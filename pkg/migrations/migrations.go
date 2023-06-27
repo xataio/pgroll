@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"database/sql"
+
 	"pg-roll/pkg/schema"
 
 	_ "github.com/lib/pq"
