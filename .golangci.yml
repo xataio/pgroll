@@ -1,0 +1,91 @@
+goVersion: &goVersion "1.20"
+
+run:
+  go: *goVersion
+  timeout: 5m
+
+linters:
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
+  enable:
+    - errorlint
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - goconst
+    - gocritic
+    - gofumpt
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nolintlint
+    - prealloc
+    - prealloc
+    - staticcheck
+    - stylecheck
+    - unused
+
+linters-settings:
+  errorlint:
+    errorf: true
+
+  forbidigo:
+    forbid:
+      - log.With\(\) # do not use global logger, use log.Ctx(ctx) instead
+      - fmt.Print*
+  gomodguard:
+    blocked:
+      # List of blocked modules.
+      modules:
+        # Blocked module.
+        - github.com/pkg/errors:
+            # Recommended modules that should be used instead. (Optional)
+            recommendations:
+              - errors
+              - fmt
+            reason: "This package is deprecated, use `fmt.Errorf` with `%w` instead"
+
+  goconst:
+    ignore-tests: true
+    numbers: true
+
+  gocritic:
+    disabled-checks:
+      - exitAfterDefer
+      - ifElseChain
+      - commentFormatting
+
+  gofumpt:
+    lang-version: *goVersion
+    module-path: "xata"
+    extra-rules: false
+
+  staticcheck:
+    go: *goVersion
+    checks: ["all"]
+
+  stylecheck:
+    go: *goVersion
+    checks: ["all", "-ST1000", "-ST1005"]
+
+  unused:
+    go: *goVersion
+
+  makezero:
+    always: false
+
+  gosec:
+    exclude-generated: true
+    severity: low
+    includes: []
+
+issues:
+  exclude-rules:
+    - path: 'tools/*|lambdas/*|cmd/*|internal/flarg/*|internal/naja/*'
+      linters:
+        - forbidigo
