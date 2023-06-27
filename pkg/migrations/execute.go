@@ -70,7 +70,6 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	}
 
 	var migration Migration
-	fmt.Println(rawMigration)
 	err = json.Unmarshal([]byte(rawMigration), &migration)
 	if err != nil {
 		return fmt.Errorf("unable to unmarshal migration: %w", err)
@@ -95,14 +94,27 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Migrations) Rollback(ctx context.Context, version string, ops Operations) error {
+func (m *Migrations) Rollback(ctx context.Context) error {
+	// get current ongoing migration
+	name, rawMigration, err := m.state.GetActiveMigration(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get active migration: %w", err)
+	}
+
+	var migration Migration
+	err = json.Unmarshal([]byte(rawMigration), &migration)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal migration: %w", err)
+	}
+
 	// delete the schema and view for the new version
-	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(version)))
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(name)))
 	if err != nil {
 		return err
 	}
 
 	// reverse the order of the operations so that they are undone in the correct order
+	ops := migration.Operations
 	for i, j := 0, len(ops)-1; i < j; i, j = i+1, j-1 {
 		ops[i], ops[j] = ops[j], ops[i]
 	}
@@ -113,6 +125,12 @@ func (m *Migrations) Rollback(ctx context.Context, version string, ops Operation
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
+	}
+
+	// mark as completed
+	err = m.state.Rollback(ctx, name)
+	if err != nil {
+		return fmt.Errorf("unable to rollback migration: %w", err)
 	}
 
 	return nil

@@ -120,14 +120,15 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 
 	withMigratorAndConnectionToContainer(t, func(mig *Migrations, db *sql.DB) {
 		ctx := context.Background()
-		ops := Operations{createTableOp()}
 
 		version := "1_create_table"
-		if err := mig.Start(ctx, version, ops); err != nil {
+		migration := &Migration{Name: version, Operations: Operations{createTableOp()}}
+
+		if err := mig.Start(ctx, migration); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
-		if err := mig.Rollback(ctx, version, ops); err != nil {
+		if err := mig.Rollback(ctx); err != nil {
 			t.Fatalf("Failed to revert migration: %v", err)
 		}
 

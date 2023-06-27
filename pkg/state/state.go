@@ -104,8 +104,40 @@ func (s *State) Start(ctx context.Context, name, rawMigration string) error {
 
 // Complete marks a migration as completed
 func (s *State) Complete(ctx context.Context, name string) error {
-	_, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("UPDATE %s.migrations SET done=$1 WHERE NAME=$2 AND done=$3", pq.QuoteIdentifier(s.schema)), true, name, false)
-
+	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("UPDATE %s.migrations SET done=$1 WHERE NAME=$2 AND done=$3", pq.QuoteIdentifier(s.schema)), true, name, false)
+	if err != nil {
+		return err
+	}
 	// TODO handle constraint violations, ie trying to complete a migration that is not active
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("no migration found with name %s", name)
+	}
+
 	return err
+}
+
+// Rollback removes a migration from the state (we consider it rolled back, as if it never started)
+func (s *State) Rollback(ctx context.Context, name string) error {
+	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s.migrations WHERE NAME=$1 AND done=$2", pq.QuoteIdentifier(s.schema)), name, false)
+	if err != nil {
+		return err
+	}
+	// TODO handle constraint violations, ie trying to complete a migration that is not active
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("no migration found with name %s", name)
+	}
+
+	return nil
 }

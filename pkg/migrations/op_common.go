@@ -27,7 +27,6 @@ func ReadMigrationFile(file string) (*Migration, error) {
 	}
 
 	mig := Migration{}
-	fmt.Println(string(byteValue))
 	err = json.Unmarshal(byteValue, &mig)
 	if err != nil {
 		return nil, err
