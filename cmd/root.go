@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+
 	"pg-roll/pkg/migrations"
 	"pg-roll/pkg/state"
 
@@ -9,21 +10,26 @@ import (
 )
 
 var (
-	PGURL       string
+	// PGURL is the Postgres URL to connect to
+	PGURL string
+
+	// Schema is the schema to use for the migration
+	Schema string
+
+	// StateSchema is the Postgres schema where pg-roll will store its state
 	StateSchema string
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&PGURL, "postgres_url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
+	rootCmd.PersistentFlags().StringVar(&Schema, "schema", "public", "Postgres schema to use for the migration")
 	rootCmd.PersistentFlags().StringVar(&StateSchema, "pgroll_schema", "pgroll", "Postgres schema where pg-roll will store its state")
 }
 
-var (
-	rootCmd = &cobra.Command{
-		Use:          "pg-roll",
-		SilenceUsage: true,
-	}
-)
+var rootCmd = &cobra.Command{
+	Use:          "pg-roll",
+	SilenceUsage: true,
+}
 
 func NewMigrations(ctx context.Context) (*migrations.Migrations, error) {
 	state, err := state.New(ctx, PGURL, StateSchema)
@@ -31,7 +37,7 @@ func NewMigrations(ctx context.Context) (*migrations.Migrations, error) {
 		return nil, err
 	}
 
-	return migrations.New(ctx, PGURL, state)
+	return migrations.New(ctx, PGURL, Schema, state)
 }
 
 // Execute executes the root command.

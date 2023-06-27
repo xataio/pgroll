@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"database/sql"
+
 	"pg-roll/pkg/schema"
 	"pg-roll/pkg/state"
 
@@ -11,6 +12,9 @@ import (
 
 type Migrations struct {
 	pgConn *sql.DB // TODO abstract sql connection
+
+	// schema we are acting on
+	schema string
 
 	state *state.State
 }
@@ -31,14 +35,16 @@ type Operation interface {
 	Rollback(ctx context.Context, conn *sql.DB) error
 }
 
-type Operations []Operation
-type Migration struct {
-	Name string `json:"name"`
+type (
+	Operations []Operation
+	Migration  struct {
+		Name string `json:"name"`
 
-	Operations Operations `json:"operations"`
-}
+		Operations Operations `json:"operations"`
+	}
+)
 
-func New(ctx context.Context, pgURL string, state *state.State) (*Migrations, error) {
+func New(ctx context.Context, pgURL, schema string, state *state.State) (*Migrations, error) {
 	conn, err := sql.Open("postgres", pgURL)
 	if err != nil {
 		return nil, err
@@ -46,6 +52,7 @@ func New(ctx context.Context, pgURL string, state *state.State) (*Migrations, er
 
 	return &Migrations{
 		pgConn: conn,
+		schema: schema,
 		state:  state,
 	}, nil
 }

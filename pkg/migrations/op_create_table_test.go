@@ -4,9 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"pg-roll/pkg/state"
 	"testing"
 	"time"
+
+	"pg-roll/pkg/state"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/lib/pq"
@@ -242,7 +243,7 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations,
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := New(ctx, cStr, st)
+	mig, err := New(ctx, cStr, "public", st)
 	if err != nil {
 		t.Fatal(err)
 	}

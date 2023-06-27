@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"pg-roll/pkg/schema"
 	"strings"
+
+	"pg-roll/pkg/schema"
 
 	"github.com/lib/pq"
 )
@@ -15,7 +16,7 @@ var errActiveMigration = fmt.Errorf("there is an active migration already")
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
 	// check if there is an active migration, create one otherwise
-	active, err := m.state.IsActiveMigrationPeriod(ctx)
+	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
 	if err != nil {
 		return fmt.Errorf("unable to marshal migration: %w", err)
 	}
-	err = m.state.Start(ctx, migration.Name, string(rawMigration))
+	err = m.state.Start(ctx, m.schema, migration.Name, string(rawMigration))
 	if err != nil {
 		return fmt.Errorf("unable to start migration: %w", err)
 	}
@@ -64,7 +65,7 @@ func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
 // Complete will update the database schema to match the current version
 func (m *Migrations) Complete(ctx context.Context) error {
 	// get current ongoing migration
-	name, rawMigration, err := m.state.GetActiveMigration(ctx)
+	name, rawMigration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
@@ -86,7 +87,7 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	// TODO: drop views from previous version
 
 	// mark as completed
-	err = m.state.Complete(ctx, name)
+	err = m.state.Complete(ctx, m.schema, name)
 	if err != nil {
 		return fmt.Errorf("unable to complete migration: %w", err)
 	}
@@ -96,7 +97,7 @@ func (m *Migrations) Complete(ctx context.Context) error {
 
 func (m *Migrations) Rollback(ctx context.Context) error {
 	// get current ongoing migration
-	name, rawMigration, err := m.state.GetActiveMigration(ctx)
+	name, rawMigration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
@@ -128,7 +129,7 @@ func (m *Migrations) Rollback(ctx context.Context) error {
 	}
 
 	// mark as completed
-	err = m.state.Rollback(ctx, name)
+	err = m.state.Rollback(ctx, m.schema, name)
 	if err != nil {
 		return fmt.Errorf("unable to rollback migration: %w", err)
 	}
