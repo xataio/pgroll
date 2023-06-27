@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
-	"pg-roll/pkg/migrations"
 	"strings"
+
+	"pg-roll/pkg/migrations"
 
 	"github.com/spf13/cobra"
 )

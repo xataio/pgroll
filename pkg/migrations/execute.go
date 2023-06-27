@@ -3,8 +3,9 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"pg-roll/pkg/schema"
 	"strings"
+
+	"pg-roll/pkg/schema"
 
 	"github.com/lib/pq"
 )
