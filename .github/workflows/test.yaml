@@ -1,8 +1,8 @@
-name: tests
+name: Run tests
 on: [push]
 jobs:
   test:
-    name: 'Run tests'
+    name: test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
