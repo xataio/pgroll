@@ -39,6 +39,7 @@ func Execute() error {
 	// register subcommands
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(completeCmd)
+	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(initCmd)
 

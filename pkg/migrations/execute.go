@@ -95,6 +95,29 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	return nil
 }
 
+func (m *Migrations) Rollback(ctx context.Context, version string, ops Operations) error {
+	// delete the schema and view for the new version
+	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(version)))
+	if err != nil {
+		return err
+	}
+
+	// reverse the order of the operations so that they are undone in the correct order
+	for i, j := 0, len(ops)-1; i < j; i, j = i+1, j-1 {
+		ops[i], ops[j] = ops[j], ops[i]
+	}
+
+	// execute operations
+	for _, op := range ops {
+		err := op.Rollback(ctx, m.pgConn)
+		if err != nil {
+			return fmt.Errorf("unable to execute rollback operation: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // create view creates a view for the new version of the schema
 func (m *Migrations) createView(ctx context.Context, version string, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
