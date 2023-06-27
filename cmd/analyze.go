@@ -29,12 +29,12 @@ var analyzeCmd = &cobra.Command{
 			return err
 		}
 
-		schemaJson, err := json.MarshalIndent(s, "", "  ")
+		schemaJSON, err := json.MarshalIndent(s, "", "  ")
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(string(schemaJson))
+		fmt.Println(string(schemaJSON))
 		return nil
 	},
 }

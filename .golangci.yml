@@ -34,10 +34,6 @@ linters-settings:
   errorlint:
     errorf: true
 
-  forbidigo:
-    forbid:
-      - log.With\(\) # do not use global logger, use log.Ctx(ctx) instead
-      - fmt.Print*
   gomodguard:
     blocked:
       # List of blocked modules.
@@ -62,7 +58,7 @@ linters-settings:
 
   gofumpt:
     lang-version: *goVersion
-    module-path: "xata"
+    module-path: "pg-roll"
     extra-rules: false
 
   staticcheck:
@@ -83,9 +79,3 @@ linters-settings:
     exclude-generated: true
     severity: low
     includes: []
-
-issues:
-  exclude-rules:
-    - path: 'tools/*|lambdas/*|cmd/*|internal/flarg/*|internal/naja/*'
-      linters:
-        - forbidigo
