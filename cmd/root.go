@@ -21,9 +21,9 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&PGURL, "postgres_url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
+	rootCmd.PersistentFlags().StringVar(&PGURL, "postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
 	rootCmd.PersistentFlags().StringVar(&Schema, "schema", "public", "Postgres schema to use for the migration")
-	rootCmd.PersistentFlags().StringVar(&StateSchema, "pgroll_schema", "pgroll", "Postgres schema where pg-roll will store its state")
+	rootCmd.PersistentFlags().StringVar(&StateSchema, "pgroll-schema", "pgroll", "Postgres schema where pg-roll will store its state")
 }
 
 var rootCmd = &cobra.Command{
