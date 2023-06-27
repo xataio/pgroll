@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -62,7 +63,10 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		//
 		// Insert records via the view
 		//
-		sql := fmt.Sprintf(`INSERT INTO %q.%q (id, name) VALUES ($1, $2)`, version, viewName)
+		sql := fmt.Sprintf(`INSERT INTO %s.%s (id, name) VALUES ($1, $2)`,
+			pq.QuoteIdentifier(version),
+			pq.QuoteIdentifier(viewName))
+
 		insertStmt, err := db.Prepare(sql)
 		if err != nil {
 			t.Fatal(err)
