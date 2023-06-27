@@ -3,7 +3,10 @@ package state
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+
+	"pg-roll/pkg/migrations"
 
 	"github.com/lib/pq"
 )
@@ -91,23 +94,34 @@ func (s *State) IsActiveMigrationPeriod(ctx context.Context, schema string) (boo
 }
 
 // GetActiveMigration returns the name & raw content of the active migration (if any), errors out otherwise
-func (s *State) GetActiveMigration(ctx context.Context, schema string) (string, string, error) {
-	var name, migration string
-	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT name, migration FROM %s.migrations WHERE schema=$1 AND done=false", pq.QuoteIdentifier(s.schema)), schema).Scan(&name, &migration)
+func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrations.Migration, error) {
+	var name, rawMigration string
+	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT name, migration FROM %s.migrations WHERE schema=$1 AND done=false", pq.QuoteIdentifier(s.schema)), schema).Scan(&name, &rawMigration)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return name, migration, nil
+	var migration migrations.Migration
+	err = json.Unmarshal([]byte(rawMigration), &migration)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
+	}
+
+	return &migration, nil
 }
 
 // Start creates a new migration, storing it's name and raw content
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
-func (s *State) Start(ctx context.Context, schema, name, rawMigration string) error {
-	_, err := s.pgConn.ExecContext(ctx,
+func (s *State) Start(ctx context.Context, schema string, migration *migrations.Migration) error {
+	rawMigration, err := json.Marshal(migration)
+	if err != nil {
+		return fmt.Errorf("unable to marshal migration: %w", err)
+	}
+
+	_, err = s.pgConn.ExecContext(ctx,
 		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
-		schema, name, rawMigration)
+		schema, migration.Name, string(rawMigration))
 
 	// TODO handle constraint violations, ie to detect an active migration, or duplicated names
 	return err

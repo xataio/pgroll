@@ -14,10 +14,10 @@ var _ Operation = (*OpCreateTable)(nil)
 
 type OpCreateTable struct {
 	Name    string   `json:"name"`
-	Columns []column `json:"columns"`
+	Columns []Column `json:"columns"`
 }
 
-type column struct {
+type Column struct {
 	Name       string  `json:"name"`
 	Type       string  `json:"type"`
 	Nullable   bool    `json:"nullable"`
@@ -50,7 +50,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 	return nil
 }
 
-func columnsToSQL(cols []column) string {
+func columnsToSQL(cols []Column) string {
 	var sql string
 	for i, col := range cols {
 		if i > 0 {

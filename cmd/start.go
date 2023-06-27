@@ -17,7 +17,7 @@ var startCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fileName := args[0]
 
-		m, err := NewMigrations(cmd.Context())
+		m, err := NewRoll(cmd.Context())
 		if err != nil {
 			return err
 		}

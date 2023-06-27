@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"pg-roll/pkg/migrations"
+	"pg-roll/pkg/roll"
 	"pg-roll/pkg/state"
 
 	"github.com/spf13/cobra"
@@ -31,13 +31,13 @@ var rootCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
-func NewMigrations(ctx context.Context) (*migrations.Migrations, error) {
+func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	state, err := state.New(ctx, PGURL, StateSchema)
 	if err != nil {
 		return nil, err
 	}
 
-	return migrations.New(ctx, PGURL, Schema, state)
+	return roll.New(ctx, PGURL, Schema, state)
 }
 
 // Execute executes the root command.

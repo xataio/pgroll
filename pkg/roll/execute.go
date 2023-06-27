@@ -1,38 +1,32 @@
-package migrations
+package roll
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
+	"pg-roll/pkg/migrations"
 	"pg-roll/pkg/schema"
 
 	"github.com/lib/pq"
 )
 
-var errActiveMigration = fmt.Errorf("there is an active migration already")
-
 // Start will apply the required changes to enable supporting the new schema version
-func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
+func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
 		return err
 	}
 	if active {
-		return errActiveMigration
+		return fmt.Errorf("there is an active migration already")
 	}
 
 	// TODO: retrieve current schema + store it as state?
 	newSchema := schema.New()
 
 	// create a new active migration (guaranteed to be unique by constraints)
-	rawMigration, err := json.Marshal(migration)
-	if err != nil {
-		return fmt.Errorf("unable to marshal migration: %w", err)
-	}
-	err = m.state.Start(ctx, m.schema, migration.Name, string(rawMigration))
+	err = m.state.Start(ctx, m.schema, migration)
 	if err != nil {
 		return fmt.Errorf("unable to start migration: %w", err)
 	}
@@ -63,17 +57,11 @@ func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
 }
 
 // Complete will update the database schema to match the current version
-func (m *Migrations) Complete(ctx context.Context) error {
+func (m *Roll) Complete(ctx context.Context) error {
 	// get current ongoing migration
-	name, rawMigration, err := m.state.GetActiveMigration(ctx, m.schema)
+	migration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get active migration: %w", err)
-	}
-
-	var migration Migration
-	err = json.Unmarshal([]byte(rawMigration), &migration)
-	if err != nil {
-		return fmt.Errorf("unable to unmarshal migration: %w", err)
 	}
 
 	// execute operations
@@ -87,7 +75,7 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	// TODO: drop views from previous version
 
 	// mark as completed
-	err = m.state.Complete(ctx, m.schema, name)
+	err = m.state.Complete(ctx, m.schema, migration.Name)
 	if err != nil {
 		return fmt.Errorf("unable to complete migration: %w", err)
 	}
@@ -95,21 +83,15 @@ func (m *Migrations) Complete(ctx context.Context) error {
 	return nil
 }
 
-func (m *Migrations) Rollback(ctx context.Context) error {
+func (m *Roll) Rollback(ctx context.Context) error {
 	// get current ongoing migration
-	name, rawMigration, err := m.state.GetActiveMigration(ctx, m.schema)
+	migration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
-	var migration Migration
-	err = json.Unmarshal([]byte(rawMigration), &migration)
-	if err != nil {
-		return fmt.Errorf("unable to unmarshal migration: %w", err)
-	}
-
 	// delete the schema and view for the new version
-	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(name)))
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(migration.Name)))
 	if err != nil {
 		return err
 	}
@@ -129,7 +111,7 @@ func (m *Migrations) Rollback(ctx context.Context) error {
 	}
 
 	// mark as completed
-	err = m.state.Rollback(ctx, m.schema, name)
+	err = m.state.Rollback(ctx, m.schema, migration.Name)
 	if err != nil {
 		return fmt.Errorf("unable to rollback migration: %w", err)
 	}
@@ -138,7 +120,7 @@ func (m *Migrations) Rollback(ctx context.Context) error {
 }
 
 // create view creates a view for the new version of the schema
-func (m *Migrations) createView(ctx context.Context, version string, name string, table schema.Table) error {
+func (m *Roll) createView(ctx context.Context, version string, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
 		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(k), pq.QuoteIdentifier(v.Name)))

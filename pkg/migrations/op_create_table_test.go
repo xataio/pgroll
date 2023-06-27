@@ -1,4 +1,4 @@
-package migrations
+package migrations_test
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"pg-roll/pkg/migrations"
+	"pg-roll/pkg/roll"
 	"pg-roll/pkg/state"
 
 	"github.com/google/go-cmp/cmp"
@@ -25,11 +27,11 @@ const (
 func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
 	t.Parallel()
 
-	withMigratorAndConnectionToContainer(t, func(mig *Migrations, db *sql.DB) {
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		version := "1_create_table"
-		if err := mig.Start(ctx, &Migration{Name: version, Operations: Operations{createTableOp()}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -54,11 +56,11 @@ func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
 func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testing.T) {
 	t.Parallel()
 
-	withMigratorAndConnectionToContainer(t, func(mig *Migrations, db *sql.DB) {
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		version := "1_create_table"
-		if err := mig.Start(ctx, &Migration{Name: version, Operations: Operations{createTableOp()}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -119,11 +121,11 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 	t.Parallel()
 
-	withMigratorAndConnectionToContainer(t, func(mig *Migrations, db *sql.DB) {
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		version := "1_create_table"
-		migration := &Migration{Name: version, Operations: Operations{createTableOp()}}
+		migration := &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}
 
 		if err := mig.Start(ctx, migration); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
@@ -137,7 +139,7 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 		//
 		// Check that the new table has been dropped
 		//
-		tableName := TemporaryName(viewName)
+		tableName := migrations.TemporaryName(viewName)
 		err := db.QueryRow(`
     SELECT EXISTS(
       SELECT 1
@@ -189,10 +191,10 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 	})
 }
 
-func createTableOp() *OpCreateTable {
-	return &OpCreateTable{
+func createTableOp() *migrations.OpCreateTable {
+	return &migrations.OpCreateTable{
 		Name: viewName,
-		Columns: []column{
+		Columns: []migrations.Column{
 			{
 				Name:       "id",
 				Type:       "integer",
@@ -207,7 +209,7 @@ func createTableOp() *OpCreateTable {
 	}
 }
 
-func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations, db *sql.DB)) {
+func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -243,7 +245,7 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations,
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := New(ctx, cStr, "public", st)
+	mig, err := roll.New(ctx, cStr, "public", st)
 	if err != nil {
 		t.Fatal(err)
 	}
