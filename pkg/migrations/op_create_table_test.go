@@ -76,13 +76,13 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		defer insertStmt.Close()
 
 		type user struct {
-			Id   int
+			ID   int
 			Name string
 		}
-		inserted := []user{{Id: 1, Name: "Alice"}, {Id: 2, Name: "Bob"}}
+		inserted := []user{{ID: 1, Name: "Alice"}, {ID: 2, Name: "Bob"}}
 
 		for _, v := range inserted {
-			_, err = insertStmt.Exec(v.Id, v.Name)
+			_, err = insertStmt.Exec(v.ID, v.Name)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -101,7 +101,7 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		var retrieved []user
 		for rows.Next() {
 			var user user
-			if err := rows.Scan(&user.Id, &user.Name); err != nil {
+			if err := rows.Scan(&user.ID, &user.Name); err != nil {
 				t.Fatal(err)
 			}
 			retrieved = append(retrieved, user)

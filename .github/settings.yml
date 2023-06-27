@@ -74,6 +74,7 @@ branches:
       # Required. The list of status checks to require in order to merge into this branch
       contexts:
       - test
+      - lint
 
     # Required. Require at least one approving review on a pull request, before merging. Set to null to disable.
     required_pull_request_reviews:
