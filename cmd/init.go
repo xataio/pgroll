@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var completeCmd = &cobra.Command{
-	Use:   "complete <file>",
-	Short: "Complete an ongoing migration with the operations present in the given file",
+var initCmd = &cobra.Command{
+	Use:   "init <file>",
+	Short: "Initializes pg-roll, creating the required pg_roll schema to store state",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		m, err := NewMigrations(cmd.Context())
 		if err != nil {
@@ -16,12 +16,12 @@ var completeCmd = &cobra.Command{
 		}
 		defer m.Close()
 
-		err = m.Complete(cmd.Context())
+		err = m.Init(cmd.Context())
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("Migration successful!")
+		fmt.Printf("Initialization done! pg-roll is ready to be used\n")
 		return nil
 	},
 }

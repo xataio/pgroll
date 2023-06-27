@@ -12,6 +12,12 @@ PostgreSQL zero-downtime migrations made easy.
 docker compose up
 ```
 
+* Initialize pg-roll (first time only):
+
+```sh
+go run . init
+```
+
 * Start a migration:
 
 ```sh
@@ -32,5 +38,5 @@ psql postgres://localhost -U postgres
 * Complete the migration:
 
 ```sh
-go run . complete examples/01_create_tables.json
+go run . complete
 ```

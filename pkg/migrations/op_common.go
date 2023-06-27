@@ -1,19 +1,18 @@
 package migrations
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 )
 
-type Operations []Operation
-
 func temporaryName(name string) string {
 	return "_pgroll_new_" + name
 }
 
-func ReadMigrationFile(file string) ([]Operation, error) {
+func ReadMigrationFile(file string) (*Migration, error) {
 	// read operations from file
 	jsonFile, err := os.Open(file)
 	if err != nil {
@@ -27,15 +26,17 @@ func ReadMigrationFile(file string) ([]Operation, error) {
 		return nil, err
 	}
 
-	ops := Operations{}
-	err = json.Unmarshal(byteValue, &ops)
+	mig := Migration{}
+	fmt.Println(string(byteValue))
+	err = json.Unmarshal(byteValue, &mig)
 	if err != nil {
 		return nil, err
 	}
 
-	return ops, nil
+	return &mig, nil
 }
 
+// UnmarshalJSON deserializes the list of operations from a JSON array.
 func (v *Operations) UnmarshalJSON(data []byte) error {
 	var tmp []map[string]json.RawMessage
 	if err := json.Unmarshal(data, &tmp); err != nil {
@@ -76,4 +77,40 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 	*v = ops
 	return nil
+}
+
+// MarshalJSON serializes the list of operations into a JSON array.
+func (v Operations) MarshalJSON() ([]byte, error) {
+	if len(v) == 0 {
+		return []byte(`[]`), nil
+	}
+
+	var buf bytes.Buffer
+	buf.WriteByte('[')
+
+	enc := json.NewEncoder(&buf)
+	for i, op := range v {
+		if i != 0 {
+			buf.WriteByte(',')
+		}
+
+		var opName string
+		switch op.(type) {
+		case *OpCreateTable:
+			opName = "create_table"
+
+		default:
+			panic(fmt.Errorf("unknown operation for %T", op))
+		}
+
+		buf.WriteString(`{"`)
+		buf.WriteString(opName)
+		buf.WriteString(`":`)
+		if err := enc.Encode(op); err != nil {
+			return nil, fmt.Errorf("unable to encode op [%v]: %w", i, err)
+		}
+		buf.WriteByte('}')
+	}
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
 }

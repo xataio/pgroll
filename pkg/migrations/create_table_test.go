@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"pg-roll/pkg/state"
 	"testing"
 	"time"
 
@@ -26,7 +27,7 @@ func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
 		ctx := context.Background()
 
 		version := "1_create_table"
-		if err := mig.Start(ctx, version, Operations{createTableOp()}); err != nil {
+		if err := mig.Start(ctx, &Migration{Name: version, Operations: Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -55,7 +56,7 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		ctx := context.Background()
 
 		version := "1_create_table"
-		if err := mig.Start(ctx, version, Operations{createTableOp()}); err != nil {
+		if err := mig.Start(ctx, &Migration{Name: version, Operations: Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -156,7 +157,15 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations,
 		t.Fatal(err)
 	}
 
-	mig, err := New(ctx, cStr)
+	st, err := state.New(ctx, cStr, "pgroll")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = st.Init(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mig, err := New(ctx, cStr, st)
 	if err != nil {
 		t.Fatal(err)
 	}

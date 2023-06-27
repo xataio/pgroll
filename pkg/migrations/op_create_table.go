@@ -17,12 +17,12 @@ type OpCreateTable struct {
 }
 
 type column struct {
-	Name       string         `json:"name"`
-	Type       string         `json:"type"`
-	Nullable   bool           `json:"nullable"`
-	Unique     bool           `json:"unique"`
-	PrimaryKey bool           `json:"pk"`
-	Default    sql.NullString `json:"default"`
+	Name       string  `json:"name"`
+	Type       string  `json:"type"`
+	Nullable   bool    `json:"nullable"`
+	Unique     bool    `json:"unique"`
+	PrimaryKey bool    `json:"pk"`
+	Default    *string `json:"default"`
 }
 
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
@@ -66,8 +66,8 @@ func columnsToSQL(cols []column) string {
 		if !col.Nullable {
 			sql += " NOT NULL"
 		}
-		if col.Default.Valid {
-			sql += fmt.Sprintf(" DEFAULT %s", col.Default.String)
+		if col.Default != nil {
+			sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
 		}
 	}
 	return sql

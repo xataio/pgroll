@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"pg-roll/pkg/schema"
+	"pg-roll/pkg/state"
 
 	_ "github.com/lib/pq"
 )
 
 type Migrations struct {
 	pgConn *sql.DB // TODO abstract sql connection
+
+	state *state.State
 }
 
 type Operation interface {
@@ -27,7 +30,14 @@ type Operation interface {
 	// Rollback(ctx context.Context, conn *sql.DB) error
 }
 
-func New(ctx context.Context, pgURL string) (*Migrations, error) {
+type Operations []Operation
+type Migration struct {
+	Name string `json:"name"`
+
+	Operations Operations `json:"operations"`
+}
+
+func New(ctx context.Context, pgURL string, state *state.State) (*Migrations, error) {
 	conn, err := sql.Open("postgres", pgURL)
 	if err != nil {
 		return nil, err
@@ -35,9 +45,19 @@ func New(ctx context.Context, pgURL string) (*Migrations, error) {
 
 	return &Migrations{
 		pgConn: conn,
+		state:  state,
 	}, nil
 }
 
+func (m *Migrations) Init(ctx context.Context) error {
+	return m.state.Init(ctx)
+}
+
 func (m *Migrations) Close() error {
+	err := m.state.Close()
+	if err != nil {
+		return err
+	}
+
 	return m.pgConn.Close()
 }

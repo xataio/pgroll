@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"pg-roll/pkg/schema"
 	"strings"
@@ -9,12 +10,34 @@ import (
 	"github.com/lib/pq"
 )
 
+var errActiveMigration = fmt.Errorf("there is an active migration already")
+
 // Start will apply the required changes to enable supporting the new schema version
-func (m *Migrations) Start(ctx context.Context, version string, ops Operations) error {
+func (m *Migrations) Start(ctx context.Context, migration *Migration) error {
+	// check if there is an active migration, create one otherwise
+	active, err := m.state.IsActiveMigrationPeriod(ctx)
+	if err != nil {
+		return err
+	}
+	if active {
+		return errActiveMigration
+	}
+
+	// TODO: retrieve current schema + store it as state?
 	newSchema := schema.New()
 
+	// create a new active migration (guaranteed to be unique by constraints)
+	rawMigration, err := json.Marshal(migration)
+	if err != nil {
+		return fmt.Errorf("unable to marshal migration: %w", err)
+	}
+	err = m.state.Start(ctx, migration.Name, string(rawMigration))
+	if err != nil {
+		return fmt.Errorf("unable to start migration: %w", err)
+	}
+
 	// execute operations
-	for _, op := range ops {
+	for _, op := range migration.Operations {
 		err := op.Start(ctx, m.pgConn, newSchema)
 		if err != nil {
 			return fmt.Errorf("unable to execute start operation: %w", err)
@@ -22,14 +45,14 @@ func (m *Migrations) Start(ctx context.Context, version string, ops Operations) 
 	}
 
 	// create schema for the new version
-	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(version)))
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(migration.Name)))
 	if err != nil {
 		return err
 	}
 
 	// create views in the new schema
 	for name, table := range newSchema.Tables {
-		err = m.createView(ctx, version, name, table)
+		err = m.createView(ctx, migration.Name, name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
 		}
@@ -39,16 +62,35 @@ func (m *Migrations) Start(ctx context.Context, version string, ops Operations) 
 }
 
 // Complete will update the database schema to match the current version
-func (m *Migrations) Complete(ctx context.Context, version string, ops Operations) error {
+func (m *Migrations) Complete(ctx context.Context) error {
+	// get current ongoing migration
+	name, rawMigration, err := m.state.GetActiveMigration(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to get active migration: %w", err)
+	}
+
+	var migration Migration
+	fmt.Println(rawMigration)
+	err = json.Unmarshal([]byte(rawMigration), &migration)
+	if err != nil {
+		return fmt.Errorf("unable to unmarshal migration: %w", err)
+	}
+
 	// execute operations
-	for _, op := range ops {
+	for _, op := range migration.Operations {
 		err := op.Complete(ctx, m.pgConn)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
 	}
 
-	// TODO: once we have state, drop views for previous versions
+	// TODO: drop views from previous version
+
+	// mark as completed
+	err = m.state.Complete(ctx, name)
+	if err != nil {
+		return fmt.Errorf("unable to complete migration: %w", err)
+	}
 
 	return nil
 }
