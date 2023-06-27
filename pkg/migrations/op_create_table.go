@@ -26,7 +26,7 @@ type column struct {
 }
 
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
-	tempName := temporaryName(o.Name)
+	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(tempName),
 		columnsToSQL(o.Columns)))
@@ -74,9 +74,17 @@ func columnsToSQL(cols []column) string {
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB) error {
-	tempName := temporaryName(o.Name)
+	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s",
 		pq.QuoteIdentifier(tempName),
 		pq.QuoteIdentifier(o.Name)))
+	return err
+}
+
+func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
+	tempName := TemporaryName(o.Name)
+
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
+		pq.QuoteIdentifier(tempName)))
 	return err
 }

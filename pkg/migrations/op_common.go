@@ -9,7 +9,7 @@ import (
 
 type Operations []Operation
 
-func temporaryName(name string) string {
+func TemporaryName(name string) string {
 	return "_pgroll_new_" + name
 }
 
