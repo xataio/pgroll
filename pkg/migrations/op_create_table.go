@@ -80,3 +80,11 @@ func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB) error {
 		pq.QuoteIdentifier(o.Name)))
 	return err
 }
+
+func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
+	tempName := TemporaryName(o.Name)
+
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
+		pq.QuoteIdentifier(tempName)))
+	return err
+}

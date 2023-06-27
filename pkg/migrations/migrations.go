@@ -23,8 +23,9 @@ type Operation interface {
 	// this method should be called once the previous version is no longer used
 	Complete(ctx context.Context, conn *sql.DB) error
 
-	// TODO
-	// Rollback(ctx context.Context, conn *sql.DB) error
+	// Rollback will revert the changes made by Start. It is not possible to
+	// rollback a completed migration.
+	Rollback(ctx context.Context, conn *sql.DB) error
 }
 
 func New(ctx context.Context, pgURL string) (*Migrations, error) {
