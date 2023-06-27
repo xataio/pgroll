@@ -13,27 +13,27 @@ CREATE SCHEMA IF NOT EXISTS %[1]s;
 
 CREATE TABLE IF NOT EXISTS %[1]s.migrations (
 	schema			NAME NOT NULL,
-	name				TEXT NOT NULL,
-	migration			JSONB NOT NULL,
-	created_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	name			TEXT NOT NULL,
+	migration		JSONB NOT NULL,
+	created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-	parent_name			TEXT,
-	done				BOOLEAN NOT NULL DEFAULT false,
-	failed				BOOLEAN NOT NULL DEFAULT false,
+	parent			TEXT,
+	done			BOOLEAN NOT NULL DEFAULT false,
+	failed			BOOLEAN NOT NULL DEFAULT false,
 
     PRIMARY KEY (schema, name),
-	FOREIGN KEY	(schema, parent_name) REFERENCES %[1]s.migrations(schema, name)
+	FOREIGN KEY	(schema, parent) REFERENCES %[1]s.migrations(schema, name)
 );
 
 -- Only one migration can be active at a time
 CREATE UNIQUE INDEX IF NOT EXISTS only_one_active ON %[1]s.migrations (schema, name, done) WHERE done = false;
 
 -- Only first migration can exist without parent
-CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent_name ON %[1]s.migrations ((1)) WHERE parent_name IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON %[1]s.migrations ((1)) WHERE parent IS NULL;
 
 -- History is linear
-CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON %[1]s.migrations (schema, parent_name);
+CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON %[1]s.migrations (schema, parent);
 
 -- Helper functions
 
@@ -45,7 +45,7 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
-AS $$ SELECT name FROM %[1]s.migrations WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations AS other WHERE schema=schemaname AND other.parent_name=name) $$
+AS $$ SELECT name FROM %[1]s.migrations WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations AS other WHERE schema=schemaname AND other.parent=name) $$
 LANGUAGE SQL
 STABLE;
 `
@@ -106,7 +106,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (string, 
 // until the migration is completed
 func (s *State) Start(ctx context.Context, schema, name, rawMigration string) error {
 	_, err := s.pgConn.ExecContext(ctx,
-		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent_name, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
+		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
 		schema, name, rawMigration)
 
 	// TODO handle constraint violations, ie to detect an active migration, or duplicated names
