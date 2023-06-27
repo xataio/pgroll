@@ -4,6 +4,9 @@ run:
   go: *goVersion
   timeout: 5m
 
+output:
+  format: github-actions,colored-line-number
+
 linters:
   disable-all: true
   # Enable specific linter
