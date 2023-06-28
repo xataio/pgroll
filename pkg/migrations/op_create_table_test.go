@@ -237,6 +237,12 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations,
 		t.Fatal(err)
 	}
 
+	t.Cleanup(func() {
+		if err := mig.Close(); err != nil {
+			t.Fatalf("Failed to close migrator connection: %v", err)
+		}
+	})
+
 	db, err := sql.Open("postgres", cStr)
 	if err != nil {
 		t.Fatal(err)
@@ -244,7 +250,7 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *Migrations,
 
 	t.Cleanup(func() {
 		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close connection: %v", err)
+			t.Fatalf("Failed to close database connection: %v", err)
 		}
 	})
 
