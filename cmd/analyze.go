@@ -13,7 +13,6 @@ import (
 var analyzeCmd = &cobra.Command{
 	Use:    "analyze",
 	Short:  "Analyze the SQL schema of the target database",
-	Long:   "Analyse the SQL schema of the target database and output the result as JSON",
 	Hidden: true,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		db, err := sql.Open("postgres", PGURL)

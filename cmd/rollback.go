@@ -9,7 +9,6 @@ import (
 var rollbackCmd = &cobra.Command{
 	Use:   "rollback <file>",
 	Short: "Roll back an ongoing migration",
-	Long:  "Roll back an ongoing migration. This will revert the changes made by the migration.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		m, err := NewRoll(cmd.Context())
 		if err != nil {
