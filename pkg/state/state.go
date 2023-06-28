@@ -48,7 +48,7 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
-AS $$ SELECT name FROM %[1]s.migrations WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations AS other WHERE schema=schemaname AND other.parent=name) $$
+AS $$ SELECT name FROM %[1]s.migrations WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations c WHERE schema=schemaname AND c.parent=name) $$
 LANGUAGE SQL
 STABLE;
 `
