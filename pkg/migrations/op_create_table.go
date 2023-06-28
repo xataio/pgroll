@@ -14,16 +14,16 @@ var _ Operation = (*OpCreateTable)(nil)
 
 type OpCreateTable struct {
 	Name    string   `json:"name"`
-	Columns []column `json:"columns"`
+	Columns []Column `json:"columns"`
 }
 
-type column struct {
-	Name       string         `json:"name"`
-	Type       string         `json:"type"`
-	Nullable   bool           `json:"nullable"`
-	Unique     bool           `json:"unique"`
-	PrimaryKey bool           `json:"pk"`
-	Default    sql.NullString `json:"default"`
+type Column struct {
+	Name       string  `json:"name"`
+	Type       string  `json:"type"`
+	Nullable   bool    `json:"nullable"`
+	Unique     bool    `json:"unique"`
+	PrimaryKey bool    `json:"pk"`
+	Default    *string `json:"default"`
 }
 
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
@@ -50,7 +50,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 	return nil
 }
 
-func columnsToSQL(cols []column) string {
+func columnsToSQL(cols []Column) string {
 	var sql string
 	for i, col := range cols {
 		if i > 0 {
@@ -67,8 +67,8 @@ func columnsToSQL(cols []column) string {
 		if !col.Nullable {
 			sql += " NOT NULL"
 		}
-		if col.Default.Valid {
-			sql += fmt.Sprintf(" DEFAULT %s", col.Default.String)
+		if col.Default != nil {
+			sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
 		}
 	}
 	return sql

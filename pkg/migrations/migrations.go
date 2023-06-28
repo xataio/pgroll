@@ -9,10 +9,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Migrations struct {
-	pgConn *sql.DB // TODO abstract sql connection
-}
-
 type Operation interface {
 	// Start will apply the required changes to enable supporting the new schema
 	// version in the database (through a view)
@@ -29,17 +25,11 @@ type Operation interface {
 	Rollback(ctx context.Context, conn *sql.DB) error
 }
 
-func New(ctx context.Context, pgURL string) (*Migrations, error) {
-	conn, err := sql.Open("postgres", pgURL)
-	if err != nil {
-		return nil, err
+type (
+	Operations []Operation
+	Migration  struct {
+		Name string `json:"name"`
+
+		Operations Operations `json:"operations"`
 	}
-
-	return &Migrations{
-		pgConn: conn,
-	}, nil
-}
-
-func (m *Migrations) Close() error {
-	return m.pgConn.Close()
-}
+)
