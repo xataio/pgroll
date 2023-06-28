@@ -121,7 +121,7 @@ func (s *State) Start(ctx context.Context, schema string, migration *migrations.
 
 	_, err = s.pgConn.ExecContext(ctx,
 		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
-		schema, migration.Name, string(rawMigration))
+		schema, migration.Name, rawMigration)
 
 	// TODO handle constraint violations, ie to detect an active migration, or duplicated names
 	return err
