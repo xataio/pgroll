@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"pg-roll/pkg/migrations"
@@ -98,6 +99,9 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	var name, rawMigration string
 	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT name, migration FROM %s.migrations WHERE schema=$1 AND done=false", pq.QuoteIdentifier(s.schema)), schema).Scan(&name, &rawMigration)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoActiveMigration
+		}
 		return nil, err
 	}
 
