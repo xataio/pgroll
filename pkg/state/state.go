@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"pg-roll/pkg/migrations"
@@ -98,6 +99,9 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	var name, rawMigration string
 	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT name, migration FROM %s.migrations WHERE schema=$1 AND done=false", pq.QuoteIdentifier(s.schema)), schema).Scan(&name, &rawMigration)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNoActiveMigration
+		}
 		return nil, err
 	}
 
@@ -110,7 +114,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	return &migration, nil
 }
 
-// Start creates a new migration, storing it's name and raw content
+// Start creates a new migration, storing its name and raw content
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
 func (s *State) Start(ctx context.Context, schema string, migration *migrations.Migration) error {
@@ -123,7 +127,6 @@ func (s *State) Start(ctx context.Context, schema string, migration *migrations.
 		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
 		schema, migration.Name, rawMigration)
 
-	// TODO handle constraint violations, ie to detect an active migration, or duplicated names
 	return err
 }
 
@@ -133,7 +136,6 @@ func (s *State) Complete(ctx context.Context, schema, name string) error {
 	if err != nil {
 		return err
 	}
-	// TODO handle constraint violations, ie trying to complete a migration that is not active
 
 	rows, err := res.RowsAffected()
 	if err != nil {
@@ -153,7 +155,6 @@ func (s *State) Rollback(ctx context.Context, schema, name string) error {
 	if err != nil {
 		return err
 	}
-	// TODO handle constraint violations, ie trying to complete a migration that is not active
 
 	rows, err := res.RowsAffected()
 	if err != nil {

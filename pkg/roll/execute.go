@@ -19,7 +19,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 		return err
 	}
 	if active {
-		return fmt.Errorf("there is an active migration already")
+		return fmt.Errorf("a migration for schema %q is already in progress", m.schema)
 	}
 
 	// TODO: retrieve current schema + store it as state?
