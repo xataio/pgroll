@@ -191,9 +191,14 @@ func (s *State) Start(ctx context.Context, schema string, migration *migrations.
 		return nil, fmt.Errorf("unable to marshal migration: %w", err)
 	}
 
-	_, err = s.pgConn.ExecContext(ctx,
-		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
-		schema, migration.Name, rawMigration)
+	stmt := fmt.Sprintf(`
+		INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)
+		RETURNING (
+			SELECT resulting_schema FROM %[1]s.migrations
+			WHERE schema=$1 AND name=%[1]s.latest_version($1))
+		`, pq.QuoteIdentifier(s.schema))
+
+	_, err = s.pgConn.ExecContext(ctx, stmt, schema, migration.Name, rawMigration)
 
 	if err != nil {
 		return nil, err
