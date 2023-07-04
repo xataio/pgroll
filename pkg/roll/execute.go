@@ -22,11 +22,8 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 		return fmt.Errorf("a migration for schema %q is already in progress", m.schema)
 	}
 
-	// TODO: retrieve current schema + store it as state?
-	newSchema := schema.New()
-
 	// create a new active migration (guaranteed to be unique by constraints)
-	err = m.state.Start(ctx, m.schema, migration)
+	newSchema, err := m.state.Start(ctx, m.schema, migration)
 	if err != nil {
 		return fmt.Errorf("unable to start migration: %w", err)
 	}

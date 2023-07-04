@@ -42,10 +42,10 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 		}
 	}
 
-	s.Tables[o.Name] = schema.Table{
+	s.AddTable(o.Name, schema.Table{
 		Name:    tempName,
 		Columns: columns,
-	}
+	})
 
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"pg-roll/pkg/migrations"
+	"pg-roll/pkg/schema"
 
 	"github.com/lib/pq"
 )
@@ -61,47 +62,47 @@ DECLARE
 BEGIN
 	SELECT json_build_object(
 		'tables', (
-			SELECT jsonb_agg(jsonb_build_object(
-				'oid', t.oid,
+			SELECT json_object_agg(t.relname, jsonb_build_object(
 				'name', t.relname,
+				'oid', t.oid,
 				'comment', descr.description,
 				'columns', (
-					SELECT json_agg(c) FROM (
+					SELECT json_object_agg(name, c) FROM (
 						SELECT
-						attr.attname AS column_name,
-						pg_get_expr(def.adbin, def.adrelid) AS column_default,
-						NOT (
-							attr.attnotnull
-							OR tp.typtype = 'd'
-							AND tp.typnotnull
-						) AS is_nullable,
-						CASE
-							WHEN 'character varying' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
-								format_type(attr.atttypid, attr.atttypmod),
-								'character varying',
-								'varchar'
-							)
-							WHEN 'timestamp with time zone' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
-								format_type(attr.atttypid, attr.atttypmod),
-								'timestamp with time zone',
-								'timestamptz'
-							)
-							ELSE format_type(attr.atttypid, attr.atttypmod)
-						END AS data_type,
-						descr.description AS comment
+							attr.attname AS name,
+							pg_get_expr(def.adbin, def.adrelid) AS default,
+							NOT (
+								attr.attnotnull
+								OR tp.typtype = 'd'
+								AND tp.typnotnull
+							) AS nullable,
+							CASE
+								WHEN 'character varying' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
+									format_type(attr.atttypid, attr.atttypmod),
+									'character varying',
+									'varchar'
+								)
+								WHEN 'timestamp with time zone' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
+									format_type(attr.atttypid, attr.atttypmod),
+									'timestamp with time zone',
+									'timestamptz'
+								)
+								ELSE format_type(attr.atttypid, attr.atttypmod)
+							END AS type,
+							descr.description AS comment
 						FROM
-						pg_attribute AS attr
-						INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
-						LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
-						AND attr.attnum = def.adnum
-						LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
-						AND attr.attnum = descr.objsubid
+							pg_attribute AS attr
+							INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
+							LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
+							AND attr.attnum = def.adnum
+							LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
+							AND attr.attnum = descr.objsubid
 						WHERE
-						attr.attnum > 0
-						AND NOT attr.attisdropped
-						AND attr.attrelid = t.oid
+							attr.attnum > 0
+							AND NOT attr.attisdropped
+							AND attr.attrelid = t.oid
 						ORDER BY
-						attr.attnum
+							attr.attnum
 					) c
 				)
 			)) FROM pg_class AS t
@@ -183,17 +184,22 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 // Start creates a new migration, storing its name and raw content
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
-func (s *State) Start(ctx context.Context, schema string, migration *migrations.Migration) error {
+// This method will return the current schema (before the migration is applied)
+func (s *State) Start(ctx context.Context, schema string, migration *migrations.Migration) (*schema.Schema, error) {
 	rawMigration, err := json.Marshal(migration)
 	if err != nil {
-		return fmt.Errorf("unable to marshal migration: %w", err)
+		return nil, fmt.Errorf("unable to marshal migration: %w", err)
 	}
 
 	_, err = s.pgConn.ExecContext(ctx,
 		fmt.Sprintf("INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)", pq.QuoteIdentifier(s.schema)),
 		schema, migration.Name, rawMigration)
 
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	return s.getCurrentSchema(ctx, schema)
 }
 
 // Complete marks a migration as completed
@@ -232,4 +238,20 @@ func (s *State) Rollback(ctx context.Context, schema, name string) error {
 	}
 
 	return nil
+}
+
+func (s *State) getCurrentSchema(ctx context.Context, schemaname string) (*schema.Schema, error) {
+	var rawSchema string
+	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s.read_schema($1)", pq.QuoteIdentifier(s.schema)), schemaname).Scan(&rawSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	var schema schema.Schema
+	err = json.Unmarshal([]byte(rawSchema), &schema)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
+	}
+
+	return &schema, nil
 }
