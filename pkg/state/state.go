@@ -208,7 +208,7 @@ func (s *State) Start(ctx context.Context, schemaname string, migration *migrati
 	var schema schema.Schema
 	err = json.Unmarshal([]byte(rawSchema), &schema)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal schema: %w", err)
 	}
 
 	return &schema, nil
