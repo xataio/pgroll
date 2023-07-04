@@ -185,7 +185,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
 // This method will return the current schema (before the migration is applied)
-func (s *State) Start(ctx context.Context, schema string, migration *migrations.Migration) (*schema.Schema, error) {
+func (s *State) Start(ctx context.Context, schemaname string, migration *migrations.Migration) (*schema.Schema, error) {
 	rawMigration, err := json.Marshal(migration)
 	if err != nil {
 		return nil, fmt.Errorf("unable to marshal migration: %w", err)
@@ -194,17 +194,24 @@ func (s *State) Start(ctx context.Context, schema string, migration *migrations.
 	stmt := fmt.Sprintf(`
 		INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)
 		RETURNING (
-			SELECT resulting_schema FROM %[1]s.migrations
-			WHERE schema=$1 AND name=%[1]s.latest_version($1))
-		`, pq.QuoteIdentifier(s.schema))
+			SELECT COALESCE(
+				(SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=%[1]s.latest_version($1)),
+				'{}')
+		)`, pq.QuoteIdentifier(s.schema))
 
-	_, err = s.pgConn.ExecContext(ctx, stmt, schema, migration.Name, rawMigration)
-
+	var rawSchema string
+	err = s.pgConn.QueryRowContext(ctx, stmt, schemaname, migration.Name, rawMigration).Scan(&rawSchema)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.getCurrentSchema(ctx, schema)
+	var schema schema.Schema
+	err = json.Unmarshal([]byte(rawSchema), &schema)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
+	}
+
+	return &schema, nil
 }
 
 // Complete marks a migration as completed
@@ -243,20 +250,4 @@ func (s *State) Rollback(ctx context.Context, schema, name string) error {
 	}
 
 	return nil
-}
-
-func (s *State) getCurrentSchema(ctx context.Context, schemaname string) (*schema.Schema, error) {
-	var rawSchema string
-	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s.read_schema($1)", pq.QuoteIdentifier(s.schema)), schemaname).Scan(&rawSchema)
-	if err != nil {
-		return nil, err
-	}
-
-	var schema schema.Schema
-	err = json.Unmarshal([]byte(rawSchema), &schema)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
-	}
-
-	return &schema, nil
 }
