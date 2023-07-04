@@ -16,15 +16,15 @@ const sqlInit = `
 CREATE SCHEMA IF NOT EXISTS %[1]s;
 
 CREATE TABLE IF NOT EXISTS %[1]s.migrations (
-	schema			NAME NOT NULL,
-	name			TEXT NOT NULL,
-	migration		JSONB NOT NULL,
-	created_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	updated_at		TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	schema				NAME NOT NULL,
+	name				TEXT NOT NULL,
+	migration			JSONB NOT NULL,
+	created_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	updated_at			TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-	parent			TEXT,
-	done			BOOLEAN NOT NULL DEFAULT false,
-	failed			BOOLEAN NOT NULL DEFAULT false,
+	parent				TEXT,
+	done				BOOLEAN NOT NULL DEFAULT false,
+	resulting_schema	JSONB NOT NULL DEFAULT '{}'::jsonb,
 
     PRIMARY KEY (schema, name),
 	FOREIGN KEY	(schema, parent) REFERENCES %[1]s.migrations(schema, name)
@@ -52,6 +52,72 @@ CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
 AS $$ SELECT p.name FROM %[1]s.migrations p WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations c WHERE schema=schemaname AND c.parent=p.name) $$
 LANGUAGE SQL
 STABLE;
+
+-- Get the JSON representation of the current schema
+CREATE OR REPLACE FUNCTION %[1]s.read_schema(schemaname text) RETURNS jsonb
+LANGUAGE plpgsql AS $$
+DECLARE
+	tables jsonb;
+BEGIN
+	SELECT json_build_object(
+		'tables', (
+			SELECT jsonb_agg(jsonb_build_object(
+				'oid', t.oid,
+				'name', t.relname,
+				'comment', descr.description,
+				'columns', (
+					SELECT json_agg(c) FROM (
+						SELECT
+						attr.attname AS column_name,
+						pg_get_expr(def.adbin, def.adrelid) AS column_default,
+						NOT (
+							attr.attnotnull
+							OR tp.typtype = 'd'
+							AND tp.typnotnull
+						) AS is_nullable,
+						CASE
+							WHEN 'character varying' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
+								format_type(attr.atttypid, attr.atttypmod),
+								'character varying',
+								'varchar'
+							)
+							WHEN 'timestamp with time zone' :: regtype = ANY(ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
+								format_type(attr.atttypid, attr.atttypmod),
+								'timestamp with time zone',
+								'timestamptz'
+							)
+							ELSE format_type(attr.atttypid, attr.atttypmod)
+						END AS data_type,
+						descr.description AS comment
+						FROM
+						pg_attribute AS attr
+						INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
+						LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
+						AND attr.attnum = def.adnum
+						LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
+						AND attr.attnum = descr.objsubid
+						WHERE
+						attr.attnum > 0
+						AND NOT attr.attisdropped
+						AND attr.attrelid = t.oid
+						ORDER BY
+						attr.attnum
+					) c
+				)
+			)) FROM pg_class AS t
+				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
+				LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
+				AND descr.objsubid = 0
+			WHERE
+				ns.nspname = schemaname
+				AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
+			)
+		)
+	INTO tables;
+
+	RETURN tables;
+END;
+$$;
 `
 
 type State struct {
@@ -132,7 +198,7 @@ func (s *State) Start(ctx context.Context, schema string, migration *migrations.
 
 // Complete marks a migration as completed
 func (s *State) Complete(ctx context.Context, schema, name string) error {
-	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("UPDATE %s.migrations SET done=$1 WHERE schema=$2 AND name=$3 AND done=$4", pq.QuoteIdentifier(s.schema)), true, schema, name, false)
+	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("UPDATE %[1]s.migrations SET done=$1, resulting_schema=(SELECT %[1]s.read_schema($2)) WHERE schema=$2 AND name=$3 AND done=$4", pq.QuoteIdentifier(s.schema)), true, schema, name, false)
 	if err != nil {
 		return err
 	}
