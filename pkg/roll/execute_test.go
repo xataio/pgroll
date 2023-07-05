@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	schema        = "public"
 	postgresImage = "postgres:15.3"
 )
 
@@ -51,7 +52,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
       SELECT 1
       FROM pg_catalog.pg_namespace
       WHERE nspname = $1
-    )`, firstVersion).Scan(&exists)
+    )`, roll.SchemaName(schema, firstVersion)).Scan(&exists)
 		if err != nil {
 			t.Fatal(err)
 		}
