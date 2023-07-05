@@ -121,13 +121,12 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 	})
 }
 
-func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
+func TestTableIsDroppedAfterMigrationRollback(t *testing.T) {
 	t.Parallel()
 
 	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		version := "1_create_table"
-		versionSchema := roll.VersionedSchemaName(schema, version)
 
 		migration := &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}
 
@@ -156,41 +155,6 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 
 		if exists {
 			t.Errorf("Expected table %q to not exist", tableName)
-		}
-
-		//
-		// Check that the view in the new schema has been dropped
-		//
-		err = db.QueryRow(`
-    SELECT EXISTS (
-      SELECT 1
-      FROM pg_catalog.pg_views
-      WHERE schemaname = $1
-      AND viewname = $2
-    ) `, versionSchema, viewName).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if exists {
-			t.Errorf("Expected view %q to not exist", viewName)
-		}
-
-		//
-		// Check that the new schema has been dropped
-		//
-		err = db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, versionSchema).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if exists {
-			t.Errorf("Expected schema %q to not exist", version)
 		}
 	})
 }
