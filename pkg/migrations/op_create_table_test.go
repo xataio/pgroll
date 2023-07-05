@@ -22,6 +22,7 @@ import (
 const (
 	postgresImage = "postgres:15.3"
 	viewName      = "users"
+	schema        = "public"
 )
 
 func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
@@ -29,8 +30,9 @@ func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
 
 	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
-
 		version := "1_create_table"
+		versionSchema := roll.VersionedSchemaName(schema, version)
+
 		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
@@ -42,7 +44,7 @@ func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
 			FROM pg_catalog.pg_views
 			WHERE schemaname = $1
 			AND viewname = $2
-		) `, version, viewName).Scan(&exists)
+		) `, versionSchema, viewName).Scan(&exists)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -58,8 +60,9 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 
 	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
-
 		version := "1_create_table"
+		versionSchema := roll.VersionedSchemaName(schema, version)
+
 		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
@@ -68,7 +71,7 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		// Insert records via the view
 		//
 		sql := fmt.Sprintf(`INSERT INTO %s.%s (id, name) VALUES ($1, $2)`,
-			pq.QuoteIdentifier(version),
+			pq.QuoteIdentifier(versionSchema),
 			pq.QuoteIdentifier(viewName))
 
 		insertStmt, err := db.Prepare(sql)
@@ -93,7 +96,7 @@ func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testin
 		//
 		// Read the records back via the view
 		//
-		sql = fmt.Sprintf(`SELECT id, name FROM %q.%q`, version, viewName)
+		sql = fmt.Sprintf(`SELECT id, name FROM %q.%q`, versionSchema, viewName)
 		rows, err := db.Query(sql)
 		if err != nil {
 			t.Fatal(err)
@@ -123,8 +126,9 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
 
 	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
-
 		version := "1_create_table"
+		versionSchema := roll.VersionedSchemaName(schema, version)
+
 		migration := &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}
 
 		if err := mig.Start(ctx, migration); err != nil {
@@ -163,7 +167,7 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
       FROM pg_catalog.pg_views
       WHERE schemaname = $1
       AND viewname = $2
-    ) `, version, viewName).Scan(&exists)
+    ) `, versionSchema, viewName).Scan(&exists)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +184,7 @@ func TestViewSchemaAndTableAreDroppedAfterMigrationRevert(t *testing.T) {
       SELECT 1
       FROM pg_catalog.pg_namespace
       WHERE nspname = $1
-    )`, version).Scan(&exists)
+    )`, versionSchema).Scan(&exists)
 		if err != nil {
 			t.Fatal(err)
 		}
