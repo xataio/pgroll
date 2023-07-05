@@ -20,6 +20,37 @@ const (
 	postgresImage = "postgres:15.3"
 )
 
+func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
+	t.Parallel()
+
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		version := "1_create_table"
+
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+
+		//
+		// Check that the schema exists
+		//
+		var exists bool
+		err := db.QueryRow(`
+    SELECT EXISTS(
+      SELECT 1
+      FROM pg_catalog.pg_namespace
+      WHERE nspname = $1
+    )`, roll.VersionedSchemaName(schema, version)).Scan(&exists)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !exists {
+			t.Errorf("Expected schema %q to exist", version)
+		}
+	})
+}
+
 func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	t.Parallel()
 
