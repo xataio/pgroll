@@ -1,0 +1,32 @@
+{
+  "name": "03_add_column",
+  "operations": [
+    {
+      "create_table": {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "unique": true
+          }
+        ]
+      }
+    },
+    {
+      "add_column": {
+        "table": "users",
+        "column": {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true
+        }
+      }
+    }
+  ]
+}
