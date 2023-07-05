@@ -61,14 +61,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
-	// execute operations
-	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.pgConn)
-		if err != nil {
-			return fmt.Errorf("unable to execute complete operation: %w", err)
-		}
-	}
-
+	// Drop the old schema
 	prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
@@ -77,6 +70,14 @@ func (m *Roll) Complete(ctx context.Context) error {
 		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(*prevVersion)))
 		if err != nil {
 			return fmt.Errorf("unable to drop previous version: %w", err)
+		}
+	}
+
+	// execute operations
+	for _, op := range migration.Operations {
+		err := op.Complete(ctx, m.pgConn)
+		if err != nil {
+			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
 	}
 
