@@ -63,6 +63,8 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		switch opName {
 		case "create_table":
 			item = &OpCreateTable{}
+		case "rename_column":
+			item = &OpRenameColumn{}
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}

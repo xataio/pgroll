@@ -1,5 +1,7 @@
 package schema
 
+import "fmt"
+
 // XXX we create a view of the schema with the minimum required for us to
 // know how to execute migrations and build views for the new schema version.
 // As of now this is just the table names and column names.
@@ -25,6 +27,18 @@ func (s *Schema) AddTable(name string, t Table) {
 	s.Tables[name] = t
 }
 
+func (s *Schema) GetTable(name string) *Table {
+	if s.Tables == nil {
+		return nil
+	}
+
+	if t, ok := s.Tables[name]; ok {
+		return &t
+	}
+
+	return nil
+}
+
 type Table struct {
 	// OID for the table
 	OID string `json:"oid"`
@@ -37,6 +51,20 @@ type Table struct {
 
 	// Columns is a map of virtual column name -> column mapping
 	Columns map[string]Column `json:"columns"`
+}
+
+func (t *Table) RenameColumn(from, to string) error {
+	if t.Columns == nil {
+		return nil
+	}
+
+	c, ok := t.Columns[from]
+	if !ok {
+		t.Columns[to] = c
+		delete(t.Columns, from)
+	}
+
+	return fmt.Errorf("column %s does not exist", from)
 }
 
 type Column struct {
