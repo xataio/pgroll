@@ -37,8 +37,8 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 	}
 
 	// create schema for the new version
-	schemaName := SchemaName(m.schema, migration.Name)
-	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(schemaName)))
+	versionSchema := VersionedSchemaName(m.schema, migration.Name)
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {
 		return err
 	}
@@ -68,8 +68,8 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
 	if prevVersion != nil {
-		schemaName := SchemaName(m.schema, *prevVersion)
-		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(schemaName)))
+		versionSchema := VersionedSchemaName(m.schema, *prevVersion)
+		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 		if err != nil {
 			return fmt.Errorf("unable to drop previous version: %w", err)
 		}
@@ -100,8 +100,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	// delete the schema and view for the new version
-	schemaName := SchemaName(m.schema, migration.Name)
-	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(schemaName)))
+	versionSchema := VersionedSchemaName(m.schema, migration.Name)
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (m *Roll) createView(ctx context.Context, version string, name string, tabl
 
 	_, err := m.pgConn.ExecContext(ctx,
 		fmt.Sprintf("CREATE OR REPLACE VIEW %s.%s AS SELECT %s FROM %s",
-			pq.QuoteIdentifier(SchemaName(m.schema, version)),
+			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
 			strings.Join(columns, ","),
 			pq.QuoteIdentifier(table.Name)))
@@ -148,6 +148,6 @@ func (m *Roll) createView(ctx context.Context, version string, name string, tabl
 	return nil
 }
 
-func SchemaName(schema string, version string) string {
+func VersionedSchemaName(schema string, version string) string {
 	return schema + "_" + version
 }

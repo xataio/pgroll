@@ -52,7 +52,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
       SELECT 1
       FROM pg_catalog.pg_namespace
       WHERE nspname = $1
-    )`, roll.SchemaName(schema, firstVersion)).Scan(&exists)
+    )`, roll.VersionedSchemaName(schema, firstVersion)).Scan(&exists)
 		if err != nil {
 			t.Fatal(err)
 		}
