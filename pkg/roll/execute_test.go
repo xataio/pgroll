@@ -24,11 +24,11 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 
 	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
-
 		const (
 			firstVersion  = "1_create_table"
 			secondVersion = "2_create_table"
 		)
+
 		if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
 			t.Fatalf("Failed to start first migration: %v", err)
 		}
@@ -43,7 +43,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 		}
 
 		//
-		// Check that the schema for the first version is dropped
+		// Check that the schema for the first version has been dropped
 		//
 		var exists bool
 		err := db.QueryRow(`
