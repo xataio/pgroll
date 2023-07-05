@@ -42,10 +42,10 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 		}
 	}
 
-	s.Tables[o.Name] = schema.Table{
+	s.AddTable(o.Name, schema.Table{
 		Name:    tempName,
 		Columns: columns,
-	}
+	})
 
 	return nil
 }
@@ -76,7 +76,7 @@ func columnsToSQL(cols []Column) string {
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB) error {
 	tempName := TemporaryName(o.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s",
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(tempName),
 		pq.QuoteIdentifier(o.Name)))
 	return err
