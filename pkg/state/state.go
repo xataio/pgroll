@@ -57,16 +57,9 @@ STABLE;
 -- Get the name of the previous version of the schema, or NULL if there is none.
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
-DECLARE
-  parent text;
-BEGIN
-  SELECT m.parent INTO parent FROM %[1]s.migrations AS m 
-    INNER JOIN (SELECT latest_version as v FROM %[1]s.latest_version('public')) AS l 
-    ON l.v = m.name;
-
-  RETURN parent;
-END $$
-LANGUAGE plpgsql
+  SELECT parent FROM %[1]s.migrations WHERE name = (SELECT %[1]s.latest_version('public')) AND schema=schemaname;
+$$
+LANGUAGE SQL
 STABLE;
 
 -- Get the JSON representation of the current schema
