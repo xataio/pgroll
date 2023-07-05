@@ -54,6 +54,14 @@ AS $$ SELECT p.name FROM %[1]s.migrations p WHERE NOT EXISTS (SELECT 1 FROM %[1]
 LANGUAGE SQL
 STABLE;
 
+-- Get the name of the previous version of the schema, or NULL if there is none.
+CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
+AS $$
+  SELECT parent FROM %[1]s.migrations WHERE name = (SELECT %[1]s.latest_version('public')) AND schema=schemaname;
+$$
+LANGUAGE SQL
+STABLE;
+
 -- Get the JSON representation of the current schema
 CREATE OR REPLACE FUNCTION %[1]s.read_schema(schemaname text) RETURNS jsonb
 LANGUAGE plpgsql AS $$
@@ -179,6 +187,19 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	}
 
 	return &migration, nil
+}
+
+func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, error) {
+	var parent *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.previous_version($1)", pq.QuoteIdentifier(s.schema)),
+		schema).
+		Scan(&parent)
+	if err != nil {
+		return nil, err
+	}
+
+	return parent, nil
 }
 
 // Start creates a new migration, storing its name and raw content
