@@ -60,11 +60,12 @@ func (t *Table) RenameColumn(from, to string) error {
 
 	c, ok := t.Columns[from]
 	if !ok {
-		t.Columns[to] = c
-		delete(t.Columns, from)
+		return fmt.Errorf("column %s does not exist", from)
 	}
 
-	return fmt.Errorf("column %s does not exist", from)
+	t.Columns[to] = c
+	delete(t.Columns, from)
+	return nil
 }
 
 type Column struct {

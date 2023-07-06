@@ -12,6 +12,8 @@ import (
 
 var _ Operation = (*OpRenameColumn)(nil)
 
+const OpRenameColumnName = "rename_column"
+
 type OpRenameColumn struct {
 	Table string `json:"table"`
 	From  string `json:"from"`
