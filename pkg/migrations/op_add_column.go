@@ -1,0 +1,65 @@
+package migrations
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/lib/pq"
+
+	"pg-roll/pkg/schema"
+)
+
+type OpAddColumn struct {
+	Table  string `json:"table"`
+	Column Column `json:"column"`
+}
+
+var _ Operation = (*OpAddColumn)(nil)
+
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+	switch o.Column.Nullable {
+	case true:
+		if err := addNullableColumn(ctx, conn, o, s); err != nil {
+			return fmt.Errorf("failed to start add column operation: %w", err)
+		}
+	default:
+		return errors.New("addition of non-nullable columns not implemented")
+	}
+
+	s.Tables[o.Table].Columns[TemporaryName(o.Column.Name)] = schema.Column{
+		Name: o.Column.Name,
+	}
+
+	return nil
+}
+
+func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
+	tempName := TemporaryName(o.Column.Name)
+
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(tempName),
+		pq.QuoteIdentifier(o.Column.Name),
+	))
+	return err
+}
+
+func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
+	tempName := TemporaryName(o.Column.Name)
+
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(tempName)))
+	return err
+}
+
+func addNullableColumn(ctx context.Context, conn *sql.DB, o *OpAddColumn, s *schema.Schema) error {
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s",
+		pq.QuoteIdentifier(s.Tables[o.Table].Name),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
+		o.Column.Type,
+	))
+	return err
+}
