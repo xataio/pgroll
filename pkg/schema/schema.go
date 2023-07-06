@@ -44,7 +44,7 @@ func (s *Schema) RenameTable(from, to string) error {
 		return fmt.Errorf("table %s does not exist", from)
 	}
 	if s.GetTable(to) != nil {
-		return fmt.Errorf("table %s does already exists", to)
+		return fmt.Errorf("table %s already exists", to)
 	}
 
 	t := s.Tables[from]
