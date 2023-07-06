@@ -1,47 +1,47 @@
 {
-    "name": "01_create_tables",
-    "operations": [
-        {
-            "create_table": {
-                "name": "customers",
-                "columns": [
-                    {
-                        "name": "id",
-                        "type": "integer",
-                        "pk": true
-                    },
-                    {
-                        "name": "name",
-                        "type": "varchar(255)",
-                        "unique": true
-                    },
-                    {
-                        "name": "credit_card",
-                        "type": "text",
-                        "nullable": true
-                    }
-                ]
-            }
-        },
-        {
-            "create_table": {
-                "name": "bills",
-                "columns": [
-                    {
-                        "name": "id",
-                        "type": "integer",
-                        "pk": true
-                    },
-                    {
-                        "name": "date",
-                        "type": "time with time zone"
-                    },
-                    {
-                        "name": "quantity",
-                        "type": "integer"
-                    }
-                ]
-            }
-        }
-    ]
+  "name": "01_create_tables",
+  "operations": [
+    {
+      "create_table": {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "unique": true
+          },
+          {
+            "name": "credit_card",
+            "type": "text",
+            "nullable": true
+          }
+        ]
+      }
+    },
+    {
+      "create_table": {
+        "name": "bills",
+        "columns": [
+          {
+            "name": "id",
+            "type": "integer",
+            "pk": true
+          },
+          {
+            "name": "date",
+            "type": "time with time zone"
+          },
+          {
+            "name": "quantity",
+            "type": "integer"
+          }
+        ]
+      }
+    }
+  ]
 }
