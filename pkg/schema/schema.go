@@ -39,6 +39,20 @@ func (s *Schema) GetTable(name string) *Table {
 	return nil
 }
 
+func (s *Schema) RenameTable(from, to string) error {
+	if s.GetTable(from) == nil {
+		return fmt.Errorf("table %s does not exist", from)
+	}
+	if s.GetTable(to) != nil {
+		return fmt.Errorf("table %s does already exists", to)
+	}
+
+	t := s.Tables[from]
+	s.Tables[to] = t
+	delete(s.Tables, from)
+	return nil
+}
+
 type Table struct {
 	// OID for the table
 	OID string `json:"oid"`
@@ -51,21 +65,6 @@ type Table struct {
 
 	// Columns is a map of virtual column name -> column mapping
 	Columns map[string]Column `json:"columns"`
-}
-
-func (t *Table) RenameColumn(from, to string) error {
-	if t.Columns == nil {
-		return nil
-	}
-
-	c, ok := t.Columns[from]
-	if !ok {
-		return fmt.Errorf("column %s does not exist", from)
-	}
-
-	t.Columns[to] = c
-	delete(t.Columns, from)
-	return nil
 }
 
 type Column struct {

@@ -63,8 +63,8 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		switch opName {
 		case OpCreateTableName:
 			item = &OpCreateTable{}
-		case OpRenameColumnName:
-			item = &OpRenameColumn{}
+		case OpRenameTableName:
+			item = &OpRenameTable{}
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -100,8 +100,8 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 		case *OpCreateTable:
 			opName = OpCreateTableName
 
-		case *OpRenameColumn:
-			opName = OpRenameColumnName
+		case *OpRenameTable:
+			opName = OpRenameTableName
 
 		default:
 			panic(fmt.Errorf("unknown operation for %T", op))
