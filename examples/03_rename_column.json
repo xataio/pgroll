@@ -1,0 +1,12 @@
+{
+    "name": "03_rename_column",
+    "operations": [
+        {
+            "rename_column": {
+                "table": "customers",
+                "from": "credit_card",
+                "to": "credit_card_number"
+            }
+        }
+    ]
+}
