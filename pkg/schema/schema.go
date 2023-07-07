@@ -1,5 +1,7 @@
 package schema
 
+import "fmt"
+
 // XXX we create a view of the schema with the minimum required for us to
 // know how to execute migrations and build views for the new schema version.
 // As of now this is just the table names and column names.
@@ -62,6 +64,20 @@ func (s *Schema) AddTable(name string, t Table) {
 	}
 
 	s.Tables[name] = t
+}
+
+func (s *Schema) RenameTable(from, to string) error {
+	if s.GetTable(from) == nil {
+		return fmt.Errorf("table %s does not exist", from)
+	}
+	if s.GetTable(to) != nil {
+		return fmt.Errorf("table %s already exists", to)
+	}
+
+	t := s.Tables[from]
+	s.Tables[to] = t
+	delete(s.Tables, from)
+	return nil
 }
 
 func (t *Table) AddColumn(name string, c Column) {
