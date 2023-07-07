@@ -19,12 +19,11 @@ type OpAddColumn struct {
 var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
-	switch o.Column.Nullable {
-	case true:
+	if o.Column.Nullable {
 		if err := addNullableColumn(ctx, conn, o, s); err != nil {
 			return fmt.Errorf("failed to start add column operation: %w", err)
 		}
-	default:
+	} else {
 		return errors.New("addition of non-nullable columns not implemented")
 	}
 
