@@ -53,6 +53,14 @@ func (s *Schema) AddTable(name string, t Table) {
 	s.Tables[name] = t
 }
 
+func (t *Table) AddColumn(name string, c Column) {
+	if t.Columns == nil {
+		t.Columns = make(map[string]Column)
+	}
+
+	t.Columns[name] = c
+}
+
 func (s *Schema) GetTable(name string) *Table {
 	if s.Tables == nil {
 		return nil

@@ -32,9 +32,9 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema)
 		return errors.New("addition of non-nullable columns not implemented")
 	}
 
-	table.Columns[TemporaryName(o.Column.Name)] = schema.Column{
+	table.AddColumn(TemporaryName(o.Column.Name), schema.Column{
 		Name: o.Column.Name,
-	}
+	})
 
 	return nil
 }
