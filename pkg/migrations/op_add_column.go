@@ -19,15 +19,20 @@ type OpAddColumn struct {
 var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return fmt.Errorf("failed to start add column operation: table %q does not exist", o.Table)
+	}
+
 	if o.Column.Nullable {
-		if err := addNullableColumn(ctx, conn, o, s); err != nil {
+		if err := addNullableColumn(ctx, conn, o, table); err != nil {
 			return fmt.Errorf("failed to start add column operation: %w", err)
 		}
 	} else {
 		return errors.New("addition of non-nullable columns not implemented")
 	}
 
-	s.Tables[o.Table].Columns[TemporaryName(o.Column.Name)] = schema.Column{
+	table.Columns[TemporaryName(o.Column.Name)] = schema.Column{
 		Name: o.Column.Name,
 	}
 
@@ -54,9 +59,9 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 	return err
 }
 
-func addNullableColumn(ctx context.Context, conn *sql.DB, o *OpAddColumn, s *schema.Schema) error {
+func addNullableColumn(ctx context.Context, conn *sql.DB, o *OpAddColumn, t *schema.Table) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s",
-		pq.QuoteIdentifier(s.Tables[o.Table].Name),
+		pq.QuoteIdentifier(t.Name),
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
 		o.Column.Type,
 	))
