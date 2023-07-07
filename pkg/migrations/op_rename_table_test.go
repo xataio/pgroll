@@ -47,27 +47,11 @@ func TestRenameTable(t *testing.T) {
 			},
 			beforeComplete: func(t *testing.T, db *sql.DB) {
 				// check that the table with the new name can be accessed
-
-				// TODO generalize this check:
-				versionSchema := roll.VersionedSchemaName(schema, "02_rename_table")
-				tableName := "renamed_table"
-				var exists bool
-				err := db.QueryRow(`
-					SELECT EXISTS (
-						SELECT 1
-						FROM pg_catalog.pg_views
-						WHERE schemaname = $1
-						AND viewname = $2
-					)`,
-					versionSchema, tableName).Scan(&exists)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if !exists {
-					t.Fatalf("Expected view to exist")
-				}
+				ViewMustExist(t, db, "public", "01_create_table", "test_table")
+				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
+				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
 			},
 		},
 	}
