@@ -189,12 +189,49 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	return &migration, nil
 }
 
+// Schemas returns all database schema that have active or completed migrations
+func (s *State) Schemas(ctx context.Context) ([]string, error) {
+	rows, err := s.pgConn.QueryContext(ctx, fmt.Sprintf("SELECT DISTINCT schema FROM %s.migrations", pq.QuoteIdentifier(s.schema)))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var schemas []string
+	for rows.Next() {
+		var schema string
+		err = rows.Scan(&schema)
+		if err != nil {
+			return nil, err
+		}
+		schemas = append(schemas, schema)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return schemas, nil
+}
+
+// LatestVersion returns the name of the latest version schema
+func (s *State) LatestVersion(ctx context.Context, schema string) (*string, error) {
+	var version *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.latest_version($1)", pq.QuoteIdentifier(s.schema)),
+		schema).Scan(&version)
+	if err != nil {
+		return nil, err
+	}
+
+	return version, nil
+}
+
+// PreviousVersion returns the name of the previous version schema
 func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, error) {
 	var parent *string
 	err := s.pgConn.QueryRowContext(ctx,
 		fmt.Sprintf("SELECT %s.previous_version($1)", pq.QuoteIdentifier(s.schema)),
-		schema).
-		Scan(&parent)
+		schema).Scan(&parent)
 	if err != nil {
 		return nil, err
 	}

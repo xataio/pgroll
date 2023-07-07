@@ -48,6 +48,7 @@ func Execute() error {
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(initCmd)
+	rootCmd.AddCommand(statusCmd)
 
 	return rootCmd.Execute()
 }
