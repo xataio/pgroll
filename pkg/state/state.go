@@ -254,6 +254,22 @@ func (s *State) Complete(ctx context.Context, schema, name string) error {
 	return err
 }
 
+func (s *State) ReadSchema(ctx context.Context, schemaName string) (*schema.Schema, error) {
+	var rawSchema []byte
+	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s.read_schema($1)", s.schema), schemaName).Scan(&rawSchema)
+	if err != nil {
+		return nil, err
+	}
+
+	var sc schema.Schema
+	err = json.Unmarshal(rawSchema, &sc)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal schema: %w", err)
+	}
+
+	return &sc, nil
+}
+
 // Rollback removes a migration from the state (we consider it rolled back, as if it never started)
 func (s *State) Rollback(ctx context.Context, schema, name string) error {
 	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s.migrations WHERE schema=$1 AND name=$2 AND done=$3", pq.QuoteIdentifier(s.schema)), schema, name, false)
