@@ -5,17 +5,12 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
-	"time"
 
 	"pg-roll/pkg/migrations"
 	"pg-roll/pkg/roll"
-	"pg-roll/pkg/state"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/lib/pq"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"golang.org/x/exp/slices"
 )
 
@@ -198,65 +193,4 @@ func createTableOp() *migrations.OpCreateTable {
 			},
 		},
 	}
-}
-
-func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
-	t.Helper()
-	ctx := context.Background()
-
-	waitForLogs := wait.
-		ForLog("database system is ready to accept connections").
-		WithOccurrence(2).
-		WithStartupTimeout(5 * time.Second)
-
-	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage(postgresImage),
-		testcontainers.WithWaitStrategy(waitForLogs),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := ctr.Terminate(ctx); err != nil {
-			t.Fatalf("Failed to terminate container: %v", err)
-		}
-	})
-
-	cStr, err := ctr.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	st, err := state.New(ctx, cStr, "pgroll")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = st.Init(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	mig, err := roll.New(ctx, cStr, "public", st)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := mig.Close(); err != nil {
-			t.Fatalf("Failed to close migrator connection: %v", err)
-		}
-	})
-
-	db, err := sql.Open("postgres", cStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	fn(mig, db)
 }
