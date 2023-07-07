@@ -40,11 +40,13 @@ func TestRenameTable(t *testing.T) {
 			},
 			beforeComplete: func(t *testing.T, db *sql.DB) {
 				// check that the table with the new name can be accessed
-				ViewMustExist(t, db, "public", "01_create_table", "test_table")
-				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
+				TableMustExist(t, db, "public", "01_create_table", "test_table")
+				TableMustExist(t, db, "public", "02_rename_table", "renamed_table")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
-				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
+				// the table still exists with the new name
+				TableMustExist(t, db, "public", "02_rename_table", "renamed_table")
+				TableMustNotExist(t, db, "public", "02_rename_table", "testTable")
 			},
 		},
 	}

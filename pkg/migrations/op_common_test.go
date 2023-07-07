@@ -126,19 +126,19 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 
 // Common assertions
 
-func ViewMustExist(t *testing.T, db *sql.DB, schema, version, table string) {
-	if !viewExists(t, db, schema, version, table) {
+func TableMustExist(t *testing.T, db *sql.DB, schema, version, table string) {
+	if !tableExists(t, db, schema, version, table) {
 		t.Fatalf("Expected view to exist")
 	}
 }
 
-func ViewMustNotExist(t *testing.T, db *sql.DB, schema, version, table string) {
-	if viewExists(t, db, schema, version, table) {
+func TableMustNotExist(t *testing.T, db *sql.DB, schema, version, table string) {
+	if tableExists(t, db, schema, version, table) {
 		t.Fatalf("Expected view to not exist")
 	}
 }
 
-func viewExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
+func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
 	versionSchema := roll.VersionedSchemaName(schema, version)
 	var exists bool
 	err := db.QueryRow(`
