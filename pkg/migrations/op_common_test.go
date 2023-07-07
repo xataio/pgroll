@@ -3,12 +3,14 @@ package migrations_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"golang.org/x/exp/maps"
 
 	"pg-roll/pkg/migrations"
 	"pg-roll/pkg/roll"
@@ -16,10 +18,10 @@ import (
 )
 
 type TestCase struct {
-	name           string
-	migrations     []migrations.Migration
-	beforeComplete func(t *testing.T, db *sql.DB)
-	afterComplete  func(t *testing.T, db *sql.DB)
+	name          string
+	migrations    []migrations.Migration
+	afterStart    func(t *testing.T, db *sql.DB)
+	afterComplete func(t *testing.T, db *sql.DB)
 }
 
 type TestCases []TestCase
@@ -46,8 +48,8 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 			}
 
 			// run the beforeComplete hook
-			if tt.beforeComplete != nil {
-				tt.beforeComplete(t, db)
+			if tt.afterStart != nil {
+				tt.afterStart(t, db)
 			}
 
 			// complete the last migration
@@ -153,4 +155,32 @@ func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
 		t.Fatal(err)
 	}
 	return exists
+}
+
+func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	versionSchema := roll.VersionedSchemaName(schema, version)
+
+	recordStr := "("
+	for i, k := range maps.Keys(record) {
+		if i > 0 {
+			recordStr += ", "
+		}
+		recordStr += k
+	}
+	recordStr += ") VALUES ("
+	for i, v := range maps.Values(record) {
+		if i > 0 {
+			recordStr += ", "
+		}
+		recordStr += fmt.Sprintf("'%s'", v)
+	}
+	recordStr += ")"
+
+	//nolint:gosec // this is a test so we don't care about SQL injection
+	stmt := fmt.Sprintf("INSERT INTO %s.%s %s", versionSchema, table, recordStr)
+
+	_, err := db.Exec(stmt)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

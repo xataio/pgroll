@@ -24,6 +24,10 @@ func TestRenameTable(t *testing.T) {
 									Name: "id",
 									Type: "serial",
 								},
+								{
+									Name: "name",
+									Type: "text",
+								},
 							},
 						},
 					},
@@ -38,15 +42,28 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			beforeComplete: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB) {
 				// check that the table with the new name can be accessed
 				TableMustExist(t, db, "public", "01_create_table", "test_table")
 				TableMustExist(t, db, "public", "02_rename_table", "renamed_table")
+
+				// inserts work
+				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
+					"name": "foo",
+				})
+				MustInsert(t, db, "public", "02_rename_table", "renamed_table", map[string]string{
+					"name": "bar",
+				})
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// the table still exists with the new name
-				TableMustExist(t, db, "public", "02_rename_table", "renamed_table")
 				TableMustNotExist(t, db, "public", "02_rename_table", "testTable")
+				TableMustExist(t, db, "public", "02_rename_table", "renamed_table")
+
+				// inserts work
+				MustInsert(t, db, "public", "02_rename_table", "renamed_table", map[string]string{
+					"name": "baz",
+				})
 			},
 		},
 	}
