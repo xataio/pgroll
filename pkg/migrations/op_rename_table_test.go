@@ -10,7 +10,7 @@ import (
 func TestRenameTable(t *testing.T) {
 	t.Parallel()
 
-	tests := TestCases{
+	ExecuteTests(t, TestCases{
 		{
 			name: "rename table",
 			migrations: []migrations.Migration{
@@ -66,7 +66,5 @@ func TestRenameTable(t *testing.T) {
 				})
 			},
 		},
-	}
-
-	ExecuteTests(t, tests)
+	})
 }
