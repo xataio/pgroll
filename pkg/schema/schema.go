@@ -17,14 +17,6 @@ type Schema struct {
 	Tables map[string]Table `json:"tables"`
 }
 
-func (s *Schema) AddTable(name string, t Table) {
-	if s.Tables == nil {
-		s.Tables = make(map[string]Table)
-	}
-
-	s.Tables[name] = t
-}
-
 type Table struct {
 	// OID for the table
 	OID string `json:"oid"`
@@ -51,4 +43,31 @@ type Column struct {
 
 	// Optional comment for the column
 	Comment string `json:"comment"`
+}
+
+func (s *Schema) AddTable(name string, t Table) {
+	if s.Tables == nil {
+		s.Tables = make(map[string]Table)
+	}
+
+	s.Tables[name] = t
+}
+
+func (t *Table) AddColumn(name string, c Column) {
+	if t.Columns == nil {
+		t.Columns = make(map[string]Column)
+	}
+
+	t.Columns[name] = c
+}
+
+func (s *Schema) GetTable(name string) *Table {
+	if s.Tables == nil {
+		return nil
+	}
+	t, ok := s.Tables[name]
+	if !ok {
+		return nil
+	}
+	return &t
 }
