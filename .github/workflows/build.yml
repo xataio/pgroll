@@ -44,5 +44,8 @@ jobs:
     - name: Ensure JSON examples are formatted
       run: |
         for file in ./examples/*.json; do
-          diff <(cat $file | jq) <(cat $file)
+          if ! diff <(cat $file | jq) <(cat $file); then
+            echo "$file is not formatted: run 'cat $file | jq' to fix";
+            exit 1;
+          fi
         done
