@@ -101,39 +101,6 @@ func TestNewColumnIsRemovedAfterMigrationRollback(t *testing.T) {
 	})
 }
 
-func TestCanCompleteAMigrationAddingANewTableAndANewColumn(t *testing.T) {
-	t.Parallel()
-
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-
-		if err := mig.Start(ctx, addTableAndAddColumnMigration()); err != nil {
-			t.Fatalf("Failed to start combined migration: %v", err)
-		}
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete combined migration: %v", err)
-		}
-
-		versionSchema := roll.VersionedSchemaName(schema, "1_add_table_and_add_column")
-		insertAndSelectRowsFromUsersTable(t, db, versionSchema, "users")
-	})
-}
-
-func TestCanRollbackAMigrationAddingANewTableAndANewColumn(t *testing.T) {
-	t.Parallel()
-
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, _ *sql.DB) {
-		ctx := context.Background()
-
-		if err := mig.Start(ctx, addTableAndAddColumnMigration()); err != nil {
-			t.Fatalf("Failed to start combined migration: %v", err)
-		}
-		if err := mig.Rollback(ctx); err != nil {
-			t.Fatalf("Failed to rollback combined migration: %v", err)
-		}
-	})
-}
-
 func insertAndSelectRowsFromUsersTable(t *testing.T, db *sql.DB, schemaName, viewName string) {
 	//
 	// Insert records via the view
@@ -217,37 +184,6 @@ func addColumnMigration() *migrations.Migration {
 	return &migrations.Migration{
 		Name: "2_add_column",
 		Operations: migrations.Operations{
-			&migrations.OpAddColumn{
-				Table: "users",
-				Column: migrations.Column{
-					Name:     "age",
-					Type:     "integer",
-					Nullable: true,
-				},
-			},
-		},
-	}
-}
-
-func addTableAndAddColumnMigration() *migrations.Migration {
-	return &migrations.Migration{
-		Name: "1_add_table_and_add_column",
-		Operations: migrations.Operations{
-			&migrations.OpCreateTable{
-				Name: "users",
-				Columns: []migrations.Column{
-					{
-						Name:       "id",
-						Type:       "integer",
-						PrimaryKey: true,
-					},
-					{
-						Name:   "name",
-						Type:   "varchar(255)",
-						Unique: true,
-					},
-				},
-			},
 			&migrations.OpAddColumn{
 				Table: "users",
 				Column: migrations.Column{

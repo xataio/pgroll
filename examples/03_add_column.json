@@ -1,26 +1,9 @@
 {
-  "name": "03_add_column",
+  "name": "03_add_column_to_products",
   "operations": [
     {
-      "create_table": {
-        "name": "users",
-        "columns": [
-          {
-            "name": "id",
-            "type": "integer",
-            "pk": true
-          },
-          {
-            "name": "name",
-            "type": "varchar(255)",
-            "unique": true
-          }
-        ]
-      }
-    },
-    {
       "add_column": {
-        "table": "users",
+        "table": "products",
         "column": {
           "name": "description",
           "type": "varchar(255)",
