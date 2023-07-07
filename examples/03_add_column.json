@@ -1,0 +1,15 @@
+{
+  "name": "03_add_column_to_products",
+  "operations": [
+    {
+      "add_column": {
+        "table": "products",
+        "column": {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true
+        }
+      }
+    }
+  ]
+}

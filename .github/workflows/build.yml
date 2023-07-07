@@ -40,3 +40,12 @@ jobs:
         # Note: By default, the `.golangci.yml` file should be at the root of the repository.
         # The location of the configuration file can be changed by using `--config=`
         args: --timeout=30m --out-format=colored-line-number --config=.golangci.yml
+
+    - name: Ensure JSON examples are formatted
+      run: |
+        for file in ./examples/*.json; do
+          if ! diff <(cat $file | jq) <(cat $file); then
+            echo "$file is not formatted: run 'cat $file | jq' to fix";
+            exit 1;
+          fi
+        done

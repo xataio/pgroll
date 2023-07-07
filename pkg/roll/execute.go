@@ -106,14 +106,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		return err
 	}
 
-	// reverse the order of the operations so that they are undone in the correct order
-	ops := migration.Operations
-	for i, j := 0, len(ops)-1; i < j; i, j = i+1, j-1 {
-		ops[i], ops[j] = ops[j], ops[i]
-	}
-
 	// execute operations
-	for _, op := range ops {
+	for _, op := range migration.Operations {
 		err := op.Rollback(ctx, m.pgConn)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
