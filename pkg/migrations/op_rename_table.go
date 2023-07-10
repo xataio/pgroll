@@ -24,7 +24,7 @@ func (o *OpRenameTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 }
 
 func (o *OpRenameTable) Complete(ctx context.Context, conn *sql.DB) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME TO %s",
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(o.From),
 		pq.QuoteIdentifier(o.To)))
 	return err
