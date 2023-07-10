@@ -1,5 +1,5 @@
 {
-  "name": "03_rename_table",
+  "name": "04_rename_table",
   "operations": [
     {
       "rename_table": {
