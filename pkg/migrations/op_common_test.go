@@ -129,18 +129,21 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 // Common assertions
 
 func TableMustExist(t *testing.T, db *sql.DB, schema, version, table string) {
+	t.Helper()
 	if !tableExists(t, db, schema, version, table) {
 		t.Fatalf("Expected view to exist")
 	}
 }
 
 func TableMustNotExist(t *testing.T, db *sql.DB, schema, version, table string) {
+	t.Helper()
 	if tableExists(t, db, schema, version, table) {
 		t.Fatalf("Expected view to not exist")
 	}
 }
 
 func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
+	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 	var exists bool
 	err := db.QueryRow(`
@@ -158,6 +161,7 @@ func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
 }
 
 func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
 	recordStr := "("
@@ -183,4 +187,43 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]string {
+	t.Helper()
+	versionSchema := roll.VersionedSchemaName(schema, version)
+
+	//nolint:gosec // this is a test so we don't care about SQL injection
+	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
+
+	q, err := db.Query(selectStmt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res := make([]map[string]string, 0)
+
+	for q.Next() {
+		cols, err := q.Columns()
+		if err != nil {
+			t.Fatal(err)
+		}
+		values := make([]string, len(cols))
+		valuesPtr := make([]any, len(cols))
+		for i := range values {
+			valuesPtr[i] = &values[i]
+		}
+		if err := q.Scan(valuesPtr...); err != nil {
+			t.Fatal(err)
+		}
+
+		row := map[string]string{}
+		for i, col := range cols {
+			row[col] = values[i]
+		}
+
+		res = append(res, row)
+	}
+
+	return res
 }
