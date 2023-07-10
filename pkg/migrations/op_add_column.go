@@ -11,8 +11,6 @@ import (
 	"pg-roll/pkg/schema"
 )
 
-const OpAddColumnName = "add_column"
-
 type OpAddColumn struct {
 	Table  string `json:"table"`
 	Column Column `json:"column"`

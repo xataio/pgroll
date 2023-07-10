@@ -12,8 +12,6 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-const OpCreateTableName = "create_table"
-
 type OpCreateTable struct {
 	Name    string   `json:"name"`
 	Columns []Column `json:"columns"`

@@ -12,8 +12,6 @@ import (
 
 var _ Operation = (*OpRenameTable)(nil)
 
-const OpRenameTableName = "rename_table"
-
 type OpRenameTable struct {
 	From string `json:"from"`
 	To   string `json:"to"`
