@@ -22,6 +22,7 @@ type TestCase struct {
 	migrations    []migrations.Migration
 	afterStart    func(t *testing.T, db *sql.DB)
 	afterComplete func(t *testing.T, db *sql.DB)
+	afterRollback func(t *testing.T, db *sql.DB)
 }
 
 type TestCases []TestCase
@@ -47,9 +48,24 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 				t.Fatalf("Failed to start migration: %v", err)
 			}
 
-			// run the beforeComplete hook
+			// run the afterStart hook
 			if tt.afterStart != nil {
 				tt.afterStart(t, db)
+			}
+
+			// roll back the migration
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to roll back migration: %v", err)
+			}
+
+			// run the afterRollback hook
+			if tt.afterRollback != nil {
+				tt.afterRollback(t, db)
+			}
+
+			// re-start the last migration
+			if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
 			}
 
 			// complete the last migration
@@ -128,21 +144,54 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 
 // Common assertions
 
-func TableMustExist(t *testing.T, db *sql.DB, schema, version, table string) {
+func ViewMustExist(t *testing.T, db *sql.DB, schema, version, view string) {
 	t.Helper()
-	if !tableExists(t, db, schema, version, table) {
+	if !viewExists(t, db, schema, version, view) {
 		t.Fatalf("Expected view to exist")
 	}
 }
 
-func TableMustNotExist(t *testing.T, db *sql.DB, schema, version, table string) {
+func ViewMustNotExist(t *testing.T, db *sql.DB, schema, version, view string) {
 	t.Helper()
-	if tableExists(t, db, schema, version, table) {
+	if viewExists(t, db, schema, version, view) {
 		t.Fatalf("Expected view to not exist")
 	}
 }
 
-func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
+func TableMustExist(t *testing.T, db *sql.DB, schema, table string) {
+	t.Helper()
+	if !tableExists(t, db, schema, table) {
+		t.Fatalf("Expected table to exist")
+	}
+}
+
+func TableMustNotExist(t *testing.T, db *sql.DB, schema, table string) {
+	t.Helper()
+	if tableExists(t, db, schema, table) {
+		t.Fatalf("Expected table to not exist")
+	}
+}
+
+func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM pg_catalog.pg_tables
+			WHERE schemaname = $1
+			AND tablename = $2
+		)`,
+		schema, table).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func viewExists(t *testing.T, db *sql.DB, schema, version, view string) bool {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 	var exists bool
@@ -153,7 +202,7 @@ func tableExists(t *testing.T, db *sql.DB, schema, version, table string) bool {
 			WHERE schemaname = $1
 			AND viewname = $2
 		)`,
-		versionSchema, table).Scan(&exists)
+		versionSchema, view).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}
