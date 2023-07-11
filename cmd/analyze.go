@@ -1,34 +1,33 @@
 package cmd
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 
-	"github.com/covrom/goerd/drivers/postgres"
-	"github.com/covrom/goerd/schema"
 	"github.com/spf13/cobra"
+
+	"pg-roll/pkg/state"
 )
 
 var analyzeCmd = &cobra.Command{
 	Use:    "analyze",
 	Short:  "Analyze the SQL schema of the target database",
 	Hidden: true,
-	RunE: func(_ *cobra.Command, _ []string) error {
-		db, err := sql.Open("postgres", PGURL)
+	Args:   cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		ctx := cmd.Context()
+		state, err := state.New(ctx, PGURL, StateSchema)
 		if err != nil {
 			return err
 		}
-		defer db.Close()
+		defer state.Close()
 
-		driver := postgres.New(db)
-		s := &schema.Schema{}
-		err = driver.Analyze(s)
+		schema, err := state.ReadSchema(ctx, Schema)
 		if err != nil {
 			return err
 		}
 
-		schemaJSON, err := json.MarshalIndent(s, "", "  ")
+		schemaJSON, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {
 			return err
 		}
