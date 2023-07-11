@@ -68,7 +68,7 @@ func (s *Schema) AddTable(name string, t Table) {
 
 func (s *Schema) RenameTable(from, to string) error {
 	if s.GetTable(from) == nil {
-		return fmt.Errorf("table %s does not exist", from)
+		return fmt.Errorf("table %q does not exist", from)
 	}
 	if s.GetTable(to) != nil {
 		return fmt.Errorf("table %q already exists", to)
