@@ -47,7 +47,7 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 				t.Fatalf("Failed to start migration: %v", err)
 			}
 
-			// run the beforeComplete hook
+			// run the afterStart hook
 			if tt.afterStart != nil {
 				tt.afterStart(t, db)
 			}
