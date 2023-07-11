@@ -27,21 +27,12 @@ var statusCmd = &cobra.Command{
 		}
 		defer state.Close()
 
-		schemas, err := state.Schemas(ctx)
+		statusLine, err := statusForSchema(ctx, state, Schema)
 		if err != nil {
 			return err
 		}
 
-		var statusLines []statusLine
-		for _, schema := range schemas {
-			statusLine, err := statusForSchema(ctx, state, schema)
-			if err != nil {
-				return err
-			}
-			statusLines = append(statusLines, *statusLine)
-		}
-
-		statusJSON, err := json.MarshalIndent(statusLines, "", "  ")
+		statusJSON, err := json.MarshalIndent(statusLine, "", "  ")
 		if err != nil {
 			return err
 		}
