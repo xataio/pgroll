@@ -18,12 +18,11 @@ import (
 )
 
 type TestCase struct {
-	name            string
-	migrations      []migrations.Migration
-	wantStartErr    string
-	wantCompleteErr string
-	afterStart      func(t *testing.T, db *sql.DB)
-	afterComplete   func(t *testing.T, db *sql.DB)
+	name          string
+	migrations    []migrations.Migration
+	wantStartErr  string
+	afterStart    func(t *testing.T, db *sql.DB)
+	afterComplete func(t *testing.T, db *sql.DB)
 }
 
 type TestCases []TestCase
@@ -63,12 +62,6 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 
 				// complete the last migration
 				if err := mig.Complete(ctx); err != nil {
-					if tt.wantCompleteErr != "" {
-						if err.Error() != tt.wantCompleteErr {
-							t.Fatalf("Expected error %q, got %q", tt.wantCompleteErr, err.Error())
-						}
-						return
-					}
 					t.Fatalf("Failed to complete migration: %v", err)
 				}
 
