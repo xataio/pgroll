@@ -50,22 +50,12 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
-AS $$
-  WITH RECURSIVE parent_chain AS (
-    SELECT name, schema, parent
-    FROM %[1]s.migrations
-    WHERE parent IS NULL AND schema=schemaname
-    UNION
-    SELECT m.name, m.schema, m.parent
-    FROM pgroll.migrations m
-    INNER JOIN parent_chain pc ON pc.name = m.parent
-  )
-  SELECT name
-  FROM parent_chain
-  WHERE schema=schemaname
-  ORDER BY name DESC
-  LIMIT 1;
-$$
+AS $$ 
+  SELECT p.name FROM %[1]s.migrations p 
+  WHERE NOT EXISTS (
+    SELECT 1 FROM %[1]s.migrations c WHERE schema=schemaname AND c.parent=p.name
+  ) 
+  AND schema=schemaname $$
 LANGUAGE SQL
 STABLE;
 
