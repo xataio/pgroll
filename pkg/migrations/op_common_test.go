@@ -53,19 +53,19 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 				tt.afterStart(t, db)
 			}
 
-			// roll back the migration if a rollback hook is provided
+			// roll back the migration
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to roll back migration: %v", err)
+			}
+
+			// run the afterRollback hook
 			if tt.afterRollback != nil {
-				if err := mig.Rollback(ctx); err != nil {
-					t.Fatalf("Failed to roll back migration: %v", err)
-				}
-
-				// run the afterRollback hook
 				tt.afterRollback(t, db)
+			}
 
-				// re-start the last migration
-				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
-					t.Fatalf("Failed to start migration: %v", err)
-				}
+			// re-start the last migration
+			if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
 			}
 
 			// complete the last migration
