@@ -3,6 +3,7 @@ package roll_test
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -128,6 +129,41 @@ func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	})
 }
 
+func TestSchemaOptionIsRespected(t *testing.T) {
+	t.Parallel()
+
+	withMigratorInSchemaAndConnectionToContainer(t, "schema1", func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		version := "1_create_table"
+
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+		if err := mig.Complete(ctx); err != nil {
+			t.Fatalf("Failed to complete migration: %v", err)
+		}
+
+		//
+		// Check that the table exists in the correct schema
+		//
+		var exists bool
+		err := db.QueryRow(`
+    SELECT EXISTS(
+      SELECT 1
+      FROM pg_catalog.pg_tables
+      WHERE tablename = $1
+      AND schemaname = $2
+    )`, "table1", "schema1").Scan(&exists)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !exists {
+			t.Errorf("Expected table %q to exist in schema %q", "table1", "schema1")
+		}
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,
@@ -146,7 +182,7 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 	}
 }
 
-func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
+func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -182,7 +218,7 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := roll.New(ctx, cStr, "public", st)
+	mig, err := roll.New(ctx, cStr, schema, st)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,5 +240,14 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 		}
 	})
 
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schema))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	fn(mig, db)
+}
+
+func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
+	withMigratorInSchemaAndConnectionToContainer(t, "public", fn)
 }

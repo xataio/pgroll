@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/lib/pq"
+
 	"pg-roll/pkg/state"
 )
 
@@ -17,7 +19,14 @@ type Roll struct {
 }
 
 func New(ctx context.Context, pgURL, schema string, state *state.State) (*Roll, error) {
-	conn, err := sql.Open("postgres", pgURL)
+	dsn, err := pq.ParseURL(pgURL)
+	if err != nil {
+		dsn = pgURL
+	}
+
+	dsn += " search_path=" + schema
+
+	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS %[1]s.migrations (
 CREATE UNIQUE INDEX IF NOT EXISTS only_one_active ON %[1]s.migrations (schema, name, done) WHERE done = false;
 
 -- Only first migration can exist without parent
-CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON %[1]s.migrations ((1)) WHERE parent IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON %[1]s.migrations (schema) WHERE parent IS NULL;
 
 -- History is linear
 CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON %[1]s.migrations (schema, parent);
@@ -50,7 +50,12 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
-AS $$ SELECT p.name FROM %[1]s.migrations p WHERE NOT EXISTS (SELECT 1 FROM %[1]s.migrations c WHERE schema=schemaname AND c.parent=p.name) $$
+AS $$ 
+  SELECT p.name FROM %[1]s.migrations p 
+  WHERE NOT EXISTS (
+    SELECT 1 FROM %[1]s.migrations c WHERE schema=schemaname AND c.parent=p.name
+  ) 
+  AND schema=schemaname $$
 LANGUAGE SQL
 STABLE;
 
@@ -189,12 +194,25 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	return &migration, nil
 }
 
+// LatestVersion returns the name of the latest version schema
+func (s *State) LatestVersion(ctx context.Context, schema string) (*string, error) {
+	var version *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.latest_version($1)", pq.QuoteIdentifier(s.schema)),
+		schema).Scan(&version)
+	if err != nil {
+		return nil, err
+	}
+
+	return version, nil
+}
+
+// PreviousVersion returns the name of the previous version schema
 func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, error) {
 	var parent *string
 	err := s.pgConn.QueryRowContext(ctx,
 		fmt.Sprintf("SELECT %s.previous_version($1)", pq.QuoteIdentifier(s.schema)),
-		schema).
-		Scan(&parent)
+		schema).Scan(&parent)
 	if err != nil {
 		return nil, err
 	}
