@@ -1,17 +1,12 @@
 package migrations_test
 
 import (
-	"context"
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/lib/pq"
-	"golang.org/x/exp/slices"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -20,177 +15,66 @@ const (
 	schema        = "public"
 )
 
-func TestViewForNewVersionIsCreatedAfterMigrationStart(t *testing.T) {
+func TestCreateTable(t *testing.T) {
 	t.Parallel()
 
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
-		versionSchema := roll.VersionedSchemaName(schema, version)
-
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-
-		var exists bool
-		err := db.QueryRow(`
-		SELECT EXISTS (
-			SELECT 1
-			FROM pg_catalog.pg_views
-			WHERE schemaname = $1
-			AND viewname = $2
-		) `, versionSchema, viewName).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if !exists {
-			t.Fatalf("Expected view to exist")
-		}
-	})
-}
-
-func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationStart(t *testing.T) {
-	t.Parallel()
-
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
-		versionSchema := roll.VersionedSchemaName(schema, version)
-
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-
-		insertAndSelectRows(t, db, versionSchema)
-	})
-}
-
-func TestRecordsCanBeInsertedIntoAndReadFromNewViewAfterMigrationComplete(t *testing.T) {
-	t.Parallel()
-
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
-		versionSchema := roll.VersionedSchemaName(schema, version)
-
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete migration: %v", err)
-		}
-
-		insertAndSelectRows(t, db, versionSchema)
-	})
-}
-
-func TestTableIsDroppedAfterMigrationRollback(t *testing.T) {
-	t.Parallel()
-
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
-
-		migration := &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp()}}
-
-		if err := mig.Start(ctx, migration); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-
-		if err := mig.Rollback(ctx); err != nil {
-			t.Fatalf("Failed to revert migration: %v", err)
-		}
-
-		var exists bool
-		//
-		// Check that the new table has been dropped
-		//
-		tableName := migrations.TemporaryName(viewName)
-		err := db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_tables
-      WHERE tablename = $1
-    )`, tableName).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if exists {
-			t.Errorf("Expected table %q to not exist", tableName)
-		}
-	})
-}
-
-func insertAndSelectRows(t *testing.T, db *sql.DB, schemaName string) {
-	//
-	// Insert records via the view
-	//
-	sql := fmt.Sprintf(`INSERT INTO %s.%s (id, name) VALUES ($1, $2)`,
-		pq.QuoteIdentifier(schemaName),
-		pq.QuoteIdentifier(viewName))
-
-	insertStmt, err := db.Prepare(sql)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer insertStmt.Close()
-
-	type user struct {
-		ID   int
-		Name string
-	}
-	inserted := []user{{ID: 1, Name: "Alice"}, {ID: 2, Name: "Bob"}}
-
-	for _, v := range inserted {
-		_, err = insertStmt.Exec(v.ID, v.Name)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	//
-	// Read the records back via the view
-	//
-	sql = fmt.Sprintf(`SELECT id, name FROM %q.%q`, schemaName, viewName)
-	rows, err := db.Query(sql)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer rows.Close()
-
-	var retrieved []user
-	for rows.Next() {
-		var user user
-		if err := rows.Scan(&user.ID, &user.Name); err != nil {
-			t.Fatal(err)
-		}
-		retrieved = append(retrieved, user)
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatal(err)
-	}
-
-	if !slices.Equal(inserted, retrieved) {
-		t.Error(cmp.Diff(inserted, retrieved))
-	}
-}
-
-func createTableOp() *migrations.OpCreateTable {
-	return &migrations.OpCreateTable{
-		Name: viewName,
-		Columns: []migrations.Column{
+	ExecuteTests(t, TestCases{TestCase{
+		name: "create table",
+		migrations: []migrations.Migration{
 			{
-				Name:       "id",
-				Type:       "integer",
-				PrimaryKey: true,
-			},
-			{
-				Name:   "name",
-				Type:   "varchar(255)",
-				Unique: true,
+				Name: "01_create_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "users",
+						Columns: []migrations.Column{
+							{
+								Name:       "id",
+								Type:       "serial",
+								PrimaryKey: true,
+							},
+							{
+								Name:   "name",
+								Type:   "varchar(255)",
+								Unique: true,
+							},
+						},
+					},
+				},
 			},
 		},
-	}
+		afterStart: func(t *testing.T, db *sql.DB) {
+			// The new view exists in the new version schema.
+			ViewMustExist(t, db, "public", "01_create_table", "users")
+
+			// Data can be inserted into the new view.
+			MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+				"name": "Alice",
+			})
+
+			// Data can be retrieved from the new view.
+			rows := MustSelect(t, db, "public", "01_create_table", "users")
+			assert.Equal(t, []map[string]string{
+				{"id": "1", "name": "Alice"},
+			}, rows)
+		},
+		afterRollback: func(t *testing.T, db *sql.DB) {
+			// The underlying table has been dropped.
+			TableMustNotExist(t, db, "public", "users")
+		},
+		afterComplete: func(t *testing.T, db *sql.DB) {
+			// The view still exists
+			ViewMustExist(t, db, "public", "01_create_table", "users")
+
+			// Data can be inserted into the new view.
+			MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+				"name": "Alice",
+			})
+
+			// Data can be retrieved from the new view.
+			rows := MustSelect(t, db, "public", "01_create_table", "users")
+			assert.Equal(t, []map[string]string{
+				{"id": "1", "name": "Alice"},
+			}, rows)
+		},
+	}})
 }
