@@ -10,11 +10,11 @@ import (
 )
 
 var analyzeCmd = &cobra.Command{
-	Use:    "analyze <schemaName>",
+	Use:    "analyze",
 	Short:  "Analyze the SQL schema of the target database",
 	Hidden: true,
-	Args:   cobra.MaximumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:   cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
 		state, err := state.New(ctx, PGURL, StateSchema)
 		if err != nil {
@@ -22,12 +22,7 @@ var analyzeCmd = &cobra.Command{
 		}
 		defer state.Close()
 
-		if len(args) == 0 {
-			args = []string{"public"}
-		}
-		schemaName := args[0]
-
-		schema, err := state.ReadSchema(ctx, schemaName)
+		schema, err := state.ReadSchema(ctx, Schema)
 		if err != nil {
 			return err
 		}
