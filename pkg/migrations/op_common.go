@@ -8,6 +8,14 @@ import (
 	"os"
 )
 
+type OpName string
+
+const (
+	OpNameCreateTable OpName = "create_table"
+	OpNameRenameTable OpName = "rename_table"
+	OpNameAddColumn   OpName = "add_column"
+)
+
 func TemporaryName(name string) string {
 	return "_pgroll_new_" + name
 }
@@ -49,22 +57,27 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 	ops := make([]Operation, len(tmp))
 	for i, opObj := range tmp {
-		var opName string
+		var opName OpName
 		var logBody json.RawMessage
 		if len(opObj) != 1 {
 			return fmt.Errorf("invalid migration: %v", opObj)
 		}
 		for k, v := range opObj {
-			opName = k
+			opName = OpName(k)
 			logBody = v
 		}
 
 		var item Operation
 		switch opName {
-		case "create_table":
+		case OpNameCreateTable:
 			item = &OpCreateTable{}
-		case "add_column":
+
+		case OpNameRenameTable:
+			item = &OpRenameTable{}
+
+		case OpNameAddColumn:
 			item = &OpAddColumn{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -95,19 +108,23 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 			buf.WriteByte(',')
 		}
 
-		var opName string
+		var opName OpName
 		switch op.(type) {
 		case *OpCreateTable:
-			opName = "create_table"
+			opName = OpNameCreateTable
+
+		case *OpRenameTable:
+			opName = OpNameRenameTable
+
 		case *OpAddColumn:
-			opName = "add_column"
+			opName = OpNameAddColumn
 
 		default:
 			panic(fmt.Errorf("unknown operation for %T", op))
 		}
 
 		buf.WriteString(`{"`)
-		buf.WriteString(opName)
+		buf.WriteString(string(opName))
 		buf.WriteString(`":`)
 		if err := enc.Encode(op); err != nil {
 			return nil, fmt.Errorf("unable to encode op [%v]: %w", i, err)

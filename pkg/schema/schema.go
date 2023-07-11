@@ -1,5 +1,7 @@
 package schema
 
+import "fmt"
+
 // XXX we create a view of the schema with the minimum required for us to
 // know how to execute migrations and build views for the new schema version.
 // As of now this is just the table names and column names.
@@ -45,22 +47,6 @@ type Column struct {
 	Comment string `json:"comment"`
 }
 
-func (s *Schema) AddTable(name string, t Table) {
-	if s.Tables == nil {
-		s.Tables = make(map[string]Table)
-	}
-
-	s.Tables[name] = t
-}
-
-func (t *Table) AddColumn(name string, c Column) {
-	if t.Columns == nil {
-		t.Columns = make(map[string]Column)
-	}
-
-	t.Columns[name] = c
-}
-
 func (s *Schema) GetTable(name string) *Table {
 	if s.Tables == nil {
 		return nil
@@ -70,4 +56,34 @@ func (s *Schema) GetTable(name string) *Table {
 		return nil
 	}
 	return &t
+}
+
+func (s *Schema) AddTable(name string, t Table) {
+	if s.Tables == nil {
+		s.Tables = make(map[string]Table)
+	}
+
+	s.Tables[name] = t
+}
+
+func (s *Schema) RenameTable(from, to string) error {
+	if s.GetTable(from) == nil {
+		return fmt.Errorf("table %q does not exist", from)
+	}
+	if s.GetTable(to) != nil {
+		return fmt.Errorf("table %q already exists", to)
+	}
+
+	t := s.Tables[from]
+	s.Tables[to] = t
+	delete(s.Tables, from)
+	return nil
+}
+
+func (t *Table) AddColumn(name string, c Column) {
+	if t.Columns == nil {
+		t.Columns = make(map[string]Column)
+	}
+
+	t.Columns[name] = c
 }

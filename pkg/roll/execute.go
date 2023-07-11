@@ -127,7 +127,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 func (m *Roll) createView(ctx context.Context, version string, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
-		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(k), pq.QuoteIdentifier(v.Name)))
+		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
 	}
 
 	_, err := m.pgConn.ExecContext(ctx,
