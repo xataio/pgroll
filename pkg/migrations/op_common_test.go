@@ -158,6 +158,39 @@ func ViewMustNotExist(t *testing.T, db *sql.DB, schema, version, view string) {
 	}
 }
 
+func TableMustExist(t *testing.T, db *sql.DB, schema, table string) {
+	t.Helper()
+	if !tableExists(t, db, schema, table) {
+		t.Fatalf("Expected table to exist")
+	}
+}
+
+func TableMustNotExist(t *testing.T, db *sql.DB, schema, table string) {
+	t.Helper()
+	if tableExists(t, db, schema, table) {
+		t.Fatalf("Expected table to not exist")
+	}
+}
+
+func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM pg_catalog.pg_tables
+			WHERE schemaname = $1
+			AND tablename = $2
+		)`,
+		schema, table).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
 func viewExists(t *testing.T, db *sql.DB, schema, version, view string) bool {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
