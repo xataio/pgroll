@@ -18,49 +18,65 @@ import (
 )
 
 type TestCase struct {
-	name          string
-	migrations    []migrations.Migration
-	afterStart    func(t *testing.T, db *sql.DB)
-	afterComplete func(t *testing.T, db *sql.DB)
+	name            string
+	migrations      []migrations.Migration
+	wantStartErr    string
+	wantCompleteErr string
+	afterStart      func(t *testing.T, db *sql.DB)
+	afterComplete   func(t *testing.T, db *sql.DB)
 }
 
 type TestCases []TestCase
 
 func ExecuteTests(t *testing.T, tests TestCases) {
 	for _, tt := range tests {
-		withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-			ctx := context.Background()
+		t.Run(tt.name, func(t *testing.T) {
+			withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+				ctx := context.Background()
 
-			// run all migrations except the last one
-			for i := 0; i < len(tt.migrations)-1; i++ {
-				if err := mig.Start(ctx, &tt.migrations[i]); err != nil {
+				// run all migrations except the last one
+				for i := 0; i < len(tt.migrations)-1; i++ {
+					if err := mig.Start(ctx, &tt.migrations[i]); err != nil {
+						t.Fatalf("Failed to start migration: %v", err)
+					}
+
+					if err := mig.Complete(ctx); err != nil {
+						t.Fatalf("Failed to complete migration: %v", err)
+					}
+				}
+
+				// start the last migration
+				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
+					if tt.wantStartErr != "" {
+						if err.Error() != tt.wantStartErr {
+							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err.Error())
+						}
+						return
+					}
 					t.Fatalf("Failed to start migration: %v", err)
 				}
 
+				// run the beforeComplete hook
+				if tt.afterStart != nil {
+					tt.afterStart(t, db)
+				}
+
+				// complete the last migration
 				if err := mig.Complete(ctx); err != nil {
+					if tt.wantCompleteErr != "" {
+						if err.Error() != tt.wantCompleteErr {
+							t.Fatalf("Expected error %q, got %q", tt.wantCompleteErr, err.Error())
+						}
+						return
+					}
 					t.Fatalf("Failed to complete migration: %v", err)
 				}
-			}
 
-			// start the last migration
-			if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
-				t.Fatalf("Failed to start migration: %v", err)
-			}
-
-			// run the beforeComplete hook
-			if tt.afterStart != nil {
-				tt.afterStart(t, db)
-			}
-
-			// complete the last migration
-			if err := mig.Complete(ctx); err != nil {
-				t.Fatalf("Failed to complete migration: %v", err)
-			}
-
-			// run the afterComplete hook
-			if tt.afterComplete != nil {
-				tt.afterComplete(t, db)
-			}
+				// run the afterComplete hook
+				if tt.afterComplete != nil {
+					tt.afterComplete(t, db)
+				}
+			})
 		})
 	}
 }

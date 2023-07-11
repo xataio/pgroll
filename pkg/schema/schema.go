@@ -80,6 +80,17 @@ func (s *Schema) RenameTable(from, to string) error {
 	return nil
 }
 
+func (t *Table) GetColumn(name string) *Column {
+	if t.Columns == nil {
+		return nil
+	}
+	c, ok := t.Columns[name]
+	if !ok {
+		return nil
+	}
+	return &c
+}
+
 func (t *Table) AddColumn(name string, c Column) {
 	if t.Columns == nil {
 		t.Columns = make(map[string]Column)

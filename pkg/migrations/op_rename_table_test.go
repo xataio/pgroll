@@ -99,5 +99,33 @@ func TestRenameTable(t *testing.T) {
 				}, res)
 			},
 		},
+		{
+			name: "rename table validation: already exists",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name:    "test_table",
+							Columns: []migrations.Column{},
+						},
+						&migrations.OpCreateTable{
+							Name:    "other_table",
+							Columns: []migrations.Column{},
+						},
+					},
+				},
+				{
+					Name: "02_rename_table",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "test_table",
+							To:   "other_table",
+						},
+					},
+				},
+			},
+			wantStartErr: "migration is invalid: table \"other_table\" already exists",
+		},
 	})
 }

@@ -20,10 +20,6 @@ var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
-	if table == nil {
-		return fmt.Errorf("failed to start add column operation: table %q does not exist", o.Table)
-	}
-
 	if o.Column.Nullable {
 		if err := addNullableColumn(ctx, conn, o, table); err != nil {
 			return fmt.Errorf("failed to start add column operation: %w", err)
@@ -57,6 +53,19 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(tempName)))
 	return err
+}
+
+func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return fmt.Errorf("table %q does not exist", o.Table)
+	}
+
+	if table.GetColumn(o.Column.Name) != nil {
+		return fmt.Errorf("column %q already exists in table %q", o.Column.Name, o.Table)
+	}
+
+	return nil
 }
 
 func addNullableColumn(ctx context.Context, conn *sql.DB, o *OpAddColumn, t *schema.Table) error {

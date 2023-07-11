@@ -89,3 +89,11 @@ func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
 		pq.QuoteIdentifier(tempName)))
 	return err
 }
+
+func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Name)
+	if table != nil {
+		return fmt.Errorf("table %q already exists", o.Name)
+	}
+	return nil
+}
