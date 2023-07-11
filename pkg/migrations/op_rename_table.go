@@ -34,7 +34,7 @@ func (o *OpRenameTable) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 	if s.GetTable(o.From) == nil {
-		return fmt.Errorf("table %s does not exist", o.From)
+		return fmt.Errorf("table %q does not exist", o.From)
 	}
 	if s.GetTable(o.To) != nil {
 		return fmt.Errorf("table %q already exists", o.To)
