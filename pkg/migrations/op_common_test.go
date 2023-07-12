@@ -3,6 +3,7 @@ package migrations_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ import (
 type TestCase struct {
 	name          string
 	migrations    []migrations.Migration
-	wantStartErr  string
+	wantStartErr  error
 	afterStart    func(t *testing.T, db *sql.DB)
 	afterComplete func(t *testing.T, db *sql.DB)
 	afterRollback func(t *testing.T, db *sql.DB)
@@ -47,9 +48,9 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 
 				// start the last migration
 				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
-					if tt.wantStartErr != "" {
-						if err.Error() != tt.wantStartErr {
-							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err.Error())
+					if tt.wantStartErr != nil {
+						if !errors.Is(err, tt.wantStartErr) {
+							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
 						}
 						return
 					}

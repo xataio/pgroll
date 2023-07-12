@@ -58,11 +58,11 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return fmt.Errorf("table %q does not exist", o.Table)
+		return TableDoesNotExistError{Name: o.Table}
 	}
 
 	if table.GetColumn(o.Column.Name) != nil {
-		return fmt.Errorf("column %q already exists in table %q", o.Column.Name, o.Table)
+		return ColumnAlreadyExistsError{Name: o.Column.Name, Table: o.Table}
 	}
 
 	return nil

@@ -125,7 +125,7 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: "migration is invalid: table \"other_table\" already exists",
+			wantStartErr: migrations.TableAlreadyExistsError{"other_table"},
 		},
 	})
 }
