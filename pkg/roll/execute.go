@@ -28,6 +28,15 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 		return fmt.Errorf("unable to start migration: %w", err)
 	}
 
+	// validate migration
+	err = migration.Validate(ctx, newSchema)
+	if err != nil {
+		if err := m.state.Rollback(ctx, m.schema, migration.Name); err != nil {
+			fmt.Printf("failed to rollback migration: %s\n", err)
+		}
+		return fmt.Errorf("migration is invalid: %w", err)
+	}
+
 	// execute operations
 	for _, op := range migration.Operations {
 		err := op.Start(ctx, m.pgConn, newSchema)
@@ -114,7 +123,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		}
 	}
 
-	// mark as completed
+	// roll back the migration
 	err = m.state.Rollback(ctx, m.schema, migration.Name)
 	if err != nil {
 		return fmt.Errorf("unable to rollback migration: %w", err)

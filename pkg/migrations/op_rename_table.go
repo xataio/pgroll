@@ -31,3 +31,14 @@ func (o *OpRenameTable) Complete(ctx context.Context, conn *sql.DB) error {
 func (o *OpRenameTable) Rollback(ctx context.Context, conn *sql.DB) error {
 	return nil
 }
+
+func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
+	if s.GetTable(o.From) == nil {
+		return TableDoesNotExistError{Name: o.From}
+	}
+	if s.GetTable(o.To) != nil {
+		return TableAlreadyExistsError{Name: o.To}
+	}
+
+	return nil
+}
