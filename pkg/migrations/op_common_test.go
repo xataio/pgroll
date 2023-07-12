@@ -11,6 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"pg-roll/pkg/migrations"
 	"pg-roll/pkg/roll"
@@ -213,19 +214,22 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
+	cols := maps.Keys(record)
+	slices.Sort(cols)
+
 	recordStr := "("
-	for i, k := range maps.Keys(record) {
+	for i, c := range cols {
 		if i > 0 {
 			recordStr += ", "
 		}
-		recordStr += k
+		recordStr += c
 	}
 	recordStr += ") VALUES ("
-	for i, v := range maps.Values(record) {
+	for i, c := range cols {
 		if i > 0 {
 			recordStr += ", "
 		}
-		recordStr += fmt.Sprintf("'%s'", v)
+		recordStr += fmt.Sprintf("'%s'", record[c])
 	}
 	recordStr += ")"
 
