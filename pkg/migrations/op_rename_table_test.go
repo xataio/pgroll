@@ -62,13 +62,13 @@ func TestRenameTable(t *testing.T) {
 				resOld := MustSelect(t, db, "public", "02_rename_table", "renamed_table")
 
 				assert.Equal(t, resOld, resNew)
-				assert.Equal(t, []map[string]string{
+				assert.Equal(t, []map[string]any{
 					{
-						"id":   "1",
+						"id":   1,
 						"name": "foo",
 					},
 					{
-						"id":   "2",
+						"id":   2,
 						"name": "bar",
 					},
 				}, resNew)
@@ -83,17 +83,17 @@ func TestRenameTable(t *testing.T) {
 					"name": "baz",
 				})
 				res := MustSelect(t, db, "public", "02_rename_table", "renamed_table")
-				assert.Equal(t, []map[string]string{
+				assert.Equal(t, []map[string]any{
 					{
-						"id":   "1",
+						"id":   1,
 						"name": "foo",
 					},
 					{
-						"id":   "2",
+						"id":   2,
 						"name": "bar",
 					},
 					{
-						"id":   "3",
+						"id":   3,
 						"name": "baz",
 					},
 				}, res)
