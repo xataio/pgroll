@@ -53,8 +53,8 @@ func TestCreateTable(t *testing.T) {
 
 			// Data can be retrieved from the new view.
 			rows := MustSelect(t, db, "public", "01_create_table", "users")
-			assert.Equal(t, []map[string]string{
-				{"id": "1", "name": "Alice"},
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "Alice"},
 			}, rows)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
@@ -72,8 +72,8 @@ func TestCreateTable(t *testing.T) {
 
 			// Data can be retrieved from the new view.
 			rows := MustSelect(t, db, "public", "01_create_table", "users")
-			assert.Equal(t, []map[string]string{
-				{"id": "1", "name": "Alice"},
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "Alice"},
 			}, rows)
 		},
 	}})

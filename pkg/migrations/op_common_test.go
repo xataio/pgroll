@@ -310,7 +310,7 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	}
 }
 
-func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]string {
+func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]any {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
@@ -322,14 +322,14 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 		t.Fatal(err)
 	}
 
-	res := make([]map[string]string, 0)
+	res := make([]map[string]any, 0)
 
 	for q.Next() {
 		cols, err := q.Columns()
 		if err != nil {
 			t.Fatal(err)
 		}
-		values := make([]string, len(cols))
+		values := make([]any, len(cols))
 		valuesPtr := make([]any, len(cols))
 		for i := range values {
 			valuesPtr[i] = &values[i]
@@ -338,8 +338,12 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 			t.Fatal(err)
 		}
 
-		row := map[string]string{}
+		row := map[string]any{}
 		for i, col := range cols {
+			// avoid having to cast int literals to int64 in tests
+			if v, ok := values[i].(int64); ok {
+				values[i] = int(v)
+			}
 			row[col] = values[i]
 		}
 

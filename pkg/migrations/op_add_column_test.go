@@ -68,14 +68,14 @@ func TestAddColumn(t *testing.T) {
 
 			// selecting from both the old and the new views works
 			resOld := MustSelect(t, db, "public", "01_add_table", "users")
-			assert.Equal(t, []map[string]string{
-				{"id": "1", "name": "Alice"},
-				{"id": "2", "name": "Bob"},
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "Alice"},
+				{"id": 2, "name": "Bob"},
 			}, resOld)
 			resNew := MustSelect(t, db, "public", "02_add_column", "users")
-			assert.Equal(t, []map[string]string{
-				{"id": "1", "name": "Alice", "age": "0"},
-				{"id": "2", "name": "Bob", "age": "21"},
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "Alice", "age": 0},
+				{"id": 2, "name": "Bob", "age": 21},
 			}, resNew)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
@@ -98,10 +98,10 @@ func TestAddColumn(t *testing.T) {
 
 			// Selecting from the new view still works
 			res := MustSelect(t, db, "public", "02_add_column", "users")
-			assert.Equal(t, []map[string]string{
-				{"id": "1", "name": "Alice", "age": "0"},
-				{"id": "2", "name": "Bob", "age": "0"},
-				{"id": "3", "name": "Carl", "age": "31"},
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "Alice", "age": 0},
+				{"id": 2, "name": "Bob", "age": 0},
+				{"id": 3, "name": "Carl", "age": 31},
 			}, res)
 		},
 	}})
