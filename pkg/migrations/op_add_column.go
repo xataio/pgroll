@@ -20,12 +20,9 @@ var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
-	if o.Column.Nullable {
-		if err := addNullableColumn(ctx, conn, o, table); err != nil {
-			return fmt.Errorf("failed to start add column operation: %w", err)
-		}
-	} else {
-		return errors.New("addition of non-nullable columns not implemented")
+
+	if err := addColumn(ctx, conn, *o, table); err != nil {
+		return fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
 	table.AddColumn(o.Column.Name, schema.Column{
@@ -65,14 +62,23 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnAlreadyExistsError{Name: o.Column.Name, Table: o.Table}
 	}
 
+	if !o.Column.Nullable && o.Column.Default == nil {
+		return errors.New("adding non-nullable columns without a default is not supported")
+	}
+
+	if o.Column.PrimaryKey {
+		return errors.New("adding primary key columns is not supported")
+	}
+
 	return nil
 }
 
-func addNullableColumn(ctx context.Context, conn *sql.DB, o *OpAddColumn, t *schema.Table) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s",
+func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table) error {
+	o.Column.Name = TemporaryName(o.Column.Name)
+
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
-		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
-		o.Column.Type,
+		ColumnToSQL(o.Column),
 	))
 	return err
 }

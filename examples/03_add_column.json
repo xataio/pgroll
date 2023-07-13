@@ -10,6 +10,17 @@
           "nullable": true
         }
       }
+    },
+    {
+      "add_column": {
+        "table": "products",
+        "column": {
+          "name": "stock",
+          "type": "int",
+          "nullable": false,
+          "default": "100"
+        }
+      }
     }
   ]
 }

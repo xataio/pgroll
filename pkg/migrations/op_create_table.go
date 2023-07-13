@@ -50,30 +50,6 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schem
 	return nil
 }
 
-func columnsToSQL(cols []Column) string {
-	var sql string
-	for i, col := range cols {
-		if i > 0 {
-			sql += ", "
-		}
-		sql += fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
-
-		if col.PrimaryKey {
-			sql += " PRIMARY KEY"
-		}
-		if col.Unique {
-			sql += " UNIQUE"
-		}
-		if !col.Nullable {
-			sql += " NOT NULL"
-		}
-		if col.Default != nil {
-			sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
-		}
-	}
-	return sql
-}
-
 func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
@@ -96,4 +72,33 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 	return nil
+}
+
+func columnsToSQL(cols []Column) string {
+	var sql string
+	for i, col := range cols {
+		if i > 0 {
+			sql += ", "
+		}
+		sql += ColumnToSQL(col)
+	}
+	return sql
+}
+
+func ColumnToSQL(col Column) string {
+	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
+
+	if col.PrimaryKey {
+		sql += " PRIMARY KEY"
+	}
+	if col.Unique {
+		sql += " UNIQUE"
+	}
+	if !col.Nullable {
+		sql += " NOT NULL"
+	}
+	if col.Default != nil {
+		sql += fmt.Sprintf(" DEFAULT %s", pq.QuoteLiteral(*col.Default))
+	}
+	return sql
 }
