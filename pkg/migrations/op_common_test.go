@@ -183,6 +183,27 @@ func TableMustNotExist(t *testing.T, db *sql.DB, schema, table string) {
 	}
 }
 
+func ColumnMustExist(t *testing.T, db *sql.DB, schema, table, column string) {
+	t.Helper()
+	if !columnExists(t, db, schema, table, column) {
+		t.Fatalf("Expected column to exist")
+	}
+}
+
+func ColumnMustNotExist(t *testing.T, db *sql.DB, schema, table, column string) {
+	t.Helper()
+	if columnExists(t, db, schema, table, column) {
+		t.Fatalf("Expected column to not exist")
+	}
+}
+
+func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n int) {
+	t.Helper()
+	if !tableMustHaveColumnCount(t, db, schema, table, n) {
+		t.Fatalf("Expected table to have %d columns", n)
+	}
+}
+
 func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	t.Helper()
 
@@ -202,6 +223,23 @@ func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	return exists
 }
 
+func tableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n int) bool {
+	t.Helper()
+
+	var count int
+	err := db.QueryRow(`
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = $1
+    AND table_name = $2`,
+		schema, table).Scan(&count)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return count == n
+}
+
 func viewExists(t *testing.T, db *sql.DB, schema, version, view string) bool {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
@@ -217,6 +255,26 @@ func viewExists(t *testing.T, db *sql.DB, schema, version, view string) bool {
 	if err != nil {
 		t.Fatal(err)
 	}
+	return exists
+}
+
+func columnExists(t *testing.T, db *sql.DB, schema, table, column string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = $1
+      AND table_name = $2
+      AND column_name = $3
+    )`,
+		schema, table, column).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return exists
 }
 
