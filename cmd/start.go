@@ -10,6 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var startOpts struct {
+	complete bool
+}
+
 var startCmd = &cobra.Command{
 	Use:   "start <file>",
 	Short: "Start a migration for the operations present in the given file",
@@ -33,6 +37,12 @@ var startCmd = &cobra.Command{
 		err = m.Start(cmd.Context(), migration)
 		if err != nil {
 			return err
+		}
+
+		if startOpts.complete {
+			if err = m.Complete(cmd.Context()); err != nil {
+				return err
+			}
 		}
 
 		fmt.Printf("Migration successful!, new version of the schema available under postgres '%s' schema\n", version)
