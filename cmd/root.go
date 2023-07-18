@@ -42,11 +42,8 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 
 // Execute executes the root command.
 func Execute() error {
-	// add flags to subcommands
-	startCmd.Flags().BoolVarP(&startOpts.complete, "complete", "c", false, "complete the migration immediately")
-
 	// register subcommands
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(startCmd())
 	rootCmd.AddCommand(completeCmd)
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(analyzeCmd)
