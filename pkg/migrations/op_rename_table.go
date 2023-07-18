@@ -17,7 +17,7 @@ type OpRenameTable struct {
 	To   string `json:"to"`
 }
 
-func (o *OpRenameTable) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpRenameTable) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
 	return s.RenameTable(o.From, o.To)
 }
 

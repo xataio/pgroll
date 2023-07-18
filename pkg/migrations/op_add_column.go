@@ -18,7 +18,7 @@ type OpAddColumn struct {
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table); err != nil {

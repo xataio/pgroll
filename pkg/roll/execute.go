@@ -39,7 +39,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Start(ctx, m.pgConn, newSchema)
+		err := op.Start(ctx, m.pgConn, m.schema, m.state.Schema(), newSchema)
 		if err != nil {
 			return fmt.Errorf("unable to execute start operation: %w", err)
 		}
