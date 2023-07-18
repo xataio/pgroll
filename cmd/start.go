@@ -10,32 +10,46 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var startCmd = &cobra.Command{
-	Use:   "start <file>",
-	Short: "Start a migration for the operations present in the given file",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fileName := args[0]
+func startCmd() *cobra.Command {
+	var complete bool
 
-		m, err := NewRoll(cmd.Context())
-		if err != nil {
-			return err
-		}
-		defer m.Close()
+	startCmd := &cobra.Command{
+		Use:   "start <file>",
+		Short: "Start a migration for the operations present in the given file",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fileName := args[0]
 
-		migration, err := migrations.ReadMigrationFile(args[0])
-		if err != nil {
-			return fmt.Errorf("reading migration file: %w", err)
-		}
+			m, err := NewRoll(cmd.Context())
+			if err != nil {
+				return err
+			}
+			defer m.Close()
 
-		version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
+			migration, err := migrations.ReadMigrationFile(args[0])
+			if err != nil {
+				return fmt.Errorf("reading migration file: %w", err)
+			}
 
-		err = m.Start(cmd.Context(), migration)
-		if err != nil {
-			return err
-		}
+			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
 
-		fmt.Printf("Migration successful!, new version of the schema available under postgres '%s' schema\n", version)
-		return nil
-	},
+			err = m.Start(cmd.Context(), migration)
+			if err != nil {
+				return err
+			}
+
+			if complete {
+				if err = m.Complete(cmd.Context()); err != nil {
+					return err
+				}
+			}
+
+			fmt.Printf("Migration successful!, new version of the schema available under postgres '%s' schema\n", version)
+			return nil
+		},
+	}
+
+	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
+
+	return startCmd
 }

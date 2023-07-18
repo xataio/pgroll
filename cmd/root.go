@@ -43,7 +43,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 // Execute executes the root command.
 func Execute() error {
 	// register subcommands
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(startCmd())
 	rootCmd.AddCommand(completeCmd)
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(analyzeCmd)
