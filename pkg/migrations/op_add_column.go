@@ -108,6 +108,7 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 		return decls
 	}
 
+	//nolint:gosec // I don't think we can avoid SQL injection warnings here when running arbitrary SQL
 	triggerFn := fmt.Sprintf(`CREATE OR REPLACE FUNCTION %[1]s() 
     RETURNS TRIGGER 
     LANGUAGE PLPGSQL
