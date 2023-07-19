@@ -96,6 +96,11 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 	}
 	triggerName := triggerFnName
 
+	// Generate the SQL declarations for the trigger function
+	// This results in declarations like:
+	//   col1 table.col1%TYPE := NEW.col1;
+	// Without these declarations, users would have to reference
+	// `col1` as `NEW.col1` in their `up` SQL.
 	sqlDeclarations := func(s *schema.Schema) string {
 		table := s.GetTable(o.Table)
 
