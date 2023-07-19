@@ -27,11 +27,11 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 	}
 
 	if o.Up != nil {
-		if err := backFill(ctx, conn, o); err != nil {
-			return fmt.Errorf("failed to backfill column: %w", err)
-		}
 		if err := createTrigger(ctx, conn, o, schemaName, stateSchema, s); err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
+		}
+		if err := backFill(ctx, conn, o); err != nil {
+			return fmt.Errorf("failed to backfill column: %w", err)
 		}
 	}
 
@@ -166,13 +166,14 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 }
 
 func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
-	//nolint:gosec // unavoidable SQL injection warning when running arbitrary SQL
-	sql := fmt.Sprintf("UPDATE %s SET %s = %s",
+	// touch rows without changing them in order to have the trigger fire
+	// and set the value using the `up` SQL.
+	// TODO: this should be done in batches in case of large tables.
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
-		*o.Up)
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name))))
 
-	_, err := conn.ExecContext(ctx, sql)
 	return err
 }
 
