@@ -30,6 +30,9 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 		if err := createTrigger(ctx, conn, o, schemaName, stateSchema, s); err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
+		if err := backFill(ctx, conn, o); err != nil {
+			return fmt.Errorf("failed to backfill column: %w", err)
+		}
 	}
 
 	table.AddColumn(o.Column.Name, schema.Column{
@@ -114,7 +117,7 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 		return decls
 	}
 
-	//nolint:gosec // I don't think we can avoid SQL injection warnings here when running arbitrary SQL
+	//nolint:gosec // unavoidable SQL injection warning when running arbitrary SQL
 	triggerFn := fmt.Sprintf(`CREATE OR REPLACE FUNCTION %[1]s() 
     RETURNS TRIGGER 
     LANGUAGE PLPGSQL
@@ -160,6 +163,18 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 	}
 
 	return nil
+}
+
+func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
+	// touch rows without changing them in order to have the trigger fire
+	// and set the value using the `up` SQL.
+	// TODO: this should be done in batches in case of large tables.
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name))))
+
+	return err
 }
 
 func TriggerFunctionName(tableName, columnName string) string {

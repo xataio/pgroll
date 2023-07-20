@@ -178,6 +178,12 @@ func TestAddColumnWithUpSql(t *testing.T) {
 			TriggerMustNotExist(t, db, "public", "products", triggerName)
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
+			// after rollback + restart + complete, all 'description' values are the backfilled ones.
+			res := MustSelect(t, db, "public", "02_add_column", "products")
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "apple", "description": "APPLE"},
+				{"id": 2, "name": "banana", "description": "BANANA"},
+			}, res)
 		},
 	}})
 }
