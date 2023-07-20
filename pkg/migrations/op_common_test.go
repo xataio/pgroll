@@ -226,7 +226,7 @@ func TriggerMustNotExist(t *testing.T, db *sql.DB, schema, table, trigger string
 	}
 }
 
-func TriggerExists(t *testing.T, db *sql.DB, schema, table, trigger string) {
+func TriggerMustExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
 	t.Helper()
 	if !triggerExists(t, db, schema, table, trigger) {
 		t.Fatalf("Expected trigger to exist")
