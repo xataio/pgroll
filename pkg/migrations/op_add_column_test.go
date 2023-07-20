@@ -243,10 +243,18 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
 			// the check constraint has been dropped.
-			constraintname := migrations.NotNullConstraintName("description")
-			ConstraintMustNotExist(t, db, "public", "products", constraintname)
+			constraintName := migrations.NotNullConstraintName("description")
+			ConstraintMustNotExist(t, db, "public", "products", constraintName)
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
+			// the check constraint has been dropped.
+			constraintName := migrations.NotNullConstraintName("description")
+			ConstraintMustNotExist(t, db, "public", "products", constraintName)
+
+			// can't insert a null description into the new view; the column now has a NOT NULL constraint.
+			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
+				"name": "orange",
+			})
 		},
 	}})
 }
