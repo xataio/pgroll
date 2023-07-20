@@ -22,6 +22,17 @@
           "default": "100"
         }
       }
+    },
+    {
+      "add_column": {
+        "table": "products",
+        "up": "name || '-category'",
+        "column": {
+          "name": "category",
+          "type": "varchar(255)",
+          "nullable": false
+        }
+      }
     }
   ]
 }
