@@ -169,7 +169,13 @@ func TestAddColumnWithUpSql(t *testing.T) {
 			}, res)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
-			// TODO check that the trigger created by the start operation has been removed
+			// The trigger function has been dropped.
+			triggerFnName := migrations.TriggerFunctionName("products", "description")
+			FunctionMustNotExist(t, db, "public", triggerFnName)
+
+			// The trigger has been dropped.
+			triggerName := migrations.TriggerName("products", "description")
+			TriggerMustNotExist(t, db, "public", "products", triggerName)
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
 		},

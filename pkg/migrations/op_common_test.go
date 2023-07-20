@@ -205,6 +205,72 @@ func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n 
 	}
 }
 
+func FunctionMustExist(t *testing.T, db *sql.DB, schema, functionName string) {
+	t.Helper()
+	if !functionExists(t, db, schema, functionName) {
+		t.Fatalf("Expected function to exist")
+	}
+}
+
+func FunctionMustNotExist(t *testing.T, db *sql.DB, schema, functionName string) {
+	t.Helper()
+	if functionExists(t, db, schema, functionName) {
+		t.Fatalf("Expected function to not exist")
+	}
+}
+
+func TriggerMustNotExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
+	t.Helper()
+	if triggerExists(t, db, schema, table, trigger) {
+		t.Fatalf("Expected trigger to not exist")
+	}
+}
+
+func TriggerExists(t *testing.T, db *sql.DB, schema, table, trigger string) {
+	t.Helper()
+	if !triggerExists(t, db, schema, table, trigger) {
+		t.Fatalf("Expected trigger to exist")
+	}
+}
+
+func triggerExists(t *testing.T, db *sql.DB, schema, table, trigger string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_trigger
+      WHERE tgrelid = $1::regclass
+      AND tgname = $2
+    )`,
+		fmt.Sprintf("%s.%s", schema, table), trigger).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func functionExists(t *testing.T, db *sql.DB, schema, functionName string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_proc
+      WHERE proname = $1
+      AND pronamespace = $2::regnamespace
+    )`,
+		functionName, schema).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
 func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	t.Helper()
 

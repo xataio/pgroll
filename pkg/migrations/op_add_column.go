@@ -56,6 +56,12 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(tempName)))
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name))))
 	return err
 }
 
@@ -91,11 +97,6 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 }
 
 func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName, stateSchema string, s *schema.Schema) error {
-	triggerFnName := func(o *OpAddColumn) string {
-		return "_pgroll_add_column_" + o.Table + "_" + o.Column.Name
-	}
-	triggerName := triggerFnName
-
 	// Generate the SQL declarations for the trigger function
 	// This results in declarations like:
 	//   col1 table.col1%TYPE := NEW.col1;
@@ -132,7 +133,7 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 
       RETURN NEW;
     END; $$`,
-		pq.QuoteIdentifier(triggerFnName(o)),
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name)),
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
 		*o.Up,
 		sqlDeclarations(s),
@@ -149,9 +150,9 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
     ON %[2]s
     FOR EACH ROW
     EXECUTE PROCEDURE %[3]s();`,
-		pq.QuoteIdentifier(triggerName(o)),
+		pq.QuoteIdentifier(TriggerName(o.Table, o.Column.Name)),
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(triggerFnName(o)))
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name)))
 
 	_, err = conn.ExecContext(ctx, trigger)
 	if err != nil {
@@ -159,4 +160,12 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 	}
 
 	return nil
+}
+
+func TriggerFunctionName(tableName, columnName string) string {
+	return "_pgroll_add_column_" + tableName + "_" + columnName
+}
+
+func TriggerName(tableName, columnName string) string {
+	return TriggerFunctionName(tableName, columnName)
 }
