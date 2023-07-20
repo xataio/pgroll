@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -282,6 +283,8 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
+	mustSetSearchPath(t, db, versionSchema)
+
 	cols := maps.Keys(record)
 	slices.Sort(cols)
 
@@ -351,4 +354,13 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	}
 
 	return res
+}
+
+func mustSetSearchPath(t *testing.T, db *sql.DB, schema string) {
+	t.Helper()
+
+	_, err := db.Exec(fmt.Sprintf("SET search_path = %s", pq.QuoteIdentifier(schema)))
+	if err != nil {
+		t.Fatal(err)
+	}
 }

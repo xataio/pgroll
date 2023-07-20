@@ -4,6 +4,7 @@
     {
       "add_column": {
         "table": "products",
+        "up": "UPPER(name)",
         "column": {
           "name": "description",
           "type": "varchar(255)",

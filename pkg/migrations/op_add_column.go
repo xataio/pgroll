@@ -12,17 +12,24 @@ import (
 )
 
 type OpAddColumn struct {
-	Table  string `json:"table"`
-	Column Column `json:"column"`
+	Table  string  `json:"table"`
+	Up     *string `json:"up"`
+	Column Column  `json:"column"`
 }
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table); err != nil {
 		return fmt.Errorf("failed to start add column operation: %w", err)
+	}
+
+	if o.Up != nil {
+		if err := createTrigger(ctx, conn, o, schemaName, stateSchema, s); err != nil {
+			return fmt.Errorf("failed to create trigger: %w", err)
+		}
 	}
 
 	table.AddColumn(o.Column.Name, schema.Column{
@@ -81,4 +88,75 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 		ColumnToSQL(o.Column),
 	))
 	return err
+}
+
+func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName, stateSchema string, s *schema.Schema) error {
+	triggerFnName := func(o *OpAddColumn) string {
+		return "_pgroll_add_column_" + o.Table + "_" + o.Column.Name
+	}
+	triggerName := triggerFnName
+
+	// Generate the SQL declarations for the trigger function
+	// This results in declarations like:
+	//   col1 table.col1%TYPE := NEW.col1;
+	// Without these declarations, users would have to reference
+	// `col1` as `NEW.col1` in their `up` SQL.
+	sqlDeclarations := func(s *schema.Schema) string {
+		table := s.GetTable(o.Table)
+
+		decls := ""
+		for _, c := range table.Columns {
+			decls += fmt.Sprintf("%[1]s %[2]s.%[1]s%%TYPE := NEW.%[1]s;\n",
+				pq.QuoteIdentifier(c.Name),
+				pq.QuoteIdentifier(table.Name))
+		}
+		return decls
+	}
+
+	//nolint:gosec // I don't think we can avoid SQL injection warnings here when running arbitrary SQL
+	triggerFn := fmt.Sprintf(`CREATE OR REPLACE FUNCTION %[1]s() 
+    RETURNS TRIGGER 
+    LANGUAGE PLPGSQL
+    AS $$
+    DECLARE
+      %[4]s
+      latest_schema text;
+      search_path text;
+    BEGIN
+      SELECT %[5]s || '_' || latest_version INTO latest_schema FROM %[6]s.latest_version(%[5]s);
+      SELECT current_setting INTO search_path FROM current_setting('search_path');
+
+      IF search_path <> latest_schema THEN
+        NEW.%[2]s = %[3]s;
+      END IF;
+
+      RETURN NEW;
+    END; $$`,
+		pq.QuoteIdentifier(triggerFnName(o)),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
+		*o.Up,
+		sqlDeclarations(s),
+		pq.QuoteLiteral(schemaName),
+		pq.QuoteIdentifier(stateSchema))
+
+	_, err := conn.ExecContext(ctx, triggerFn)
+	if err != nil {
+		return err
+	}
+
+	trigger := fmt.Sprintf(`CREATE OR REPLACE TRIGGER %[1]s
+    BEFORE UPDATE OR INSERT
+    ON %[2]s
+    FOR EACH ROW
+    EXECUTE PROCEDURE %[3]s();`,
+		pq.QuoteIdentifier(triggerName(o)),
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(triggerFnName(o)))
+
+	_, err = conn.ExecContext(ctx, trigger)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

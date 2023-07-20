@@ -106,3 +106,72 @@ func TestAddColumn(t *testing.T) {
 		},
 	}})
 }
+
+func TestAddColumnWithUpSql(t *testing.T) {
+	t.Parallel()
+
+	ptr := func(s string) *string { return &s }
+
+	ExecuteTests(t, TestCases{{
+		name: "add column",
+		migrations: []migrations.Migration{
+			{
+				Name: "01_add_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "products",
+						Columns: []migrations.Column{
+							{
+								Name:       "id",
+								Type:       "serial",
+								PrimaryKey: true,
+							},
+							{
+								Name:   "name",
+								Type:   "varchar(255)",
+								Unique: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "products",
+						Up:    ptr("UPPER(name)"),
+						Column: migrations.Column{
+							Name:     "description",
+							Type:     "varchar(255)",
+							Nullable: true,
+						},
+					},
+				},
+			},
+		},
+		afterStart: func(t *testing.T, db *sql.DB) {
+			// inserting via both the old and the new views works
+			MustInsert(t, db, "public", "01_add_table", "products", map[string]string{
+				"name": "apple",
+			})
+			MustInsert(t, db, "public", "02_add_column", "products", map[string]string{
+				"name":        "banana",
+				"description": "a yellow banana",
+			})
+
+			res := MustSelect(t, db, "public", "02_add_column", "products")
+			assert.Equal(t, []map[string]any{
+				// the description column has been populated for the product inserted into the old view.
+				{"id": 1, "name": "apple", "description": "APPLE"},
+				// the description column for the product inserted into the new view is as inserted.
+				{"id": 2, "name": "banana", "description": "a yellow banana"},
+			}, res)
+		},
+		afterRollback: func(t *testing.T, db *sql.DB) {
+			// TODO check that the trigger created by the start operation has been removed
+		},
+		afterComplete: func(t *testing.T, db *sql.DB) {
+		},
+	}})
+}

@@ -163,6 +163,10 @@ func (s *State) Close() error {
 	return s.pgConn.Close()
 }
 
+func (s *State) Schema() string {
+	return s.schema
+}
+
 // IsActiveMigrationPeriod returns true if there is an active migration
 func (s *State) IsActiveMigrationPeriod(ctx context.Context, schema string) (bool, error) {
 	var isActive bool
