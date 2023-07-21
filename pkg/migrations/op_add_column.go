@@ -56,7 +56,34 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
 		pq.QuoteIdentifier(tempName),
 		pq.QuoteIdentifier(o.Column.Name),
 	))
-	return err
+	if err != nil {
+		return err
+	}
+
+	if !o.Column.Nullable && o.Column.Default == nil {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name))))
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Column.Name)))
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name))))
+		if err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
