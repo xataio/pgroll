@@ -187,3 +187,63 @@ func TestAddColumnWithUpSql(t *testing.T) {
 		},
 	}})
 }
+
+func TestAddNotNullColumnWithNoDefault(t *testing.T) {
+	t.Parallel()
+
+	ptr := func(s string) *string { return &s }
+
+	ExecuteTests(t, TestCases{{
+		name: "add column",
+		migrations: []migrations.Migration{
+			{
+				Name: "01_add_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "products",
+						Columns: []migrations.Column{
+							{
+								Name:       "id",
+								Type:       "serial",
+								PrimaryKey: true,
+							},
+							{
+								Name:   "name",
+								Type:   "varchar(255)",
+								Unique: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "products",
+						Up:    ptr("UPPER(name)"),
+						Column: migrations.Column{
+							Name:     "description",
+							Type:     "varchar(255)",
+							Nullable: false,
+						},
+					},
+				},
+			},
+		},
+		afterStart: func(t *testing.T, db *sql.DB) {
+			// Inserting a null description through the old view works (due to `up` sql populating the column).
+			MustInsert(t, db, "public", "01_add_table", "products", map[string]string{
+				"name": "apple",
+			})
+			// Inserting a null description through the new view fails.
+			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
+				"name": "banana",
+			})
+		},
+		afterRollback: func(t *testing.T, db *sql.DB) {
+		},
+		afterComplete: func(t *testing.T, db *sql.DB) {
+		},
+	}})
+}

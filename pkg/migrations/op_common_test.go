@@ -346,6 +346,18 @@ func columnExists(t *testing.T, db *sql.DB, schema, table, column string) bool {
 }
 
 func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	if err := insert(t, db, schema, version, table, record); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func MustNotInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	if err := insert(t, db, schema, version, table, record); err == nil {
+		t.Fatal("Expected INSERT to fail")
+	}
+}
+
+func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) error {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
@@ -374,9 +386,7 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	stmt := fmt.Sprintf("INSERT INTO %s.%s %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
-	if err != nil {
-		t.Fatal(err)
-	}
+	return err
 }
 
 func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]any {

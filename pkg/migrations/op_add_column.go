@@ -26,6 +26,12 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 		return fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
+	if !o.Column.Nullable && o.Column.Default == nil {
+		if err := addNotNullConstraint(ctx, conn, o); err != nil {
+			return fmt.Errorf("failed to add check constraint: %w", err)
+		}
+	}
+
 	if o.Up != nil {
 		if err := createTrigger(ctx, conn, o, schemaName, stateSchema, s); err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
@@ -78,10 +84,6 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnAlreadyExistsError{Name: o.Column.Name, Table: o.Table}
 	}
 
-	if !o.Column.Nullable && o.Column.Default == nil {
-		return errors.New("adding non-nullable columns without a default is not supported")
-	}
-
 	if o.Column.PrimaryKey {
 		return errors.New("adding primary key columns is not supported")
 	}
@@ -90,11 +92,31 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 }
 
 func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table) error {
+	// don't add non-nullable columns with no default directly
+	// they are handled by:
+	// - adding the column as nullable
+	// - adding a NOT VALID check constraint on the column
+	// - validating the constraint and converting the column to not null
+	//   on migration completion
+	// This is to avoid unnecessary exclusive table locks.
+	if !o.Column.Nullable && o.Column.Default == nil {
+		o.Column.Nullable = true
+	}
+
 	o.Column.Name = TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
 		ColumnToSQL(o.Column),
+	))
+	return err
+}
+
+func addNotNullConstraint(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s IS NOT NULL) NOT VALID",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name)),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
 	))
 	return err
 }
@@ -175,6 +197,10 @@ func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name))))
 
 	return err
+}
+
+func NotNullConstraintName(columnName string) string {
+	return "_pgroll_add_column_check_" + columnName
 }
 
 func TriggerFunctionName(tableName, columnName string) string {
