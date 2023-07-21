@@ -60,6 +60,12 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
 		return err
 	}
 
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name))))
+	if err != nil {
+		return err
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 			pq.QuoteIdentifier(o.Table),

@@ -184,6 +184,14 @@ func TestAddColumnWithUpSql(t *testing.T) {
 				{"id": 1, "name": "apple", "description": "APPLE"},
 				{"id": 2, "name": "banana", "description": "BANANA"},
 			}, res)
+
+			// The trigger function has been dropped.
+			triggerFnName := migrations.TriggerFunctionName("products", "description")
+			FunctionMustNotExist(t, db, "public", triggerFnName)
+
+			// The trigger has been dropped.
+			triggerName := migrations.TriggerName("products", "description")
+			TriggerMustNotExist(t, db, "public", "products", triggerName)
 		},
 	}})
 }
