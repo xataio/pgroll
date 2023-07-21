@@ -242,6 +242,9 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 			})
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
+			// the check constraint has been dropped.
+			constraintname := migrations.NotNullConstraintName("description")
+			ConstraintMustNotExist(t, db, "public", "products", constraintname)
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
 		},

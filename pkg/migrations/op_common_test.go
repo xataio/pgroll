@@ -233,6 +233,32 @@ func TriggerMustExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
 	}
 }
 
+func ConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if constraintExists(t, db, schema, table, constraint) {
+		t.Fatalf("Expected constraint to not exist")
+	}
+}
+
+func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_constraint
+      WHERE conrelid = $1::regclass
+      AND conname = $2
+    )`,
+		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
 func triggerExists(t *testing.T, db *sql.DB, schema, table, trigger string) bool {
 	t.Helper()
 
