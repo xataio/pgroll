@@ -27,7 +27,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 	}
 
 	if !o.Column.Nullable && o.Column.Default == nil {
-		if err := addCheckConstraint(ctx, conn, o); err != nil {
+		if err := addNotNullConstraint(ctx, conn, o); err != nil {
 			return fmt.Errorf("failed to add check constraint: %w", err)
 		}
 	}
@@ -112,10 +112,10 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 	return err
 }
 
-func addCheckConstraint(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
+func addNotNullConstraint(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s IS NOT NULL) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CheckConstraintName(o.Column.Name)),
+		pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name)),
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
 	))
 	return err
@@ -199,7 +199,7 @@ func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 	return err
 }
 
-func CheckConstraintName(columnName string) string {
+func NotNullConstraintName(columnName string) string {
 	return "_pgroll_add_column_check_" + columnName
 }
 
