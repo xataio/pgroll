@@ -92,6 +92,19 @@ func (m *Roll) Complete(ctx context.Context) error {
 		}
 	}
 
+	// recreate views (this is needed when a raw SQL operation is used,
+	// as the view is not created by the start operation)
+	newSchema, err := m.state.ReadVersionSchema(ctx, m.schema, migration.Name)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve resulting schema: %w", err)
+	}
+	for name, table := range newSchema.Tables {
+		err = m.createView(ctx, migration.Name, name, table)
+		if err != nil {
+			return fmt.Errorf("unable to create view: %w", err)
+		}
+	}
+
 	// mark as completed
 	err = m.state.Complete(ctx, m.schema, migration.Name)
 	if err != nil {
