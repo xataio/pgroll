@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"pg-roll/pkg/schema"
 	"pg-roll/pkg/state"
 
 	"github.com/spf13/cobra"
 )
 
 type statusLine struct {
-	Schema  string
-	Version string
-	Status  string
+	Schema     string
+	Version    string
+	Status     string
+	SchemaJSON *schema.Schema
 }
 
 var statusCmd = &cobra.Command{
@@ -56,6 +58,11 @@ func statusForSchema(ctx context.Context, state *state.State, schema string) (*s
 		return nil, err
 	}
 
+	jsonSchema, err := state.ReadCurrentSchema(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+
 	var status string
 	if *latestVersion == "" {
 		status = "No migrations"
@@ -66,8 +73,9 @@ func statusForSchema(ctx context.Context, state *state.State, schema string) (*s
 	}
 
 	return &statusLine{
-		Schema:  schema,
-		Version: *latestVersion,
-		Status:  status,
+		Schema:     schema,
+		Version:    *latestVersion,
+		Status:     status,
+		SchemaJSON: jsonSchema,
 	}, nil
 }

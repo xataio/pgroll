@@ -1,6 +1,11 @@
 package schema
 
-import "fmt"
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
+)
 
 // XXX we create a view of the schema with the minimum required for us to
 // know how to execute migrations and build views for the new schema version.
@@ -97,4 +102,21 @@ func (t *Table) AddColumn(name string, c Column) {
 	}
 
 	t.Columns[name] = c
+}
+
+// Make the Schema struct implement the driver.Valuer interface. This method
+// simply returns the JSON-encoded representation of the struct.
+func (s Schema) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+// Make the Schema struct implement the sql.Scanner interface. This method
+// simply decodes a JSON-encoded value into the struct fields.
+func (s *Schema) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &s)
 }
