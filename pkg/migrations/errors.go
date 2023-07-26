@@ -2,6 +2,12 @@ package migrations
 
 import "fmt"
 
+type EmptyMigration struct{}
+
+func (e EmptyMigration) Error() string {
+	return "migration is empty"
+}
+
 type TableAlreadyExistsError struct {
 	Name string
 }

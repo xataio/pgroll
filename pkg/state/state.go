@@ -132,6 +132,32 @@ BEGIN
 	RETURN tables;
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION %[1]s.raw_migration() RETURNS event_trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+	-- We understand any DDL command during active migration period is done by pg-roll
+	IF %[1]s.is_active_migration_period(current_schema()) THEN
+		RETURN;
+	END IF;
+
+	-- Someone did a schema change without pg-roll, include it in the history
+	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
+	VALUES (
+		current_schema(),
+		format('sql_%%s', now()::date),
+		json_build_object('sql', json_build_object('up', current_query())),
+		%[1]s.read_schema(current_schema()),
+		true,
+		%[1]s.latest_version(current_schema())
+	);
+END;
+$$;
+
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
+CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
+   EXECUTE FUNCTION %[1]s.raw_migration();
 `
 
 type State struct {

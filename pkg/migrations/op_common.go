@@ -14,6 +14,7 @@ const (
 	OpNameCreateTable OpName = "create_table"
 	OpNameRenameTable OpName = "rename_table"
 	OpNameAddColumn   OpName = "add_column"
+	OpRawSQLName      OpName = "sql"
 )
 
 func TemporaryName(name string) string {
@@ -78,6 +79,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameAddColumn:
 			item = &OpAddColumn{}
 
+		case OpRawSQLName:
+			item = &OpRawSQL{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -118,6 +122,9 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 
 		case *OpAddColumn:
 			opName = OpNameAddColumn
+
+		case *OpRawSQL:
+			opName = OpRawSQLName
 
 		default:
 			panic(fmt.Errorf("unknown operation for %T", op))
