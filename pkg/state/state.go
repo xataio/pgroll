@@ -14,6 +14,9 @@ import (
 )
 
 const sqlInit = `
+-- Disable raw sql migration handler
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
+
 CREATE SCHEMA IF NOT EXISTS %[1]s;
 
 CREATE TABLE IF NOT EXISTS %[1]s.migrations (
@@ -146,7 +149,7 @@ BEGIN
 	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
 	VALUES (
 		current_schema(),
-		format('sql_%%s', now()::date),
+		format('sql_%%s', substr(md5(random()::text), 0, 15)),
 		json_build_object('sql', json_build_object('up', current_query())),
 		%[1]s.read_schema(current_schema()),
 		true,
@@ -155,7 +158,6 @@ BEGIN
 END;
 $$;
 
-DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
 CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
    EXECUTE FUNCTION %[1]s.raw_migration();
 `
