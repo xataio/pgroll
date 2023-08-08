@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 
@@ -165,9 +166,11 @@ func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName
 
 		decls := ""
 		for _, c := range table.Columns {
-			decls += fmt.Sprintf("%[1]s %[2]s.%[1]s%%TYPE := NEW.%[1]s;\n",
-				pq.QuoteIdentifier(c.Name),
-				pq.QuoteIdentifier(table.Name))
+			if !isTemporaryColumnName(c.Name) {
+				decls += fmt.Sprintf("%[1]s %[2]s.%[1]s%%TYPE := NEW.%[1]s;\n",
+					pq.QuoteIdentifier(c.Name),
+					pq.QuoteIdentifier(table.Name))
+			}
 		}
 		return decls
 	}
@@ -230,6 +233,10 @@ func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 		pq.QuoteIdentifier(TemporaryName(o.Column.Name))))
 
 	return err
+}
+
+func isTemporaryColumnName(columnName string) bool {
+	return strings.HasPrefix(columnName, "_pgroll_new_")
 }
 
 func NotNullConstraintName(columnName string) string {
