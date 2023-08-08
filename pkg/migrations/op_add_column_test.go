@@ -140,6 +140,15 @@ func TestAddColumnWithUpSql(t *testing.T) {
 				Operations: migrations.Operations{
 					&migrations.OpAddColumn{
 						Table: "products",
+						Column: migrations.Column{
+							Name:     "stock",
+							Type:     "int",
+							Nullable: true,
+							Default:  ptr("0"),
+						},
+					},
+					&migrations.OpAddColumn{
+						Table: "products",
 						Up:    ptr("UPPER(name)"),
 						Column: migrations.Column{
 							Name:     "description",
@@ -163,9 +172,9 @@ func TestAddColumnWithUpSql(t *testing.T) {
 			res := MustSelect(t, db, "public", "02_add_column", "products")
 			assert.Equal(t, []map[string]any{
 				// the description column has been populated for the product inserted into the old view.
-				{"id": 1, "name": "apple", "description": "APPLE"},
+				{"id": 1, "name": "apple", "stock": 0, "description": "APPLE"},
 				// the description column for the product inserted into the new view is as inserted.
-				{"id": 2, "name": "banana", "description": "a yellow banana"},
+				{"id": 2, "name": "banana", "stock": 0, "description": "a yellow banana"},
 			}, res)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
@@ -181,8 +190,8 @@ func TestAddColumnWithUpSql(t *testing.T) {
 			// after rollback + restart + complete, all 'description' values are the backfilled ones.
 			res := MustSelect(t, db, "public", "02_add_column", "products")
 			assert.Equal(t, []map[string]any{
-				{"id": 1, "name": "apple", "description": "APPLE"},
-				{"id": 2, "name": "banana", "description": "BANANA"},
+				{"id": 1, "name": "apple", "stock": 0, "description": "APPLE"},
+				{"id": 2, "name": "banana", "stock": 0, "description": "BANANA"},
 			}, res)
 
 			// The trigger function has been dropped.
@@ -227,6 +236,14 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 			{
 				Name: "02_add_column",
 				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "products",
+						Column: migrations.Column{
+							Name:     "stock",
+							Type:     "int",
+							Nullable: true,
+						},
+					},
 					&migrations.OpAddColumn{
 						Table: "products",
 						Up:    ptr("UPPER(name)"),
