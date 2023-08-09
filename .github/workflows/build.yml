@@ -4,7 +4,6 @@ jobs:
   test:
     name: test (postgres ${{ matrix.pgVersion }})
     runs-on: ubuntu-latest
-    continue-on-error: true
     strategy:
       matrix:
         pgVersion: ['14.8', '15.3']
