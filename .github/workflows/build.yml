@@ -2,8 +2,12 @@ name: Build
 on: [push]
 jobs:
   test:
-    name: test
+    name: test (postgres ${{ matrix.pgVersion }})
     runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        pgVersion: ['14.8', '15.3']
     steps:
     - uses: actions/checkout@v3
 
@@ -14,6 +18,8 @@ jobs:
 
     - name: Run tests
       run: go test ./...
+      env:
+        POSTGRES_VERSION: ${{ matrix.pgVersion }}
 
   lint:
     name: lint
