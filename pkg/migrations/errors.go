@@ -43,3 +43,11 @@ type IndexAlreadyExistsError struct {
 func (e IndexAlreadyExistsError) Error() string {
 	return fmt.Sprintf("index %q already exists", e.Name)
 }
+
+type IndexDoesNotExistError struct {
+	Name string
+}
+
+func (e IndexDoesNotExistError) Error() string {
+	return fmt.Sprintf("index %q does not exist", e.Name)
+}
