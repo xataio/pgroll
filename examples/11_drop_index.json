@@ -1,0 +1,10 @@
+{
+  "name": "11_drop_index",
+  "operations": [
+    {
+      "drop_index": {
+        "name": "_pgroll_idx_fruits_name"
+      }
+    }
+  ]
+}
