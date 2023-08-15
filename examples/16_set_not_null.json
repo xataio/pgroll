@@ -1,0 +1,12 @@
+{
+  "name": "16_set_not_null",
+  "operations": [
+    {
+      "set_not_null": {
+        "table": "reviews",
+        "column": "review",
+        "up": "product || ' is good'"
+      }
+    }
+  ]
+}

@@ -20,7 +20,8 @@
           },
           {
             "name": "review",
-            "type": "text"
+            "type": "text",
+            "nullable": true
           }
         ]
       }
