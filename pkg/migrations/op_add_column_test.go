@@ -113,7 +113,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 	ptr := func(s string) *string { return &s }
 
 	ExecuteTests(t, TestCases{{
-		name: "add column",
+		name: "add column with up sql",
 		migrations: []migrations.Migration{
 			{
 				Name: "01_add_table",
@@ -202,7 +202,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 	ptr := func(s string) *string { return &s }
 
 	ExecuteTests(t, TestCases{{
-		name: "add column",
+		name: "add not null column with no default",
 		migrations: []migrations.Migration{
 			{
 				Name: "01_add_table",
