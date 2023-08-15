@@ -250,6 +250,13 @@ func ConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint 
 	}
 }
 
+func ConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !constraintExists(t, db, schema, table, constraint) {
+		t.Fatalf("Expected constraint %q to exist", constraint)
+	}
+}
+
 func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	t.Helper()
 	if !indexExists(t, db, schema, table, index) {
