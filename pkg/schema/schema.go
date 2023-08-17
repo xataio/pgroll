@@ -31,6 +31,9 @@ type Table struct {
 
 	// Columns is a map of virtual column name -> column mapping
 	Columns map[string]Column `json:"columns"`
+
+	// Indexes is a map of the indexes defined on the table
+	Indexes map[string]Index `json:"indexes"`
 }
 
 type Column struct {
@@ -45,6 +48,11 @@ type Column struct {
 
 	// Optional comment for the column
 	Comment string `json:"comment"`
+}
+
+type Index struct {
+	// Name is the name of the index in postgres
+	Name string `json:"name"`
 }
 
 func (s *Schema) GetTable(name string) *Table {
