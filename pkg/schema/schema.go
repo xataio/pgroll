@@ -80,6 +80,10 @@ func (s *Schema) RenameTable(from, to string) error {
 	return nil
 }
 
+func (s *Schema) RemoveTable(name string) {
+	delete(s.Tables, name)
+}
+
 func (t *Table) GetColumn(name string) *Column {
 	if t.Columns == nil {
 		return nil
