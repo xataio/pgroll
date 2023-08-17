@@ -35,3 +35,11 @@ type ColumnDoesNotExistError struct {
 func (e ColumnDoesNotExistError) Error() string {
 	return fmt.Sprintf("column %q does not exist on table %q", e.Name, e.Table)
 }
+
+type IndexAlreadyExistsError struct {
+	Name string
+}
+
+func (e IndexAlreadyExistsError) Error() string {
+	return fmt.Sprintf("index %q already exists", e.Name)
+}

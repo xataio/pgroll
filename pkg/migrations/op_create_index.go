@@ -53,6 +53,14 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Index names must be unique across the entire schema.
+	for _, table := range s.Tables {
+		_, ok := table.Indexes[indexName(o)]
+		if ok {
+			return IndexAlreadyExistsError{Name: indexName(o)}
+		}
+	}
+
 	return nil
 }
 
