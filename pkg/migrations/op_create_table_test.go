@@ -9,12 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	postgresImage = "postgres:15.3"
-	viewName      = "users"
-	schema        = "public"
-)
-
 func TestCreateTable(t *testing.T) {
 	t.Parallel()
 

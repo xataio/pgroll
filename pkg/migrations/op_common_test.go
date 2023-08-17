@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -19,6 +20,10 @@ import (
 	"pg-roll/pkg/roll"
 	"pg-roll/pkg/state"
 )
+
+// The version of postgres against which the tests are run
+// if the POSTGRES_VERSION environment variable is not set.
+const defaultPostgresVersion = "15.3"
 
 type TestCase struct {
 	name          string
@@ -102,8 +107,13 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 		WithOccurrence(2).
 		WithStartupTimeout(5 * time.Second)
 
+	pgVersion := os.Getenv("POSTGRES_VERSION")
+	if pgVersion == "" {
+		pgVersion = defaultPostgresVersion
+	}
+
 	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage(postgresImage),
+		testcontainers.WithImage("postgres:"+pgVersion),
 		testcontainers.WithWaitStrategy(waitForLogs),
 	)
 	if err != nil {
