@@ -1,0 +1,13 @@
+{
+  "name": "10_create_index",
+  "operations": [
+    {
+      "create_index": {
+        "table": "fruits",
+        "columns": [
+          "name"
+        ]
+      }
+    }
+  ]
+}

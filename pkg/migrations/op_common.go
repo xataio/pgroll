@@ -16,6 +16,7 @@ const (
 	OpNameDropTable   OpName = "drop_table"
 	OpNameAddColumn   OpName = "add_column"
 	OpNameDropColumn  OpName = "drop_column"
+	OpNameCreateIndex OpName = "create_index"
 )
 
 func TemporaryName(name string) string {
@@ -86,6 +87,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
 
+		case OpNameCreateIndex:
+			item = &OpCreateIndex{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -132,6 +136,9 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 
 		case *OpDropColumn:
 			opName = OpNameDropColumn
+
+		case *OpCreateIndex:
+			opName = OpNameCreateIndex
 
 		default:
 			panic(fmt.Errorf("unknown operation for %T", op))

@@ -250,6 +250,40 @@ func ConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint 
 	}
 }
 
+func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
+	t.Helper()
+	if !indexExists(t, db, schema, table, index) {
+		t.Fatalf("Expected index to exist")
+	}
+}
+
+func IndexMustNotExist(t *testing.T, db *sql.DB, schema, table, index string) {
+	t.Helper()
+	if indexExists(t, db, schema, table, index) {
+		t.Fatalf("Expected index to not exist")
+	}
+}
+
+func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_indexes
+      WHERE schemaname = $1
+      AND tablename = $2
+      AND indexname = $3
+    )`,
+		schema, table, index).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
 func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
 	t.Helper()
 
