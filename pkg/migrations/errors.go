@@ -26,3 +26,12 @@ type ColumnAlreadyExistsError struct {
 func (e ColumnAlreadyExistsError) Error() string {
 	return fmt.Sprintf("column %q already exists in table %q", e.Name, e.Table)
 }
+
+type ColumnDoesNotExistError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnDoesNotExistError) Error() string {
+	return fmt.Sprintf("column %q does not exist on table %q", e.Name, e.Table)
+}

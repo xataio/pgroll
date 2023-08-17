@@ -102,3 +102,7 @@ func (t *Table) AddColumn(name string, c Column) {
 
 	t.Columns[name] = c
 }
+
+func (t *Table) RemoveColumn(column string) {
+	delete(t.Columns, column)
+}
