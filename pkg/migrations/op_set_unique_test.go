@@ -47,6 +47,7 @@ func TestSetColumnsUnique(t *testing.T) {
 				Name: "02_set_unique",
 				Operations: migrations.Operations{
 					&migrations.OpSetUnique{
+						Name:    "reviews_username_product_unique",
 						Table:   "reviews",
 						Columns: []string{"username", "product"},
 					},
@@ -55,8 +56,7 @@ func TestSetColumnsUnique(t *testing.T) {
 		},
 		afterStart: func(t *testing.T, db *sql.DB) {
 			// The unique index has been created on the underlying table.
-			idxName := migrations.IndexName("reviews", []string{"username", "product"})
-			IndexMustExist(t, db, "public", "reviews", idxName)
+			IndexMustExist(t, db, "public", "reviews", "reviews_username_product_unique")
 
 			// Inserting values into the old schema that violate uniqueness should fail.
 			MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
@@ -76,13 +76,11 @@ func TestSetColumnsUnique(t *testing.T) {
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
 			// The unique index has been dropped from the the underlying table.
-			idxName := migrations.IndexName("reviews", []string{"username", "product"})
-			IndexMustNotExist(t, db, "public", "reviews", idxName)
+			IndexMustNotExist(t, db, "public", "reviews", "reviews_username_product_unique")
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
 			// The unique constraint has been created on the underlying table.
-			constraintName := migrations.UniqueConstraintName("reviews", []string{"username", "product"})
-			ConstraintMustExist(t, db, "public", "reviews", constraintName)
+			ConstraintMustExist(t, db, "public", "reviews", "reviews_username_product_unique")
 
 			// Inserting values into the new schema that violate uniqueness should fail.
 			MustInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{

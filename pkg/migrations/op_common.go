@@ -19,6 +19,7 @@ const (
 	OpNameCreateIndex  OpName = "create_index"
 	OpNameDropIndex    OpName = "drop_index"
 	OpNameRenameColumn OpName = "rename_column"
+	OpNameSetUnique    OpName = "set_unique"
 )
 
 func TemporaryName(name string) string {
@@ -98,6 +99,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameDropIndex:
 			item = &OpDropIndex{}
 
+		case OpNameSetUnique:
+			item = &OpSetUnique{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -153,6 +157,9 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 
 		case *OpDropIndex:
 			opName = OpNameDropIndex
+
+		case *OpSetUnique:
+			opName = OpNameSetUnique
 
 		default:
 			panic(fmt.Errorf("unknown operation for %T", op))
