@@ -1,0 +1,21 @@
+{
+  "name": "12_create_employees_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "role",
+            "type": "varchar(255)"
+          }
+        ]
+      }
+    }
+  ]
+}

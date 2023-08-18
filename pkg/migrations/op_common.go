@@ -11,13 +11,14 @@ import (
 type OpName string
 
 const (
-	OpNameCreateTable OpName = "create_table"
-	OpNameRenameTable OpName = "rename_table"
-	OpNameDropTable   OpName = "drop_table"
-	OpNameAddColumn   OpName = "add_column"
-	OpNameDropColumn  OpName = "drop_column"
-	OpNameCreateIndex OpName = "create_index"
-	OpNameDropIndex   OpName = "drop_index"
+	OpNameCreateTable  OpName = "create_table"
+	OpNameRenameTable  OpName = "rename_table"
+	OpNameDropTable    OpName = "drop_table"
+	OpNameAddColumn    OpName = "add_column"
+	OpNameDropColumn   OpName = "drop_column"
+	OpNameCreateIndex  OpName = "create_index"
+	OpNameDropIndex    OpName = "drop_index"
+	OpNameRenameColumn OpName = "rename_column"
 )
 
 func TemporaryName(name string) string {
@@ -88,6 +89,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
 
+		case OpNameRenameColumn:
+			item = &OpRenameColumn{}
+
 		case OpNameCreateIndex:
 			item = &OpCreateIndex{}
 
@@ -140,6 +144,9 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 
 		case *OpDropColumn:
 			opName = OpNameDropColumn
+
+		case *OpRenameColumn:
+			opName = OpNameRenameColumn
 
 		case *OpCreateIndex:
 			opName = OpNameCreateIndex

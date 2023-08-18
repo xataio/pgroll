@@ -114,3 +114,8 @@ func (t *Table) AddColumn(name string, c Column) {
 func (t *Table) RemoveColumn(column string) {
 	delete(t.Columns, column)
 }
+
+func (t *Table) RenameColumn(from, to string) {
+	t.Columns[to] = t.Columns[from]
+	delete(t.Columns, from)
+}
