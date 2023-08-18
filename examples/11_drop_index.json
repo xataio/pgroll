@@ -3,7 +3,7 @@
   "operations": [
     {
       "drop_index": {
-        "name": "_pgroll_idx_fruits_name"
+        "name": "idx_fruits_name"
       }
     }
   ]
