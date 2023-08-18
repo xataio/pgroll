@@ -51,3 +51,9 @@ type IndexDoesNotExistError struct {
 func (e IndexDoesNotExistError) Error() string {
 	return fmt.Sprintf("index %q does not exist", e.Name)
 }
+
+type NameRequiredError struct{}
+
+func (e NameRequiredError) Error() string {
+	return "name is required"
+}

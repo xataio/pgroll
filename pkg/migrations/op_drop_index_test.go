@@ -10,8 +10,6 @@ import (
 func TestDropIndex(t *testing.T) {
 	t.Parallel()
 
-	idxName := migrations.GenerateIndexName("users", []string{"name"})
-
 	ExecuteTests(t, TestCases{{
 		name: "drop index",
 		migrations: []migrations.Migration{
@@ -39,6 +37,7 @@ func TestDropIndex(t *testing.T) {
 				Name: "02_create_index",
 				Operations: migrations.Operations{
 					&migrations.OpCreateIndex{
+						Name:    "idx_users_name",
 						Table:   "users",
 						Columns: []string{"name"},
 					},
@@ -48,21 +47,21 @@ func TestDropIndex(t *testing.T) {
 				Name: "03_drop_index",
 				Operations: migrations.Operations{
 					&migrations.OpDropIndex{
-						Name: idxName,
+						Name: "idx_users_name",
 					},
 				},
 			},
 		},
 		afterStart: func(t *testing.T, db *sql.DB) {
 			// The index has not yet been dropped.
-			IndexMustExist(t, db, "public", "users", idxName)
+			IndexMustExist(t, db, "public", "users", "idx_users_name")
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
 			// Rollback is a no-op.
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
 			// The index has been removed from the underlying table.
-			IndexMustNotExist(t, db, "public", "users", idxName)
+			IndexMustNotExist(t, db, "public", "users", "idx_users_name")
 		},
 	}})
 }
