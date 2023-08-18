@@ -41,8 +41,11 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
+	if o.Name == "" {
+		return NameRequiredError{}
+	}
 
+	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
 	}
