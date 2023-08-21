@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"pg-roll/pkg/schema"
-
 	"github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type TriggerDirection string

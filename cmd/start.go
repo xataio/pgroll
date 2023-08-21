@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/migrations"
 
 	"github.com/spf13/cobra"
 )

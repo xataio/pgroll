@@ -5,9 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
 )
 
 func TestDropColumnWithDownSQL(t *testing.T) {

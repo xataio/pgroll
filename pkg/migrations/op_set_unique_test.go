@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/migrations"
 )
 
 func TestSetColumnsUnique(t *testing.T) {

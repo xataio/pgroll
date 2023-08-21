@@ -5,8 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/migrations"
 )
 
 func TestRenameColumn(t *testing.T) {

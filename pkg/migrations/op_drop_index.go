@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"pg-roll/pkg/schema"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type OpDropIndex struct {

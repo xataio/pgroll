@@ -6,7 +6,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"pg-roll/pkg/state"
+	"github.com/xataio/pg-roll/pkg/state"
 )
 
 type Roll struct {
