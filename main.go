@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"pg-roll/cmd"
+	"github.com/xataio/pg-roll/cmd"
 )
 
 func main() {

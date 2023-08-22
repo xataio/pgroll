@@ -7,10 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/schema"
-
 	"github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 const sqlInit = `
@@ -120,6 +119,14 @@ BEGIN
 						ORDER BY
 							attr.attnum
 					) c
+				),
+				'indexes', (
+				  SELECT json_object_agg(pi.indexrelid::regclass, json_build_object(
+				    'name', pi.indexrelid::regclass
+				  ))
+				  FROM pg_index pi 
+				  INNER JOIN pg_class pgc ON pi.indexrelid = pgc.oid
+				  WHERE pi.indrelid = t.oid::regclass
 				)
 			)) FROM pg_class AS t
 				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid

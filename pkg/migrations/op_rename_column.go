@@ -1,0 +1,55 @@
+package migrations
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/schema"
+)
+
+type OpRenameColumn struct {
+	Table string `json:"table"`
+	From  string `json:"from"`
+	To    string `json:"to"`
+}
+
+var _ Operation = (*OpRenameColumn)(nil)
+
+func (o *OpRenameColumn) Start(ctx context.Context, conn *sql.DB, schemaName string, stateSchema string, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	table.RenameColumn(o.From, o.To)
+	return nil
+}
+
+func (o *OpRenameColumn) Complete(ctx context.Context, conn *sql.DB) error {
+	// rename the column in the underlying table
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(o.From),
+		pq.QuoteIdentifier(o.To)))
+	return err
+}
+
+func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB) error {
+	// no-op
+	return nil
+}
+
+func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
+
+	if table.GetColumn(o.From) == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.From}
+	}
+
+	if table.GetColumn(o.To) != nil {
+		return ColumnAlreadyExistsError{Table: o.Table, Name: o.From}
+	}
+
+	return nil
+}

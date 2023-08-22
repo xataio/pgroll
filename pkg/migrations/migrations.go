@@ -4,9 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"pg-roll/pkg/schema"
-
 	_ "github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type Operation interface {

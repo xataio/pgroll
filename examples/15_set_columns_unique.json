@@ -1,0 +1,15 @@
+{
+  "name": "15_set_columns_unique",
+  "operations": [
+    {
+      "set_unique": {
+        "name": "reviews_username_product_unique",
+        "table": "reviews",
+        "columns": [
+          "username",
+          "product"
+        ]
+      }
+    }
+  ]
+}

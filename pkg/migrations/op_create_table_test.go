@@ -4,15 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/migrations"
 
 	"github.com/stretchr/testify/assert"
-)
-
-const (
-	postgresImage = "postgres:15.3"
-	viewName      = "users"
-	schema        = "public"
 )
 
 func TestCreateTable(t *testing.T) {

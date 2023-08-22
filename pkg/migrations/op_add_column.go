@@ -7,8 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-
-	"pg-roll/pkg/schema"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type OpAddColumn struct {
@@ -33,7 +32,16 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 	}
 
 	if o.Up != nil {
-		if err := createTrigger(ctx, conn, o, schemaName, stateSchema, s); err != nil {
+		err := createTrigger(ctx, conn, s, triggerConfig{
+			Direction:      TriggerDirectionUp,
+			SchemaName:     schemaName,
+			StateSchema:    stateSchema,
+			Table:          o.Table,
+			Column:         o.Column.Name,
+			PhysicalColumn: TemporaryName(o.Column.Name),
+			SQL:            *o.Up,
+		})
+		if err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
 		if err := backFill(ctx, conn, o); err != nil {
@@ -154,72 +162,6 @@ func addNotNullConstraint(ctx context.Context, conn *sql.DB, o *OpAddColumn) err
 	return err
 }
 
-func createTrigger(ctx context.Context, conn *sql.DB, o *OpAddColumn, schemaName, stateSchema string, s *schema.Schema) error {
-	// Generate the SQL declarations for the trigger function
-	// This results in declarations like:
-	//   col1 table.col1%TYPE := NEW.col1;
-	// Without these declarations, users would have to reference
-	// `col1` as `NEW.col1` in their `up` SQL.
-	sqlDeclarations := func(s *schema.Schema) string {
-		table := s.GetTable(o.Table)
-
-		decls := ""
-		for _, c := range table.Columns {
-			decls += fmt.Sprintf("%[1]s %[2]s.%[1]s%%TYPE := NEW.%[1]s;\n",
-				pq.QuoteIdentifier(c.Name),
-				pq.QuoteIdentifier(table.Name))
-		}
-		return decls
-	}
-
-	//nolint:gosec // unavoidable SQL injection warning when running arbitrary SQL
-	triggerFn := fmt.Sprintf(`CREATE OR REPLACE FUNCTION %[1]s() 
-    RETURNS TRIGGER 
-    LANGUAGE PLPGSQL
-    AS $$
-    DECLARE
-      %[4]s
-      latest_schema text;
-      search_path text;
-    BEGIN
-      SELECT %[5]s || '_' || latest_version INTO latest_schema FROM %[6]s.latest_version(%[5]s);
-      SELECT current_setting INTO search_path FROM current_setting('search_path');
-
-      IF search_path <> latest_schema THEN
-        NEW.%[2]s = %[3]s;
-      END IF;
-
-      RETURN NEW;
-    END; $$`,
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name)),
-		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
-		*o.Up,
-		sqlDeclarations(s),
-		pq.QuoteLiteral(schemaName),
-		pq.QuoteIdentifier(stateSchema))
-
-	_, err := conn.ExecContext(ctx, triggerFn)
-	if err != nil {
-		return err
-	}
-
-	trigger := fmt.Sprintf(`CREATE OR REPLACE TRIGGER %[1]s
-    BEFORE UPDATE OR INSERT
-    ON %[2]s
-    FOR EACH ROW
-    EXECUTE PROCEDURE %[3]s();`,
-		pq.QuoteIdentifier(TriggerName(o.Table, o.Column.Name)),
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name)))
-
-	_, err = conn.ExecContext(ctx, trigger)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 	// touch rows without changing them in order to have the trigger fire
 	// and set the value using the `up` SQL.
@@ -234,12 +176,4 @@ func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
 
 func NotNullConstraintName(columnName string) string {
 	return "_pgroll_add_column_check_" + columnName
-}
-
-func TriggerFunctionName(tableName, columnName string) string {
-	return "_pgroll_add_column_" + tableName + "_" + columnName
-}
-
-func TriggerName(tableName, columnName string) string {
-	return TriggerFunctionName(tableName, columnName)
 }

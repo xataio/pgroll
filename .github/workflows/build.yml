@@ -2,18 +2,23 @@ name: Build
 on: [push]
 jobs:
   test:
-    name: test
+    name: test (postgres ${{ matrix.pgVersion }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pgVersion: ['14.8', '15.3']
     steps:
     - uses: actions/checkout@v3
 
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.20.5'
+        go-version: '1.21'
 
     - name: Run tests
       run: go test ./...
+      env:
+        POSTGRES_VERSION: ${{ matrix.pgVersion }}
 
   lint:
     name: lint
@@ -24,7 +29,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.20.5'
+        go-version: '1.21'
         cache: false
 
     - name: golangci-lint

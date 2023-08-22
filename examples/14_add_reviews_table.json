@@ -1,0 +1,29 @@
+{
+  "name": "14_add_reviews_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "reviews",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "username",
+            "type": "text"
+          },
+          {
+            "name": "product",
+            "type": "text"
+          },
+          {
+            "name": "review",
+            "type": "text"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "07_drop_table",
+  "operations": [
+    {
+      "drop_table": {
+        "name": "products"
+      }
+    }
+  ]
+}

@@ -4,21 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 	"time"
-
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
-	"pg-roll/pkg/state"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/state"
 )
 
 const (
-	schema        = "public"
-	postgresImage = "postgres:15.3"
+	schema = "public"
+	// The version of postgres against which the tests are run
+	// if the POSTGRES_VERSION environment variable is not set.
+	defaultPostgresVersion = "15.3"
 )
 
 func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
@@ -191,8 +193,13 @@ func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 		WithOccurrence(2).
 		WithStartupTimeout(5 * time.Second)
 
+	pgVersion := os.Getenv("POSTGRES_VERSION")
+	if pgVersion == "" {
+		pgVersion = defaultPostgresVersion
+	}
+
 	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage(postgresImage),
+		testcontainers.WithImage("postgres:"+pgVersion),
 		testcontainers.WithWaitStrategy(waitForLogs),
 	)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -12,13 +13,16 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/state"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
-
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
-	"pg-roll/pkg/state"
 )
+
+// The version of postgres against which the tests are run
+// if the POSTGRES_VERSION environment variable is not set.
+const defaultPostgresVersion = "15.3"
 
 type TestCase struct {
 	name          string
@@ -102,8 +106,13 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 		WithOccurrence(2).
 		WithStartupTimeout(5 * time.Second)
 
+	pgVersion := os.Getenv("POSTGRES_VERSION")
+	if pgVersion == "" {
+		pgVersion = defaultPostgresVersion
+	}
+
 	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage(postgresImage),
+		testcontainers.WithImage("postgres:"+pgVersion),
 		testcontainers.WithWaitStrategy(waitForLogs),
 	)
 	if err != nil {
@@ -159,42 +168,42 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 func ViewMustExist(t *testing.T, db *sql.DB, schema, version, view string) {
 	t.Helper()
 	if !viewExists(t, db, schema, version, view) {
-		t.Fatalf("Expected view to exist")
+		t.Fatalf("Expected view %q to exist", view)
 	}
 }
 
 func ViewMustNotExist(t *testing.T, db *sql.DB, schema, version, view string) {
 	t.Helper()
 	if viewExists(t, db, schema, version, view) {
-		t.Fatalf("Expected view to not exist")
+		t.Fatalf("Expected view %q to not exist", view)
 	}
 }
 
 func TableMustExist(t *testing.T, db *sql.DB, schema, table string) {
 	t.Helper()
 	if !tableExists(t, db, schema, table) {
-		t.Fatalf("Expected table to exist")
+		t.Fatalf("Expected table %q to exist", table)
 	}
 }
 
 func TableMustNotExist(t *testing.T, db *sql.DB, schema, table string) {
 	t.Helper()
 	if tableExists(t, db, schema, table) {
-		t.Fatalf("Expected table to not exist")
+		t.Fatalf("Expected table %q to not exist", table)
 	}
 }
 
 func ColumnMustExist(t *testing.T, db *sql.DB, schema, table, column string) {
 	t.Helper()
 	if !columnExists(t, db, schema, table, column) {
-		t.Fatalf("Expected column to exist")
+		t.Fatalf("Expected column %q to exist", column)
 	}
 }
 
 func ColumnMustNotExist(t *testing.T, db *sql.DB, schema, table, column string) {
 	t.Helper()
 	if columnExists(t, db, schema, table, column) {
-		t.Fatalf("Expected column to not exist")
+		t.Fatalf("Expected column %q to not exist", column)
 	}
 }
 
@@ -205,39 +214,80 @@ func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n 
 	}
 }
 
-func FunctionMustExist(t *testing.T, db *sql.DB, schema, functionName string) {
+func FunctionMustExist(t *testing.T, db *sql.DB, schema, function string) {
 	t.Helper()
-	if !functionExists(t, db, schema, functionName) {
-		t.Fatalf("Expected function to exist")
+	if !functionExists(t, db, schema, function) {
+		t.Fatalf("Expected function %q to exist", function)
 	}
 }
 
-func FunctionMustNotExist(t *testing.T, db *sql.DB, schema, functionName string) {
+func FunctionMustNotExist(t *testing.T, db *sql.DB, schema, function string) {
 	t.Helper()
-	if functionExists(t, db, schema, functionName) {
-		t.Fatalf("Expected function to not exist")
+	if functionExists(t, db, schema, function) {
+		t.Fatalf("Expected function %q to not exist", function)
 	}
 }
 
 func TriggerMustNotExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
 	t.Helper()
 	if triggerExists(t, db, schema, table, trigger) {
-		t.Fatalf("Expected trigger to not exist")
+		t.Fatalf("Expected trigger %q to not exist", trigger)
 	}
 }
 
 func TriggerMustExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
 	t.Helper()
 	if !triggerExists(t, db, schema, table, trigger) {
-		t.Fatalf("Expected trigger to exist")
+		t.Fatalf("Expected trigger %q to exist", trigger)
 	}
 }
 
 func ConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
 	if constraintExists(t, db, schema, table, constraint) {
-		t.Fatalf("Expected constraint to not exist")
+		t.Fatalf("Expected constraint %q to not exist", constraint)
 	}
+}
+
+func ConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !constraintExists(t, db, schema, table, constraint) {
+		t.Fatalf("Expected constraint %q to exist", constraint)
+	}
+}
+
+func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
+	t.Helper()
+	if !indexExists(t, db, schema, table, index) {
+		t.Fatalf("Expected index %q to exist", index)
+	}
+}
+
+func IndexMustNotExist(t *testing.T, db *sql.DB, schema, table, index string) {
+	t.Helper()
+	if indexExists(t, db, schema, table, index) {
+		t.Fatalf("Expected index %q to not exist", index)
+	}
+}
+
+func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_indexes
+      WHERE schemaname = $1
+      AND tablename = $2
+      AND indexname = $3
+    )`,
+		schema, table, index).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
 }
 
 func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
 
 	"github.com/spf13/cobra"
 )

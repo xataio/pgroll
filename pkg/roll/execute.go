@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/schema"
-
 	"github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 // Start will apply the required changes to enable supporting the new schema version

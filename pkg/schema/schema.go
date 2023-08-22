@@ -36,6 +36,9 @@ type Table struct {
 
 	// Columns is a map of virtual column name -> column mapping
 	Columns map[string]Column `json:"columns"`
+
+	// Indexes is a map of the indexes defined on the table
+	Indexes map[string]Index `json:"indexes"`
 }
 
 type Column struct {
@@ -50,6 +53,11 @@ type Column struct {
 
 	// Optional comment for the column
 	Comment string `json:"comment"`
+}
+
+type Index struct {
+	// Name is the name of the index in postgres
+	Name string `json:"name"`
 }
 
 func (s *Schema) GetTable(name string) *Table {
@@ -85,6 +93,10 @@ func (s *Schema) RenameTable(from, to string) error {
 	return nil
 }
 
+func (s *Schema) RemoveTable(name string) {
+	delete(s.Tables, name)
+}
+
 func (t *Table) GetColumn(name string) *Column {
 	if t.Columns == nil {
 		return nil
@@ -102,6 +114,15 @@ func (t *Table) AddColumn(name string, c Column) {
 	}
 
 	t.Columns[name] = c
+}
+
+func (t *Table) RemoveColumn(column string) {
+	delete(t.Columns, column)
+}
+
+func (t *Table) RenameColumn(from, to string) {
+	t.Columns[to] = t.Columns[from]
+	delete(t.Columns, from)
 }
 
 // Make the Schema struct implement the driver.Valuer interface. This method
