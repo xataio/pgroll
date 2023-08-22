@@ -42,6 +42,14 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 		if err != nil {
 			return fmt.Errorf("unable to execute start operation: %w", err)
 		}
+
+		if iso, ok := op.(migrations.RequiresSchemaRefreshOperation); ok && iso.RequiresSchemaRefresh() {
+			// refresh schema
+			newSchema, err = m.state.ReadSchema(ctx, m.schema)
+			if err != nil {
+				return fmt.Errorf("unable to refresh schema: %w", err)
+			}
+		}
 	}
 
 	// create schema for the new version
@@ -88,19 +96,6 @@ func (m *Roll) Complete(ctx context.Context) error {
 		err := op.Complete(ctx, m.pgConn)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
-		}
-	}
-
-	// recreate views (this is needed when a raw SQL operation is used,
-	// as the view is not created by the start operation)
-	newSchema, err := m.state.ReadVersionSchema(ctx, m.schema, migration.Name)
-	if err != nil {
-		return fmt.Errorf("unable to retrieve resulting schema: %w", err)
-	}
-	for name, table := range newSchema.Tables {
-		err = m.createView(ctx, migration.Name, name, table)
-		if err != nil {
-			return fmt.Errorf("unable to create view: %w", err)
 		}
 	}
 

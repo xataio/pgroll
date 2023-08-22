@@ -259,21 +259,10 @@ func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, er
 	return parent, nil
 }
 
-// ReadCurrentSchema reads & returns the current schema from postgres
-func (s *State) ReadCurrentSchema(ctx context.Context, schemaname string) (*schema.Schema, error) {
+// ReadSchema reads & returns the current schema from postgres
+func ReadSchema(ctx context.Context, conn *sql.DB, stateSchema, schemaname string) (*schema.Schema, error) {
 	var res schema.Schema
-	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %[1]s.read_schema($1)", pq.QuoteIdentifier(s.schema)), schemaname).Scan(&res)
-	if err != nil {
-		return nil, err
-	}
-
-	return &res, nil
-}
-
-// ReadVersionSchema retrieves the resulting schema from the given migration
-func (s *State) ReadVersionSchema(ctx context.Context, schemaname, version string) (*schema.Schema, error) {
-	var res schema.Schema
-	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=$2", pq.QuoteIdentifier(s.schema)), schemaname, version).Scan(&res)
+	err := conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %[1]s.read_schema($1)", pq.QuoteIdentifier(stateSchema)), schemaname).Scan(&res)
 	if err != nil {
 		return nil, err
 	}

@@ -2,9 +2,17 @@ package migrations
 
 import "fmt"
 
-type EmptyMigration struct{}
+type InvalidMigrationError struct {
+	Reason string
+}
 
-func (e EmptyMigration) Error() string {
+func (e InvalidMigrationError) Error() string {
+	return e.Reason
+}
+
+type EmptyMigrationError struct{}
+
+func (e EmptyMigrationError) Error() string {
 	return "migration is empty"
 }
 

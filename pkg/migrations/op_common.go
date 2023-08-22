@@ -136,43 +136,8 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 			buf.WriteByte(',')
 		}
 
-		var opName OpName
-		switch op.(type) {
-		case *OpCreateTable:
-			opName = OpNameCreateTable
-
-		case *OpRenameTable:
-			opName = OpNameRenameTable
-
-		case *OpDropTable:
-			opName = OpNameDropTable
-
-		case *OpAddColumn:
-			opName = OpNameAddColumn
-
-		case *OpDropColumn:
-			opName = OpNameDropColumn
-
-		case *OpRenameColumn:
-			opName = OpNameRenameColumn
-
-		case *OpCreateIndex:
-			opName = OpNameCreateIndex
-
-		case *OpDropIndex:
-			opName = OpNameDropIndex
-
-		case *OpSetUnique:
-			opName = OpNameSetUnique
-		case *OpRawSQL:
-			opName = OpRawSQLName
-
-		default:
-			panic(fmt.Errorf("unknown operation for %T", op))
-		}
-
 		buf.WriteString(`{"`)
-		buf.WriteString(string(opName))
+		buf.WriteString(string(OperationName(op)))
 		buf.WriteString(`":`)
 		if err := enc.Encode(op); err != nil {
 			return nil, fmt.Errorf("unable to encode op [%v]: %w", i, err)
@@ -181,4 +146,41 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 	}
 	buf.WriteByte(']')
 	return buf.Bytes(), nil
+}
+
+func OperationName(op Operation) OpName {
+	switch op.(type) {
+	case *OpCreateTable:
+		return OpNameCreateTable
+
+	case *OpRenameTable:
+		return OpNameRenameTable
+
+	case *OpDropTable:
+		return OpNameDropTable
+
+	case *OpAddColumn:
+		return OpNameAddColumn
+
+	case *OpDropColumn:
+		return OpNameDropColumn
+
+	case *OpRenameColumn:
+		return OpNameRenameColumn
+
+	case *OpCreateIndex:
+		return OpNameCreateIndex
+
+	case *OpDropIndex:
+		return OpNameDropIndex
+
+	case *OpSetUnique:
+		return OpNameSetUnique
+
+	case *OpRawSQL:
+		return OpRawSQLName
+
+	}
+
+	panic(fmt.Errorf("unknown operation for %T", op))
 }

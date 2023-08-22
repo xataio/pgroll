@@ -16,7 +16,10 @@ type OpRawSQL struct {
 
 func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, o.Up)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB) error {
@@ -33,8 +36,18 @@ func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Up == "" {
-		return EmptyMigration{}
+		return EmptyMigrationError{}
 	}
 
 	return nil
+}
+
+// this operation is isolated, cannot be executed with other operations
+func (o *OpRawSQL) IsIsolated() bool {
+	return true
+}
+
+// this operation requires the resulting schema to be refreshed
+func (o *OpRawSQL) RequiresSchemaRefresh() bool {
+	return true
 }
