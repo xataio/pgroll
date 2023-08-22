@@ -13,12 +13,11 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/state"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
-
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
-	"pg-roll/pkg/state"
 )
 
 // The version of postgres against which the tests are run

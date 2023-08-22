@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/migrations"
 )
 
 func TestAddColumn(t *testing.T) {

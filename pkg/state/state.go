@@ -7,10 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/schema"
-
 	"github.com/lib/pq"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 const sqlInit = `

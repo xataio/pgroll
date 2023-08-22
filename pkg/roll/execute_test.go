@@ -8,13 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"pg-roll/pkg/migrations"
-	"pg-roll/pkg/roll"
-	"pg-roll/pkg/state"
-
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
+	"github.com/xataio/pg-roll/pkg/state"
 )
 
 const (

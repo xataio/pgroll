@@ -6,8 +6,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-
-	"pg-roll/pkg/schema"
+	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type OpDropColumn struct {
