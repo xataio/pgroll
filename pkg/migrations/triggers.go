@@ -18,6 +18,8 @@ const (
 
 type triggerConfig struct {
 	Direction      TriggerDirection
+	TestExpr       string
+	ElseExpr       string
 	SchemaName     string
 	StateSchema    string
 	Table          string
@@ -50,6 +52,11 @@ func createTrigger(ctx context.Context, conn *sql.DB, s *schema.Schema, cfg trig
 		cmp = "="
 	}
 
+	testExpr := "TRUE"
+	if cfg.TestExpr != "" {
+		testExpr = cfg.TestExpr
+	}
+
 	//nolint:gosec // unavoidable SQL injection warning when running arbitrary SQL
 	triggerFn := fmt.Sprintf(`CREATE OR REPLACE FUNCTION %[1]s() 
     RETURNS TRIGGER 
@@ -63,8 +70,10 @@ func createTrigger(ctx context.Context, conn *sql.DB, s *schema.Schema, cfg trig
       SELECT %[5]s || '_' || latest_version INTO latest_schema FROM %[6]s.latest_version(%[5]s);
       SELECT current_setting INTO search_path FROM current_setting('search_path');
 
-      IF search_path %[7]s latest_schema THEN
+      IF search_path %[7]s latest_schema AND %[8]s THEN
         NEW.%[2]s = %[3]s;
+      ELSE 
+        %[9]s
       END IF;
 
       RETURN NEW;
@@ -75,7 +84,9 @@ func createTrigger(ctx context.Context, conn *sql.DB, s *schema.Schema, cfg trig
 		sqlDeclarations(s),
 		pq.QuoteLiteral(cfg.SchemaName),
 		pq.QuoteIdentifier(cfg.StateSchema),
-		cmp)
+		cmp,
+		testExpr,
+		cfg.ElseExpr)
 
 	_, err := conn.ExecContext(ctx, triggerFn)
 	if err != nil {
