@@ -13,9 +13,6 @@ import (
 )
 
 const sqlInit = `
--- Disable raw sql migration handler
-DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
-
 CREATE SCHEMA IF NOT EXISTS %[1]s;
 
 CREATE TABLE IF NOT EXISTS %[1]s.migrations (
@@ -143,30 +140,51 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION %[1]s.raw_migration() RETURNS event_trigger
 LANGUAGE plpgsql AS $$
+DECLARE
+	schemaname TEXT;
 BEGIN
-	-- We understand any DDL command during active migration period is done by pg-roll
-	IF %[1]s.is_active_migration_period(current_schema()) THEN
+	-- Ignore migrations done by pg-roll
+	IF (current_setting('pgroll.internal', 't') <> 'TRUE') THEN
+		RETURN;
+	END IF;
+
+	-- Guess the schema from ddl commands, ignore migrations that touch several schemas
+	IF (SELECT COUNT(DISTINCT schema_name) FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
+		RAISE NOTICE 'pg-roll: ignoring migration that touches several schemas';
+		RETURN;
+	END IF;
+
+	SELECT schema_name INTO schemaname FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+
+	IF schemaname IS NULL THEN
+		RAISE NOTICE 'pg-roll: ignoring migration with null schema';
+		RETURN;
+	END IF;
+
+	-- Ignore migrations done during a migration period
+	IF %[1]s.is_active_migration_period(schemaname) THEN
+		RAISE NOTICE 'pg-roll: ignoring migration during active migration period';
 		RETURN;
 	END IF;
 
 	-- Someone did a schema change without pg-roll, include it in the history
 	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
 	VALUES (
-		current_schema(),
+		schemaname,
 		format('sql_%%s', substr(md5(random()::text), 0, 15)),
 		json_build_object('sql', json_build_object('up', current_query())),
-		%[1]s.read_schema(current_schema()),
+		%[1]s.read_schema(schemaname),
 		true,
-		%[1]s.latest_version(current_schema())
+		%[1]s.latest_version(schemaname)
 	);
 END;
 $$;
 
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
 CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
-   EXECUTE FUNCTION %[1]s.raw_migration();
+	EXECUTE FUNCTION %[1]s.raw_migration() ;
 `
 
 type State struct {
@@ -178,6 +196,11 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 	conn, err := sql.Open("postgres", pgURL)
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = conn.ExecContext(ctx, "SET LOCAL pgroll.internal to 'TRUE'")
+	if err != nil {
+		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
 	}
 
 	return &State{
