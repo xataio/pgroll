@@ -57,3 +57,9 @@ type NameRequiredError struct{}
 func (e NameRequiredError) Error() string {
 	return "name is required"
 }
+
+type UpSQLRequiredError struct{}
+
+func (e UpSQLRequiredError) Error() string {
+	return "up SQL is required"
+}
