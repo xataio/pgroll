@@ -53,13 +53,14 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 				}
 
 				// start the last migration
-				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
-					if tt.wantStartErr != nil {
-						if !errors.Is(err, tt.wantStartErr) {
-							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
-						}
-						return
+				err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1])
+				if tt.wantStartErr != nil {
+					if !errors.Is(err, tt.wantStartErr) {
+						t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
 					}
+					return
+				}
+				if err != nil {
 					t.Fatalf("Failed to start migration: %v", err)
 				}
 
