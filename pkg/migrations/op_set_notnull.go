@@ -27,7 +27,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 	}
 
 	// Add an unchecked NOT NULL constraint to the new column.
-	if err := addNotNullConstraint2(ctx, conn, o.Table, o.Column); err != nil {
+	if err := addNotNullConstraint(ctx, conn, o.Table, o.Column, TemporaryName(o.Column)); err != nil {
 		return fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
@@ -184,16 +184,6 @@ func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, col
 		schemaColumnToSQL(column),
 	))
 
-	return err
-}
-
-// TODO: deduplicate this function with the one in op_add_column.go
-func addNotNullConstraint2(ctx context.Context, conn *sql.DB, table, column string) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s IS NOT NULL) NOT VALID",
-		pq.QuoteIdentifier(table),
-		pq.QuoteIdentifier(NotNullConstraintName(column)),
-		pq.QuoteIdentifier(TemporaryName(column)),
-	))
 	return err
 }
 
