@@ -50,7 +50,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 	}
 
 	// Backfill the new column with values from the old column.
-	if err := backFill2(ctx, conn, o); err != nil {
+	if err := backFill(ctx, conn, o.Table, TemporaryName(o.Column)); err != nil {
 		return fmt.Errorf("failed to backfill column: %w", err)
 	}
 
@@ -174,18 +174,6 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 		return UpSQLRequiredError{}
 	}
 	return nil
-}
-
-// TODO: deduplicate this function with the one in op_add_column.go
-func backFill2(ctx context.Context, conn *sql.DB, o *OpSetNotNull) error {
-	// touch rows without changing them in order to have the `up` trigger fire
-	// TODO: this should be done in batches in case of large tables.
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
-		pq.QuoteIdentifier(TemporaryName(o.Column))))
-
-	return err
 }
 
 func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column schema.Column) error {

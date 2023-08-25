@@ -44,7 +44,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 		if err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
-		if err := backFill(ctx, conn, o); err != nil {
+		if err := backFill(ctx, conn, o.Table, TemporaryName(o.Column.Name)); err != nil {
 			return fmt.Errorf("failed to backfill column: %w", err)
 		}
 	}
@@ -162,14 +162,14 @@ func addNotNullConstraint(ctx context.Context, conn *sql.DB, o *OpAddColumn) err
 	return err
 }
 
-func backFill(ctx context.Context, conn *sql.DB, o *OpAddColumn) error {
+func backFill(ctx context.Context, conn *sql.DB, table, column string) error {
 	// touch rows without changing them in order to have the trigger fire
 	// and set the value using the `up` SQL.
 	// TODO: this should be done in batches in case of large tables.
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
-		pq.QuoteIdentifier(TemporaryName(o.Column.Name))))
+		pq.QuoteIdentifier(table),
+		pq.QuoteIdentifier(column),
+		pq.QuoteIdentifier(column)))
 
 	return err
 }
