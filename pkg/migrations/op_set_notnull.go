@@ -135,7 +135,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
-	// Drop the old column
+	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(TemporaryName(o.Column)),
