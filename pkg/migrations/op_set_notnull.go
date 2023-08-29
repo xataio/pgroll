@@ -17,7 +17,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName string, stateSchema string, s *schema.Schema) error {
+func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
@@ -36,7 +36,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
-		SchemaName:     schemaName,
+		SchemaName:     s.Name,
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
@@ -60,7 +60,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,
-		SchemaName:     schemaName,
+		SchemaName:     s.Name,
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
 		StateSchema:    stateSchema,

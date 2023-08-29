@@ -18,7 +18,7 @@ type OpAddColumn struct {
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table); err != nil {
@@ -36,7 +36,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
 			Columns:        s.GetTable(o.Table).Columns,
-			SchemaName:     schemaName,
+			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column.Name),
 			StateSchema:    stateSchema,

@@ -17,13 +17,13 @@ type OpDropColumn struct {
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, schemaName string, stateSchema string, s *schema.Schema) error {
+func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	if o.Down != nil {
 		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
 			Direction:      TriggerDirectionDown,
 			Columns:        s.GetTable(o.Table).Columns,
-			SchemaName:     schemaName,
+			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
 			StateSchema:    stateSchema,
