@@ -517,3 +517,5 @@ func mustSetSearchPath(t *testing.T, db *sql.DB, schema string) {
 		t.Fatal(err)
 	}
 }
+
+func ptr[T any](x T) *T { return &x }
