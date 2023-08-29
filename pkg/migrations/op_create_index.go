@@ -18,7 +18,7 @@ type OpCreateIndex struct {
 
 var _ Operation = (*OpCreateIndex)(nil)
 
-func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, schemaName string, stateSchema string, s *schema.Schema) error {
+func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	// create index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
