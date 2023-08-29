@@ -171,8 +171,13 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	if table.GetColumn(o.Column) == nil {
+	column := table.GetColumn(o.Column)
+	if column == nil {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
+
+	if !column.Nullable {
+		return ColumnIsNotNullableError{Table: o.Table, Name: o.Column}
 	}
 
 	if o.Up == nil {

@@ -36,6 +36,15 @@ func (e ColumnDoesNotExistError) Error() string {
 	return fmt.Sprintf("column %q does not exist on table %q", e.Name, e.Table)
 }
 
+type ColumnIsNotNullableError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnIsNotNullableError) Error() string {
+	return fmt.Sprintf("column %q on table %q is NOT NULL", e.Name, e.Table)
+}
+
 type IndexAlreadyExistsError struct {
 	Name string
 }

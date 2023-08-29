@@ -239,5 +239,51 @@ func TestSetNotNullValidation(t *testing.T) {
 			},
 			wantStartErr: migrations.ColumnDoesNotExistError{Table: "reviews", Name: "doesntexist"},
 		},
+		{
+			name: "column is nullable",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reviews",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:     "product",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:     "review",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Up:     ptr("product || ' is good'"),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsNotNullableError{Table: "reviews", Name: "review"},
+		},
 	})
 }
