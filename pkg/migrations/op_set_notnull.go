@@ -174,7 +174,7 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	if o.Up == nil {
-		return UpSQLRequiredError{}
+		return FieldRequiredError{Name: "up"}
 	}
 	return nil
 }

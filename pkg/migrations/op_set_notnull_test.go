@@ -207,7 +207,7 @@ func TestSetNotNullValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.UpSQLRequiredError{},
+			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
 			name: "table must exist",
