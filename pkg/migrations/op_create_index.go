@@ -41,7 +41,7 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
-		return NameRequiredError{}
+		return FieldRequiredError{Name: "name"}
 	}
 
 	table := s.GetTable(o.Table)

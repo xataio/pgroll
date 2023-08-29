@@ -52,14 +52,10 @@ func (e IndexDoesNotExistError) Error() string {
 	return fmt.Sprintf("index %q does not exist", e.Name)
 }
 
-type NameRequiredError struct{}
-
-func (e NameRequiredError) Error() string {
-	return "name is required"
+type FieldRequiredError struct {
+	Name string
 }
 
-type UpSQLRequiredError struct{}
-
-func (e UpSQLRequiredError) Error() string {
-	return "up SQL is required"
+func (e FieldRequiredError) Error() string {
+	return fmt.Sprintf("field %q is required", e.Name)
 }
