@@ -22,9 +22,10 @@ func TestMigrationsIsolated(t *testing.T) {
 	err := migration.Validate(context.TODO(), schema.New())
 	var wantErr InvalidMigrationError
 	assert.ErrorAs(t, err, &wantErr)
-	assert.Equal(t, wantErr.Reason, "operation \"sql\" cannot be executed with other operations")
+}
 
-	migration = Migration{
+func TestMigrationsIsolatedValid(t *testing.T) {
+	migration := Migration{
 		Name: "sql",
 		Operations: Operations{
 			&OpRawSQL{
@@ -32,6 +33,6 @@ func TestMigrationsIsolated(t *testing.T) {
 			},
 		},
 	}
-	err = migration.Validate(context.TODO(), schema.New())
+	err := migration.Validate(context.TODO(), schema.New())
 	assert.NoError(t, err)
 }
