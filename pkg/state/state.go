@@ -146,7 +146,7 @@ DECLARE
 	schemaname TEXT;
 BEGIN
 	-- Ignore migrations done by pg-roll
-	IF (current_setting('pgroll.internal', 't') <> 'TRUE') THEN
+	IF (current_setting('pgroll.internal', 'TRUE') <> 'TRUE') THEN
 		RETURN;
 	END IF;
 
