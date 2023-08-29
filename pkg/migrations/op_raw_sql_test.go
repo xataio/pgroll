@@ -42,13 +42,10 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// table is dropped after rollback
-				ViewMustNotExist(t, db, "public", "01_create_table", "test_table")
+				TableMustNotExist(t, db, "public", "test_table")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
-				// table can still be accessed after complete
-				ViewMustExist(t, db, "public", "01_create_table", "test_table")
-
-				// inserts work
+				// inserts still work after complete
 				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
