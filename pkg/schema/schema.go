@@ -15,6 +15,8 @@ func New() *Schema {
 }
 
 type Schema struct {
+	// Name is the name of the schema
+	Name string `json:"name"`
 	// Tables is a map of virtual table name -> table mapping
 	Tables map[string]Table `json:"tables"`
 }

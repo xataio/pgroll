@@ -73,6 +73,7 @@ DECLARE
 	tables jsonb;
 BEGIN
 	SELECT json_build_object(
+		'name', schemaname,
 		'tables', (
 			SELECT json_object_agg(t.relname, jsonb_build_object(
 				'name', t.relname,
