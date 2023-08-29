@@ -12,8 +12,6 @@ import (
 func TestAddColumn(t *testing.T) {
 	t.Parallel()
 
-	ptr := func(s string) *string { return &s }
-
 	ExecuteTests(t, TestCases{{
 		name: "add column",
 		migrations: []migrations.Migration{
@@ -110,8 +108,6 @@ func TestAddColumn(t *testing.T) {
 func TestAddColumnWithUpSql(t *testing.T) {
 	t.Parallel()
 
-	ptr := func(s string) *string { return &s }
-
 	ExecuteTests(t, TestCases{{
 		name: "add column with up sql",
 		migrations: []migrations.Migration{
@@ -198,8 +194,6 @@ func TestAddColumnWithUpSql(t *testing.T) {
 
 func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 	t.Parallel()
-
-	ptr := func(s string) *string { return &s }
 
 	ExecuteTests(t, TestCases{{
 		name: "add not null column with no default",

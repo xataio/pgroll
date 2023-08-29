@@ -12,8 +12,6 @@ import (
 func TestDropColumnWithDownSQL(t *testing.T) {
 	t.Parallel()
 
-	ptr := func(s string) *string { return &s }
-
 	ExecuteTests(t, TestCases{{
 		name: "drop column",
 		migrations: []migrations.Migration{

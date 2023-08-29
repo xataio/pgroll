@@ -11,8 +11,6 @@ import (
 func TestSetNotNull(t *testing.T) {
 	t.Parallel()
 
-	ptr := func(s string) *string { return &s }
-
 	ExecuteTests(t, TestCases{{
 		name: "set not null",
 		migrations: []migrations.Migration{
@@ -158,8 +156,6 @@ func TestSetNotNull(t *testing.T) {
 
 func TestSetNotNullValidation(t *testing.T) {
 	t.Parallel()
-
-	ptr := func(s string) *string { return &s }
 
 	createTableMigration := migrations.Migration{
 		Name: "01_add_table",
