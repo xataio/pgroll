@@ -46,7 +46,7 @@ func startCmd() *cobra.Command {
 			}
 
 			viewName := roll.VersionedSchemaName(Schema, version)
-			fmt.Printf("Migration successful!, new version of the schema available under postgres '%s' schema\n", viewName)
+			fmt.Printf("Migration successful! New version of the schema available under postgres '%s' schema\n", viewName)
 			return nil
 		},
 	}
