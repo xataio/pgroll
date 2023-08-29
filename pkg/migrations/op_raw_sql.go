@@ -43,11 +43,7 @@ func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 }
 
 // this operation is isolated, cannot be executed with other operations
-func (o *OpRawSQL) IsIsolated() bool {
-	return true
-}
+func (o *OpRawSQL) IsIsolated() {}
 
 // this operation requires the resulting schema to be refreshed
-func (o *OpRawSQL) RequiresSchemaRefresh() bool {
-	return true
-}
+func (o *OpRawSQL) RequiresSchemaRefresh() {}

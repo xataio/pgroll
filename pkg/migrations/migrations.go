@@ -31,12 +31,12 @@ type Operation interface {
 // IsolatedOperation is an operation that cannot be executed with other operations
 // in the same migration
 type IsolatedOperation interface {
-	IsIsolated() bool
+	IsIsolated()
 }
 
 // RequiresSchemaRefreshOperation is an operation that requires the resulting schema to be refreshed
 type RequiresSchemaRefreshOperation interface {
-	RequiresSchemaRefresh() bool
+	RequiresSchemaRefresh()
 }
 
 type (
@@ -52,7 +52,7 @@ type (
 // returns a descriptive error if the migration is invalid
 func (m *Migration) Validate(ctx context.Context, s *schema.Schema) error {
 	for _, op := range m.Operations {
-		if iso, ok := op.(IsolatedOperation); ok && iso.IsIsolated() {
+		if _, ok := op.(IsolatedOperation); ok {
 			if len(m.Operations) > 1 {
 				return InvalidMigrationError{Reason: fmt.Sprintf("operation %q cannot be executed with other operations", OperationName(op))}
 			}

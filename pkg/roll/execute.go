@@ -43,7 +43,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 			return fmt.Errorf("unable to execute start operation: %w", err)
 		}
 
-		if iso, ok := op.(migrations.RequiresSchemaRefreshOperation); ok && iso.RequiresSchemaRefresh() {
+		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
 			// refresh schema
 			newSchema, err = m.state.ReadSchema(ctx, m.schema)
 			if err != nil {
