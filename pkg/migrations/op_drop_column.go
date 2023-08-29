@@ -19,13 +19,14 @@ var _ Operation = (*OpDropColumn)(nil)
 
 func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, schemaName string, stateSchema string, s *schema.Schema) error {
 	if o.Down != nil {
-		err := createTrigger(ctx, conn, s, triggerConfig{
+		err := createTrigger(ctx, conn, triggerConfig{
+			Name:           TriggerName(o.Table, o.Column),
 			Direction:      TriggerDirectionDown,
+			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     schemaName,
-			StateSchema:    stateSchema,
-			Table:          o.Table,
-			Column:         o.Column,
+			TableName:      o.Table,
 			PhysicalColumn: o.Column,
+			StateSchema:    stateSchema,
 			SQL:            *o.Down,
 		})
 		if err != nil {

@@ -32,16 +32,17 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting NULL values using the `up` SQL.
-	err := createTrigger(ctx, conn, s, triggerConfig{
+	err := createTrigger(ctx, conn, triggerConfig{
+		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
+		Columns:        table.Columns,
 		SchemaName:     schemaName,
-		StateSchema:    stateSchema,
-		Table:          o.Table,
-		Column:         o.Column,
+		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
+		StateSchema:    stateSchema,
 		SQL:            *o.Up,
 		TestExpr:       fmt.Sprintf("NEW.%s IS NULL", pq.QuoteIdentifier(o.Column)),
-		ElseExpr: fmt.Sprintf("NEW.%s = NEW.%s;",
+		ElseExpr: fmt.Sprintf("NEW.%s = NEW.%s",
 			pq.QuoteIdentifier(TemporaryName(o.Column)),
 			pq.QuoteIdentifier(o.Column)),
 	})
@@ -55,13 +56,14 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, schemaName strin
 	}
 
 	// Add a trigger to copy values from the new column to the old.
-	err = createTrigger(ctx, conn, s, triggerConfig{
+	err = createTrigger(ctx, conn, triggerConfig{
+		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 		Direction:      TriggerDirectionDown,
+		Columns:        table.Columns,
 		SchemaName:     schemaName,
-		StateSchema:    stateSchema,
-		Table:          o.Table,
-		Column:         TemporaryName(o.Column),
+		TableName:      o.Table,
 		PhysicalColumn: o.Column,
+		StateSchema:    stateSchema,
 		SQL:            fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column))),
 	})
 	if err != nil {

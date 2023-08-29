@@ -32,13 +32,14 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, schemaName, state
 	}
 
 	if o.Up != nil {
-		err := createTrigger(ctx, conn, s, triggerConfig{
+		err := createTrigger(ctx, conn, triggerConfig{
+			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
+			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     schemaName,
-			StateSchema:    stateSchema,
-			Table:          o.Table,
-			Column:         o.Column.Name,
+			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column.Name),
+			StateSchema:    stateSchema,
 			SQL:            *o.Up,
 		})
 		if err != nil {
