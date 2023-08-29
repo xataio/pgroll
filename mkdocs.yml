@@ -1,0 +1,50 @@
+site_name: pg-roll
+repo_url: https://github.com/xataio/pg-roll
+repo_name: xataio/pg-roll
+copyright: Built with <span class="md-icon"><img height="10px" width="10px" src="/img/love.svg" alt="love"/></span> by <a href="https://xata.io">Xata</a>. Copyright © 2023 Xatabase Inc</a>. All rights reserved.
+edit_uri: edit/main/docs/
+nav:
+  - Home: index.md
+  - Documentation:
+    - Getting started: getting-started.md
+    - Usage: usage.md
+  - Reference:
+    - CLI: cli.md
+    - Migrations: migrations.md
+  - Changelog: CHANGELOG.md
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/xataio/pg-roll
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/xataio
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil 
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - content.action.edit
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+    - content.code.copy
+    - content.code.annotate
+plugins:
+  - search:
+      lang: en
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

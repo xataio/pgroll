@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg3542"
+   sodipodi:docname="agone-Heart.svg"
+   viewBox="0 0 488.4897 435.32057"
+   sodipodi:version="0.32"
+   version="1.0"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:version="0.48.4 r9939"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:guide-bbox="true"
+     pagecolor="#ffffff"
+     inkscape:window-height="1026"
+     inkscape:zoom="1.5270017"
+     inkscape:window-x="1415"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="325.21834"
+     inkscape:cy="255.64221"
+     showguides="true"
+     inkscape:window-y="24"
+     inkscape:window-width="1631"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-maximized="1" />
+  <g
+     id="layer1"
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     transform="translate(-117.97623,-253.64943)">
+    <path
+       style="fill:#c42615;stroke:none"
+       d="m 137.15625,1.9375 c -133.2055748,0.9945991 -253.01204,205.15765 86.1875,421.03125 5.56625,3.95044 11.16422,7.45178 16.78125,10.46875 2.08922,1.27549 4.15948,2.53646 6.28125,3.8125 0.23511,-0.10703 0.48361,-0.20367 0.71875,-0.3125 0.2286,0.10575 0.45893,0.20845 0.6875,0.3125 2.14873,-1.29226 4.25965,-2.58332 6.375,-3.875 5.58714,-3.00616 11.18204,-6.47677 16.71875,-10.40625 C 624.1983,198.12638 479.53398,-14.017525 340.4375,2.875 285.7815,9.5170163 259.63329,39.528091 247.125,65.71875 234.61769,39.526866 208.44086,9.5174556 153.78125,2.875 148.23281,2.2011719 142.69046,1.896178 137.15625,1.9375 z"
+       transform="translate(115.1,251.72)"
+       id="path2361"
+       inkscape:connector-curvature="0" />
+  </g>
+  <metadata
+     id="metadata6">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Heart</dc:title>
+        <dc:date>2009-03-09T15:13:26</dc:date>
+        <dc:description />
+        <dc:source>https://openclipart.org/detail/22052/heart-by-agone</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>agone</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>heart</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>
