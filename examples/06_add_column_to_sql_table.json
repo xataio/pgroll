@@ -1,0 +1,16 @@
+{
+  "name": "06_add_column_to_sql_table",
+  "operations": [
+    {
+      "add_column": {
+        "table": "users",
+        "up": "UPPER(name)",
+        "column": {
+          "name": "description",
+          "type": "varchar(255)",
+          "nullable": true
+        }
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ package roll
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/lib/pq"
 
@@ -29,6 +30,11 @@ func New(ctx context.Context, pgURL, schema string, state *state.State) (*Roll, 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = conn.ExecContext(ctx, "SET LOCAL pgroll.internal to 'TRUE'")
+	if err != nil {
+		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
 	}
 
 	return &Roll{

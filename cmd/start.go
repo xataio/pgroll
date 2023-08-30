@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pg-roll/pkg/roll"
 
 	"github.com/spf13/cobra"
 )
@@ -44,7 +45,8 @@ func startCmd() *cobra.Command {
 				}
 			}
 
-			fmt.Printf("Migration successful!, new version of the schema available under postgres '%s' schema\n", version)
+			viewName := roll.VersionedSchemaName(Schema, version)
+			fmt.Printf("Migration successful! New version of the schema available under postgres '%s' schema\n", viewName)
 			return nil
 		},
 	}

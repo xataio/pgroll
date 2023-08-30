@@ -21,6 +21,7 @@ const (
 	OpNameRenameColumn OpName = "rename_column"
 	OpNameSetUnique    OpName = "set_unique"
 	OpNameSetNotNull   OpName = "set_not_null"
+	OpRawSQLName       OpName = "sql"
 )
 
 func TemporaryName(name string) string {
@@ -106,6 +107,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameSetNotNull:
 			item = &OpSetNotNull{}
 
+		case OpRawSQLName:
+			item = &OpRawSQL{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -136,44 +140,8 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 			buf.WriteByte(',')
 		}
 
-		var opName OpName
-		switch op.(type) {
-		case *OpCreateTable:
-			opName = OpNameCreateTable
-
-		case *OpRenameTable:
-			opName = OpNameRenameTable
-
-		case *OpDropTable:
-			opName = OpNameDropTable
-
-		case *OpAddColumn:
-			opName = OpNameAddColumn
-
-		case *OpDropColumn:
-			opName = OpNameDropColumn
-
-		case *OpRenameColumn:
-			opName = OpNameRenameColumn
-
-		case *OpCreateIndex:
-			opName = OpNameCreateIndex
-
-		case *OpDropIndex:
-			opName = OpNameDropIndex
-
-		case *OpSetUnique:
-			opName = OpNameSetUnique
-
-		case *OpSetNotNull:
-			opName = OpNameSetNotNull
-
-		default:
-			panic(fmt.Errorf("unknown operation for %T", op))
-		}
-
 		buf.WriteString(`{"`)
-		buf.WriteString(string(opName))
+		buf.WriteString(string(OperationName(op)))
 		buf.WriteString(`":`)
 		if err := enc.Encode(op); err != nil {
 			return nil, fmt.Errorf("unable to encode op [%v]: %w", i, err)
@@ -182,4 +150,44 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 	}
 	buf.WriteByte(']')
 	return buf.Bytes(), nil
+}
+
+func OperationName(op Operation) OpName {
+	switch op.(type) {
+	case *OpCreateTable:
+		return OpNameCreateTable
+
+	case *OpRenameTable:
+		return OpNameRenameTable
+
+	case *OpDropTable:
+		return OpNameDropTable
+
+	case *OpAddColumn:
+		return OpNameAddColumn
+
+	case *OpDropColumn:
+		return OpNameDropColumn
+
+	case *OpRenameColumn:
+		return OpNameRenameColumn
+
+	case *OpCreateIndex:
+		return OpNameCreateIndex
+
+	case *OpDropIndex:
+		return OpNameDropIndex
+
+	case *OpSetUnique:
+		return OpNameSetUnique
+
+	case *OpSetNotNull:
+		return OpNameSetNotNull
+
+	case *OpRawSQL:
+		return OpRawSQLName
+
+	}
+
+	panic(fmt.Errorf("unknown operation for %T", op))
 }

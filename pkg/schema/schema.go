@@ -1,6 +1,11 @@
 package schema
 
-import "fmt"
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
+)
 
 // XXX we create a view of the schema with the minimum required for us to
 // know how to execute migrations and build views for the new schema version.
@@ -55,6 +60,11 @@ type Column struct {
 type Index struct {
 	// Name is the name of the index in postgres
 	Name string `json:"name"`
+}
+
+// Replace replaces the contents of the schema with the contents of the given one
+func (s *Schema) Replace(other *Schema) {
+	s.Tables = other.Tables
 }
 
 func (s *Schema) GetTable(name string) *Table {
@@ -120,4 +130,21 @@ func (t *Table) RemoveColumn(column string) {
 func (t *Table) RenameColumn(from, to string) {
 	t.Columns[to] = t.Columns[from]
 	delete(t.Columns, from)
+}
+
+// Make the Schema struct implement the driver.Valuer interface. This method
+// simply returns the JSON-encoded representation of the struct.
+func (s Schema) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+// Make the Schema struct implement the sql.Scanner interface. This method
+// simply decodes a JSON-encoded value into the struct fields.
+func (s *Schema) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &s)
 }
