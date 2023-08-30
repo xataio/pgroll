@@ -152,6 +152,53 @@ func TestBuildFunction(t *testing.T) {
     END; $$
 `,
 		},
+		{
+			name: "down trigger with aliased column",
+			config: triggerConfig{
+				Name:      "triggerName",
+				Direction: TriggerDirectionDown,
+				Columns: map[string]schema.Column{
+					"id":       {Name: "id", Type: "int"},
+					"username": {Name: "username", Type: "text"},
+					"product":  {Name: "product", Type: "text"},
+					"review":   {Name: "review", Type: "text"},
+					"rating":   {Name: "_pgroll_new_rating", Type: "integer"},
+				},
+				SchemaName:     "public",
+				TableName:      "reviews",
+				StateSchema:    "pgroll",
+				PhysicalColumn: "rating",
+				SQL:            `CAST(rating as text)`,
+			},
+			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
+    RETURNS TRIGGER
+    LANGUAGE PLPGSQL
+    AS $$
+    DECLARE
+      "id" "public"."reviews"."id"%TYPE := NEW."id";
+      "product" "public"."reviews"."product"%TYPE := NEW."product";
+      "rating" "public"."reviews"."_pgroll_new_rating"%TYPE := NEW."_pgroll_new_rating";
+      "review" "public"."reviews"."review"%TYPE := NEW."review";
+      "username" "public"."reviews"."username"%TYPE := NEW."username";
+      latest_schema text;
+      search_path text;
+    BEGIN
+      SELECT 'public' || '_' || latest_version
+        INTO latest_schema
+        FROM "pgroll".latest_version('public');
+
+      SELECT current_setting
+        INTO search_path
+        FROM current_setting('search_path');
+
+      IF search_path = latest_schema THEN
+        NEW."rating" = CAST(rating as text);
+      END IF;
+
+      RETURN NEW;
+    END; $$
+`,
+		},
 	}
 
 	for _, tc := range testCases {
