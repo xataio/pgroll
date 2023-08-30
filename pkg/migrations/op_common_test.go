@@ -423,12 +423,16 @@ func columnExists(t *testing.T, db *sql.DB, schema, table, column string) bool {
 }
 
 func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	t.Helper()
+
 	if err := insert(t, db, schema, version, table, record); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func MustNotInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	t.Helper()
+
 	if err := insert(t, db, schema, version, table, record); err == nil {
 		t.Fatal("Expected INSERT to fail")
 	}
