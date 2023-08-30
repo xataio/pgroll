@@ -35,8 +35,9 @@ func TestChangeColumnType(t *testing.T) {
 								Type: "text",
 							},
 							{
-								Name: "rating",
-								Type: "text",
+								Name:    "rating",
+								Type:    "text",
+								Default: ptr("0"),
 							},
 						},
 					},

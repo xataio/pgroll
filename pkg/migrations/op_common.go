@@ -21,6 +21,7 @@ const (
 	OpNameRenameColumn OpName = "rename_column"
 	OpNameSetUnique    OpName = "set_unique"
 	OpNameSetNotNull   OpName = "set_not_null"
+	OpNameChangeType   OpName = "change_type"
 	OpRawSQLName       OpName = "sql"
 )
 
@@ -107,6 +108,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameSetNotNull:
 			item = &OpSetNotNull{}
 
+		case OpNameChangeType:
+			item = &OpChangeType{}
+
 		case OpRawSQLName:
 			item = &OpRawSQL{}
 
@@ -183,6 +187,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpSetNotNull:
 		return OpNameSetNotNull
+
+	case *OpChangeType:
+		return OpNameChangeType
 
 	case *OpRawSQL:
 		return OpRawSQLName
