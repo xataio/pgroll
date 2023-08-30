@@ -2,6 +2,7 @@ package roll
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -40,7 +41,11 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 	for _, op := range migration.Operations {
 		err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema)
 		if err != nil {
-			return fmt.Errorf("unable to execute start operation: %w", err)
+			errRollback := m.Rollback(ctx)
+
+			return errors.Join(
+				fmt.Errorf("unable to execute start operation: %w", err),
+				errRollback)
 		}
 
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
