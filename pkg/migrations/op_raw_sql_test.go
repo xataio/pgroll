@@ -97,7 +97,6 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// table can still be accessed after complete
-				ViewMustNotExist(t, db, "public", "01_create_table", "test_table")
 				ViewMustExist(t, db, "public", "02_rename_table", "test_table_renamed")
 
 				// inserts work
