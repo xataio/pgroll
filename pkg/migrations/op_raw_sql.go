@@ -14,7 +14,7 @@ type OpRawSQL struct {
 	Down string `json:"down,omitempty"`
 }
 
-func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, schemaName, stateSchema string, s *schema.Schema) error {
+func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, o.Up)
 	if err != nil {
 		return err
