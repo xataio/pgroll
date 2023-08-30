@@ -27,8 +27,8 @@ func TestBuildFunction(t *testing.T) {
 				SchemaName:     "public",
 				TableName:      "reviews",
 				StateSchema:    "pgroll",
-				PhysicalColumn: "review",
-				SQL:            `NEW."_pgroll_new_review"`,
+				PhysicalColumn: "_pgroll_new_review",
+				SQL:            "product || 'is good'",
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -51,7 +51,7 @@ func TestBuildFunction(t *testing.T) {
         FROM current_setting('search_path');
 
       IF search_path != latest_schema THEN
-        NEW."review" = NEW."_pgroll_new_review";
+        NEW."_pgroll_new_review" = product || 'is good';
       END IF;
 
       RETURN NEW;
