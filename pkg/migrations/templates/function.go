@@ -7,8 +7,8 @@ const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
     DECLARE
       {{- $schemaName := .SchemaName  }}
       {{- $tableName := .TableName  }}
-      {{ range .Columns }} 
-      {{- .Name | qi }} {{ $schemaName | qi }}.{{ $tableName | qi}}.{{ .Name | qi }}%TYPE := NEW.{{ .Name | qi }};
+      {{ range $name, $col := .Columns }} 
+      {{- $name | qi }} {{ $schemaName | qi }}.{{ $tableName | qi}}.{{ $col.Name | qi }}%TYPE := NEW.{{ $col.Name | qi }};
       {{ end -}}
       latest_schema text;
       search_path text;
