@@ -62,11 +62,6 @@ type Index struct {
 	Name string `json:"name"`
 }
 
-// Replace replaces the contents of the schema with the contents of the given one
-func (s *Schema) Replace(other *Schema) {
-	s.Tables = other.Tables
-}
-
 func (s *Schema) GetTable(name string) *Table {
 	if s.Tables == nil {
 		return nil
