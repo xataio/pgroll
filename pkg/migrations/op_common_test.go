@@ -208,6 +208,13 @@ func ColumnMustNotExist(t *testing.T, db *sql.DB, schema, table, column string) 
 	}
 }
 
+func ColumnMustHaveType(t *testing.T, db *sql.DB, schema, table, column, expectedType string) {
+	t.Helper()
+	if !columnHasType(t, db, schema, table, column, expectedType) {
+		t.Fatalf("Expected column %q to have type %q", column, expectedType)
+	}
+}
+
 func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n int) {
 	t.Helper()
 	if !tableMustHaveColumnCount(t, db, schema, table, n) {
@@ -420,6 +427,25 @@ func columnExists(t *testing.T, db *sql.DB, schema, table, column string) bool {
 	}
 
 	return exists
+}
+
+func columnHasType(t *testing.T, db *sql.DB, schema, table, column, expectedType string) bool {
+	t.Helper()
+
+	var actualType string
+	err := db.QueryRow(`
+    SELECT data_type
+    FROM information_schema.columns
+    WHERE table_schema = $1
+    AND table_name = $2
+    AND column_name = $3
+  `,
+		schema, table, column).Scan(&actualType)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return expectedType == actualType
 }
 
 func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {

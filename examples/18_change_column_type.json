@@ -1,0 +1,14 @@
+{
+  "name": "18_change_column_type",
+  "operations": [
+    {
+      "change_type": {
+        "table": "reviews",
+        "column": "rating",
+        "type": "integer",
+        "up": "CAST(rating AS integer)",
+        "down": "CAST(rating AS text)"
+      }
+    }
+  ]
+}
