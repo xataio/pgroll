@@ -1,0 +1,29 @@
+{
+  "name": "19_create_orders_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "references": {
+              "table": "users",
+              "column": "id"
+            }
+          },
+          {
+            "name": "quantity",
+            "type": "int"
+          }
+        ]
+      }
+    }
+  ]
+}
