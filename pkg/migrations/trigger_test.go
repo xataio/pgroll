@@ -107,6 +107,51 @@ func TestBuildFunction(t *testing.T) {
     END; $$
 `,
 		},
+		{
+			name: "simple down trigger",
+			config: triggerConfig{
+				Name:      "triggerName",
+				Direction: TriggerDirectionDown,
+				Columns: map[string]schema.Column{
+					"id":       {Name: "id", Type: "int"},
+					"username": {Name: "username", Type: "text"},
+					"product":  {Name: "product", Type: "text"},
+					"review":   {Name: "review", Type: "text"},
+				},
+				SchemaName:     "public",
+				TableName:      "reviews",
+				StateSchema:    "pgroll",
+				PhysicalColumn: "review",
+				SQL:            `NEW."_pgroll_new_review"`,
+			},
+			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
+    RETURNS TRIGGER
+    LANGUAGE PLPGSQL
+    AS $$
+    DECLARE
+      "id" "public"."reviews"."id"%TYPE := NEW."id";
+      "product" "public"."reviews"."product"%TYPE := NEW."product";
+      "review" "public"."reviews"."review"%TYPE := NEW."review";
+      "username" "public"."reviews"."username"%TYPE := NEW."username";
+      latest_schema text;
+      search_path text;
+    BEGIN
+      SELECT 'public' || '_' || latest_version
+        INTO latest_schema
+        FROM "pgroll".latest_version('public');
+
+      SELECT current_setting
+        INTO search_path
+        FROM current_setting('search_path');
+
+      IF search_path = latest_schema THEN
+        NEW."review" = NEW."_pgroll_new_review";
+      END IF;
+
+      RETURN NEW;
+    END; $$
+`,
+		},
 	}
 
 	for _, tc := range testCases {
