@@ -82,3 +82,20 @@ type FieldRequiredError struct {
 func (e FieldRequiredError) Error() string {
 	return fmt.Sprintf("field %q is required", e.Name)
 }
+
+type ColumnReferenceError struct {
+	Table  string
+	Column string
+	Err    error
+}
+
+func (e ColumnReferenceError) Unwrap() error {
+	return e.Err
+}
+
+func (e ColumnReferenceError) Error() string {
+	return fmt.Sprintf("column reference to column %q in table %q is invalid: %s",
+		e.Column,
+		e.Table,
+		e.Err.Error())
+}
