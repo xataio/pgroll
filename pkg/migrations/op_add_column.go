@@ -130,6 +130,10 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return errors.New("adding primary key columns is not supported")
 	}
 
+	if o.Column.References != nil {
+		return errors.New("adding foreign key columns is not supported")
+	}
+
 	return nil
 }
 

@@ -17,12 +17,18 @@ type OpCreateTable struct {
 }
 
 type Column struct {
-	Name       string  `json:"name"`
-	Type       string  `json:"type"`
-	Nullable   bool    `json:"nullable"`
-	Unique     bool    `json:"unique"`
-	PrimaryKey bool    `json:"pk"`
-	Default    *string `json:"default"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	Nullable   bool             `json:"nullable"`
+	Unique     bool             `json:"unique"`
+	PrimaryKey bool             `json:"pk"`
+	Default    *string          `json:"default"`
+	References *ColumnReference `json:"references"`
+}
+
+type ColumnReference struct {
+	Table  string `json:"table"`
+	Column string `json:"column"`
 }
 
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
@@ -70,6 +76,30 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	if table != nil {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
+
+	for _, col := range o.Columns {
+		if col.References != nil {
+			table := s.GetTable(col.References.Table)
+			if table == nil {
+				return ColumnReferenceError{
+					Table:  o.Name,
+					Column: col.Name,
+					Err:    TableDoesNotExistError{Name: col.References.Table},
+				}
+			}
+			if _, ok := table.Columns[col.References.Column]; !ok {
+				return ColumnReferenceError{
+					Table:  o.Name,
+					Column: col.Name,
+					Err: ColumnDoesNotExistError{
+						Table: col.References.Table,
+						Name:  col.References.Column,
+					},
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -99,5 +129,18 @@ func ColumnToSQL(col Column) string {
 	if col.Default != nil {
 		sql += fmt.Sprintf(" DEFAULT %s", pq.QuoteLiteral(*col.Default))
 	}
+	if col.References != nil {
+		tableRef := col.References.Table
+		columnRef := col.References.Column
+
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s)",
+			pq.QuoteIdentifier(ForeignKeyConstraintName(col.Name, tableRef, columnRef)),
+			pq.QuoteIdentifier(tableRef),
+			pq.QuoteIdentifier(columnRef))
+	}
 	return sql
+}
+
+func ForeignKeyConstraintName(columnName, tableRef, columnRef string) string {
+	return "_pgroll_fk_" + columnName + "_" + tableRef + "_" + columnRef
 }
