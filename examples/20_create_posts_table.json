@@ -1,0 +1,26 @@
+{
+  "name": "20_create_posts_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ]
+      }
+    }
+  ]
+}
