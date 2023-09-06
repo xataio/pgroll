@@ -96,9 +96,21 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
 		if err != nil {
 			return err
 		}
-
 	}
-	return nil
+
+	// Rename any foreign key constraint to use the final (non-temporary) column name.
+	if o.Column.References != nil {
+		tableRef := o.Column.References.Table
+		columnRef := o.Column.References.Column
+
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(ForeignKeyConstraintName(tempName, tableRef, columnRef)),
+			pq.QuoteIdentifier(ForeignKeyConstraintName(o.Column.Name, tableRef, columnRef)),
+		))
+	}
+
+	return err
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
@@ -128,10 +140,6 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	if o.Column.PrimaryKey {
 		return errors.New("adding primary key columns is not supported")
-	}
-
-	if o.Column.References != nil {
-		return errors.New("adding foreign key columns is not supported")
 	}
 
 	return nil

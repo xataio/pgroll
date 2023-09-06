@@ -105,6 +105,224 @@ func TestAddColumn(t *testing.T) {
 	}})
 }
 
+func TestAddForeignKeyColumn(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "add nullable foreign key column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "orders",
+							Column: migrations.Column{
+								Name: "user_id",
+								Type: "integer",
+								References: &migrations.ColumnReference{
+									Table:  "users",
+									Column: "id",
+								},
+								Nullable: true,
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint exists on the new table.
+				tempColumnName := migrations.TemporaryName("user_id")
+				constraintName := migrations.ForeignKeyConstraintName(tempColumnName, "users", "id")
+				ConstraintMustExist(t, db, "public", "orders", constraintName)
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+				// The new column has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint exists on the new table, using the final
+				// (non-temporary) name of the new column.
+				constraintName := migrations.ForeignKeyConstraintName("user_id", "users", "id")
+				ConstraintMustExist(t, db, "public", "orders", constraintName)
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "3",
+					"quantity": "300",
+				})
+			},
+		},
+		{
+			name: "add non-nullable foreign key column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "orders",
+							Column: migrations.Column{
+								Name: "user_id",
+								Type: "integer",
+								References: &migrations.ColumnReference{
+									Table:  "users",
+									Column: "id",
+								},
+								Nullable: false,
+							},
+							Up: ptr("1"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint exists on the new table.
+				tempColumnName := migrations.TemporaryName("user_id")
+				constraintName := migrations.ForeignKeyConstraintName(tempColumnName, "users", "id")
+				ConstraintMustExist(t, db, "public", "orders", constraintName)
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+				// The new column has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint exists on the new table, using the final
+				// (non-temporary) name of the new column.
+				constraintName := migrations.ForeignKeyConstraintName("user_id", "users", "id")
+				ConstraintMustExist(t, db, "public", "orders", constraintName)
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+					"user_id":  "3",
+					"quantity": "300",
+				})
+			},
+		},
+	})
+}
+
 func TestAddColumnWithUpSql(t *testing.T) {
 	t.Parallel()
 
