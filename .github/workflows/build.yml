@@ -54,3 +54,40 @@ jobs:
             exit 1;
           fi
         done
+
+  examples:
+    name: examples (postgres ${{ matrix.pgVersion }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pgVersion: ['14.8', '15.3']
+    services:
+      postgres:
+        image: postgres:${{ matrix.pgVersion }}
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        cache: false
+
+    - name: Run example migrations
+      run: |
+        go run . init
+        for file in ./examples/*.json; do
+          if [ -f "$file" ]; then
+            go run . start --complete $file;
+          fi
+        done
