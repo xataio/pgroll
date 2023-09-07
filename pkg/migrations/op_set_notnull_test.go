@@ -234,7 +234,8 @@ func TestSetNotNullValidation(t *testing.T) {
 						&migrations.OpSetNotNull{
 							Table:  "doesntexist",
 							Column: "review",
-							Up:     ptr("product || ' is good'"),
+							Up:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+							Down:   ptr("review"),
 						},
 					},
 				},
@@ -251,7 +252,8 @@ func TestSetNotNullValidation(t *testing.T) {
 						&migrations.OpSetNotNull{
 							Table:  "reviews",
 							Column: "doesntexist",
-							Up:     ptr("product || ' is good'"),
+							Up:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+							Down:   ptr("review"),
 						},
 					},
 				},
@@ -297,7 +299,8 @@ func TestSetNotNullValidation(t *testing.T) {
 						&migrations.OpSetNotNull{
 							Table:  "reviews",
 							Column: "review",
-							Up:     ptr("product || ' is good'"),
+							Up:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+							Down:   ptr("review"),
 						},
 					},
 				},
