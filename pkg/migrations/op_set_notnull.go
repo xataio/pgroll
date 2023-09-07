@@ -183,6 +183,10 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
+
+	if o.Down == nil {
+		return FieldRequiredError{Name: "down"}
+	}
 	return nil
 }
 

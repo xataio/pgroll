@@ -200,11 +200,29 @@ func TestSetNotNullValidation(t *testing.T) {
 						&migrations.OpSetNotNull{
 							Table:  "reviews",
 							Column: "review",
+							Down:   ptr("review"),
 						},
 					},
 				},
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "up"},
+		},
+		{
+			name: "down SQL is mandatory",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Up:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "down"},
 		},
 		{
 			name: "table must exist",
