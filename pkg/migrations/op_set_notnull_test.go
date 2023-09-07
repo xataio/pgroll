@@ -51,6 +51,7 @@ func TestSetNotNull(t *testing.T) {
 						Table:  "reviews",
 						Column: "review",
 						Up:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+						Down:   ptr("review"),
 					},
 				},
 			},
