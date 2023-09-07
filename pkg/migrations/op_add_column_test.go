@@ -478,3 +478,91 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 		},
 	}})
 }
+
+func TestAddColumnValidation(t *testing.T) {
+	t.Parallel()
+
+	addTableMigration := migrations.Migration{
+		Name: "01_add_table",
+		Operations: migrations.Operations{
+			&migrations.OpCreateTable{
+				Name: "users",
+				Columns: []migrations.Column{
+					{
+						Name:       "id",
+						Type:       "serial",
+						PrimaryKey: true,
+					},
+					{
+						Name:   "name",
+						Type:   "varchar(255)",
+						Unique: true,
+					},
+				},
+			},
+		},
+	}
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "table must exist",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "doesntexist",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+								Default:  ptr("0"),
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+		},
+		{
+			name: "column must not exist",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name: "name",
+								Type: "varchar(255)",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "name"},
+		},
+		{
+			name: "up SQL is mandatory when adding a NOT NULL column with no DEFAULT",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "up"},
+		},
+	})
+}
