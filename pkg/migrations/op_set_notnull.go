@@ -68,7 +68,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
 		StateSchema:    stateSchema,
-		SQL:            *o.Down,
+		SQL:            o.downSQL(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create down trigger: %w", err)
@@ -188,6 +188,14 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "down"}
 	}
 	return nil
+}
+
+// Down SQL is either user-specified or defaults to copying the value from the new column to the old.
+func (o *OpSetNotNull) downSQL() string {
+	if o.Down == nil {
+		return fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column)))
+	}
+	return *o.Down
 }
 
 func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column schema.Column) error {
