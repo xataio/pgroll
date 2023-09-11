@@ -184,9 +184,6 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "up"}
 	}
 
-	if o.Down == nil {
-		return FieldRequiredError{Name: "down"}
-	}
 	return nil
 }
 
