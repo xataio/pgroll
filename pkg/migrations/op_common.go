@@ -16,6 +16,7 @@ const (
 	OpNameDropTable          OpName = "drop_table"
 	OpNameAddColumn          OpName = "add_column"
 	OpNameDropColumn         OpName = "drop_column"
+	OpNameAlterColumn        OpName = "alter_column"
 	OpNameCreateIndex        OpName = "create_index"
 	OpNameDropIndex          OpName = "drop_index"
 	OpNameRenameColumn       OpName = "rename_column"
@@ -94,6 +95,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
+
+		case OpNameAlterColumn:
+			item = &OpAlterColumn{}
 
 		case OpNameRenameColumn:
 			item = &OpRenameColumn{}
@@ -180,6 +184,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpDropColumn:
 		return OpNameDropColumn
+
+	case *OpAlterColumn:
+		return OpNameAlterColumn
 
 	case *OpRenameColumn:
 		return OpNameRenameColumn

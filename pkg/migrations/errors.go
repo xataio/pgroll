@@ -99,3 +99,21 @@ func (e ColumnReferenceError) Error() string {
 		e.Table,
 		e.Err.Error())
 }
+
+type NoUpSQLAllowedError struct{}
+
+func (e NoUpSQLAllowedError) Error() string {
+	return "up SQL is not allowed for this operation"
+}
+
+type NoDownSQLAllowedError struct{}
+
+func (e NoDownSQLAllowedError) Error() string {
+	return "down SQL is not allowed for this operation"
+}
+
+type MultipleAlterColumnChangesError struct{}
+
+func (e MultipleAlterColumnChangesError) Error() string {
+	return "alter column operations require exactly one change"
+}
