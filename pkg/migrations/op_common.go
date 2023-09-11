@@ -11,18 +11,19 @@ import (
 type OpName string
 
 const (
-	OpNameCreateTable  OpName = "create_table"
-	OpNameRenameTable  OpName = "rename_table"
-	OpNameDropTable    OpName = "drop_table"
-	OpNameAddColumn    OpName = "add_column"
-	OpNameDropColumn   OpName = "drop_column"
-	OpNameCreateIndex  OpName = "create_index"
-	OpNameDropIndex    OpName = "drop_index"
-	OpNameRenameColumn OpName = "rename_column"
-	OpNameSetUnique    OpName = "set_unique"
-	OpNameSetNotNull   OpName = "set_not_null"
-	OpNameChangeType   OpName = "change_type"
-	OpRawSQLName       OpName = "sql"
+	OpNameCreateTable   OpName = "create_table"
+	OpNameRenameTable   OpName = "rename_table"
+	OpNameDropTable     OpName = "drop_table"
+	OpNameAddColumn     OpName = "add_column"
+	OpNameDropColumn    OpName = "drop_column"
+	OpNameCreateIndex   OpName = "create_index"
+	OpNameDropIndex     OpName = "drop_index"
+	OpNameRenameColumn  OpName = "rename_column"
+	OpNameSetUnique     OpName = "set_unique"
+	OpNameSetNotNull    OpName = "set_not_null"
+	OpNameSetForeignKey OpName = "set_foreign_key"
+	OpNameChangeType    OpName = "change_type"
+	OpRawSQLName        OpName = "sql"
 )
 
 func TemporaryName(name string) string {
@@ -108,6 +109,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameSetNotNull:
 			item = &OpSetNotNull{}
 
+		case OpNameSetForeignKey:
+			item = &OpSetForeignKey{}
+
 		case OpNameChangeType:
 			item = &OpChangeType{}
 
@@ -187,6 +191,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpSetNotNull:
 		return OpNameSetNotNull
+
+	case *OpSetForeignKey:
+		return OpNameSetForeignKey
 
 	case *OpChangeType:
 		return OpNameChangeType

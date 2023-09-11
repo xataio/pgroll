@@ -1,0 +1,17 @@
+{
+  "name": "21_add_foreign_key_constraint",
+  "operations": [
+    {
+      "set_foreign_key": {
+        "table": "posts",
+        "column": "user_id",
+        "references": {
+          "table": "users",
+          "column": "id"
+        },
+        "up": "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+        "down": "user_id"
+      }
+    }
+  ]
+}
