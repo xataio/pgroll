@@ -10,10 +10,10 @@ import (
 )
 
 type OpSetNotNull struct {
-	Table  string  `json:"table"`
-	Column string  `json:"column"`
-	Up     *string `json:"up"`
-	Down   *string `json:"down"`
+	Table  string `json:"table"`
+	Column string `json:"column"`
+	Up     string `json:"up"`
+	Down   string `json:"down"`
 }
 
 var _ Operation = (*OpSetNotNull)(nil)
@@ -41,7 +41,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
-		SQL:            *o.Up,
+		SQL:            o.Up,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create up trigger: %w", err)
@@ -180,7 +180,7 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnIsNotNullableError{Table: o.Table, Name: o.Column}
 	}
 
-	if o.Up == nil {
+	if o.Up == "" {
 		return FieldRequiredError{Name: "up"}
 	}
 
@@ -189,10 +189,10 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 
 // Down SQL is either user-specified or defaults to copying the value from the new column to the old.
 func (o *OpSetNotNull) downSQL() string {
-	if o.Down == nil {
+	if o.Down == "" {
 		return fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column)))
 	}
-	return *o.Down
+	return o.Down
 }
 
 func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column schema.Column) error {
