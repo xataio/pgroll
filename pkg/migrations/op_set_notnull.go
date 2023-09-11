@@ -13,6 +13,7 @@ type OpSetNotNull struct {
 	Table  string  `json:"table"`
 	Column string  `json:"column"`
 	Up     *string `json:"up"`
+	Down   *string `json:"down"`
 }
 
 var _ Operation = (*OpSetNotNull)(nil)
@@ -51,6 +52,13 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		return fmt.Errorf("failed to backfill column: %w", err)
 	}
 
+	// Add the new column to the internal schema representation. This is done
+	// here, before creation of the down trigger, so that the trigger can declare
+	// a variable for the new column.
+	table.AddColumn(o.Column, schema.Column{
+		Name: TemporaryName(o.Column),
+	})
+
 	// Add a trigger to copy values from the new column to the old.
 	err = createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
@@ -60,15 +68,11 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
 		StateSchema:    stateSchema,
-		SQL:            fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column))),
+		SQL:            o.downSQL(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create down trigger: %w", err)
 	}
-
-	table.AddColumn(o.Column, schema.Column{
-		Name: TemporaryName(o.Column),
-	})
 
 	return nil
 }
@@ -179,7 +183,16 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
+
 	return nil
+}
+
+// Down SQL is either user-specified or defaults to copying the value from the new column to the old.
+func (o *OpSetNotNull) downSQL() string {
+	if o.Down == nil {
+		return fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column)))
+	}
+	return *o.Down
 }
 
 func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column schema.Column) error {

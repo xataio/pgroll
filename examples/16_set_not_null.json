@@ -5,7 +5,8 @@
       "set_not_null": {
         "table": "reviews",
         "column": "review",
-        "up": "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"
+        "up": "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+        "down": "review"
       }
     }
   ]
