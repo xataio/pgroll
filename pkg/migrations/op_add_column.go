@@ -138,6 +138,10 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnAlreadyExistsError{Name: o.Column.Name, Table: o.Table}
 	}
 
+	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
+		return FieldRequiredError{Name: "up"}
+	}
+
 	if o.Column.PrimaryKey {
 		return errors.New("adding primary key columns is not supported")
 	}
