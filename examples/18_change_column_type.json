@@ -2,7 +2,7 @@
   "name": "18_change_column_type",
   "operations": [
     {
-      "change_type": {
+      "alter_column": {
         "table": "reviews",
         "column": "rating",
         "type": "integer",
