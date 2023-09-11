@@ -41,10 +41,6 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
 		SQL:            *o.Up,
-		TestExpr:       fmt.Sprintf("NEW.%s IS NULL", pq.QuoteIdentifier(o.Column)),
-		ElseExpr: fmt.Sprintf("NEW.%s = NEW.%s",
-			pq.QuoteIdentifier(TemporaryName(o.Column)),
-			pq.QuoteIdentifier(o.Column)),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create up trigger: %w", err)
