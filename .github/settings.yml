@@ -75,6 +75,8 @@ branches:
       contexts:
       - test (postgres 14.8)
       - test (postgres 15.3)
+      - examples (postgres 14.8)
+      - examples (postgres 15.3)
       - lint
 
     # Required. Require at least one approving review on a pull request, before merging. Set to null to disable.
