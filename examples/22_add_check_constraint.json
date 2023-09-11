@@ -1,0 +1,14 @@
+{
+  "name": "22_add_check_constraint",
+  "operations": [
+    {
+      "set_check_constraint": {
+        "table": "posts",
+        "column": "title",
+        "check": "length(title) > 3",
+        "up": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+        "down": "title"
+      }
+    }
+  ]
+}
