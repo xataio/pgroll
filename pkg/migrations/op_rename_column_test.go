@@ -37,10 +37,10 @@ func TestRenameColumn(t *testing.T) {
 			{
 				Name: "02_rename_column",
 				Operations: migrations.Operations{
-					&migrations.OpRenameColumn{
-						Table: "users",
-						From:  "username",
-						To:    "name",
+					&migrations.OpAlterColumn{
+						Table:  "users",
+						Column: "username",
+						Name:   "name",
 					},
 				},
 			},
