@@ -11,20 +11,23 @@ import (
 type OpName string
 
 const (
-	OpNameCreateTable        OpName = "create_table"
-	OpNameRenameTable        OpName = "rename_table"
-	OpNameDropTable          OpName = "drop_table"
-	OpNameAddColumn          OpName = "add_column"
-	OpNameDropColumn         OpName = "drop_column"
-	OpNameCreateIndex        OpName = "create_index"
-	OpNameDropIndex          OpName = "drop_index"
+	OpNameCreateTable OpName = "create_table"
+	OpNameRenameTable OpName = "rename_table"
+	OpNameDropTable   OpName = "drop_table"
+	OpNameAddColumn   OpName = "add_column"
+	OpNameDropColumn  OpName = "drop_column"
+	OpNameAlterColumn OpName = "alter_column"
+	OpNameCreateIndex OpName = "create_index"
+	OpNameDropIndex   OpName = "drop_index"
+	OpRawSQLName      OpName = "sql"
+
+	// Internal operation types used by `alter_column`
 	OpNameRenameColumn       OpName = "rename_column"
 	OpNameSetUnique          OpName = "set_unique"
 	OpNameSetNotNull         OpName = "set_not_null"
 	OpNameSetForeignKey      OpName = "set_foreign_key"
 	OpNameSetCheckConstraint OpName = "set_check_constraint"
 	OpNameChangeType         OpName = "change_type"
-	OpRawSQLName             OpName = "sql"
 )
 
 func TemporaryName(name string) string {
@@ -95,8 +98,8 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
 
-		case OpNameRenameColumn:
-			item = &OpRenameColumn{}
+		case OpNameAlterColumn:
+			item = &OpAlterColumn{}
 
 		case OpNameCreateIndex:
 			item = &OpCreateIndex{}
@@ -115,9 +118,6 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameSetCheckConstraint:
 			item = &OpSetCheckConstraint{}
-
-		case OpNameChangeType:
-			item = &OpChangeType{}
 
 		case OpRawSQLName:
 			item = &OpRawSQL{}
@@ -181,8 +181,8 @@ func OperationName(op Operation) OpName {
 	case *OpDropColumn:
 		return OpNameDropColumn
 
-	case *OpRenameColumn:
-		return OpNameRenameColumn
+	case *OpAlterColumn:
+		return OpNameAlterColumn
 
 	case *OpCreateIndex:
 		return OpNameCreateIndex
@@ -201,9 +201,6 @@ func OperationName(op Operation) OpName {
 
 	case *OpSetCheckConstraint:
 		return OpNameSetCheckConstraint
-
-	case *OpChangeType:
-		return OpNameChangeType
 
 	case *OpRawSQL:
 		return OpRawSQLName

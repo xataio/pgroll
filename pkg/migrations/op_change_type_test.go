@@ -46,7 +46,7 @@ func TestChangeColumnType(t *testing.T) {
 			{
 				Name: "02_change_type",
 				Operations: migrations.Operations{
-					&migrations.OpChangeType{
+					&migrations.OpAlterColumn{
 						Table:  "reviews",
 						Column: "rating",
 						Type:   "integer",
@@ -184,7 +184,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpChangeType{
+						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "rating",
 							Type:   "integer",
@@ -202,7 +202,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpChangeType{
+						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "rating",
 							Type:   "integer",
@@ -220,7 +220,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpChangeType{
+						&migrations.OpAlterColumn{
 							Table:  "doesntexist",
 							Column: "rating",
 							Type:   "integer",
@@ -239,7 +239,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpChangeType{
+						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "doesntexist",
 							Type:   "integer",
