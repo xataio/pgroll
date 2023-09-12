@@ -41,11 +41,20 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
-	op := o.innerOperation()
-
 	if !o.oneChange() {
 		return MultipleAlterColumnChangesError{}
 	}
+
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
+
+	if table.GetColumn(o.Column) == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
+
+	op := o.innerOperation()
 
 	switch op.(type) {
 	case *OpRenameColumn:

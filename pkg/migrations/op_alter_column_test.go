@@ -49,6 +49,40 @@ func TestAlterColumnValidation(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
+			name: "table must exist",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "01_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "doesntexist",
+							Column: "title",
+							Name:   "renamed_title",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+		},
+		{
+			name: "column must exist",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "01_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "doesntexist",
+							Name:   "renamed_title",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
+		},
+		{
 			name: "column rename: no up SQL allowed",
 			migrations: []migrations.Migration{
 				createTablesMigration,
