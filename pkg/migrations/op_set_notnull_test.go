@@ -48,10 +48,11 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "reviews",
-							Column: "review",
-							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+						&migrations.OpAlterColumn{
+							Table:   "reviews",
+							Column:  "review",
+							NotNull: ptr(true),
+							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
 				},
@@ -189,11 +190,12 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "reviews",
-							Column: "review",
-							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:   "review || ' (from new column)'",
+						&migrations.OpAlterColumn{
+							Table:   "reviews",
+							Column:  "review",
+							NotNull: ptr(true),
+							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:    "review || ' (from new column)'",
 						},
 					},
 				},
@@ -263,10 +265,11 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "reviews",
-							Column: "review",
-							Down:   "review",
+						&migrations.OpAlterColumn{
+							Table:   "reviews",
+							Column:  "review",
+							NotNull: ptr(true),
+							Down:    "review",
 						},
 					},
 				},
@@ -280,11 +283,12 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "doesntexist",
-							Column: "review",
-							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:   "review",
+						&migrations.OpAlterColumn{
+							Table:   "doesntexist",
+							Column:  "review",
+							NotNull: ptr(true),
+							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:    "review",
 						},
 					},
 				},
@@ -298,11 +302,12 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "reviews",
-							Column: "doesntexist",
-							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:   "review",
+						&migrations.OpAlterColumn{
+							Table:   "reviews",
+							Column:  "doesntexist",
+							NotNull: ptr(true),
+							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:    "review",
 						},
 					},
 				},
@@ -345,11 +350,12 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpSetNotNull{
-							Table:  "reviews",
-							Column: "review",
-							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:   "review",
+						&migrations.OpAlterColumn{
+							Table:   "reviews",
+							Column:  "review",
+							NotNull: ptr(true),
+							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:    "review",
 						},
 					},
 				},
