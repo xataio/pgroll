@@ -39,13 +39,6 @@ func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-
-	if table.GetColumn(o.From) == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.From}
-	}
 
 	if table.GetColumn(o.To) != nil {
 		return ColumnAlreadyExistsError{Table: o.Table, Name: o.From}
