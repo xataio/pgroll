@@ -2,7 +2,7 @@
   "name": "21_add_foreign_key_constraint",
   "operations": [
     {
-      "set_foreign_key": {
+      "alter_column": {
         "table": "posts",
         "column": "user_id",
         "references": {

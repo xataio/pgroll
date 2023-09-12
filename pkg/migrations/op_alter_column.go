@@ -8,13 +8,14 @@ import (
 )
 
 type OpAlterColumn struct {
-	Table  string `json:"table"`
-	Column string `json:"column"`
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Check  string `json:"check"`
-	Up     string `json:"up"`
-	Down   string `json:"down"`
+	Table      string           `json:"table"`
+	Column     string           `json:"column"`
+	Name       string           `json:"name"`
+	Type       string           `json:"type"`
+	Check      string           `json:"check"`
+	References *ColumnReference `json:"references"`
+	Up         string           `json:"up"`
+	Down       string           `json:"down"`
 }
 
 var _ Operation = (*OpAlterColumn)(nil)
@@ -82,6 +83,15 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Up:     o.Up,
 			Down:   o.Down,
 		}
+
+	case o.References != nil:
+		return &OpSetForeignKey{
+			Table:      o.Table,
+			Column:     o.Column,
+			References: *o.References,
+			Up:         o.Up,
+			Down:       o.Down,
+		}
 	}
 	return nil
 }
@@ -99,6 +109,9 @@ func (o *OpAlterColumn) oneChange() bool {
 		fieldsSet++
 	}
 	if o.Check != "" {
+		fieldsSet++
+	}
+	if o.References != nil {
 		fieldsSet++
 	}
 

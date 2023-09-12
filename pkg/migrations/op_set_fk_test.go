@@ -54,10 +54,10 @@ func TestSetForeignKey(t *testing.T) {
 			{
 				Name: "02_add_fk_constraint",
 				Operations: migrations.Operations{
-					&migrations.OpSetForeignKey{
+					&migrations.OpAlterColumn{
 						Table:  "posts",
 						Column: "user_id",
-						References: migrations.ColumnReference{
+						References: &migrations.ColumnReference{
 							Table:  "users",
 							Column: "id",
 						},
@@ -219,10 +219,10 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetForeignKey{
+						&migrations.OpAlterColumn{
 							Table:  "doesntexist",
 							Column: "user_id",
-							References: migrations.ColumnReference{
+							References: &migrations.ColumnReference{
 								Table:  "users",
 								Column: "id",
 							},
@@ -241,10 +241,10 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetForeignKey{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "doesntexist",
-							References: migrations.ColumnReference{
+							References: &migrations.ColumnReference{
 								Table:  "users",
 								Column: "id",
 							},
@@ -263,10 +263,10 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetForeignKey{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "user_id",
-							References: migrations.ColumnReference{
+							References: &migrations.ColumnReference{
 								Table:  "doesntexist",
 								Column: "id",
 							},
@@ -289,10 +289,10 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetForeignKey{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "user_id",
-							References: migrations.ColumnReference{
+							References: &migrations.ColumnReference{
 								Table:  "users",
 								Column: "doesntexist",
 							},

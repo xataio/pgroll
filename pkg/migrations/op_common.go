@@ -113,9 +113,6 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameSetNotNull:
 			item = &OpSetNotNull{}
 
-		case OpNameSetForeignKey:
-			item = &OpSetForeignKey{}
-
 		case OpRawSQLName:
 			item = &OpRawSQL{}
 
@@ -192,9 +189,6 @@ func OperationName(op Operation) OpName {
 
 	case *OpSetNotNull:
 		return OpNameSetNotNull
-
-	case *OpSetForeignKey:
-		return OpNameSetForeignKey
 
 	case *OpRawSQL:
 		return OpRawSQLName
