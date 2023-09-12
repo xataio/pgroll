@@ -11,11 +11,12 @@ import (
 )
 
 type OpSetCheckConstraint struct {
-	Table  string `json:"table"`
-	Column string `json:"column"`
-	Check  string `json:"check"`
-	Up     string `json:"up"`
-	Down   string `json:"down"`
+	Table          string `json:"table"`
+	Column         string `json:"column"`
+	ConstraintName string `json:"constraint_name"`
+	Check          string `json:"check"`
+	Up             string `json:"up"`
+	Down           string `json:"down"`
 }
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
@@ -79,12 +80,10 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 }
 
 func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB) error {
-	tempName := TemporaryName(o.Column)
-
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CheckConstraintName(o.Table, tempName))))
+		pq.QuoteIdentifier(o.ConstraintName)))
 	if err != nil {
 		return err
 	}
@@ -120,13 +119,6 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB) error
 		return err
 	}
 
-	// Rename the check constraint to use the final (non-temporary) column name.
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CheckConstraintName(o.Table, tempName)),
-		pq.QuoteIdentifier(CheckConstraintName(o.Table, o.Column)),
-	))
-
 	return err
 }
 
@@ -161,6 +153,10 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 		return FieldRequiredError{Name: "check"}
 	}
 
+	if o.ConstraintName == "" {
+		return FieldRequiredError{Name: "constraint_name"}
+	}
+
 	if o.Up == "" {
 		return FieldRequiredError{Name: "up"}
 	}
@@ -172,14 +168,10 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	return nil
 }
 
-func CheckConstraintName(tableName, columnName string) string {
-	return fmt.Sprintf("_pgroll_check_%s_%s", tableName, columnName)
-}
-
 func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CheckConstraintName(o.Table, TemporaryName(o.Column))),
+		pq.QuoteIdentifier(o.ConstraintName),
 		rewriteCheckExpression(o.Check, o.Column, TemporaryName(o.Column)),
 	))
 
