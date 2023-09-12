@@ -159,16 +159,6 @@ func (o *OpSetForeignKey) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-
-	column := table.GetColumn(o.Column)
-	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-
 	refTable := s.GetTable(o.References.Table)
 	if refTable == nil {
 		return ColumnReferenceError{
