@@ -132,15 +132,6 @@ func (o *OpChangeType) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-
-	if table.GetColumn(o.Column) == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-
 	if o.Up == "" {
 		return FieldRequiredError{Name: "up"}
 	}
