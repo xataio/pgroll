@@ -12,6 +12,7 @@ type OpAlterColumn struct {
 	Column string `json:"column"`
 	Name   string `json:"name"`
 	Type   string `json:"type"`
+	Check  string `json:"check"`
 	Up     string `json:"up"`
 	Down   string `json:"down"`
 }
@@ -72,6 +73,15 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Up:     o.Up,
 			Down:   o.Down,
 		}
+
+	case o.Check != "":
+		return &OpSetCheckConstraint{
+			Table:  o.Table,
+			Column: o.Column,
+			Check:  o.Check,
+			Up:     o.Up,
+			Down:   o.Down,
+		}
 	}
 	return nil
 }
@@ -86,6 +96,9 @@ func (o *OpAlterColumn) oneChange() bool {
 		fieldsSet++
 	}
 	if o.Type != "" {
+		fieldsSet++
+	}
+	if o.Check != "" {
 		fieldsSet++
 	}
 
