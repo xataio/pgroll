@@ -98,18 +98,6 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
 		}
 	}
 
-	// Rename any foreign key constraint to use the final (non-temporary) column name.
-	if o.Column.References != nil {
-		tableRef := o.Column.References.Table
-		columnRef := o.Column.References.Column
-
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(ForeignKeyConstraintName(tempName, tableRef, columnRef)),
-			pq.QuoteIdentifier(ForeignKeyConstraintName(o.Column.Name, tableRef, columnRef)),
-		))
-	}
-
 	return err
 }
 
