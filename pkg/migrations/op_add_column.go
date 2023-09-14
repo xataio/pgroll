@@ -126,6 +126,16 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnAlreadyExistsError{Name: o.Column.Name, Table: o.Table}
 	}
 
+	if o.Column.References != nil {
+		if err := o.Column.References.Validate(s); err != nil {
+			return ColumnReferenceError{
+				Table:  o.Table,
+				Column: o.Column.Name,
+				Err:    err,
+			}
+		}
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
