@@ -10,11 +10,11 @@ import (
 )
 
 type OpSetForeignKey struct {
-	Table      string          `json:"table"`
-	Column     string          `json:"column"`
-	References ColumnReference `json:"references"`
-	Up         string          `json:"up"`
-	Down       string          `json:"down"`
+	Table      string              `json:"table"`
+	Column     string              `json:"column"`
+	References ForeignKeyReference `json:"references"`
+	Up         string              `json:"up"`
+	Down       string              `json:"down"`
 }
 
 var _ Operation = (*OpSetForeignKey)(nil)

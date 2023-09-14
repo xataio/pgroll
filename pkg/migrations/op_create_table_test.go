@@ -109,7 +109,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "user_id",
 									Type: "integer",
-									References: &migrations.ColumnReference{
+									References: &migrations.ForeignKeyReference{
 										Table:  "users",
 										Column: "id",
 									},
@@ -214,7 +214,7 @@ func TestCreateTableValidation(t *testing.T) {
 							{
 								Name: "user_id",
 								Type: "integer",
-								References: &migrations.ColumnReference{
+								References: &migrations.ForeignKeyReference{
 									Table:  "users",
 									Column: "doesntexist",
 								},

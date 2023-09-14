@@ -17,16 +17,17 @@ type OpCreateTable struct {
 }
 
 type Column struct {
-	Name       string           `json:"name"`
-	Type       string           `json:"type"`
-	Nullable   bool             `json:"nullable"`
-	Unique     bool             `json:"unique"`
-	PrimaryKey bool             `json:"pk"`
-	Default    *string          `json:"default"`
-	References *ColumnReference `json:"references"`
+	Name       string               `json:"name"`
+	Type       string               `json:"type"`
+	Nullable   bool                 `json:"nullable"`
+	Unique     bool                 `json:"unique"`
+	PrimaryKey bool                 `json:"pk"`
+	Default    *string              `json:"default"`
+	References *ForeignKeyReference `json:"references"`
 }
 
-type ColumnReference struct {
+type ForeignKeyReference struct {
+	Name   string `json:"name"`
 	Table  string `json:"table"`
 	Column string `json:"column"`
 }

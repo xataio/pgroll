@@ -154,7 +154,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name: "user_id",
 								Type: "integer",
-								References: &migrations.ColumnReference{
+								References: &migrations.ForeignKeyReference{
 									Table:  "users",
 									Column: "id",
 								},
@@ -259,7 +259,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name: "user_id",
 								Type: "integer",
-								References: &migrations.ColumnReference{
+								References: &migrations.ForeignKeyReference{
 									Table:  "users",
 									Column: "id",
 								},
