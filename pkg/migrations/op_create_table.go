@@ -140,7 +140,3 @@ func ColumnToSQL(col Column) string {
 	}
 	return sql
 }
-
-func ForeignKeyConstraintName(columnName, tableRef, columnRef string) string {
-	return "_pgroll_fk_" + columnName + "_" + tableRef + "_" + columnRef
-}
