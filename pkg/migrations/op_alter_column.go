@@ -3,6 +3,7 @@ package migrations
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/xataio/pg-roll/pkg/schema"
 )
@@ -14,6 +15,7 @@ type OpAlterColumn struct {
 	Type       string           `json:"type"`
 	Check      string           `json:"check"`
 	References *ColumnReference `json:"references"`
+	NotNull    *bool            `json:"not_null"`
 	Up         string           `json:"up"`
 	Down       string           `json:"down"`
 }
@@ -45,12 +47,18 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return MultipleAlterColumnChangesError{}
 	}
 
-	if _, ok := op.(*OpRenameColumn); ok {
+	switch op.(type) {
+	case *OpRenameColumn:
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
 		if o.Down != "" {
 			return NoDownSQLAllowedError{}
+		}
+
+	case *OpSetNotNull:
+		if o.NotNull != nil && !*o.NotNull {
+			return fmt.Errorf("removing NOT NULL constraints is not supported")
 		}
 	}
 
@@ -92,6 +100,14 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Up:         o.Up,
 			Down:       o.Down,
 		}
+
+	case o.NotNull != nil:
+		return &OpSetNotNull{
+			Table:  o.Table,
+			Column: o.Column,
+			Up:     o.Up,
+			Down:   o.Down,
+		}
 	}
 	return nil
 }
@@ -112,6 +128,9 @@ func (o *OpAlterColumn) oneChange() bool {
 		fieldsSet++
 	}
 	if o.References != nil {
+		fieldsSet++
+	}
+	if o.NotNull != nil {
 		fieldsSet++
 	}
 
