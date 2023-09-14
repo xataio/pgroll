@@ -9,15 +9,16 @@ import (
 )
 
 type OpAlterColumn struct {
-	Table      string           `json:"table"`
-	Column     string           `json:"column"`
-	Name       string           `json:"name"`
-	Type       string           `json:"type"`
-	Check      string           `json:"check"`
-	References *ColumnReference `json:"references"`
-	NotNull    *bool            `json:"not_null"`
-	Up         string           `json:"up"`
-	Down       string           `json:"down"`
+	Table          string           `json:"table"`
+	Column         string           `json:"column"`
+	Name           string           `json:"name"`
+	Type           string           `json:"type"`
+	ConstraintName string           `json:"constraint_name"`
+	Check          string           `json:"check"`
+	References     *ColumnReference `json:"references"`
+	NotNull        *bool            `json:"not_null"`
+	Up             string           `json:"up"`
+	Down           string           `json:"down"`
 }
 
 var _ Operation = (*OpAlterColumn)(nil)
@@ -96,11 +97,12 @@ func (o *OpAlterColumn) innerOperation() Operation {
 
 	case o.Check != "":
 		return &OpSetCheckConstraint{
-			Table:  o.Table,
-			Column: o.Column,
-			Check:  o.Check,
-			Up:     o.Up,
-			Down:   o.Down,
+			Table:          o.Table,
+			Column:         o.Column,
+			ConstraintName: o.ConstraintName,
+			Check:          o.Check,
+			Up:             o.Up,
+			Down:           o.Down,
 		}
 
 	case o.References != nil:
