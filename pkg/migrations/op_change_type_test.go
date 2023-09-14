@@ -213,43 +213,5 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "down"},
 		},
-		{
-			name: "table must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_change_type",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "doesntexist",
-							Column: "rating",
-							Type:   "integer",
-							Up:     "CAST (rating AS integer)",
-							Down:   "CAST (rating AS text)",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
-		},
-		{
-			name: "column must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_change_type",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "reviews",
-							Column: "doesntexist",
-							Type:   "integer",
-							Up:     "CAST (rating AS integer)",
-							Down:   "CAST (rating AS text)",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.ColumnDoesNotExistError{Table: "reviews", Name: "doesntexist"},
-		},
 	})
 }

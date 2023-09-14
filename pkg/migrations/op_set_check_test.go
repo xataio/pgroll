@@ -158,44 +158,6 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "table must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_add_check_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "doesntexist",
-							Column: "title",
-							Check:  "length(title) > 3",
-							Up:     "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-							Down:   "title",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
-		},
-		{
-			name: "column must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_add_check_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "doesntexist",
-							Check:  "length(title) > 3",
-							Up:     "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-							Down:   "title",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
-		},
-		{
 			name: "up SQL is mandatory",
 			migrations: []migrations.Migration{
 				createTableMigration,

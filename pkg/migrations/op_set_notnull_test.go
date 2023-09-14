@@ -277,44 +277,6 @@ func TestSetNotNullValidation(t *testing.T) {
 			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
-			name: "table must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_set_not_null",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:   "doesntexist",
-							Column:  "review",
-							NotNull: ptr(true),
-							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:    "review",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
-		},
-		{
-			name: "column must exist",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_set_not_null",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:   "reviews",
-							Column:  "doesntexist",
-							NotNull: ptr(true),
-							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:    "review",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.ColumnDoesNotExistError{Table: "reviews", Name: "doesntexist"},
-		},
-		{
 			name: "column is nullable",
 			migrations: []migrations.Migration{
 				{

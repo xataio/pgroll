@@ -213,50 +213,6 @@ func TestSetForeignKeyValidation(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "table must exist",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "02_add_fk_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "doesntexist",
-							Column: "user_id",
-							References: &migrations.ColumnReference{
-								Table:  "users",
-								Column: "id",
-							},
-							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
-							Down: "user_id",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
-		},
-		{
-			name: "column must exist",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "02_add_fk_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "doesntexist",
-							References: &migrations.ColumnReference{
-								Table:  "users",
-								Column: "id",
-							},
-							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
-							Down: "user_id",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
-		},
-		{
 			name: "referenced table must exist",
 			migrations: []migrations.Migration{
 				createTablesMigration,

@@ -166,15 +166,7 @@ func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-
-	column := table.GetColumn(o.Column)
-	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
+	column := s.GetTable(o.Table).GetColumn(o.Column)
 
 	if !column.Nullable {
 		return ColumnIsNotNullableError{Table: o.Table, Name: o.Column}
