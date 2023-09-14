@@ -26,12 +26,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        cache: false
-
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
