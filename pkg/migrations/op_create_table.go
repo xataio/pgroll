@@ -78,6 +78,8 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 
+	// Ensure that the any foreign key references are valid, ie. the referenced
+	// table and column exist.
 	for _, col := range o.Columns {
 		if col.References != nil {
 			table := s.GetTable(col.References.Table)
