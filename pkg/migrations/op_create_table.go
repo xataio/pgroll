@@ -26,12 +26,6 @@ type Column struct {
 	References *ForeignKeyReference `json:"references"`
 }
 
-type ForeignKeyReference struct {
-	Name   string `json:"name"`
-	Table  string `json:"table"`
-	Column string `json:"column"`
-}
-
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
