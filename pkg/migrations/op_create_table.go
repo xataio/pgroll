@@ -133,13 +133,10 @@ func ColumnToSQL(col Column) string {
 		sql += fmt.Sprintf(" DEFAULT %s", pq.QuoteLiteral(*col.Default))
 	}
 	if col.References != nil {
-		tableRef := col.References.Table
-		columnRef := col.References.Column
-
 		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s)",
-			pq.QuoteIdentifier(ForeignKeyConstraintName(col.Name, tableRef, columnRef)),
-			pq.QuoteIdentifier(tableRef),
-			pq.QuoteIdentifier(columnRef))
+			pq.QuoteIdentifier(col.References.Name),
+			pq.QuoteIdentifier(col.References.Table),
+			pq.QuoteIdentifier(col.References.Column))
 	}
 	return sql
 }
