@@ -6,6 +6,7 @@
         "table": "posts",
         "column": "user_id",
         "references": {
+          "name": "fk_users_id",
           "table": "users",
           "column": "id"
         },
