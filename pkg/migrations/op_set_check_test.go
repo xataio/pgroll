@@ -36,7 +36,7 @@ func TestSetCheckConstraint(t *testing.T) {
 			{
 				Name: "02_add_check_constraint",
 				Operations: migrations.Operations{
-					&migrations.OpSetCheckConstraint{
+					&migrations.OpAlterColumn{
 						Table:  "posts",
 						Column: "title",
 						Check:  "length(title) > 3",
@@ -164,7 +164,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetCheckConstraint{
+						&migrations.OpAlterColumn{
 							Table:  "doesntexist",
 							Column: "title",
 							Check:  "length(title) > 3",
@@ -183,7 +183,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetCheckConstraint{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "doesntexist",
 							Check:  "length(title) > 3",
@@ -196,31 +196,13 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
 		},
 		{
-			name: "check SQL is mandatory",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_add_check_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpSetCheckConstraint{
-							Table:  "posts",
-							Column: "title",
-							Up:     "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-							Down:   "title",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.FieldRequiredError{Name: "check"},
-		},
-		{
 			name: "up SQL is mandatory",
 			migrations: []migrations.Migration{
 				createTableMigration,
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetCheckConstraint{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "title",
 							Check:  "length(title) > 3",
@@ -238,7 +220,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpSetCheckConstraint{
+						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "title",
 							Check:  "length(title) > 3",
