@@ -9,16 +9,16 @@ import (
 )
 
 type OpAlterColumn struct {
-	Table          string           `json:"table"`
-	Column         string           `json:"column"`
-	Name           string           `json:"name"`
-	Type           string           `json:"type"`
-	ConstraintName string           `json:"constraint_name"`
-	Check          string           `json:"check"`
-	References     *ColumnReference `json:"references"`
-	NotNull        *bool            `json:"not_null"`
-	Up             string           `json:"up"`
-	Down           string           `json:"down"`
+	Table          string               `json:"table"`
+	Column         string               `json:"column"`
+	Name           string               `json:"name"`
+	Type           string               `json:"type"`
+	ConstraintName string               `json:"constraint_name"`
+	Check          string               `json:"check"`
+	References     *ForeignKeyReference `json:"references"`
+	NotNull        *bool                `json:"not_null"`
+	Up             string               `json:"up"`
+	Down           string               `json:"down"`
 }
 
 var _ Operation = (*OpAlterColumn)(nil)

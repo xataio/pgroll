@@ -57,7 +57,8 @@ func TestSetForeignKey(t *testing.T) {
 					&migrations.OpAlterColumn{
 						Table:  "posts",
 						Column: "user_id",
-						References: &migrations.ColumnReference{
+						References: &migrations.ForeignKeyReference{
+							Name:   "fk_users_id",
 							Table:  "users",
 							Column: "id",
 						},
@@ -222,7 +223,8 @@ func TestSetForeignKeyValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ColumnReference{
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_doesntexist_id",
 								Table:  "doesntexist",
 								Column: "id",
 							},
@@ -248,7 +250,8 @@ func TestSetForeignKeyValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ColumnReference{
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_doesntexist",
 								Table:  "users",
 								Column: "doesntexist",
 							},

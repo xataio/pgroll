@@ -17,16 +17,17 @@ type OpCreateTable struct {
 }
 
 type Column struct {
-	Name       string           `json:"name"`
-	Type       string           `json:"type"`
-	Nullable   bool             `json:"nullable"`
-	Unique     bool             `json:"unique"`
-	PrimaryKey bool             `json:"pk"`
-	Default    *string          `json:"default"`
-	References *ColumnReference `json:"references"`
+	Name       string               `json:"name"`
+	Type       string               `json:"type"`
+	Nullable   bool                 `json:"nullable"`
+	Unique     bool                 `json:"unique"`
+	PrimaryKey bool                 `json:"pk"`
+	Default    *string              `json:"default"`
+	References *ForeignKeyReference `json:"references"`
 }
 
-type ColumnReference struct {
+type ForeignKeyReference struct {
+	Name   string `json:"name"`
 	Table  string `json:"table"`
 	Column string `json:"column"`
 }
@@ -77,6 +78,8 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 
+	// Ensure that the any foreign key references are valid, ie. the referenced
+	// table and column exist.
 	for _, col := range o.Columns {
 		if col.References != nil {
 			table := s.GetTable(col.References.Table)
@@ -130,17 +133,10 @@ func ColumnToSQL(col Column) string {
 		sql += fmt.Sprintf(" DEFAULT %s", pq.QuoteLiteral(*col.Default))
 	}
 	if col.References != nil {
-		tableRef := col.References.Table
-		columnRef := col.References.Column
-
 		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s)",
-			pq.QuoteIdentifier(ForeignKeyConstraintName(col.Name, tableRef, columnRef)),
-			pq.QuoteIdentifier(tableRef),
-			pq.QuoteIdentifier(columnRef))
+			pq.QuoteIdentifier(col.References.Name),
+			pq.QuoteIdentifier(col.References.Table),
+			pq.QuoteIdentifier(col.References.Column))
 	}
 	return sql
-}
-
-func ForeignKeyConstraintName(columnName, tableRef, columnRef string) string {
-	return "_pgroll_fk_" + columnName + "_" + tableRef + "_" + columnRef
 }

@@ -109,7 +109,8 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "user_id",
 									Type: "integer",
-									References: &migrations.ColumnReference{
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_users_id",
 										Table:  "users",
 										Column: "id",
 									},
@@ -125,8 +126,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				constraintName := migrations.ForeignKeyConstraintName("user_id", "users", "id")
-				ConstraintMustExist(t, db, "public", migrations.TemporaryName("orders"), constraintName)
+				ConstraintMustExist(t, db, "public", migrations.TemporaryName("orders"), "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -149,9 +149,7 @@ func TestCreateTable(t *testing.T) {
 				// The table has been dropped, so the foreign key constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
-				// The foreign key constraint still exists on the new table.
-				constraintName := migrations.ForeignKeyConstraintName("user_id", "users", "id")
-				ConstraintMustExist(t, db, "public", "orders", constraintName)
+				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_create_table_with_fk", "users", map[string]string{
@@ -214,7 +212,8 @@ func TestCreateTableValidation(t *testing.T) {
 							{
 								Name: "user_id",
 								Type: "integer",
-								References: &migrations.ColumnReference{
+								References: &migrations.ForeignKeyReference{
+									Name:   "fk_users_doesntexist",
 									Table:  "users",
 									Column: "doesntexist",
 								},

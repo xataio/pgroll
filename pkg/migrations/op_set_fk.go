@@ -10,11 +10,11 @@ import (
 )
 
 type OpSetForeignKey struct {
-	Table      string          `json:"table"`
-	Column     string          `json:"column"`
-	References ColumnReference `json:"references"`
-	Up         string          `json:"up"`
-	Down       string          `json:"down"`
+	Table      string              `json:"table"`
+	Column     string              `json:"column"`
+	References ForeignKeyReference `json:"references"`
+	Up         string              `json:"up"`
+	Down       string              `json:"down"`
 }
 
 var _ Operation = (*OpSetForeignKey)(nil)
@@ -79,14 +79,10 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema s
 }
 
 func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB) error {
-	tempName := TemporaryName(o.Column)
-	tableRef := o.References.Table
-	columnRef := o.References.Column
-
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(ForeignKeyConstraintName(tempName, tableRef, columnRef))))
+		pq.QuoteIdentifier(o.References.Name)))
 	if err != nil {
 		return err
 	}
@@ -121,13 +117,6 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB) error {
 	if err != nil {
 		return err
 	}
-
-	// Rename the foreign key constraint to use the final (non-temporary) column name.
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(ForeignKeyConstraintName(tempName, tableRef, columnRef)),
-		pq.QuoteIdentifier(ForeignKeyConstraintName(o.Column, tableRef, columnRef)),
-	))
 
 	return err
 }
@@ -196,7 +185,7 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn *sql
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(ForeignKeyConstraintName(tempColumnName, o.References.Table, o.References.Column)),
+		pq.QuoteIdentifier(o.References.Name),
 		pq.QuoteIdentifier(tempColumnName),
 		pq.QuoteIdentifier(o.References.Table),
 		pq.QuoteIdentifier(o.References.Column),
