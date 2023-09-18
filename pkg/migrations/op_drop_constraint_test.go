@@ -405,25 +405,6 @@ func TestDropConstraintValidation(t *testing.T) {
 			wantStartErr: migrations.FieldRequiredError{Name: "name"},
 		},
 		{
-			name: "up SQL is mandatory",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				addCheckMigration,
-				{
-					Name: "03_drop_check_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpDropConstraint{
-							Table:  "posts",
-							Column: "title",
-							Name:   "check_title_length",
-							Down:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.FieldRequiredError{Name: "up"},
-		},
-		{
 			name: "down SQL is mandatory",
 			migrations: []migrations.Migration{
 				createTableMigration,

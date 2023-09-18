@@ -148,10 +148,6 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 		return FieldRequiredError{Name: "name"}
 	}
 
-	if o.Up == "" {
-		return FieldRequiredError{Name: "up"}
-	}
-
 	if o.Down == "" {
 		return FieldRequiredError{Name: "down"}
 	}
