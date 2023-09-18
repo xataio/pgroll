@@ -13,7 +13,7 @@ func TestDropConstraint(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "drop check constraint",
+			name: "drop check constraint with default up sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -54,7 +54,6 @@ func TestDropConstraint(t *testing.T) {
 							Table:  "posts",
 							Column: "title",
 							Name:   "check_title_length",
-							Up:     "title",
 							Down:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
 						},
 					},
@@ -138,6 +137,70 @@ func TestDropConstraint(t *testing.T) {
 				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", "title"))
 				// The down trigger no longer exists.
 				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+			},
+		},
+		{
+			name: "drop check constraint with user-supplied up sql",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:          "posts",
+							Column:         "title",
+							ConstraintName: "check_title_length",
+							Check:          "length(title) > 3",
+							Up:             "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down:           "title",
+						},
+					},
+				},
+				{
+					Name: "03_drop_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "check_title_length",
+							Up:     "title || '!'",
+							Down:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that meets the check constraint into the old view works.
+				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+					"title": "post by alice",
+				})
+				// The inserted row has been backfilled into the new view, using the user-supplied `up` SQL.
+				rows := MustSelect(t, db, "public", "03_drop_check_constraint", "posts")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "title": "post by alice!"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
 			},
 		},
 		{
