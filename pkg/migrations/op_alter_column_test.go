@@ -132,7 +132,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.MultipleAlterColumnChangesError{},
+			wantStartErr: migrations.MultipleAlterColumnChangesError{Changes: 0},
 		},
 		{
 			name: "only one change at at time",
@@ -150,7 +150,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.MultipleAlterColumnChangesError{},
+			wantStartErr: migrations.MultipleAlterColumnChangesError{Changes: 2},
 		},
 	})
 }

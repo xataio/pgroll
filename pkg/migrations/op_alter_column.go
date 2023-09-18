@@ -43,8 +43,8 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Ensure that the operation describes only one change to the column
-	if !o.oneChange() {
-		return MultipleAlterColumnChangesError{}
+	if cnt := o.numChanges(); cnt != 1 {
+		return MultipleAlterColumnChangesError{Changes: cnt}
 	}
 
 	// Validate that the table and column exist
@@ -125,10 +125,9 @@ func (o *OpAlterColumn) innerOperation() Operation {
 	return nil
 }
 
-// oneChange ensures that the 'alter column' operation attempts to make
-// only one kind of change. For example, it should not attempt to rename a
-// column and change its type at the same time.
-func (o *OpAlterColumn) oneChange() bool {
+// numChanges returns the number of kinds of change that one 'alter column'
+// operation represents.
+func (o *OpAlterColumn) numChanges() int {
 	fieldsSet := 0
 
 	if o.Name != "" {
@@ -147,5 +146,5 @@ func (o *OpAlterColumn) oneChange() bool {
 		fieldsSet++
 	}
 
-	return fieldsSet == 1
+	return fieldsSet
 }
