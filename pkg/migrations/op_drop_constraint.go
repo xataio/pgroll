@@ -37,7 +37,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema 
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
-		SQL:            o.Up,
+		SQL:            o.upSQL(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create up trigger: %w", err)
@@ -153,4 +153,12 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 	}
 
 	return nil
+}
+
+func (o *OpDropConstraint) upSQL() string {
+	if o.Up != "" {
+		return o.Up
+	}
+
+	return pq.QuoteIdentifier(o.Column)
 }
