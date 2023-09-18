@@ -169,6 +169,65 @@ func TestCreateTable(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "create table with a check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+									Check: &migrations.CheckConstraint{
+										Name:       "check_name_length",
+										Constraint: "length(name) > 3",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// The check constraint exists on the new table.
+				ConstraintMustExist(t, db, "public", migrations.TemporaryName("users"), "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "b",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+				// The table has been dropped, so the check constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The check constraint exists on the new table.
+				ConstraintMustExist(t, db, "public", "users", "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, "public", "01_create_table", "users", map[string]string{
+					"name": "c",
+				})
+			},
+		},
 	})
 }
 
