@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -42,6 +44,37 @@ func startCmd() *cobra.Command {
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
 
 	return startCmd
+}
+
+func startHttp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
+		return
+	}
+
+	var body struct {
+		Version   string                `json:"version"`
+		Migration *migrations.Migration `json:"migration"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	ctx := r.Context()
+	viewName, err := startMigration(ctx, body.Version, body.Migration, false)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"view": viewName})
+	}
 }
 
 func startMigration(ctx context.Context, version string, migration *migrations.Migration, complete bool) (string, error) {

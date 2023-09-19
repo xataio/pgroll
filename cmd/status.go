@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/xataio/pg-roll/pkg/state"
 
@@ -30,6 +31,20 @@ var statusCmd = &cobra.Command{
 		fmt.Println(string(statusJSON))
 		return nil
 	},
+}
+
+func statusHttp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx := r.Context()
+	status, err := getStatus(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write(status)
+	}
 }
 
 func getStatus(ctx context.Context) ([]byte, error) {
