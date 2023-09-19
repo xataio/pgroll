@@ -560,3 +560,78 @@ func TestAddColumnValidation(t *testing.T) {
 		},
 	})
 }
+
+func TestAddColumnWithCheckConstraint(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{{
+		name: "add column",
+		migrations: []migrations.Migration{
+			{
+				Name: "01_add_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "users",
+						Columns: []migrations.Column{
+							{
+								Name:       "id",
+								Type:       "serial",
+								PrimaryKey: true,
+							},
+							{
+								Name:   "name",
+								Type:   "varchar(255)",
+								Unique: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "users",
+						Column: migrations.Column{
+							Name:    "age",
+							Type:    "integer",
+							Default: ptr("18"),
+							Check: &migrations.CheckConstraint{
+								Name:       "age_check",
+								Constraint: "age >= 18",
+							},
+						},
+					},
+				},
+			},
+		},
+		afterStart: func(t *testing.T, db *sql.DB) {
+			// Inserting a row that meets the constraint into the new view succeeds.
+			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				"name": "alice",
+				"age":  "30",
+			})
+
+			// Inserting a row that does not meet the constraint into the new view fails.
+			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				"name": "bob",
+				"age":  "3",
+			})
+		},
+		afterRollback: func(t *testing.T, db *sql.DB) {
+		},
+		afterComplete: func(t *testing.T, db *sql.DB) {
+			// Inserting a row that meets the constraint into the new view succeeds.
+			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				"name": "carl",
+				"age":  "30",
+			})
+
+			// Inserting a row that does not meet the constraint into the new view fails.
+			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				"name": "dana",
+				"age":  "3",
+			})
+		},
+	}})
+}
