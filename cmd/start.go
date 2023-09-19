@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -21,12 +22,6 @@ func startCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fileName := args[0]
 
-			m, err := NewRoll(cmd.Context())
-			if err != nil {
-				return err
-			}
-			defer m.Close()
-
 			migration, err := migrations.ReadMigrationFile(args[0])
 			if err != nil {
 				return fmt.Errorf("reading migration file: %w", err)
@@ -34,18 +29,11 @@ func startCmd() *cobra.Command {
 
 			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
 
-			err = m.Start(cmd.Context(), migration)
+			viewName, err := startMigration(cmd.Context(), version, migration, complete)
 			if err != nil {
-				return err
+				return fmt.Errorf("starting migration: %w", err)
 			}
 
-			if complete {
-				if err = m.Complete(cmd.Context()); err != nil {
-					return err
-				}
-			}
-
-			viewName := roll.VersionedSchemaName(Schema, version)
 			fmt.Printf("Migration successful! New version of the schema available under postgres '%s' schema\n", viewName)
 			return nil
 		},
@@ -54,4 +42,26 @@ func startCmd() *cobra.Command {
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
 
 	return startCmd
+}
+
+func startMigration(ctx context.Context, version string, migration *migrations.Migration, complete bool) (string, error) {
+	m, err := NewRoll(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer m.Close()
+
+	err = m.Start(ctx, migration)
+	if err != nil {
+		return "", err
+	}
+
+	if complete {
+		if err = m.Complete(ctx); err != nil {
+			return "", err
+		}
+	}
+
+	viewName := roll.VersionedSchemaName(Schema, version)
+	return viewName, nil
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/spf13/cobra"
+	"github.com/xataio/pg-roll/pkg/migrations"
 )
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,6 +24,39 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type StartBody struct {
+	Version   string                `json:"version"`
+	Migration *migrations.Migration `json:"migration"`
+}
+
+func startHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "method not allowed"})
+		return
+	}
+
+	var body StartBody
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	ctx := r.Context()
+	viewName, err := startMigration(ctx, body.Version, body.Migration, false)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"view": viewName})
+	}
+}
+
 var serveCmd = &cobra.Command{
 	Use:   "serve [port]",
 	Short: "Start a server to handle pgroll commands",
@@ -33,6 +67,7 @@ var serveCmd = &cobra.Command{
 		}
 
 		http.HandleFunc("/status", statusHandler)
+		http.HandleFunc("/start", startHandler)
 
 		srv := &http.Server{
 			Addr:    port,
