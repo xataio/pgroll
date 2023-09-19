@@ -1,39 +1,26 @@
 package cmd
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/spf13/cobra"
 )
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	buf := new(bytes.Buffer)
-
-	go func() {
-		ctx := r.Context()
-		status, err := getStatus(ctx)
-		if err != nil {
-			json.NewEncoder(buf).Encode(map[string]string{"error": err.Error()})
-		} else {
-			buf.Write(status)
-		}
-
-		wg.Done()
-	}()
-
-	wg.Wait()
-
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(buf.Bytes())
+
+	ctx := r.Context()
+	status, err := getStatus(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Write(status)
+	}
 }
 
 var serveCmd = &cobra.Command{
