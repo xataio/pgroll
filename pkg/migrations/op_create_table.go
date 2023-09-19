@@ -23,6 +23,7 @@ type Column struct {
 	Unique     bool                 `json:"unique"`
 	PrimaryKey bool                 `json:"pk"`
 	Default    *string              `json:"default"`
+	Check      *CheckConstraint     `json:"check"`
 	References *ForeignKeyReference `json:"references"`
 }
 
@@ -72,12 +73,23 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 
-	// Ensure that any foreign key references are valid, ie. the referenced
-	// table and column exist.
 	for _, col := range o.Columns {
+		// Ensure that any foreign key references are valid, ie. the referenced
+		// table and column exist.
 		if col.References != nil {
 			if err := col.References.Validate(s); err != nil {
 				return ColumnReferenceError{
+					Table:  o.Name,
+					Column: col.Name,
+					Err:    err,
+				}
+			}
+		}
+
+		// Ensure that any CHECK constraints are valid.
+		if col.Check != nil {
+			if err := col.Check.Validate(); err != nil {
+				return CheckConstraintError{
 					Table:  o.Name,
 					Column: col.Name,
 					Err:    err,
@@ -120,6 +132,11 @@ func ColumnToSQL(col Column) string {
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
 			pq.QuoteIdentifier(col.References.Column))
+	}
+	if col.Check != nil {
+		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
+			pq.QuoteIdentifier(col.Check.Name),
+			col.Check.Constraint)
 	}
 	return sql
 }
