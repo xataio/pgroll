@@ -100,6 +100,23 @@ func (e ColumnReferenceError) Error() string {
 		e.Err.Error())
 }
 
+type CheckConstraintError struct {
+	Table  string
+	Column string
+	Err    error
+}
+
+func (e CheckConstraintError) Unwrap() error {
+	return e.Err
+}
+
+func (e CheckConstraintError) Error() string {
+	return fmt.Sprintf("check constraint on column %q in table %q is invalid: %s",
+		e.Table,
+		e.Column,
+		e.Err.Error())
+}
+
 type NoUpSQLAllowedError struct{}
 
 func (e NoUpSQLAllowedError) Error() string {

@@ -5,8 +5,10 @@
       "alter_column": {
         "table": "posts",
         "column": "title",
-        "constraint_name": "title_length",
-        "check": "length(title) > 3",
+        "check": {
+          "name": "title_length",
+          "constraint": "length(title) > 3"
+        },
         "up": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
         "down": "title"
       }

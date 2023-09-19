@@ -38,12 +38,14 @@ func TestDropConstraint(t *testing.T) {
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:          "posts",
-							Column:         "title",
-							ConstraintName: "check_title_length",
-							Check:          "length(title) > 3",
-							Up:             "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-							Down:           "title",
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -165,12 +167,14 @@ func TestDropConstraint(t *testing.T) {
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:          "posts",
-							Column:         "title",
-							ConstraintName: "check_title_length",
-							Check:          "length(title) > 3",
-							Up:             "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-							Down:           "title",
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -397,12 +401,14 @@ func TestDropConstraintValidation(t *testing.T) {
 		Name: "02_add_check_constraint",
 		Operations: migrations.Operations{
 			&migrations.OpAlterColumn{
-				Table:          "posts",
-				Column:         "title",
-				ConstraintName: "check_title_length",
-				Check:          "length(title) > 3",
-				Up:             "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-				Down:           "title",
+				Table:  "posts",
+				Column: "title",
+				Check: &migrations.CheckConstraint{
+					Name:       "check_title_length",
+					Constraint: "length(title) > 3",
+				},
+				Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+				Down: "title",
 			},
 		},
 	}

@@ -11,12 +11,11 @@ import (
 )
 
 type OpSetCheckConstraint struct {
-	Table          string `json:"table"`
-	Column         string `json:"column"`
-	ConstraintName string `json:"constraint_name"`
-	Check          string `json:"check"`
-	Up             string `json:"up"`
-	Down           string `json:"down"`
+	Table  string          `json:"table"`
+	Column string          `json:"column"`
+	Check  CheckConstraint `json:"check"`
+	Up     string          `json:"up"`
+	Down   string          `json:"down"`
 }
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
@@ -83,7 +82,7 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB) error
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.ConstraintName)))
+		pq.QuoteIdentifier(o.Check.Name)))
 	if err != nil {
 		return err
 	}
@@ -149,12 +148,12 @@ func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn *sql.DB) error
 }
 
 func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) error {
-	if o.Check == "" {
-		return FieldRequiredError{Name: "check"}
-	}
-
-	if o.ConstraintName == "" {
-		return FieldRequiredError{Name: "constraint_name"}
+	if err := o.Check.Validate(); err != nil {
+		return CheckConstraintError{
+			Table:  o.Table,
+			Column: o.Column,
+			Err:    err,
+		}
 	}
 
 	if o.Up == "" {
@@ -171,8 +170,8 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.ConstraintName),
-		rewriteCheckExpression(o.Check, o.Column, TemporaryName(o.Column)),
+		pq.QuoteIdentifier(o.Check.Name),
+		rewriteCheckExpression(o.Check.Constraint, o.Column, TemporaryName(o.Column)),
 	))
 
 	return err
