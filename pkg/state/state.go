@@ -151,13 +151,19 @@ BEGIN
 		RETURN;
 	END IF;
 
-	-- Guess the schema from ddl commands, ignore migrations that touch several schemas
-	IF (SELECT COUNT(DISTINCT schema_name) FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
-		RAISE NOTICE 'pg-roll: ignoring migration that touches several schemas';
-		RETURN;
-	END IF;
+	IF tg_event = 'sql_drop' THEN
+		-- Guess the schema from drop commands
+		SELECT schema_name INTO schemaname FROM pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
 
-	SELECT schema_name INTO schemaname FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+	ELSIF tg_event = 'ddl_command_end' THEN
+		-- Guess the schema from ddl commands, ignore migrations that touch several schemas
+		IF (SELECT COUNT(DISTINCT schema_name) FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
+			RAISE NOTICE 'pg-roll: ignoring migration that changes several schemas';
+			RETURN;
+		END IF;
+
+		SELECT schema_name INTO schemaname FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+	END IF;
 
 	IF schemaname IS NULL THEN
 		RAISE NOTICE 'pg-roll: ignoring migration with null schema';
@@ -185,7 +191,12 @@ $$;
 
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
 CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
-	EXECUTE FUNCTION %[1]s.raw_migration() ;
+	EXECUTE FUNCTION %[1]s.raw_migration();
+
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
+CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
+	EXECUTE FUNCTION %[1]s.raw_migration();
+
 `
 
 type State struct {
