@@ -1,0 +1,14 @@
+{
+  "name": "23_drop_check_constraint",
+  "operations": [
+    {
+      "drop_constraint": {
+        "table": "posts",
+        "column": "title",
+        "name": "title_length",
+        "up": "title",
+        "down": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"
+      }
+    }
+  ]
+}
