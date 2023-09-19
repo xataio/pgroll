@@ -19,6 +19,8 @@ var serveCmd = &cobra.Command{
 
 		http.HandleFunc("/status", statusHttp)
 		http.HandleFunc("/start", startHttp)
+		http.HandleFunc("/rollback", rollbackHttp)
+		http.HandleFunc("/complete", completeHttp)
 
 		srv := &http.Server{
 			Addr:    port,

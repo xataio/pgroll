@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/spf13/cobra"
 )
@@ -10,13 +13,7 @@ var completeCmd = &cobra.Command{
 	Use:   "complete <file>",
 	Short: "Complete an ongoing migration with the operations present in the given file",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		m, err := NewRoll(cmd.Context())
-		if err != nil {
-			return err
-		}
-		defer m.Close()
-
-		err = m.Complete(cmd.Context())
+		err := completeMigration(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -24,4 +21,33 @@ var completeCmd = &cobra.Command{
 		fmt.Println("Migration successful!")
 		return nil
 	},
+}
+
+func completeHttp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	ctx := r.Context()
+	err := completeMigration(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+	} else {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	}
+}
+
+func completeMigration(ctx context.Context) error {
+	m, err := NewRoll(ctx)
+	if err != nil {
+		return err
+	}
+	defer m.Close()
+
+	err = m.Complete(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
