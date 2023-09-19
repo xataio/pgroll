@@ -6,43 +6,49 @@ PostgreSQL zero-downtime migrations made easy.
 
 ## Getting started (development)
 
-* Bring a development PostgreSQL up:
+- Bring a development PostgreSQL up:
 
-    ```sh
-    docker compose up
-    ```
+  ```sh
+  docker compose up
+  ```
 
-* Initialize pg-roll (first time only):
+- Initialize pg-roll (first time only):
 
-    ```sh
-    go run . init
-    ```
+  ```sh
+  go run . init
+  ```
 
-* Start a migration:
+- Start a migration:
 
-    ```sh
-    go run . start examples/01_create_tables.json
-    ```
+  ```sh
+  go run . start examples/01_create_tables.json
+  ```
 
-* Inspect the results:
+- Inspect the results:
 
-    ```sh
-    psql postgres://localhost -U postgres
-    ```
+  ```sh
+  psql postgres://localhost -U postgres
+  ```
 
-    ```sql
-    \d+ public.*
-    \d+ 01_create_tables.*
-    ```
+  ```sql
+  \d+ public.*
+  \d+ 01_create_tables.*
+  ```
 
-* (Optional) Rollback the migration (undo):
+- (Optional) Rollback the migration (undo):
 
-    ```sh
-    go run . rollback
-    ```
+  ```sh
+  go run . rollback
+  ```
 
-* Complete the migration:
+- Complete the migration:
 
-    ```sh
-    go run . complete
-    ```
+  ```sh
+  go run . complete
+  ```
+
+- (Optional) Start an HTTP server:
+
+  ```sh
+  go run . serve
+  ```

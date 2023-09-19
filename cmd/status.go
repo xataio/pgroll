@@ -21,18 +21,8 @@ var statusCmd = &cobra.Command{
 	Short: "Show pgroll status",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
-		state, err := state.New(ctx, PGURL, StateSchema)
-		if err != nil {
-			return err
-		}
-		defer state.Close()
 
-		statusLine, err := statusForSchema(ctx, state, Schema)
-		if err != nil {
-			return err
-		}
-
-		statusJSON, err := json.MarshalIndent(statusLine, "", "  ")
+		statusJSON, err := getStatus(ctx)
 		if err != nil {
 			return err
 		}
@@ -40,6 +30,26 @@ var statusCmd = &cobra.Command{
 		fmt.Println(string(statusJSON))
 		return nil
 	},
+}
+
+func getStatus(ctx context.Context) ([]byte, error) {
+	state, err := state.New(ctx, PGURL, StateSchema)
+	if err != nil {
+		return nil, err
+	}
+	defer state.Close()
+
+	statusLine, err := statusForSchema(ctx, state, Schema)
+	if err != nil {
+		return nil, err
+	}
+
+	statusJSON, err := json.MarshalIndent(statusLine, "", "  ")
+	if err != nil {
+		return nil, err
+	}
+
+	return statusJSON, nil
 }
 
 func statusForSchema(ctx context.Context, st *state.State, schema string) (*statusLine, error) {
