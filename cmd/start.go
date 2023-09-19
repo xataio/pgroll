@@ -29,9 +29,7 @@ func startCmd() *cobra.Command {
 				return fmt.Errorf("reading migration file: %w", err)
 			}
 
-			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
-
-			viewName, err := startMigration(cmd.Context(), version, migration, complete)
+			viewName, err := startMigration(cmd.Context(), fileName, migration, complete)
 			if err != nil {
 				return fmt.Errorf("starting migration: %w", err)
 			}
@@ -56,7 +54,7 @@ func startHttp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body struct {
-		Version   string                `json:"version"`
+		Name      string                `json:"name"`
 		Migration *migrations.Migration `json:"migration"`
 	}
 	err := json.NewDecoder(r.Body).Decode(&body)
@@ -67,17 +65,19 @@ func startHttp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	viewName, err := startMigration(ctx, body.Version, body.Migration, false)
+	viewName, err := startMigration(ctx, body.Name, body.Migration, false)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		json.NewEncoder(w).Encode(map[string]any{"success": false, "error": err.Error()})
 	} else {
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"view": viewName})
+		json.NewEncoder(w).Encode(map[string]any{"success": true, "view": viewName})
 	}
 }
 
-func startMigration(ctx context.Context, version string, migration *migrations.Migration, complete bool) (string, error) {
+func startMigration(ctx context.Context, name string, migration *migrations.Migration, complete bool) (string, error) {
+	version := strings.TrimSuffix(filepath.Base(name), filepath.Ext(name))
+
 	m, err := NewRoll(ctx)
 	if err != nil {
 		return "", err
