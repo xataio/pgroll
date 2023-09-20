@@ -23,18 +23,18 @@ var completeCmd = &cobra.Command{
 	},
 }
 
-func completeHttp(w http.ResponseWriter, r *http.Request) {
+func handleComplete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ctx := r.Context()
-	err := completeMigration(ctx)
-	if err != nil {
+	if err := completeMigration(ctx); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-	} else {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func completeMigration(ctx context.Context) error {

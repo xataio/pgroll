@@ -17,19 +17,14 @@ var serveCmd = &cobra.Command{
 			port = fmt.Sprintf(":%s", args[0])
 		}
 
-		http.HandleFunc("/status", statusHttp)
-		http.HandleFunc("/start", startHttp)
-		http.HandleFunc("/rollback", rollbackHttp)
-		http.HandleFunc("/complete", completeHttp)
-
-		srv := &http.Server{
-			Addr:    port,
-			Handler: nil,
-		}
+		mux := http.NewServeMux()
+		mux.HandleFunc("/status", handleStatus)
+		mux.HandleFunc("/start", handleStart)
+		mux.HandleFunc("/rollback", handleRollback)
+		mux.HandleFunc("/complete", handleComplete)
 
 		log.Printf("Starting server on %s\n", port)
-		err := srv.ListenAndServe()
-		if err != nil {
+		if err := http.ListenAndServe(port, mux); err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
 

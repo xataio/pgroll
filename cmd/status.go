@@ -33,7 +33,7 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-func statusHttp(w http.ResponseWriter, r *http.Request) {
+func handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	ctx := r.Context()
@@ -41,10 +41,11 @@ func statusHttp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-	} else {
-		w.WriteHeader(http.StatusOK)
-		w.Write(status)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(status)
 }
 
 func getStatus(ctx context.Context) ([]byte, error) {

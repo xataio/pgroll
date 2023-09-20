@@ -44,7 +44,7 @@ func startCmd() *cobra.Command {
 	return startCmd
 }
 
-func startHttp(w http.ResponseWriter, r *http.Request) {
+func handleStart(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
@@ -57,8 +57,8 @@ func startHttp(w http.ResponseWriter, r *http.Request) {
 		Name      string                `json:"name"`
 		Migration *migrations.Migration `json:"migration"`
 	}
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
@@ -69,10 +69,11 @@ func startHttp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]any{"success": false, "error": err.Error()})
-	} else {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]any{"success": true, "view": viewName})
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]any{"success": true, "view": viewName})
 }
 
 func startMigration(ctx context.Context, name string, migration *migrations.Migration, complete bool) (string, error) {
