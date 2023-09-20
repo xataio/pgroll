@@ -16,6 +16,7 @@ type OpAlterColumn struct {
 	Check      *CheckConstraint     `json:"check"`
 	References *ForeignKeyReference `json:"references"`
 	NotNull    *bool                `json:"not_null"`
+	Unique     *UniqueConstraint    `json:"unique"`
 	Up         string               `json:"up"`
 	Down       string               `json:"down"`
 }
@@ -58,7 +59,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Apply any special validation rules for the inner operation
 	op := o.innerOperation()
 	switch op.(type) {
-	case *OpRenameColumn:
+	case *OpRenameColumn, *OpSetUnique:
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
@@ -119,6 +120,13 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Up:     o.Up,
 			Down:   o.Down,
 		}
+
+	case o.Unique != nil:
+		return &OpSetUnique{
+			Table:  o.Table,
+			Column: o.Column,
+			Name:   o.Unique.Name,
+		}
 	}
 	return nil
 }
@@ -141,6 +149,9 @@ func (o *OpAlterColumn) numChanges() int {
 		fieldsSet++
 	}
 	if o.NotNull != nil {
+		fieldsSet++
+	}
+	if o.Unique != nil {
 		fieldsSet++
 	}
 
