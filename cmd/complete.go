@@ -13,8 +13,7 @@ var completeCmd = &cobra.Command{
 	Use:   "complete <file>",
 	Short: "Complete an ongoing migration with the operations present in the given file",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := completeMigration(cmd.Context())
-		if err != nil {
+		if err := completeMigration(cmd.Context()); err != nil {
 			return err
 		}
 
