@@ -27,6 +27,12 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 
 	if !o.Column.Nullable && o.Column.Default == nil {
 		if err := addNotNullConstraint(ctx, conn, o.Table, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
+			return fmt.Errorf("failed to add not null constraint: %w", err)
+		}
+	}
+
+	if o.Column.Check != nil {
+		if err := o.addCheckConstraint(ctx, conn); err != nil {
 			return fmt.Errorf("failed to add check constraint: %w", err)
 		}
 	}
@@ -98,6 +104,15 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
 		}
 	}
 
+	if o.Column.Check != nil {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Column.Check.Name)))
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
@@ -136,6 +151,16 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	if o.Column.Check != nil {
+		if err := o.Column.Check.Validate(); err != nil {
+			return CheckConstraintError{
+				Table:  o.Table,
+				Column: o.Column.Name,
+				Err:    err,
+			}
+		}
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
@@ -159,8 +184,15 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 		o.Column.Nullable = true
 	}
 
-	o.Column.Name = TemporaryName(o.Column.Name)
+	// Don't add a column with a CHECK constraint directly.
+	// They are handled by:
+	// - adding the column without the constraint
+	// - adding a NOT VALID check constraint to the column
+	// - validating the constraint on migration completion
+	// This is to avoid unnecessary exclusive table locks.
+	o.Column.Check = nil
 
+	o.Column.Name = TemporaryName(o.Column.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
 		ColumnToSQL(o.Column),
@@ -173,6 +205,15 @@ func addNotNullConstraint(ctx context.Context, conn *sql.DB, table, column, phys
 		pq.QuoteIdentifier(table),
 		pq.QuoteIdentifier(NotNullConstraintName(column)),
 		pq.QuoteIdentifier(physicalColumn),
+	))
+	return err
+}
+
+func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(o.Column.Check.Name),
+		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name, TemporaryName(o.Column.Name)),
 	))
 	return err
 }
