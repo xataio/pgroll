@@ -7,7 +7,9 @@
         "column": "review",
         "unique": {
           "name": "reviews_review_unique"
-        }
+        },
+        "up": "review || '-' || (random()*1000000)::integer",
+        "down": "review"
       }
     }
   ]
