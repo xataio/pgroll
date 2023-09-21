@@ -8,7 +8,7 @@
 
 ## How pg-roll works
 
-TODO
+![Multiple schema versions with pg-roll](docs/img/migration.svg)
 
 ## Features
 
@@ -143,11 +143,11 @@ We welcome contributions from the community! If you'd like to contribute to `pg-
 
 ### Contributing Code
 
-* Fork the repository.
-* Create a new branch for your feature or bug fix.
-* Make your changes and write tests if applicable.
-* Ensure your code passes linting and tests.
-* Submit a pull request.
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and write tests if applicable.
+4. Ensure your code passes linting and tests.
+5. Submit a pull request.
 [TODO]:* Please see our Contribution Guidelines for more details.
 
 ## License
