@@ -75,8 +75,10 @@ branches:
       contexts:
       - test (postgres 14.8)
       - test (postgres 15.3)
+      - test (postgres 16.0)
       - examples (postgres 14.8)
       - examples (postgres 15.3)
+      - examples (postgres 16.0)
       - lint
       - build
 
