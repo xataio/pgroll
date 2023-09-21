@@ -110,7 +110,7 @@ After starting a migration, client applications can start using the new schema v
 SET search_path TO 'public_initial_migration';
 ```
 
-This can also be done by setting the `search_path` in the connection string, for instance:
+This can also be done by setting the `currentSchema` in the connection string, for instance:
 
 ```sh
 postgres://user:password@host:port/dbname?currentSchema=public_initial_migration
