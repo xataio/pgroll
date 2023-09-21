@@ -102,7 +102,17 @@ This will create a new schema version in the database, and apply the migration o
 
 ### Configure client applications
 
-TODO
+After starting a migration, client applications can start using the new schema version. In order to do so, they need to be configured to access it. This can be done by setting the `search_path` to the new schema version name (provided by `pg-roll start` output), for instance:
+
+```sql
+SET search_path TO public_initial_migration;
+```
+
+This can also be done by setting the `search_path` in the connection string, for instance:
+
+```sh
+postgres://user:password@host:port/dbname?search_path=public_initial_migration
+```
 
 ### Complete the migration
 
