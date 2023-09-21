@@ -105,26 +105,30 @@ This will create a new schema version in the database, and apply the migration o
 After starting a migration, client applications can start using the new schema version. In order to do so, they need to be configured to access it. This can be done by setting the `search_path` to the new schema version name (provided by `pg-roll start` output), for instance:
 
 ```sql
-SET search_path TO public_initial_migration;
+SET search_path TO 'public_initial_migration';
 ```
 
 This can also be done by setting the `search_path` in the connection string, for instance:
 
 ```sh
-postgres://user:password@host:port/dbname?search_path=public_initial_migration
+postgres://user:password@host:port/dbname?currentSchema=public_initial_migration
 ```
 
 ### Complete the migration
 
-TODO
+Once there are no more client applications using the old schema version, the migration can be completed. This will remove the old schema. To complete the migration, run the following command:
 
-### Complete the migration
-
-TODO
+```sh
+pg-roll --postgres-url postgres://user:password@host:port/dbname complete
+```
 
 ### Rolling back a migration
 
-TODO
+At any point during a migration, it can be rolled back to the previous version. This will remove the new schema and leave the old one as it was before the migration started. To rollback a migration, run the following command:
+
+```sh
+pg-roll --postgres-url postgres://user:password@host:port/dbname rollback
+```
 
 ### Advanced Usage
 
