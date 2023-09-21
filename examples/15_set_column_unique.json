@@ -1,0 +1,14 @@
+{
+  "name": "15_set_column_unique",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "reviews",
+        "column": "review",
+        "unique": {
+          "name": "reviews_review_unique"
+        }
+      }
+    }
+  ]
+}
