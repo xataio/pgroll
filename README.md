@@ -4,7 +4,7 @@
 
 # pg-roll - Zero-downtime schema migrations for Postgres
 
-`pg-roll` is a command-line tool that radically simplifies schema migrations in Postgres. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
+`pg-roll` is an open source command-line tool that radically simplifies schema migrations in Postgres. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
 ## How pg-roll works
 
@@ -14,6 +14,7 @@ TODO
 
 - Zero-downtime migrations (no database locking, no breaking changes).
 - Keep old and new schema versions working simultaneously.
+- Automatic columns backfilling when needed.
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
 - Works with Postgres 14.0 or later.
