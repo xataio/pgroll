@@ -124,7 +124,7 @@ For more advanced usage and detailed options, refer to the [Documentation](docs)
 
 We welcome contributions from the community! If you'd like to contribute to `pg-roll`, please follow these guidelines:
 
-* Use [issues](https://github.com/xataio/pg-roll/issues) for any questions, bug reports, or feature requests.
+* Create an [issue](https://github.com/xataio/pg-roll/issues) for any questions, bug reports, or feature requests.
 * Check the documentation and [existing issues](https://github.com/xataio/pg-roll/issues) before opening a new issue.
 
 ### Contributing Code
