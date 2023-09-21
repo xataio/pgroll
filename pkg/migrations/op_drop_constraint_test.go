@@ -372,6 +372,85 @@ func TestDropConstraint(t *testing.T) {
 				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
 			},
 		},
+		{
+			name: "drop unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name:       "id",
+									Type:       "serial",
+									PrimaryKey: true,
+								},
+								{
+									Name:   "name",
+									Type:   "text",
+									Unique: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "users",
+							Column: "name",
+							Name:   "_pgroll_new_users_name_key",
+							Up:     "name",
+							Down:   "name || '-' || (random()*1000000)::integer",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// The new (temporary) `name` column should exist on the underlying table.
+				ColumnMustExist(t, db, "public", "users", migrations.TemporaryName("name"))
+
+				// Inserting a row that meets the unique constraint into the old view works.
+				MustInsert(t, db, "public", "01_add_tables", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row that does not meet the unique constraint into the old view fails.
+				MustNotInsert(t, db, "public", "01_add_tables", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row that does not meet the unique constraint into the new view works.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+				// The new (temporary) `name` column should not exist on the underlying table.
+				ColumnMustNotExist(t, db, "public", "users", migrations.TemporaryName("name"))
+
+				// The up function no longer exists.
+				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("users", "name"))
+				// The down function no longer exists.
+				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("users", migrations.TemporaryName("name")))
+
+				// The up trigger no longer exists.
+				TriggerMustNotExist(t, db, "public", "users", migrations.TriggerName("users", "name"))
+				// The down trigger no longer exists.
+				TriggerMustNotExist(t, db, "public", "users", migrations.TriggerName("users", migrations.TemporaryName("name")))
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The new (temporary) `name` column should not exist on the underlying table.
+				ColumnMustNotExist(t, db, "public", "users", migrations.TemporaryName("name"))
+
+				// Inserting a row that does not meet the unique constraint into the new view works.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+			},
+		},
 	})
 }
 
