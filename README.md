@@ -127,6 +127,7 @@ We welcome contributions from the community! If you'd like to contribute to `pg-
 * Check the documentation and [existing issues](https://github.com/xataio/pg-roll/issues) before opening a new issue.
 
 ### Contributing Code
+
 * Fork the repository.
 * Create a new branch for your feature or bug fix.
 * Make your changes and write tests if applicable.
@@ -135,9 +136,11 @@ We welcome contributions from the community! If you'd like to contribute to `pg-
 [TODO]:* Please see our Contribution Guidelines for more details.
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Support
+
 If you have any questions, encounter issues, or need assistance, please feel free to open an issue on this repository, and our community will be happy to help.
 
 
