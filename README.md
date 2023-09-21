@@ -36,11 +36,13 @@ Binaries are available for Linux, macOS & Windows, check our [Releases](releases
 
 ### From source
 
-To install `pg-roll` from source, run the following command (requires Go 1.21 or later):
+To install `pg-roll` from source, run the following command:
 
 ```sh
 go install github.com/xataio/pg-roll
 ```
+
+Note: requires [Go 1.21](https://golang.org/doc/install) or later.
 
 ## Usage
 
