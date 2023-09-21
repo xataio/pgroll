@@ -2,9 +2,9 @@
 [![Linux Build](https://github.com/xataio/pg-roll/actions/workflows/build.yml/badge.svg)](https://github.com/xataio/pg-roll/actions?query=branch%3Amain)
 [![Release](https://img.shields.io/github/release/xataio/pg-roll.svg?label=Release)](https://github.com/xataio/pg-roll/releases)
 
-# pg-roll - Zero-downtime schema migrations for PostgreSQL
+# pg-roll - Zero-downtime schema migrations for Postgres
 
-`pg-roll` is a command-line tool that radically simplifies schema migrations in PostgreSQL. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
+`pg-roll` is a command-line tool that radically simplifies schema migrations in Postgres. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
 ## How pg-roll works
 
@@ -16,7 +16,7 @@ TODO
 - Keep old and new schema versions working simultaneously.
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
-- Works with PostgreSQL 14.0 or later.
+- Works with Postgres 14.0 or later.
 - Written in Go, cross-platform single binary with no external dependencies.
 
 ## Table of Contents
