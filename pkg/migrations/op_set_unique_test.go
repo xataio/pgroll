@@ -11,7 +11,7 @@ func TestSetColumnUnique(t *testing.T) {
 	t.Parallel()
 
 	ExecuteTests(t, TestCases{{
-		name: "set unique",
+		name: "set unique with default down sql",
 		migrations: []migrations.Migration{
 			{
 				Name: "01_add_table",
@@ -53,7 +53,6 @@ func TestSetColumnUnique(t *testing.T) {
 							Name: "reviews_review_unique",
 						},
 						Up:   "review || '-' || (random()*1000000)::integer",
-						Down: "review",
 					},
 				},
 			},
