@@ -6,7 +6,7 @@
 
 `pg-roll` is a command-line tool that radically simplifies schema migrations in PostgreSQL. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
-Written in Go, pg-roll is a single binary with no external dependencies. It is designed to be simple to use and work across platforms.
+Written in Go, `pg-roll` is a single binary with no external dependencies. It is designed to be simple to use and work across platforms.
 
 ## How pg-roll works
 
@@ -37,7 +37,7 @@ Binaries are available for Linux, macOS & Windows, check our [Releases](releases
 
 ### From source
 
-To install pg-roll from source, run the following command (requires Go 1.21 or later):
+To install `pg-roll` from source, run the following command (requires Go 1.21 or later):
 
 ```sh
 go install github.com/xataio/pg-roll
@@ -45,11 +45,11 @@ go install github.com/xataio/pg-roll
 
 ## Usage
 
-Follow these steps to perform your first schema migration using pg-roll:
+Follow these steps to perform your first schema migration using `pg-roll`:
 
 ### Prepare the database
 
-pg-roll needs to store some internal state in the database. A table is created to track the current schema version and store versions history. To prepare the database, run the following command:
+`pg-roll` needs to store some internal state in the database. A table is created to track the current schema version and store versions history. To prepare the database, run the following command:
 
 ```sh
 pg-roll init postgres://user:password@host:port/dbname
@@ -123,7 +123,7 @@ For more advanced usage and detailed options, refer to the [Documentation](docs)
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to pg-roll, please follow these guidelines:
+We welcome contributions from the community! If you'd like to contribute to `pg-roll`, please follow these guidelines:
 
 * Use [issues](https://github.com/xataio/pg-roll/issues) for any questions, bug reports, or feature requests.
 * Check the documentation and [existing issues](https://github.com/xataio/pg-roll/issues) before opening a new issue.
