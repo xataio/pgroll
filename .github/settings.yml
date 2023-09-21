@@ -6,13 +6,13 @@ repository:
   name: pg-roll
 
   # A short description of the repository that will show up on GitHub
-  description:
+  description: PostgreSQL zero-downtime migrations made easy
 
   # A URL with more information about the repository
   homepage: https://www.xata.io
 
   # A comma-separated list of topics to set on the repository
-  topics:
+  topics: postgresql, migrations, zero-downtime, golang
 
   # Either `true` to make the repository private, or `false` to make it public.
   private: true
@@ -24,7 +24,7 @@ repository:
   has_issues: true
 
   # Either `true` to enable the wiki for this repository, `false` to disable it.
-  has_wiki: true
+  has_wiki: false
   
   # Either `true` to enable projects for this repository, or `false` to disable them.
   # If projects are disabled for the organization, passing `true` will cause an API error.
