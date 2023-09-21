@@ -1,15 +1,12 @@
 name: spdx
 
-on:
-  pull_request
+on: [push, pull_request]
 
 jobs:
-  check-spdx-headers:
+  test:
     runs-on: ubuntu-latest
     steps:
-    - name: checkout
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - uses: enarx/spdx@master
-      with:
-        licenses: Apache-2.0
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@v2
