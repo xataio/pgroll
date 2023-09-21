@@ -22,7 +22,7 @@ import (
 
 // The version of postgres against which the tests are run
 // if the POSTGRES_VERSION environment variable is not set.
-const defaultPostgresVersion = "15.3"
+const defaultPostgresVersion = "16.0"
 
 type TestCase struct {
 	name          string

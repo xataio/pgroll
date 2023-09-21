@@ -20,7 +20,7 @@ const (
 	schema = "public"
 	// The version of postgres against which the tests are run
 	// if the POSTGRES_VERSION environment variable is not set.
-	defaultPostgresVersion = "15.3"
+	defaultPostgresVersion = "16.0"
 )
 
 func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
