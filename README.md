@@ -156,7 +156,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-If you have any questions, encounter issues, or need assistance, please feel free to open an issue on this repository, and our community will be happy to help.
+If you have any questions, encounter issues, or need assistance, open an issue in this repository, and our community will be happy to help.
 
 
 <br>
