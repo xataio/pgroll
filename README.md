@@ -6,20 +6,18 @@
 
 `pg-roll` is a command-line tool that radically simplifies schema migrations in PostgreSQL. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
-Written in Go, `pg-roll` is a single binary with no external dependencies. It is designed to be simple to use and work across platforms.
-
 ## How pg-roll works
 
 TODO
 
 ## Features
 
-- Simple to use, single binary with no external dependencies.
 - Zero-downtime migrations (no database locking, no breaking changes).
 - Keep old and new schema versions working simultaneously.
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
 - Works with PostgreSQL 14.0 or later.
+- Written in Go, cross-platform single binary with no external dependencies.
 
 ## Table of Contents
 
