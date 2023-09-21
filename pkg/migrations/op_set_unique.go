@@ -4,16 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pg-roll/pkg/schema"
 )
 
 type OpSetUnique struct {
-	Name    string   `json:"name"`
-	Table   string   `json:"table"`
-	Columns []string `json:"columns"`
+	Name   string `json:"name"`
+	Table  string `json:"table"`
+	Column string `json:"column"`
 }
 
 var _ Operation = (*OpSetUnique)(nil)
@@ -23,7 +22,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
-		strings.Join(quoteColumnNames(o.Columns), ", ")))
+		pq.QuoteIdentifier(o.Column)))
 	return err
 }
 
@@ -54,10 +53,8 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	for _, column := range o.Columns {
-		if table.GetColumn(column) == nil {
-			return ColumnDoesNotExistError{Table: o.Table, Name: column}
-		}
+	if table.GetColumn(o.Column) == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	return nil
