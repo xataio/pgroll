@@ -56,7 +56,7 @@ pg-roll init postgres://user:password@host:port/dbname
 
 ### Start a migration
 
-Create a migration file, check the [examples](examples) folder for some examples. For instance, use this migration file to create a new `customers` table:
+Create a migration file. You can check the [examples](examples) folder for some examples. For instance, use this migration file to create a new `customers` table:
 
 <details>
   <summary>initial_migration.json</summary>
