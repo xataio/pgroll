@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package migrations
 
 import "github.com/xataio/pg-roll/pkg/schema"

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package templates
 
 const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
