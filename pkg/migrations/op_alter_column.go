@@ -61,7 +61,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Apply any special validation rules for the inner operation
 	op := o.innerOperation()
 	switch op.(type) {
-	case *OpRenameColumn, *OpSetUnique:
+	case *OpRenameColumn:
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
@@ -128,6 +128,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Name:   o.Unique.Name,
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 	}
 	return nil
