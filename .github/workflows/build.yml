@@ -49,7 +49,7 @@ jobs:
           fi
         done
 
-  licence-check:
+  license-check:
     - name: Install license-header-checker
       run: curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash
     - name: Run license check
