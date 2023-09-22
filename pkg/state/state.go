@@ -315,12 +315,14 @@ func (s *State) Start(ctx context.Context, schemaname string, migration *migrati
 		return nil, fmt.Errorf("unable to marshal migration: %w", err)
 	}
 
+	// create a new migration object and return the previous known schema
+	// if there is no previous migration, read the schema from postgres
 	stmt := fmt.Sprintf(`
 		INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)
 		RETURNING (
 			SELECT COALESCE(
 				(SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=%[1]s.latest_version($1)),
-				'{}')
+				%[1]s.read_schema($1))
 		)`, pq.QuoteIdentifier(s.schema))
 
 	var rawSchema string
