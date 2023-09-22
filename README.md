@@ -4,7 +4,7 @@
 
 # pg-roll - Zero-downtime schema migrations for Postgres
 
-`pg-roll` is an open source command-line tool that radically simplifies schema migrations in Postgres. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
+`pg-roll` is an open source command-line tool that offers safe and un-doable schema migrations for PostgreSQL by serving multiple schema versions simultaneously. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
 ## How pg-roll works
 
