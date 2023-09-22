@@ -45,7 +45,7 @@ When no more client applications are using the old schema version, the migration
 
 ### Binaries
 
-Binaries are available for Linux, macOS & Windows, check our [Releases](releases).
+Binaries are available for Linux, macOS & Windows, check our [Releases](https://github.com/xataio/pgroll/releases).
 
 ### From source
 
