@@ -3,7 +3,7 @@
 
 # See https://developer.github.com/v3/repos/#edit for all available settings.
 repository:
-  name: pg-roll
+  name: pgroll
 
   # A short description of the repository that will show up on GitHub
   description: PostgreSQL zero-downtime migrations made easy

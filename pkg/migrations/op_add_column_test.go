@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 func TestAddColumn(t *testing.T) {

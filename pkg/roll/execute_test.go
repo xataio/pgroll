@@ -13,9 +13,9 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"github.com/xataio/pg-roll/pkg/migrations"
-	"github.com/xataio/pg-roll/pkg/roll"
-	"github.com/xataio/pg-roll/pkg/state"
+	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
+	"github.com/xataio/pgroll/pkg/state"
 )
 
 const (

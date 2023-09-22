@@ -57,7 +57,7 @@ linters-settings:
 
   gofumpt:
     lang-version: *goVersion
-    module-path: "pg-roll"
+    module-path: "pgroll"
     extra-rules: false
 
   staticcheck:

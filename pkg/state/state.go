@@ -10,8 +10,8 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pg-roll/pkg/migrations"
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 const sqlInit = `
@@ -148,7 +148,7 @@ LANGUAGE plpgsql AS $$
 DECLARE
 	schemaname TEXT;
 BEGIN
-	-- Ignore migrations done by pg-roll
+	-- Ignore migrations done by pgroll
 	IF (current_setting('pgroll.internal', 'TRUE') <> 'TRUE') THEN
 		RETURN;
 	END IF;
@@ -160,7 +160,7 @@ BEGIN
 	ELSIF tg_event = 'ddl_command_end' THEN
 		-- Guess the schema from ddl commands, ignore migrations that touch several schemas
 		IF (SELECT COUNT(DISTINCT schema_name) FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
-			RAISE NOTICE 'pg-roll: ignoring migration that changes several schemas';
+			RAISE NOTICE 'pgroll: ignoring migration that changes several schemas';
 			RETURN;
 		END IF;
 
@@ -168,17 +168,17 @@ BEGIN
 	END IF;
 
 	IF schemaname IS NULL THEN
-		RAISE NOTICE 'pg-roll: ignoring migration with null schema';
+		RAISE NOTICE 'pgroll: ignoring migration with null schema';
 		RETURN;
 	END IF;
 
 	-- Ignore migrations done during a migration period
 	IF %[1]s.is_active_migration_period(schemaname) THEN
-		RAISE NOTICE 'pg-roll: ignoring migration during active migration period';
+		RAISE NOTICE 'pgroll: ignoring migration during active migration period';
 		RETURN;
 	END IF;
 
-	-- Someone did a schema change without pg-roll, include it in the history
+	-- Someone did a schema change without pgroll, include it in the history
 	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
 	VALUES (
 		schemaname,
@@ -224,7 +224,7 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 }
 
 func (s *State) Init(ctx context.Context) error {
-	// ensure pg-roll internal tables exist
+	// ensure pgroll internal tables exist
 	// TODO: eventually use migrations for this instead of hardcoding
 	_, err := s.pgConn.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
 

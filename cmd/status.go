@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/xataio/pg-roll/pkg/state"
+	"github.com/xataio/pgroll/pkg/state"
 
 	"github.com/spf13/cobra"
 )

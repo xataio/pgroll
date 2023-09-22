@@ -2,7 +2,7 @@
 
 package migrations
 
-import "github.com/xataio/pg-roll/pkg/schema"
+import "github.com/xataio/pgroll/pkg/schema"
 
 type ForeignKeyReference struct {
 	Name   string `json:"name"`

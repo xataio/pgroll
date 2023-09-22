@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xataio/pg-roll/pkg/state"
+	"github.com/xataio/pgroll/pkg/state"
 )
 
 var analyzeCmd = &cobra.Command{

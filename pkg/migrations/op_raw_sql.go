@@ -6,7 +6,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRawSQL)(nil)

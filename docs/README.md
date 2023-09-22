@@ -1,4 +1,4 @@
-# pg-roll documentation
+# pgroll documentation
 
 :warning: This section is under development.
 

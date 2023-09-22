@@ -6,8 +6,8 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	"github.com/xataio/pg-roll/pkg/roll"
-	"github.com/xataio/pg-roll/pkg/state"
+	"github.com/xataio/pgroll/pkg/roll"
+	"github.com/xataio/pgroll/pkg/state"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 	// Schema is the schema to use for the migration
 	Schema string
 
-	// StateSchema is the Postgres schema where pg-roll will store its state
+	// StateSchema is the Postgres schema where pgroll will store its state
 	StateSchema string
 )
 
@@ -28,7 +28,7 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:          "pg-roll",
+	Use:          "pgroll",
 	SilenceUsage: true,
 }
 
