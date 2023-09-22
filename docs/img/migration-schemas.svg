@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    version="1.1"
-   viewBox="-626 -507 1528.0099 810.24268"
-   width="1528.0099"
-   height="810.24268"
+   viewBox="-626 -507 1586.01 840.99762"
+   width="1586.01"
+   height="840.9978"
    id="svg349"
    sodipodi:docname="migration-schemas.svg"
    style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
@@ -18,18 +18,18 @@
      bordercolor="#000000"
      borderopacity="0.25"
      inkscape:showpageshadow="2"
-     inkscape:pageopacity="0.0"
+     inkscape:pageopacity="1.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.53285112"
-     inkscape:cx="532.9819"
-     inkscape:cy="429.76357"
+     inkscape:zoom="0.33975436"
+     inkscape:cx="721.10921"
+     inkscape:cy="206.0312"
      inkscape:window-width="1392"
      inkscape:window-height="1027"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g132" />
+     inkscape:current-layer="svg349" />
   <defs
      id="defs1"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -121,10 +121,18 @@
       </filter>
     </g>
   </defs>
+  <rect
+     width="100%"
+     height="100%"
+     fill="#ffffff"
+     id="rect1"
+     x="-626"
+     y="-506.99991"
+     style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto;fill:#ffffff" />
   <g
      id="g22"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g2"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -136,7 +144,7 @@
          rx="3"
          ry="3"
          fill="#ffffff"
-         id="rect1"
+         id="rect2"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <rect
          y="36"
@@ -152,7 +160,7 @@
          x="-626"
          ry="3"
          height="276"
-         id="rect2"
+         id="rect3"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
     </g>
     <g
@@ -362,7 +370,7 @@
   <g
      id="g61"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g23"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -769,7 +777,7 @@
                  id="path48"
                  style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
               <polygon
-                 points="27.0921,30.45905 27.0921,41.54095 20,36 "
+                 points="27.0921,41.54095 20,36 27.0921,30.45905 "
                  fill="#788896"
                  stroke="#788896"
                  stroke-width="2"
@@ -844,7 +852,7 @@
   <g
      id="g81"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g62"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1054,7 +1062,7 @@
   <g
      id="g83"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g82"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1068,7 +1076,7 @@
          id="path81"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,-78.45905 -291.0921,-89.54095 -284,-84 "
+         points="-291.0921,-89.54095 -284,-84 -291.0921,-78.45905 "
          fill="#f7c325"
          stroke="#f7c325"
          stroke-width="2"
@@ -1081,7 +1089,7 @@
   <g
      id="g85"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g84"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1095,7 +1103,7 @@
          id="path83"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,-36.45905 -291.0921,-47.54095 -284,-42 "
+         points="-291.0921,-47.54095 -284,-42 -291.0921,-36.45905 "
          fill="#1aae9f"
          stroke="#1aae9f"
          stroke-width="2"
@@ -1108,7 +1116,7 @@
   <g
      id="g87"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g86"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1122,7 +1130,7 @@
          id="path85"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,-36.45905 -291.0921,-47.54095 -284,-42 "
+         points="-291.0921,-47.54095 -284,-42 -291.0921,-36.45905 "
          fill="#1aae9f"
          stroke="#1aae9f"
          stroke-width="2"
@@ -1135,7 +1143,7 @@
   <g
      id="g89"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g88"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1149,7 +1157,7 @@
          id="path87"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,-78.45905 -291.0921,-89.54095 -284,-84 "
+         points="-291.0921,-89.54095 -284,-84 -291.0921,-78.45905 "
          fill="#f7c325"
          stroke="#f7c325"
          stroke-width="2"
@@ -1162,7 +1170,7 @@
   <g
      id="g91"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g90"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1176,7 +1184,7 @@
          id="path89"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,41.54095 -291.0921,30.45905 -284,36 "
+         points="-291.0921,30.45905 -284,36 -291.0921,41.54095 "
          fill="#730fc3"
          stroke="#730fc3"
          stroke-width="2"
@@ -1189,7 +1197,7 @@
   <g
      id="g93"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g92"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1203,7 +1211,7 @@
          id="path91"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,5.54095 -291.0921,-5.54095 -284,0 "
+         points="-291.0921,-5.54095 -284,0 -291.0921,5.54095 "
          fill="#2c88d9"
          stroke="#2c88d9"
          stroke-width="2"
@@ -1216,7 +1224,7 @@
   <g
      id="g95"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g94"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1230,7 +1238,7 @@
          id="path93"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="-291.0921,77.54095 -291.0921,66.45905 -284,72 "
+         points="-291.0921,66.45905 -284,72 -291.0921,77.54095 "
          fill="#d3455b"
          stroke="#d3455b"
          stroke-width="2"
@@ -1243,7 +1251,7 @@
   <g
      id="g132"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g96"
        transform="matrix(1.1843834,0,0,0.99887587,62.040493,-0.34398293)"
@@ -1539,7 +1547,7 @@
   <g
      id="g153"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g133"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -1777,7 +1785,7 @@
   <g
      id="g185"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g154"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2155,7 +2163,7 @@
   <g
      id="g205"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g186"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2365,7 +2373,7 @@
   <g
      id="g207"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g206"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2379,7 +2387,7 @@
          id="path205"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="634.9079,-38.45905 634.9079,-49.54095 642,-44 "
+         points="634.9079,-49.54095 642,-44 634.9079,-38.45905 "
          fill="#1aae9f"
          stroke="#1aae9f"
          stroke-width="2"
@@ -2392,7 +2400,7 @@
   <g
      id="g209"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g208"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2406,7 +2414,7 @@
          id="path207"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="634.9079,-78.45905 634.9079,-89.54095 642,-84 "
+         points="634.9079,-89.54095 642,-84 634.9079,-78.45905 "
          fill="#f7c325"
          stroke="#f7c325"
          stroke-width="2"
@@ -2419,7 +2427,7 @@
   <g
      id="g211"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g210"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2433,7 +2441,7 @@
          id="path209"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="634.9079,5.54095 634.9079,-5.54095 642,0 "
+         points="634.9079,-5.54095 642,0 634.9079,5.54095 "
          fill="#730fc3"
          stroke="#730fc3"
          stroke-width="2"
@@ -2446,7 +2454,7 @@
   <g
      id="g213"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g212"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -2460,7 +2468,7 @@
          id="path211"
          style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
       <polygon
-         points="634.9079,41.54095 634.9079,30.45905 642,36 "
+         points="634.9079,30.45905 642,36 634.9079,41.54095 "
          fill="#d3455b"
          stroke="#d3455b"
          stroke-width="2"
@@ -2473,7 +2481,7 @@
   <g
      id="g220"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        class="content"
        id="g219"
@@ -2514,7 +2522,7 @@
   <g
      id="g227"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        class="content"
        id="g226"
@@ -2555,7 +2563,7 @@
   <g
      id="g231"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(1.0098908,-9.78125)">
+     transform="translate(30.00995,5.5963279)">
     <g
        id="g230"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">

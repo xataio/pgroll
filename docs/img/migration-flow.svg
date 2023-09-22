@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    version="1.1"
-   viewBox="-852 -60 1368 617.29688"
-   width="1368"
-   height="617.29688"
+   viewBox="-852 -60 1387 625.87037"
+   width="1387"
+   height="625.87042"
    id="svg155"
    sodipodi:docname="migration-flow.svg"
    style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
@@ -21,15 +21,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.6374269"
-     inkscape:cx="684"
-     inkscape:cy="296.50459"
+     inkscape:zoom="0.38467819"
+     inkscape:cx="618.69897"
+     inkscape:cy="389.93632"
      inkscape:window-width="1392"
      inkscape:window-height="1027"
      inkscape:window-x="0"
      inkscape:window-y="25"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g32" />
+     inkscape:current-layer="svg155" />
   <defs
      id="defs1"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -133,10 +133,18 @@
       </filter>
     </g>
   </defs>
+  <rect
+     width="100%"
+     height="100%"
+     fill="#ffffff"
+     id="rect1"
+     x="-852"
+     y="-59.999969"
+     style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto" />
   <g
      id="g16"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        class="content"
        id="g15"
@@ -200,7 +208,7 @@
   <g
      id="g18"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        id="g17"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -230,7 +238,7 @@
   <g
      id="g33"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        class="content"
        id="g32"
@@ -294,7 +302,7 @@
   <g
      id="g35"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        id="g34"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -324,7 +332,7 @@
   <g
      id="g52"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        class="content"
        id="g51"
@@ -396,7 +404,7 @@
   <g
      id="g54"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        id="g53"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
@@ -426,7 +434,7 @@
   <g
      id="g104"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <rect
        x="-852"
        y="113"
@@ -831,7 +839,7 @@
   <g
      id="g143"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <rect
        x="-852"
        y="312"
@@ -1134,7 +1142,7 @@
   <g
      id="g153"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        class="content"
        id="g152"
@@ -1198,7 +1206,7 @@
   <g
      id="g155"
      style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto"
-     transform="translate(0,-28.824219)">
+     transform="translate(9.5,-24.537445)">
     <g
        id="g154"
        style="-moz-osx-font-smoothing:auto;-webkit-font-smoothing:auto">
