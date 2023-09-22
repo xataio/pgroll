@@ -58,7 +58,7 @@ jobs:
       - name: Ensure .go files have a license reference
         run: |
           curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash
-          ./bin/license-header-checker .github/license-header.txt . go
+          ./bin/license-header-checker -a -r .github/license-header.txt . go
 
   examples:
     name: examples (postgres ${{ matrix.pgVersion }})
