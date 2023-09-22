@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pgVersion: ['14.8', '15.3', '16.0']
+        pgVersion: ['14.8', '15.3', '16.0', 'latest']
     steps:
     - uses: actions/checkout@v3
 
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pgVersion: ['14.8', '15.3', '16.0']
+        pgVersion: ['14.8', '15.3', '16.0', 'latest']
     services:
       postgres:
         image: postgres:${{ matrix.pgVersion }}
