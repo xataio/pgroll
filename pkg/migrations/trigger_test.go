@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 func TestBuildFunction(t *testing.T) {

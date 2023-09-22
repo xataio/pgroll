@@ -1,6 +1,6 @@
 {
     "gopls": {
         "formatting.gofumpt": true,
-        "formatting.local": "pg-roll"
+        "formatting.local": "pgroll"
     }
 }

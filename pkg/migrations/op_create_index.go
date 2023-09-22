@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 type OpCreateIndex struct {

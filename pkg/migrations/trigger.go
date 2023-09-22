@@ -9,8 +9,8 @@ import (
 	"text/template"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pg-roll/pkg/migrations/templates"
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/migrations/templates"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 type TriggerDirection string

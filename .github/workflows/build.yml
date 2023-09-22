@@ -107,45 +107,45 @@ jobs:
       with:
         go-version: '1.21'
 
-    - name: Build pg-roll (Linux amd64)
-      run: GOOS=linux GOARCH=amd64 go build -o pg-roll.linux.amd64
+    - name: Build pgroll (Linux amd64)
+      run: GOOS=linux GOARCH=amd64 go build -o pgroll.linux.amd64
 
-    - name: Build pg-roll (Linux arm64)
-      run: GOOS=linux GOARCH=arm64 go build -o pg-roll.linux.arm64
+    - name: Build pgroll (Linux arm64)
+      run: GOOS=linux GOARCH=arm64 go build -o pgroll.linux.arm64
 
-    - name: Build pg-roll (MacOS amd64)
-      run: GOOS=darwin GOARCH=amd64 go build -o pg-roll.macos.amd64
+    - name: Build pgroll (MacOS amd64)
+      run: GOOS=darwin GOARCH=amd64 go build -o pgroll.macos.amd64
 
-    - name: Build pg-roll (MacOS arm64)
-      run: GOOS=darwin GOARCH=arm64 go build -o pg-roll.macos.arm64
+    - name: Build pgroll (MacOS arm64)
+      run: GOOS=darwin GOARCH=arm64 go build -o pgroll.macos.arm64
 
-    - name: Build pg-roll (Windows)
-      run: GOOS=windows GOARCH=amd64 go build -o pg-roll.win.amd64
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: pg-roll.linux.amd64
-        path: pg-roll.linux.amd64
+    - name: Build pgroll (Windows)
+      run: GOOS=windows GOARCH=amd64 go build -o pgroll.win.amd64
 
     - uses: actions/upload-artifact@v3
       with:
-        name: pg-roll.linux.arm64
-        path: pg-roll.linux.arm64
+        name: pgroll.linux.amd64
+        path: pgroll.linux.amd64
 
     - uses: actions/upload-artifact@v3
       with:
-        name: pg-roll.macos.amd64
-        path: pg-roll.macos.amd64
+        name: pgroll.linux.arm64
+        path: pgroll.linux.arm64
 
     - uses: actions/upload-artifact@v3
       with:
-        name: pg-roll.macos.arm64
-        path: pg-roll.macos.arm64
+        name: pgroll.macos.amd64
+        path: pgroll.macos.amd64
 
     - uses: actions/upload-artifact@v3
       with:
-        name: pg-roll.win.amd64
-        path: pg-roll.win.amd64
+        name: pgroll.macos.arm64
+        path: pgroll.macos.arm64
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: pgroll.win.amd64
+        path: pgroll.win.amd64
 
   release:
     runs-on: ubuntu-latest
@@ -161,8 +161,8 @@ jobs:
       with:
         fail_on_unmatched_files: true
         files: |
-          artifacts/pg-roll.linux.amd64/pg-roll.linux.amd64
-          artifacts/pg-roll.linux.arm64/pg-roll.linux.arm64
-          artifacts/pg-roll.macos.amd64/pg-roll.macos.amd64
-          artifacts/pg-roll.macos.arm64/pg-roll.macos.arm64
-          artifacts/pg-roll.win.amd64/pg-roll.win.amd64
+          artifacts/pgroll.linux.amd64/pgroll.linux.amd64
+          artifacts/pgroll.linux.arm64/pgroll.linux.arm64
+          artifacts/pgroll.macos.amd64/pgroll.macos.amd64
+          artifacts/pgroll.macos.arm64/pgroll.macos.arm64
+          artifacts/pgroll.win.amd64/pgroll.win.amd64

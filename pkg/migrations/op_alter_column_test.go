@@ -5,7 +5,7 @@ package migrations_test
 import (
 	"testing"
 
-	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 func TestAlterColumnValidation(t *testing.T) {

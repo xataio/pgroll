@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/xataio/pg-roll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 func TestRawSQL(t *testing.T) {

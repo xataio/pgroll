@@ -1,4 +1,4 @@
-module github.com/xataio/pg-roll
+module github.com/xataio/pgroll
 
 go 1.21
 

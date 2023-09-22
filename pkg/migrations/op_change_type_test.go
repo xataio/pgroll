@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xataio/pg-roll/pkg/migrations"
-	"github.com/xataio/pg-roll/pkg/roll"
+	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func TestChangeColumnType(t *testing.T) {

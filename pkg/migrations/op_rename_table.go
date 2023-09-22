@@ -8,7 +8,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pg-roll/pkg/schema"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRenameTable)(nil)
