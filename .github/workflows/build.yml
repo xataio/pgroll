@@ -53,10 +53,10 @@ jobs:
     name: License check
     runs-on: ubuntu-latest
     steps:
-      - name: Install license-header-checker
-        run: curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash
-      - name: Run license check
-        run: ./bin/license-header-checker -a -r .github/license-header.txt . go && [[ -z `git status -s` ]]
+      - name: Ensure .go files have a license reference
+        run: |
+          curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash
+          ./bin/license-header-checker -a -r .github/license-header.txt . go && [[ -z `git status -s` ]]
 
   examples:
     name: examples (postgres ${{ matrix.pgVersion }})
