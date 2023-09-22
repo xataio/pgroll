@@ -150,7 +150,8 @@ We welcome contributions from the community! If you'd like to contribute to `pg-
 3. Make your changes and write tests if applicable.
 4. Ensure your code passes linting and tests.
 5. Submit a pull request.
-[TODO]:* Please see our Contribution Guidelines for more details.
+
+For this project, we pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
 ## License
 
