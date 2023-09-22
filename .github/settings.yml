@@ -15,7 +15,7 @@ repository:
   topics: postgresql, migrations, zero-downtime, golang
 
   # Either `true` to make the repository private, or `false` to make it public.
-  private: true
+  private: false
 
   # Updates the default branch for this repository.
   default_branch: main
@@ -25,7 +25,7 @@ repository:
 
   # Either `true` to enable the wiki for this repository, `false` to disable it.
   has_wiki: false
-  
+
   # Either `true` to enable projects for this repository, or `false` to disable them.
   # If projects are disabled for the organization, passing `true` will cause an API error.
   has_projects: true
