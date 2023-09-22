@@ -8,7 +8,21 @@
 
 ## How pg-roll works
 
-![Multiple schema versions with pg-roll](docs/img/migration.svg)
+
+
+![Multiple schema versions with pg-roll](docs/img/migration-flow.svg)
+
+`pg-roll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
+
+`pg-roll` follows a [expand/contract workflow](https://openpracticelibrary.com/practice/expand-and-contract-pattern/). On migration start, it will perform all the additive changes (create tables, add columns, etc) in the physical schema, without breaking it.
+
+When a breaking change is required on a column, it will create a new column in the physical schema, and backfill it from the old column. Also configure triggers to make sure all writes to the old/new column get propagated to its counterpart during the whole active migration period. The new column will be then exposed in the new version of the schema.
+
+Once start phase is complete, the new schema version is created, mapping all the views to the proper tables & columns. Client applications can then access the new schema version, while the old one is still available. This is the moment to start rolling out the new version of the client application.
+
+![Multiple schema versions with pg-roll](docs/img/migration-schemas.svg)
+
+When no more client applications are using the old schema version, the migration can be completed. This will remove the old schema, and the new one will be the only one available. No longer needed tables & columns will be removed (no client is using this at this point), and the new ones will be renamed to their final names. Client applications still work during this phase, as the views are still mapping to the proper tables & columns.
 
 ## Features
 
