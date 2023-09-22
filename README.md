@@ -8,11 +8,10 @@
 
 ## How pg-roll works
 
-
+`pg-roll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
 
 ![Multiple schema versions with pg-roll](docs/img/migration-flow.svg)
 
-`pg-roll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
 
 `pg-roll` follows a [expand/contract workflow](https://openpracticelibrary.com/practice/expand-and-contract-pattern/). On migration start, it will perform all the additive changes (create tables, add columns, etc) in the physical schema, without breaking it.
 
