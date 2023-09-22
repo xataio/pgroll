@@ -123,12 +123,6 @@ After starting a migration, client applications can start using the new schema v
 SET search_path TO 'public_initial_migration';
 ```
 
-This can also be done by setting the `currentSchema` in the connection string, for instance:
-
-```sh
-postgres://user:password@host:port/dbname?currentSchema=public_initial_migration
-```
-
 ### Complete the migration
 
 Once there are no more client applications using the old schema version, the migration can be completed. This will remove the old schema. To complete the migration, run the following command:
