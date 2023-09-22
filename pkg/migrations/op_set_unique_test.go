@@ -52,19 +52,18 @@ func TestSetColumnUnique(t *testing.T) {
 						Unique: &migrations.UniqueConstraint{
 							Name: "reviews_review_unique",
 						},
+						Up:   "review || '-' || (random()*1000000)::integer",
+						Down: "review",
 					},
 				},
 			},
 		},
 		afterStart: func(t *testing.T, db *sql.DB) {
-			// The unique index has been created on the underlying table.
-			IndexMustExist(t, db, "public", "reviews", "reviews_review_unique")
-
-			// Inserting values into the old schema that violate uniqueness should fail.
+			// Inserting values into the old schema that violate uniqueness should succeed.
 			MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
 				"username": "alice", "product": "apple", "review": "good",
 			})
-			MustNotInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+			MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
 				"username": "bob", "product": "banana", "review": "good",
 			})
 
@@ -77,12 +76,32 @@ func TestSetColumnUnique(t *testing.T) {
 			})
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
-			// The unique index has been dropped from the the underlying table.
-			IndexMustNotExist(t, db, "public", "reviews", "reviews_review_unique")
+			// The new (temporary) `review` column should not exist on the underlying table.
+			ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+
+			// The up function no longer exists.
+			FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+			// The down function no longer exists.
+			FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+
+			// The up trigger no longer exists.
+			TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+			// The down trigger no longer exists.
+			TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
-			// The unique constraint has been created on the underlying table.
-			ConstraintMustExist(t, db, "public", "reviews", "reviews_review_unique")
+			// The new (temporary) `review` column should not exist on the underlying table.
+			ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+
+			// The up function no longer exists.
+			FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+			// The down function no longer exists.
+			FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+
+			// The up trigger no longer exists.
+			TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+			// The down trigger no longer exists.
+			TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 
 			// Inserting values into the new schema that violate uniqueness should fail.
 			MustInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
