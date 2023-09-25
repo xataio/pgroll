@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/ing/pgroll-banner@2x.png" alt="pgroll logo" />
+  <img src="docs/img/pgroll-banner@2x.png" alt="pgroll logo" />
 </div>
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/xataio/pgroll/blob/main/LICENSE)
