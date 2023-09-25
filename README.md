@@ -52,7 +52,7 @@ Binaries are available for Linux, macOS & Windows, check our [Releases](https://
 To install `pgroll` from source, run the following command:
 
 ```sh
-go install github.com/xataio/pgroll
+go install github.com/xataio/pgroll@latest
 ```
 
 Note: requires [Go 1.21](https://golang.org/doc/install) or later.
