@@ -120,14 +120,15 @@ BEGIN
 							attr.attnum
 					) c
 				),
-        'primaryKey', (
-          SELECT json_agg(kcu.column_name) AS primary_key_columns
-          FROM information_schema.table_constraints AS tc 
-          JOIN information_schema.key_column_usage AS kcu 
-          ON tc.constraint_name = kcu.constraint_name
-          WHERE tc.table_name = 'users' 
-          AND tc.constraint_type = 'PRIMARY KEY'
-        ),
+				'primaryKey', (
+				  SELECT json_agg(kcu.column_name) AS primary_key_columns
+				  FROM information_schema.table_constraints AS tc 
+				  JOIN information_schema.key_column_usage AS kcu 
+				  ON tc.constraint_name = kcu.constraint_name
+				  WHERE tc.table_name = t.relname
+				  AND tc.table_schema = schemaname
+				  AND tc.constraint_type = 'PRIMARY KEY'
+				),
 				'indexes', (
 				  SELECT json_object_agg(pi.indexrelid::regclass, json_build_object(
 				    'name', pi.indexrelid::regclass

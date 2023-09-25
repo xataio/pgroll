@@ -43,6 +43,9 @@ type Table struct {
 
 	// Indexes is a map of the indexes defined on the table
 	Indexes map[string]Index `json:"indexes"`
+
+	// The columns that make up the primary key
+	PrimaryKey []string `json:"primaryKey"`
 }
 
 type Column struct {
@@ -110,6 +113,13 @@ func (t *Table) GetColumn(name string) *Column {
 		return nil
 	}
 	return &c
+}
+
+func (t *Table) GetPrimaryKey() (columns []*Column) {
+	for _, name := range t.PrimaryKey {
+		columns = append(columns, t.GetColumn(name))
+	}
+	return columns
 }
 
 func (t *Table) AddColumn(name string, c Column) {
