@@ -1,1 +1,4 @@
 bin/license-header-checker
+
+# misc
+.DS_Store
