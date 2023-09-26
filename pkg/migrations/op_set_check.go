@@ -52,7 +52,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 	}
 
 	// Backfill the new column with values from the old column.
-	if err := backFill(ctx, conn, o.Table, TemporaryName(o.Column)); err != nil {
+	if err := backfill(ctx, conn, table); err != nil {
 		return fmt.Errorf("failed to backfill column: %w", err)
 	}
 

@@ -53,7 +53,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 		if err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
-		if err := backFill(ctx, conn, o.Table, TemporaryName(o.Column.Name)); err != nil {
+		if err := backfill(ctx, conn, table); err != nil {
 			return fmt.Errorf("failed to backfill column: %w", err)
 		}
 	}
