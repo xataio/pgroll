@@ -10,6 +10,16 @@
 
 `pgroll` is an open source command-line tool that offers safe and un-doable schema migrations for PostgreSQL by serving multiple schema versions simultaneously. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
 
+## Features
+
+- Zero-downtime migrations (no database locking, no breaking changes).
+- Keep old and new schema versions working simultaneously.
+- Automatic columns backfilling when needed.
+- Instant rollback in case of issues during migration.
+- Works against existing schemas, no need to start from scratch.
+- Works with Postgres 14.0 or later.
+- Written in Go, cross-platform single binary with no external dependencies.
+
 ## How pgroll works
 
 `pgroll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
@@ -27,17 +37,7 @@ Once start phase is complete, the new schema version is created, mapping all the
 
 When no more client applications are using the old schema version, the migration can be completed. This will remove the old schema, and the new one will be the only one available. No longer needed tables & columns will be removed (no client is using this at this point), and the new ones will be renamed to their final names. Client applications still work during this phase, as the views are still mapping to the proper tables & columns.
 
-## Features
-
-- Zero-downtime migrations (no database locking, no breaking changes).
-- Keep old and new schema versions working simultaneously.
-- Automatic columns backfilling when needed.
-- Instant rollback in case of issues during migration.
-- Works against existing schemas, no need to start from scratch.
-- Works with Postgres 14.0 or later.
-- Written in Go, cross-platform single binary with no external dependencies.
-
-## Table of Contents
+## Table of Contens
 
 - [Installation](#installation)
 - [Usage](#usage)
