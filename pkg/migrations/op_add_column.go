@@ -163,6 +163,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Ensure that the column has a primary key defined on exactly one column.
+	pk := table.GetPrimaryKey()
+	if len(pk) != 1 {
+		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
