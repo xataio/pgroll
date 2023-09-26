@@ -5,8 +5,8 @@ Our logo combines a symbol and wordmark. Use the base logo and wordmark whenever
 | Symbol                                                | Wordmark                                                    |
 |-------------------------------------------------------|-------------------------------------------------------------|
 | ![SymbolBase](logo/symbol/pgroll-base-symbol.svg)   | ![WordmarkBase](logo/wordmark/pgroll-base-wordmark.svg)   |
-| ![SymbolBlack](logo/symbol/pgroll-black-symbol.svg) | ![WordmarkBlack](logo/wordmark/pgroll-black-wordmark.svg) |
 | ![SymbolWhite](logo/symbol/pgroll-white-symbol.svg) | ![WordmarkWhite](logo/wordmark/pgroll-white-wordmark.svg) |
+| ![SymbolBlack](logo/symbol/pgroll-black-symbol.svg) | ![WordmarkBlack](logo/wordmark/pgroll-black-wordmark.svg) |
 
 ## Banner
 
