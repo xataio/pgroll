@@ -25,10 +25,10 @@ type OpAlterColumn struct {
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	op := o.innerOperation()
 
-	return op.Start(ctx, conn, stateSchema, s)
+	return op.Start(ctx, conn, stateSchema, s, cbs...)
 }
 
 func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB) error {

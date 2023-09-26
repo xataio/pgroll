@@ -16,7 +16,7 @@ type OpDropIndex struct {
 
 var _ Operation = (*OpDropIndex)(nil)
 
-func (o *OpDropIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpDropIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	// no-op
 	return nil
 }
