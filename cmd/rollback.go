@@ -5,6 +5,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +19,14 @@ var rollbackCmd = &cobra.Command{
 		}
 		defer m.Close()
 
+		sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
 		err = m.Rollback(cmd.Context())
 		if err != nil {
+			sp.Fail(fmt.Sprintf("Failed to roll back migration: %s", err))
 			return err
 		}
 
-		fmt.Printf("Migration rolled back. Changes made since the last version have been reverted.\n")
+		sp.Success("Migration rolled back. Changes made since the last version have been reverted")
 		return nil
 	},
 }
