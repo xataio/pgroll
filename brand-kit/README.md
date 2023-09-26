@@ -2,25 +2,11 @@
 
 Our logo combines a symbol and wordmark. Use the base logo and wordmark whenever possible. For dark backgrounds, use the inverted (white) logo, and for light backgrounds, use the black logo. Maintain the logo's aspect ratio, provide clear space, and avoid unauthorized modifications. In contexts with other logos, opt for the monochrome versions to ensure a cohesive and community-oriented brand identity.
 
-<table>
-  <tr>
-    <th>Symbol</th>
-    <th>Wordmark</th>
-  </tr>
-  <tr>
-    <td><img src="logo/symbol/pgroll-base-symbol.svg" alt="SymbolBase"></td>
-    <td><img src="logo/wordmark/pgroll-base-wordmark.svg" alt="WordmarkBase"></td>
-  </tr>
-  <tr style="background-color: black; color: white;">
-    <td><img src="logo/symbol/pgroll-white-symbol.svg" alt="SymbolWhite"></td>
-    <td><img src="logo/wordmark/pgroll-white-wordmark.svg" alt="WordmarkWhite"></td>
-  </tr>
-  <tr>
-    <td><img src="logo/symbol/pgroll-black-symbol.svg" alt="SymbolBlack"></td>
-    <td><img src="logo/wordmark/pgroll-black-wordmark.svg" alt="WordmarkBlack"></td>
-  </tr>
-</table>
-
+| Symbol                                                | Wordmark                                                    |
+|-------------------------------------------------------|-------------------------------------------------------------|
+| ![SymbolBase](logo/symbol/pgroll-base-symbol.svg)   | ![WordmarkBase](logo/wordmark/pgroll-base-wordmark.svg)   |
+| ![SymbolBlack](logo/symbol/pgroll-black-symbol.svg) | ![WordmarkBlack](logo/wordmark/pgroll-black-wordmark.svg) |
+| ![SymbolWhite](logo/symbol/pgroll-white-symbol.svg) | ![WordmarkWhite](logo/wordmark/pgroll-white-wordmark.svg) |
 
 ## Banner
 
