@@ -37,7 +37,7 @@ Once start phase is complete, the new schema version is created, mapping all the
 
 When no more client applications are using the old schema version, the migration can be completed. This will remove the old schema, and the new one will be the only one available. No longer needed tables & columns will be removed (no client is using this at this point), and the new ones will be renamed to their final names. Client applications still work during this phase, as the views are still mapping to the proper tables & columns.
 
-## Table of Contens
+## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
