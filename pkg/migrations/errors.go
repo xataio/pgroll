@@ -138,3 +138,12 @@ type MultipleAlterColumnChangesError struct {
 func (e MultipleAlterColumnChangesError) Error() string {
 	return fmt.Sprintf("alter column operations require exactly one change, found %d", e.Changes)
 }
+
+type InvalidPrimaryKeyError struct {
+	Table  string
+	Fields int
+}
+
+func (e InvalidPrimaryKeyError) Error() string {
+	return fmt.Sprintf("primary key on table %q must be defined on exactly one column, found %d", e.Table, e.Fields)
+}

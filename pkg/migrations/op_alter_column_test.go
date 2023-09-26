@@ -154,5 +154,30 @@ func TestAlterColumnValidation(t *testing.T) {
 			},
 			wantStartErr: migrations.MultipleAlterColumnChangesError{Changes: 2},
 		},
+		{
+			name: "table must have a primary key on exactly one column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer, primary key (id, order_id))",
+							Down: "DROP TABLE orders",
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "orders",
+							Column: "quantity",
+							Name:   "renamed_quantity",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidPrimaryKeyError{Table: "orders", Fields: 2},
+		},
 	})
 }
