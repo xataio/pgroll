@@ -53,7 +53,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 		if err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
-		if err := backFill(ctx, conn, o.Table, TemporaryName(o.Column.Name)); err != nil {
+		if err := backfill(ctx, conn, table); err != nil {
 			return fmt.Errorf("failed to backfill column: %w", err)
 		}
 	}
@@ -163,6 +163,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Ensure that the column has a primary key defined on exactly one column.
+	pk := table.GetPrimaryKey()
+	if len(pk) != 1 {
+		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
@@ -217,18 +223,6 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) erro
 		pq.QuoteIdentifier(o.Column.Check.Name),
 		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name, TemporaryName(o.Column.Name)),
 	))
-	return err
-}
-
-func backFill(ctx context.Context, conn *sql.DB, table, column string) error {
-	// touch rows without changing them in order to have the trigger fire
-	// and set the value using the `up` SQL.
-	// TODO: this should be done in batches in case of large tables.
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
-		pq.QuoteIdentifier(table),
-		pq.QuoteIdentifier(column),
-		pq.QuoteIdentifier(column)))
-
 	return err
 }
 

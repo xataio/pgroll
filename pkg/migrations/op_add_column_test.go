@@ -560,6 +560,34 @@ func TestAddColumnValidation(t *testing.T) {
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
+		{
+			name: "table must have a primary key on exactly one column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE orders(id integer, order_id integer, name text, primary key (id, order_id))",
+							Down: "DROP TABLE orders",
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "orders",
+							Up:    ptr("UPPER(name)"),
+							Column: migrations.Column{
+								Name: "description",
+								Type: "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidPrimaryKeyError{Table: "orders", Fields: 2},
+		},
 	})
 }
 
