@@ -220,18 +220,6 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) erro
 	return err
 }
 
-func backFill(ctx context.Context, conn *sql.DB, table, column string) error {
-	// touch rows without changing them in order to have the trigger fire
-	// and set the value using the `up` SQL.
-	// TODO: this should be done in batches in case of large tables.
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("UPDATE %s SET %s = %s",
-		pq.QuoteIdentifier(table),
-		pq.QuoteIdentifier(column),
-		pq.QuoteIdentifier(column)))
-
-	return err
-}
-
 func NotNullConstraintName(columnName string) string {
 	return "_pgroll_add_column_check_" + columnName
 }
