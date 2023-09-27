@@ -456,6 +456,17 @@ We've seen:
 
 ## Operations reference
 
+`pgroll` migrations are specified as JSON files. All migrations follow the same basic structure:
+
+```go
+type Migration struct {
+    Name       string      `json:"name"`
+    Operations []Operation `json:"operations"`
+}
+```
+
+In addition to this documentation the [examples](../examples) directory contains examples of each kind of operation.
+
 `pgroll` supports the following migration operations:
 
 * [Add column](add-column)
@@ -480,6 +491,64 @@ We've seen:
 ### Alter column
 ### Create index
 ### Create table
+
+A create table migration creates a new table in the database.
+
+**create table** migrations have this structure:
+
+```go
+type OpCreateTable struct {
+	Name    string   `json:"name"`
+	Columns []Column `json:"columns"`
+}
+
+```
+
+where each `Column` is defined as:
+
+```go
+type Column struct {
+	Name       string               `json:"name"`
+	Type       string               `json:"type"`
+	Nullable   bool                 `json:"nullable"`
+	Unique     bool                 `json:"unique"`
+	PrimaryKey bool                 `json:"pk"`
+	Default    *string              `json:"default"`
+	Check      *CheckConstraint     `json:"check"`
+	References *ForeignKeyReference `json:"references"`
+}
+```
+
+the `CheckConstraint` type is:
+
+```go
+type CheckConstraint struct {
+	Name       string `json:"name"`
+	Constraint string `json:"constraint"`
+}
+```
+
+and the `ForeignKeyReference` type is:
+
+```go
+type ForeignKeyReference struct {
+	Name   string `json:"name"`
+	Table  string `json:"table"`
+	Column string `json:"column"`
+}
+```
+
+Example **create table** migrations:
+
+* [01_create_tables.json](../examples/01_create_tables.json)
+* [02_create_another_table.json](../examples/02_create_another_table.json)
+* [08_create_fruits_table.json](../examples/08_create_fruits_table.json)
+* [12_create_employees_table.json](../examples/12_create_employees_table.json)
+* [14_add_reviews_table.json](../examples/14_add_reviews_table.json)
+* [19_create_orders_table.json](../examples/19_create_orders_table.json)
+* [20_create_posts_table.json](../examples/20_create_posts_table.json)
+* [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
+
 ### Drop column
 ### Drop constraint
 ### Drop index
