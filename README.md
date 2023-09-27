@@ -166,7 +166,7 @@ For this project, we pledge to act and interact in ways that contribute to an op
 
 ## References
 
-This is a list of content & projects that helped as inspiration, or otherwise are similar to `pgroll`:
+This is a list of content and projects that helped as inspiration, or otherwise are similar to `pgroll`:
 
 * https://github.com/fabianlindfors/reshape
 * [PostgreSQL at Scale: Database Schema Changes Without Downtime](https://medium.com/paypal-tech/postgresql-at-scale-database-schema-changes-without-downtime-20d3749ed680)
