@@ -164,6 +164,16 @@ We welcome contributions from the community! If you'd like to contribute to `pgr
 
 For this project, we pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
+## References
+
+This is a list of content and projects that helped as inspiration, or otherwise are similar to `pgroll`:
+
+* https://github.com/fabianlindfors/reshape
+* [PostgreSQL at Scale: Database Schema Changes Without Downtime](https://medium.com/paypal-tech/postgresql-at-scale-database-schema-changes-without-downtime-20d3749ed680)
+* [Zero downtime schema migrations in highly available databases](http://essay.utwente.nl/92098/1/vanKampen_MA_EEMCS.pdf)
+* https://github.com/braintree/pg_ha_migrations
+* [Expand and contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/)
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
