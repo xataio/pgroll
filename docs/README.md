@@ -19,6 +19,32 @@
 
 ### Client applications
 
+In order to work with the multiple versioned schema that `pgroll` creates, clients need to be configured to work with one of them. 
+
+This is done by having client applications configure the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) when they connnect to the Postgres database.
+
+For example, this fragment for a Go client application shows how to set the `search_path` after a connection is established:
+
+```go
+db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+if err != nil {
+    return nil, err
+}
+
+searchPath := "public_02_add_assignee_column"
+log.Printf("Setting search path to %q", searchPath)
+_, err = db.Exec(fmt.Sprintf("SET search_path = %s", pq.QuoteIdentifier(searchPath)))
+if err != nil {
+    return nil, fmt.Errorf("failed to set search path: %s", err)
+}
+```
+
+In practice, the `searchPath` variable would be provided to the application as an environment variable.
+
+#### What happens if an application doesn't set the `search_path`?
+
+If an application doesn't set the `search_path` for the connection, the `search_path` defaults to the `public` schema, meaning that the application will be working with the underlying tables directly rather than accessing them through the versioned views.
+
 ## Installation
 
 ## Tutorial
