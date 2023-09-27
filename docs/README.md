@@ -455,3 +455,41 @@ We've seen:
 ## Command line reference
 
 ## Operations reference
+
+`pgroll` supports the following migration operations:
+
+* [Add column](add-column)
+* [Alter column](#alter-column)
+* [Create index](#create-index)
+* [Create table](#create-table)
+* [Drop column](#drop-column)
+* [Drop constraint](#drop-constraint)
+* [Drop index](#drop-index)
+* [Drop table](#drop-table)
+* [Raw SQL](#raw-sql)
+* [Rename table](#rename-table)
+* [Alter column](#alter-column)
+    * [Rename column](#rename-column)
+    * [Change type](#change-type)
+    * [Add check constraint](#set-check)
+    * [Add foreign key](#set-fk)
+    * [Add not null constraint](#set-notnull)
+    * [Add unique constraint](#set-unique)
+
+### Add column
+### Alter column
+### Create index
+### Create table
+### Drop column
+### Drop constraint
+### Drop index
+### Drop table
+### Raw SQL
+### Alter column
+
+#### Rename column
+#### Change type
+#### Add check constraint
+#### Add foreign key
+#### Add not null constraint
+#### Add unique constraint
