@@ -458,14 +458,14 @@ We've seen:
 
 `pgroll` migrations are specified as JSON files. All migrations follow the same basic structure:
 
-```go
-type Migration struct {
-    Name       string      `json:"name"`
-    Operations []Operation `json:"operations"`
+```json
+{
+  "name": "0x_migration_name",
+  "operations": [...]
 }
 ```
 
-In addition to this documentation the [examples](../examples) directory contains examples of each kind of operation.
+See the [examples](../examples) directory for examples of each kind of operation.
 
 `pgroll` supports the following migration operations:
 
@@ -496,46 +496,36 @@ A create table migration creates a new table in the database.
 
 **create table** migrations have this structure:
 
-```go
-type OpCreateTable struct {
-	Name    string   `json:"name"`
-	Columns []Column `json:"columns"`
-}
-
-```
-
-where each `Column` is defined as:
-
-```go
-type Column struct {
-	Name       string               `json:"name"`
-	Type       string               `json:"type"`
-	Nullable   bool                 `json:"nullable"`
-	Unique     bool                 `json:"unique"`
-	PrimaryKey bool                 `json:"pk"`
-	Default    *string              `json:"default"`
-	Check      *CheckConstraint     `json:"check"`
-	References *ForeignKeyReference `json:"references"`
+```json
+{
+  "create_table": {
+    "name": "name of new table",
+    "columns": [...]
+    ]
+  }
 }
 ```
 
-the `CheckConstraint` type is:
+where each `column` is defined as:
 
-```go
-type CheckConstraint struct {
-	Name       string `json:"name"`
-	Constraint string `json:"constraint"`
-}
-```
-
-and the `ForeignKeyReference` type is:
-
-```go
-type ForeignKeyReference struct {
-	Name   string `json:"name"`
-	Table  string `json:"table"`
-	Column string `json:"column"`
-}
+```json
+{
+  "name": "column name",
+  "type": "postgres type",
+  "nullable": true|false,
+  "unique": true|false,
+  "pk": true|false,
+  "default": "default value"
+  "check": {
+    "name": "name of check constraint"
+    "constraint": "constraint expression"
+  }
+  "references": {
+    "name": "name of foreign key constraint"
+    "table": "name of referenced table"
+    "column": "name of referenced column"
+  }
+},
 ```
 
 Example **create table** migrations:
