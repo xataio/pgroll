@@ -623,6 +623,27 @@ Example **add foreign key** migrations:
 * [21_add_foreign_key_constraint.json](../examples/21_add_foreign_key_constraint.json)
 
 #### Add not null constraint
+
+Add not null operations add a `NOT NULL` constraint to a column.
+
+**add not null** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "not_null": true,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **add not null** migrations:
+
+* [16_set_not_null.json](../examples/16_set_not_null.json)
+
 #### Add unique constraint
 
 ### Create index
