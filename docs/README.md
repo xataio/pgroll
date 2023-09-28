@@ -679,6 +679,26 @@ Example **drop table** migrations:
 * [07_drop_table.json](../examples/07_drop_table.json)
 
 ### Raw SQL
+
+A raw SQL operation runs arbitrary SQL against the database. This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
+
+:warning: `pgroll` is unable to guarantee that raw SQL migrations are safe and will not result in application downtime. :warning:
+
+**sql** operations have this structure:
+
+```json
+{
+  "sql": {
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **raw SQL** migrations:
+
+* [05_sql.json](../examples/05_sql.json)
+
 ### Alter column
 
 #### Rename column
