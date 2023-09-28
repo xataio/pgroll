@@ -469,7 +469,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 
 `pgroll` supports the following migration operations:
 
-* [Add column](add-column)
+* [Add column](#add-column)
 * [Alter column](#alter-column)
 * [Create index](#create-index)
 * [Create table](#create-table)
@@ -488,6 +488,44 @@ See the [examples](../examples) directory for examples of each kind of operation
     * [Add unique constraint](#set-unique)
 
 ### Add column
+
+An add column operation creates a new column on an existing table.
+
+**add column** operations have this structure:
+
+```json
+{
+  "add_column": {
+    "table": "name of table to which the column should be added",
+    "up": "SQL expression",
+    "column": {
+      "name": "name of column",
+      "type": "postgres type",
+      "nullable": true|false,
+      "unique": true|false,
+      "pk": true|false,
+      "default": "default value for the column",
+      "check": {
+        "name": "name of check constraint",
+        "constraint": "constraint expression"
+      },
+      "references": {
+        "name": "name of foreign key constraint",
+        "table": "name of referenced table",
+        "column": "name of referenced column"
+      } 
+    }
+  }
+}
+```
+
+Example **add column** migrations:
+
+* [03_add_column.json](../examples/03_add_column.json)
+* [06_add_column_to_sql_table.json](../examples/06_add_column_to_sql_table.json)
+* [17_add_rating_column.json](../examples/17_add_rating_column.json)
+* [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
+
 ### Alter column
 ### Create index
 ### Create table
