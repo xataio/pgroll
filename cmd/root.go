@@ -19,6 +19,9 @@ var (
 
 	// StateSchema is the Postgres schema where pgroll will store its state
 	StateSchema string
+
+	// Version is the pgroll version
+	Version = "development"
 )
 
 func init() {
@@ -30,6 +33,7 @@ func init() {
 var rootCmd = &cobra.Command{
 	Use:          "pgroll",
 	SilenceUsage: true,
+	Version:      Version,
 }
 
 func NewRoll(ctx context.Context) (*roll.Roll, error) {
