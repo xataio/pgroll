@@ -549,9 +549,9 @@ Example **create index** migrations:
 
 ### Create table
 
-A create table migration creates a new table in the database.
+A create table operation creates a new table in the database.
 
-**create table** migrations have this structure:
+**create table** operations have this structure:
 
 ```json
 {
