@@ -5,6 +5,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +19,14 @@ var completeCmd = &cobra.Command{
 		}
 		defer m.Close()
 
+		sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
 		err = m.Complete(cmd.Context())
 		if err != nil {
+			sp.Fail(fmt.Sprintf("Failed to complete migration: %s", err))
 			return err
 		}
 
-		fmt.Println("Migration successful!")
+		sp.Success("Migration successful!")
 		return nil
 	},
 }

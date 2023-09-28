@@ -21,7 +21,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
@@ -51,7 +51,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema s
 	}
 
 	// Backfill the new column with values from the old column.
-	if err := backfill(ctx, conn, table); err != nil {
+	if err := backfill(ctx, conn, table, cbs...); err != nil {
 		return fmt.Errorf("failed to backfill column: %w", err)
 	}
 

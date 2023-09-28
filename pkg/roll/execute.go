@@ -14,7 +14,7 @@ import (
 )
 
 // Start will apply the required changes to enable supporting the new schema version
-func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error {
+func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) error {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -41,7 +41,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration) error
 
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema)
+		err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 

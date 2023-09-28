@@ -19,7 +19,7 @@ type OpDropColumn struct {
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	if o.Down != nil {
 		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),

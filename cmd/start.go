@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 
@@ -34,21 +35,29 @@ func startCmd() *cobra.Command {
 				return fmt.Errorf("reading migration file: %w", err)
 			}
 
-			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
+			sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
+			cb := func(n int64) {
+				sp.UpdateText(fmt.Sprintf("%d records complete...", n))
+			}
 
-			err = m.Start(cmd.Context(), migration)
+			err = m.Start(cmd.Context(), migration, cb)
 			if err != nil {
+				sp.Fail(fmt.Sprintf("Failed to start migration: %s", err))
 				return err
 			}
 
 			if complete {
 				if err = m.Complete(cmd.Context()); err != nil {
+					sp.Fail(fmt.Sprintf("Failed to complete migration: %s", err))
 					return err
 				}
 			}
 
+			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
 			viewName := roll.VersionedSchemaName(Schema, version)
-			fmt.Printf("Migration successful! New version of the schema available under postgres '%s' schema\n", viewName)
+			msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
+			sp.Success(msg)
+
 			return nil
 		},
 	}

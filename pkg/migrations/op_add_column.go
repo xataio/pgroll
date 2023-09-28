@@ -20,7 +20,7 @@ type OpAddColumn struct {
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table); err != nil {
@@ -53,7 +53,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 		if err != nil {
 			return fmt.Errorf("failed to create trigger: %w", err)
 		}
-		if err := backfill(ctx, conn, table); err != nil {
+		if err := backfill(ctx, conn, table, cbs...); err != nil {
 			return fmt.Errorf("failed to backfill column: %w", err)
 		}
 	}

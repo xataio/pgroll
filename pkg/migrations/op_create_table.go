@@ -29,7 +29,7 @@ type Column struct {
 	References *ForeignKeyReference `json:"references"`
 }
 
-func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(tempName),

@@ -17,7 +17,7 @@ type OpDropTable struct {
 
 var _ Operation = (*OpDropTable)(nil)
 
-func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	s.RemoveTable(o.Name)
 	return nil
 }

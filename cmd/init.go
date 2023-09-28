@@ -5,6 +5,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -18,12 +19,14 @@ var initCmd = &cobra.Command{
 		}
 		defer m.Close()
 
+		sp, _ := pterm.DefaultSpinner.WithText("Initializing pgroll...").Start()
 		err = m.Init(cmd.Context())
 		if err != nil {
+			sp.Fail(fmt.Sprintf("Failed to initialize pgroll: %s", err))
 			return err
 		}
 
-		fmt.Printf("Initialization done! pgroll is ready to be used\n")
+		sp.Success("Initialization complete")
 		return nil
 	},
 }

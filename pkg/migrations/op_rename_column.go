@@ -19,7 +19,7 @@ type OpRenameColumn struct {
 
 var _ Operation = (*OpRenameColumn)(nil)
 
-func (o *OpRenameColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema) error {
+func (o *OpRenameColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	table := s.GetTable(o.Table)
 	table.RenameColumn(o.From, o.To)
 	return nil
