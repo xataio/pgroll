@@ -528,6 +528,25 @@ Example **add column** migrations:
 
 ### Alter column
 ### Create index
+
+A create index operation creates a new btree index on a set of columns.
+
+**create index** operations have this structure:
+
+```json
+{
+  "create_index": {
+    "table": "name of table on which to define the index",
+    "name": "index name",
+    "columns": [ "names of columns on which to define the index" ]
+  }
+}
+```
+
+Example **create index** migrations:
+
+* [10_create_index.json](../examples/10_create_index.json)
+
 ### Create table
 
 A create table migration creates a new table in the database.
