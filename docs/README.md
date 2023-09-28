@@ -597,6 +597,25 @@ Example **create table** migrations:
 * [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
 
 ### Drop column
+
+A drop column operation drops a column from an existing table.
+
+**drop column** operations have this structure:
+
+```json
+{
+  "drop_column": {
+    "table": "name of table",
+    "column": "name of column to drop",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **drop column** migrations:
+
+* [09_drop_column.json](../examples/09_drop_column.json)
+
 ### Drop constraint
 ### Drop index
 ### Drop table
