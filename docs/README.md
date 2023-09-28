@@ -617,6 +617,31 @@ Example **drop column** migrations:
 * [09_drop_column.json](../examples/09_drop_column.json)
 
 ### Drop constraint
+
+A drop constraint operation drops a constraint from an existing table.
+
+Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
+
+**drop constraint** operations have this structure:
+
+```json
+{
+  "drop_constraint": {
+    "table": "name of table",
+    "column": "name of column on which constraint is defined",
+    "name": "name of constraint to drop",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **drop constraint** migrations:
+
+* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
+* [23_drop_check_constraint.json](../examples/23_drop_check_constraint.json)
+* [24_drop_foreign_key_constraint.json](../examples/24_drop_foreign_key_constraint.json)
+
 ### Drop index
 ### Drop table
 ### Raw SQL
