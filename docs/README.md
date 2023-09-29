@@ -699,6 +699,25 @@ Example **raw SQL** migrations:
 
 * [05_sql.json](../examples/05_sql.json)
 
+### Rename table
+
+A rename table operation renames a table.
+
+**rename table** operations have this structure:
+
+```json
+{
+  "rename_table": {
+    "from": "old column name",
+    "to": "new column name"
+  }
+}
+```
+
+Example **rename table** migrations:
+
+* [04_rename_table.json](../examples/04_rename_table.json)
+
 ### Alter column
 
 #### Rename column
