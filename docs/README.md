@@ -471,6 +471,12 @@ See the [examples](../examples) directory for examples of each kind of operation
 
 * [Add column](#add-column)
 * [Alter column](#alter-column)
+    * [Rename column](#rename-column)
+    * [Change type](#change-type)
+    * [Add check constraint](#set-check)
+    * [Add foreign key](#set-fk)
+    * [Add not null constraint](#set-notnull)
+    * [Add unique constraint](#set-unique)
 * [Create index](#create-index)
 * [Create table](#create-table)
 * [Drop column](#drop-column)
@@ -479,13 +485,6 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Drop table](#drop-table)
 * [Raw SQL](#raw-sql)
 * [Rename table](#rename-table)
-* [Alter column](#alter-column)
-    * [Rename column](#rename-column)
-    * [Change type](#change-type)
-    * [Add check constraint](#set-check)
-    * [Add foreign key](#set-fk)
-    * [Add not null constraint](#set-notnull)
-    * [Add unique constraint](#set-unique)
 
 ### Add column
 
@@ -527,6 +526,148 @@ Example **add column** migrations:
 * [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
 
 ### Alter column
+
+An alter column operation alters the properties of a column. The operation supports several sub-operations, described below.
+
+#### Rename column
+
+A rename column operation renames a column.
+
+**rename column** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "old column name",
+    "name": "new column name"
+  }
+}
+```
+
+Example **rename column** migrations:
+
+* [13_rename_column.json](../examples/13_rename_column.json)
+
+#### Change type
+
+A change type operation changes the type of a column.
+
+**change type** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "type": "new type of column",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **change type** migrations:
+
+* [18_change_column_type.json](../examples/18_change_column_type.json)
+
+#### Add check constraint
+
+An add check constraint operation adds a `CHECK` constraint to a column.
+
+**add check constraint** migrations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "check": {
+      "name": "check constraint name",
+      "constraint": "constraint expression"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **add check constraint** migrations:
+
+* [22_add_check_constraint.json](../examples/22_add_check_constraint.json)
+
+#### Add foreign key
+
+Add foreign key operations add a foreign key constraint to a column.
+
+**add foreign key** constraints have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "references": {
+      "name": "name of foreign key reference",
+      "table": "name of referenced table",
+      "column": "name of referenced column"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **add foreign key** migrations:
+
+* [21_add_foreign_key_constraint.json](../examples/21_add_foreign_key_constraint.json)
+
+#### Add not null constraint
+
+Add not null operations add a `NOT NULL` constraint to a column.
+
+**add not null** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "not_null": true,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **add not null** migrations:
+
+* [16_set_not_null.json](../examples/16_set_not_null.json)
+
+#### Add unique constraint
+
+Add unique operations add a `UNIQUE` constraint to a column.
+
+**add unique** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "unique": {
+      "name": "name of unique constraint"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **add unique** migrations:
+
+* [15_set_column_unique.json](../examples/15_set_column_unique.json)
+
 ### Create index
 
 A create index operation creates a new btree index on a set of columns.
@@ -717,12 +858,3 @@ A rename table operation renames a table.
 Example **rename table** migrations:
 
 * [04_rename_table.json](../examples/04_rename_table.json)
-
-### Alter column
-
-#### Rename column
-#### Change type
-#### Add check constraint
-#### Add foreign key
-#### Add not null constraint
-#### Add unique constraint
