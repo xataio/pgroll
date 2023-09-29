@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/state"
 
 	"github.com/spf13/cobra"
@@ -23,13 +24,13 @@ var statusCmd = &cobra.Command{
 	Short: "Show pgroll status",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
-		state, err := state.New(ctx, PGURL, StateSchema)
+		state, err := state.New(ctx, flags.PostgresURL(), flags.StateSchema())
 		if err != nil {
 			return err
 		}
 		defer state.Close()
 
-		statusLine, err := statusForSchema(ctx, state, Schema)
+		statusLine, err := statusForSchema(ctx, state, flags.StateSchema())
 		if err != nil {
 			return err
 		}

@@ -6,28 +6,26 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
 )
 
-var (
-	// PGURL is the Postgres URL to connect to
-	PGURL string
-
-	// Schema is the schema to use for the migration
-	Schema string
-
-	// StateSchema is the Postgres schema where pgroll will store its state
-	StateSchema string
-
-	// Version is the pgroll version
-	Version = "development"
-)
+// Version is the pgroll version
+var Version = "development"
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&PGURL, "postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
-	rootCmd.PersistentFlags().StringVar(&Schema, "schema", "public", "Postgres schema to use for the migration")
-	rootCmd.PersistentFlags().StringVar(&StateSchema, "pgroll-schema", "pgroll", "Postgres schema in which the migration should be applied")
+	viper.SetEnvPrefix("PGROLL")
+	viper.AutomaticEnv()
+
+	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
+	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
+	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema in which the migration should be applied")
+
+	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
+	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
+	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
 }
 
 var rootCmd = &cobra.Command{
@@ -37,12 +35,16 @@ var rootCmd = &cobra.Command{
 }
 
 func NewRoll(ctx context.Context) (*roll.Roll, error) {
-	state, err := state.New(ctx, PGURL, StateSchema)
+	pgURL := flags.PostgresURL()
+	schema := flags.Schema()
+	stateSchema := flags.StateSchema()
+
+	state, err := state.New(ctx, pgURL, stateSchema)
 	if err != nil {
 		return nil, err
 	}
 
-	return roll.New(ctx, PGURL, Schema, state)
+	return roll.New(ctx, pgURL, schema, state)
 }
 
 // Execute executes the root command.
