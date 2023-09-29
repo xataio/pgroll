@@ -456,9 +456,20 @@ We've seen:
 
 ## Operations reference
 
+`pgroll` migrations are specified as JSON files. All migrations follow the same basic structure:
+
+```json
+{
+  "name": "0x_migration_name",
+  "operations": [...]
+}
+```
+
+See the [examples](../examples) directory for examples of each kind of operation.
+
 `pgroll` supports the following migration operations:
 
-* [Add column](add-column)
+* [Add column](#add-column)
 * [Alter column](#alter-column)
 * [Create index](#create-index)
 * [Create table](#create-table)
@@ -477,14 +488,236 @@ We've seen:
     * [Add unique constraint](#set-unique)
 
 ### Add column
+
+An add column operation creates a new column on an existing table.
+
+**add column** operations have this structure:
+
+```json
+{
+  "add_column": {
+    "table": "name of table to which the column should be added",
+    "up": "SQL expression",
+    "column": {
+      "name": "name of column",
+      "type": "postgres type",
+      "nullable": true|false,
+      "unique": true|false,
+      "pk": true|false,
+      "default": "default value for the column",
+      "check": {
+        "name": "name of check constraint",
+        "constraint": "constraint expression"
+      },
+      "references": {
+        "name": "name of foreign key constraint",
+        "table": "name of referenced table",
+        "column": "name of referenced column"
+      } 
+    }
+  }
+}
+```
+
+Example **add column** migrations:
+
+* [03_add_column.json](../examples/03_add_column.json)
+* [06_add_column_to_sql_table.json](../examples/06_add_column_to_sql_table.json)
+* [17_add_rating_column.json](../examples/17_add_rating_column.json)
+* [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
+
 ### Alter column
 ### Create index
+
+A create index operation creates a new btree index on a set of columns.
+
+**create index** operations have this structure:
+
+```json
+{
+  "create_index": {
+    "table": "name of table on which to define the index",
+    "name": "index name",
+    "columns": [ "names of columns on which to define the index" ]
+  }
+}
+```
+
+Example **create index** migrations:
+
+* [10_create_index.json](../examples/10_create_index.json)
+
 ### Create table
+
+A create table operation creates a new table in the database.
+
+**create table** operations have this structure:
+
+```json
+{
+  "create_table": {
+    "name": "name of new table",
+    "columns": [...]
+    ]
+  }
+}
+```
+
+where each `column` is defined as:
+
+```json
+{
+  "name": "column name",
+  "type": "postgres type",
+  "nullable": true|false,
+  "unique": true|false,
+  "pk": true|false,
+  "default": "default value"
+  "check": {
+    "name": "name of check constraint"
+    "constraint": "constraint expression"
+  }
+  "references": {
+    "name": "name of foreign key constraint"
+    "table": "name of referenced table"
+    "column": "name of referenced column"
+  }
+},
+```
+
+Example **create table** migrations:
+
+* [01_create_tables.json](../examples/01_create_tables.json)
+* [02_create_another_table.json](../examples/02_create_another_table.json)
+* [08_create_fruits_table.json](../examples/08_create_fruits_table.json)
+* [12_create_employees_table.json](../examples/12_create_employees_table.json)
+* [14_add_reviews_table.json](../examples/14_add_reviews_table.json)
+* [19_create_orders_table.json](../examples/19_create_orders_table.json)
+* [20_create_posts_table.json](../examples/20_create_posts_table.json)
+* [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
+
 ### Drop column
+
+A drop column operation drops a column from an existing table.
+
+**drop column** operations have this structure:
+
+```json
+{
+  "drop_column": {
+    "table": "name of table",
+    "column": "name of column to drop",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **drop column** migrations:
+
+* [09_drop_column.json](../examples/09_drop_column.json)
+
 ### Drop constraint
+
+A drop constraint operation drops a constraint from an existing table.
+
+Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
+
+**drop constraint** operations have this structure:
+
+```json
+{
+  "drop_constraint": {
+    "table": "name of table",
+    "column": "name of column on which constraint is defined",
+    "name": "name of constraint to drop",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **drop constraint** migrations:
+
+* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
+* [23_drop_check_constraint.json](../examples/23_drop_check_constraint.json)
+* [24_drop_foreign_key_constraint.json](../examples/24_drop_foreign_key_constraint.json)
+
 ### Drop index
+
+A drop index operation drops an index from a table.
+
+**drop index** operations have this structure:
+
+```json
+{
+  "drop_index": {
+    "name": "name of index to drop"
+  }
+}
+```
+
+Example **drop index** migrations:
+
+* [11_drop_index.json](../examples/11_drop_index.json)
+
 ### Drop table
+
+A drop table operation drops a table.
+
+**drop table** operations have this structure:
+
+```json
+{
+  "drop_table": {
+    "name": "name of table to drop"
+  }
+}
+```
+
+Example **drop table** migrations:
+
+* [07_drop_table.json](../examples/07_drop_table.json)
+
 ### Raw SQL
+
+A raw SQL operation runs arbitrary SQL against the database. This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
+
+:warning: `pgroll` is unable to guarantee that raw SQL migrations are safe and will not result in application downtime. :warning:
+
+**sql** operations have this structure:
+
+```json
+{
+  "sql": {
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **raw SQL** migrations:
+
+* [05_sql.json](../examples/05_sql.json)
+
+### Rename table
+
+A rename table operation renames a table.
+
+**rename table** operations have this structure:
+
+```json
+{
+  "rename_table": {
+    "from": "old column name",
+    "to": "new column name"
+  }
+}
+```
+
+Example **rename table** migrations:
+
+* [04_rename_table.json](../examples/04_rename_table.json)
+
 ### Alter column
 
 #### Rename column
