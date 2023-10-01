@@ -2,9 +2,13 @@
   <img src="brand-kit/banner/pgroll-banner.svg" alt="pgroll logo" />
 </div>
 
+<div align="center">
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/xataio/pgroll/blob/main/LICENSE)
 [![Linux Build](https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg)](https://github.com/xataio/pgroll/actions?query=branch%3Amain)
 [![Release](https://img.shields.io/github/release/xataio/pgroll.svg?label=Release)](https://github.com/xataio/pgroll/releases)
+[!![X/Twitter Follow](https://img.shields.io/twitter/follow/xata)](https://twitter.com/xata)
+[![Discord](https://img.shields.io/discord/996791218879086662)](https://xata.io/discord)
+</div>
 
 # pgroll - Zero-downtime, undoable, schema migrations for Postgres
 
@@ -18,6 +22,7 @@
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
 - Works with Postgres 14.0 or later.
+- Works with any Postgres service (including RDS and Aurora).
 - Written in Go, cross-platform single binary with no external dependencies.
 
 ## How pgroll works
@@ -33,7 +38,7 @@ When a breaking change is required on a column, it will create a new column in t
 
 Once start phase is complete, the new schema version is created, mapping all the views to the proper tables & columns. Client applications can then access the new schema version, while the old one is still available. This is the moment to start rolling out the new version of the client application.
 
-![Multiple schema versions with pgroll](docs/img/migration-schemas.svg)
+![Multiple schema versions with pgroll](docs/img/migration-schemas.png)
 
 When no more client applications are using the old schema version, the migration can be completed. This will remove the old schema, and the new one will be the only one available. No longer needed tables & columns will be removed (no client is using this at this point), and the new ones will be renamed to their final names. Client applications still work during this phase, as the views are still mapping to the proper tables & columns.
 
@@ -166,12 +171,12 @@ For this project, we pledge to act and interact in ways that contribute to an op
 
 ## References
 
-This is a list of content and projects that helped as inspiration, or otherwise are similar to `pgroll`:
+This is a list of projects and articles that helped as inspiration, or otherwise are similar to `pgroll`:
 
-* https://github.com/fabianlindfors/reshape
+* [Reshape](https://github.com/fabianlindfors/reshape) by Fabien Lindfors
+* [PgHaMigrations](https://github.com/braintree/pg_ha_migrations)
 * [PostgreSQL at Scale: Database Schema Changes Without Downtime](https://medium.com/paypal-tech/postgresql-at-scale-database-schema-changes-without-downtime-20d3749ed680)
 * [Zero downtime schema migrations in highly available databases](http://essay.utwente.nl/92098/1/vanKampen_MA_EEMCS.pdf)
-* https://github.com/braintree/pg_ha_migrations
 * [Expand and contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/)
 
 ## License
@@ -180,8 +185,8 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-If you have any questions, encounter issues, or need assistance, open an issue in this repository, and our community will be happy to help.
+If you have any questions, encounter issues, or need assistance, open an issue in this repository our join our [Discord](https://xata.io/discord), and our community will be happy to help.
 
 
 <br>
-<p align="right">Made with :heart: by <a href="https://xata.io">Xata</a></p>
+<p align="right">Made with :heart: by <a href="https://xata.io">Xata 🦋</a></p>
