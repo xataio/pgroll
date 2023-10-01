@@ -2,11 +2,13 @@
   <img src="brand-kit/banner/pgroll-banner.svg" alt="pgroll logo" />
 </div>
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/xataio/pgroll/blob/main/LICENSE)
-[![Linux Build](https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg)](https://github.com/xataio/pgroll/actions?query=branch%3Amain)
-[![Release](https://img.shields.io/github/release/xataio/pgroll.svg?label=Release)](https://github.com/xataio/pgroll/releases)
-[!![X/Twitter Follow](https://img.shields.io/twitter/follow/xata)](https://twitter.com/xata)
-[![Discord](https://img.shields.io/discord/996791218879086662)](https://xata.io/discord)
+<p align="center">
+  <a href="https://github.com/xataio/pgroll/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a>&nbsp;
+  <a href="https://github.com/xataio/pgroll/actions?query=branch%3Amain"><img src="https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg" alt="CI Build"></a> &nbsp;
+  <a href="https://github.com/xataio/pgroll/releases"><img src="https://img.shields.io/github/release/xataio/pgroll.svg?label=Release" alt="Release"></a> &nbsp;
+  <a href="https://xata.io/discord"><img src="https://img.shields.io/discord/996791218879086662?label=Discord" alt="Discord"></a> &nbsp;
+  <a href="https://twitter.com/xata"><img src="https://img.shields.io/twitter/follow/xata?style=flat" alt="X (formerly Twitter) Follow" /> </a>
+</p>
 
 # pgroll - Zero-downtime, undoable, schema migrations for Postgres
 
