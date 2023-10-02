@@ -90,7 +90,7 @@ func (b *batcher) buildQuery() string {
 
 	return fmt.Sprintf(`
     WITH batch AS (
-      SELECT %[1]s FROM %[2]s %[4]s ORDER BY %[1]s LIMIT %[3]d FOR UPDATE
+      SELECT %[1]s FROM %[2]s %[4]s ORDER BY %[1]s LIMIT %[3]d FOR NO KEY UPDATE
     ), update AS (
       UPDATE %[2]s SET %[1]s=%[2]s.%[1]s FROM batch WHERE %[2]s.%[1]s = batch.%[1]s RETURNING %[2]s.%[1]s
     )
