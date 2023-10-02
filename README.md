@@ -2,9 +2,13 @@
   <img src="brand-kit/banner/pgroll-banner.svg" alt="pgroll logo" />
 </div>
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/xataio/pgroll/blob/main/LICENSE)
-[![Linux Build](https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg)](https://github.com/xataio/pgroll/actions?query=branch%3Amain)
-[![Release](https://img.shields.io/github/release/xataio/pgroll.svg?label=Release)](https://github.com/xataio/pgroll/releases)
+<p align="center">
+  <a href="https://github.com/xataio/pgroll/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a>&nbsp;
+  <a href="https://github.com/xataio/pgroll/actions?query=branch%3Amain"><img src="https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg" alt="CI Build"></a> &nbsp;
+  <a href="https://github.com/xataio/pgroll/releases"><img src="https://img.shields.io/github/release/xataio/pgroll.svg?label=Release" alt="Release"></a> &nbsp;
+  <a href="https://xata.io/discord"><img src="https://img.shields.io/discord/996791218879086662?label=Discord" alt="Discord"></a> &nbsp;
+  <a href="https://twitter.com/xata"><img src="https://img.shields.io/twitter/follow/xata?style=flat" alt="X (formerly Twitter) Follow" /> </a>
+</p>
 
 # pgroll - Zero-downtime, undoable, schema migrations for Postgres
 
@@ -18,6 +22,7 @@
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
 - Works with Postgres 14.0 or later.
+- Works with any Postgres service (including RDS and Aurora).
 - Written in Go, cross-platform single binary with no external dependencies.
 
 ## How pgroll works
@@ -166,12 +171,12 @@ For this project, we pledge to act and interact in ways that contribute to an op
 
 ## References
 
-This is a list of content and projects that helped as inspiration, or otherwise are similar to `pgroll`:
+This is a list of projects and articles that helped as inspiration, or otherwise are similar to `pgroll`:
 
-* https://github.com/fabianlindfors/reshape
+* [Reshape](https://github.com/fabianlindfors/reshape) by Fabien Lindfors
+* [PgHaMigrations](https://github.com/braintree/pg_ha_migrations)
 * [PostgreSQL at Scale: Database Schema Changes Without Downtime](https://medium.com/paypal-tech/postgresql-at-scale-database-schema-changes-without-downtime-20d3749ed680)
 * [Zero downtime schema migrations in highly available databases](http://essay.utwente.nl/92098/1/vanKampen_MA_EEMCS.pdf)
-* https://github.com/braintree/pg_ha_migrations
 * [Expand and contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/)
 
 ## License
@@ -180,8 +185,8 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-If you have any questions, encounter issues, or need assistance, open an issue in this repository, and our community will be happy to help.
+If you have any questions, encounter issues, or need assistance, open an issue in this repository our join our [Discord](https://xata.io/discord), and our community will be happy to help.
 
 
 <br>
-<p align="right">Made with :heart: by <a href="https://xata.io">Xata</a></p>
+<p align="right">Made with :heart: by <a href="https://xata.io">Xata 🦋</a></p>
