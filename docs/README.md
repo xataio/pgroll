@@ -454,6 +454,132 @@ We've seen:
 
 ## Command line reference
 
+The `pgroll` CLI offers the following subcommands:
+* [init](#init)
+* [start](#start)
+* [complete](#complete)
+* [rollback](#rollback)
+* [status](#status)
+
+The `pgroll` CLI has the following top-level flags:
+* `--postgres-url`: The URL of the postgres instance against which migrations will be run.
+* `--schema`: The Postgres schema in which migrations will be run (default `"public"`).
+* `--pgroll-schema`: The Postgres schema in which `pgroll` will store its internal state (default: `"pgroll"`).
+* `--lock-timeout`: The Postgres `lock_timeout` value to use for all `pgroll` DDL operations, specified in milliseconds (default `500`).
+
+Each of these flags can also be set via an environment variable:
+* `PGROLL_PG_URL`
+* `PGROLL_SCHEMA`
+* `PGROLL_STATE_SCHEMA`
+* `PGROLL_LOCK_TIMEOUT`
+
+The CLI flag takes precedence if a flag is set via both an environment variable and a CLI flag.
+
+### Init
+
+`pgroll init` initializes `pgroll` for first use.
+
+```
+$ pgroll init
+```
+
+This will create a new schema in the database called `pgroll` (or whatever value is specified with the `--pgroll-schema` switch). 
+
+The tables and functions in this schema store `pgroll`'s internal state and are not intended to be modified outside of `pgroll` CLI.
+
+### Start
+
+`pgroll start` starts a `pgroll` migration:
+
+```
+$ pgroll start sql/03_add_column.json
+```
+
+This starts the migration defined in the `sql/01_create_table.json` file.
+
+After starting a migration there will be two schema versions in the database; one for the old schema before the migration and one for the new version with the schema changes.
+
+A migration can be started and completed with one command by specifying the `--complete` flag:
+
+```
+$ pgroll start sql/03_add_column.json --complete
+```
+
+This is equivalent to running `pgroll start` immediately followed by `pgroll complete`.
+
+:warning: Using the `--complete` flag is appropriate only when there are no applications running against the old database schema. In most cases, the recommended workflow is to run `pgroll start`, then gracefully shut down old applications before running `pgroll complete` as a separate step.
+
+### Complete
+
+`pgroll complete` completes a `pgroll` migration, removing the previous schema and leaving only the latest schema.
+
+```
+$ pgroll complete
+```
+
+This completes the most recently started migration. 
+
+Running `pgroll complete` when there is no migration in progress is a no-op.
+
+Completing a `pgroll` migration removes the previous schema version from the database, leaving only the latest version of the schema.
+
+:warning: Before running `pgroll complete` ensure that all applications that depend on the old version of the database schema are no longer live. Prematurely running `pgroll complete` can cause downtime of old application instances that depend on the old schema.
+
+### Rollback
+
+`pgroll rollback` rolls back the currently active migration.
+
+```
+$ pgroll rollback
+```
+
+This rolls back the currently active migration (an active migration is one that has been started but not yet completed). 
+
+Rolling back a `pgroll` migration means removing the new schema version. The old schema version was still present throughout the migration period and does not require modification.
+
+Migrations cannot be rolled back once completed. Attempting to roll back a migration that has already been completed is a no-op.
+
+:warning: Before running `pgroll rollback` ensure that any new versions of applications that depend on the new database schema are no longer live. Prematurely running `pgroll rollback` can cause downtime of new application instances that depend on the new schema.
+
+### Status
+
+`pgroll status` shows the current status of `pgroll` within a given schema:
+
+```
+$ pgroll status
+```
+```json
+{
+  "Schema": "public",
+  "Version": "27_drop_unique_constraint",
+  "Status": "Complete"
+}
+```
+
+The status field can be one of the following values:
+* `"No migrations"` - no migrations have been applied in this schema yet.
+* `"In progress"` - a migration has been started, but not yet completed. 
+* `"Complete"` - the most recent migration was completed.
+
+The `Version` field gives the name of the latest schema version. 
+
+If a migration is `In progress` the schemas for both the latest version indicated by the `Version` field and the previous version will exist in the database.
+
+If a migration is `Complete` only the latest version of the schema will exist in the database.
+
+The top-level `--schema` flag can be used to view the status of `pgroll` in a different schema:
+
+```
+$ pgroll status --schema schema_a
+```
+```json
+{
+  "Schema": "schema_a",
+  "Version": "01_create_tables",
+  "Status": "Complete"
+}
+```
+
 ## Operations reference
 
 `pgroll` migrations are specified as JSON files. All migrations follow the same basic structure:
