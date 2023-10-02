@@ -21,7 +21,7 @@ func init() {
 
 	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
 	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
-	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema in which the migration should be applied")
+	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
 
 	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
 	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
