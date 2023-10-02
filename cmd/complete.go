@@ -19,7 +19,7 @@ var completeCmd = &cobra.Command{
 		}
 		defer m.Close()
 
-		sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
+		sp, _ := pterm.DefaultSpinner.WithText("Completing migration...").Start()
 		err = m.Complete(cmd.Context())
 		if err != nil {
 			sp.Fail(fmt.Sprintf("Failed to complete migration: %s", err))
