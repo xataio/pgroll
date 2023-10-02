@@ -22,10 +22,12 @@ func init() {
 	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
 	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
 	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
+	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")
 
 	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
 	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
 	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
+	viper.BindPFlag("LOCK_TIMEOUT", rootCmd.PersistentFlags().Lookup("lock-timeout"))
 }
 
 var rootCmd = &cobra.Command{
@@ -38,13 +40,14 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	pgURL := flags.PostgresURL()
 	schema := flags.Schema()
 	stateSchema := flags.StateSchema()
+	lockTimeout := flags.LockTimeout()
 
 	state, err := state.New(ctx, pgURL, stateSchema)
 	if err != nil {
 		return nil, err
 	}
 
-	return roll.New(ctx, pgURL, schema, state)
+	return roll.New(ctx, pgURL, schema, lockTimeout, state)
 }
 
 // Execute executes the root command.
