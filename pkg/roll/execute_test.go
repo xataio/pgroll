@@ -227,7 +227,9 @@ func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := roll.New(ctx, cStr, schema, st)
+
+	const lockTimeoutMs = 500
+	mig, err := roll.New(ctx, cStr, schema, lockTimeoutMs, st)
 	if err != nil {
 		t.Fatal(err)
 	}
