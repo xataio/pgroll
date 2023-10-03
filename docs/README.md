@@ -8,6 +8,22 @@
 * [Tutorial](#tutorial)
 * [Command line reference](#command-line-reference)
 * [Operations reference](#operations-reference)
+    * [Add column](#add-column)
+    * [Alter column](#alter-column)
+        * [Rename column](#rename-column)
+        * [Change type](#change-type)
+        * [Add check constraint](#add-check-constraint)
+        * [Add foreign key](#add-foreign-key)
+        * [Add not null constraint](#add-not-null-constraint)
+        * [Add unique constraint](#add-unique-constraint)
+    * [Create index](#create-index)
+    * [Create table](#create-table)
+    * [Drop column](#drop-column)
+    * [Drop constraint](#drop-constraint)
+    * [Drop index](#drop-index)
+    * [Drop table](#drop-table)
+    * [Raw SQL](#raw-sql)
+    * [Rename table](#rename-table)
 
 ## Concepts
 
