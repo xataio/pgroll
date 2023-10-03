@@ -36,9 +36,9 @@ See the [introductory blog post](https://xata.io/blog/pgroll-schema-migrations-p
 
 `pgroll` follows a [expand/contract workflow](https://openpracticelibrary.com/practice/expand-and-contract-pattern/). On migration start, it will perform all the additive changes (create tables, add columns, etc) in the physical schema, without breaking it.
 
-When a breaking change is required on a column, it will create a new column in the physical schema, and backfill it from the old column. Also configure triggers to make sure all writes to the old/new column get propagated to its counterpart during the whole active migration period. The new column will be then exposed in the new version of the schema.
+When a breaking change is required on a column, it will create a new column in the physical schema, and backfill it from the old column. Also, configure triggers to make sure all writes to the old/new column get propagated to its counterpart during the whole active migration period. The new column will be then exposed in the new version of the schema.
 
-Once start phase is complete, the new schema version is created, mapping all the views to the proper tables & columns. Client applications can then access the new schema version, while the old one is still available. This is the moment to start rolling out the new version of the client application.
+Once the start phase is complete, the new schema version is ready, mapping all the views to the proper tables & columns. Client applications can then access the new schema version, while the old one is still available. This is the moment to start rolling out the new version of the client application.
 
 ![Multiple schema versions with pgroll](docs/img/migration-schemas@2x.png)
 
@@ -61,7 +61,7 @@ Binaries are available for Linux, macOS & Windows, check our [Releases](https://
 
 ### From source
 
-To install `pgroll` from source, run the following command:
+To install `pgroll` from the source, run the following command:
 
 ```sh
 go install github.com/xataio/pgroll@latest
