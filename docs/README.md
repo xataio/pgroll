@@ -65,6 +65,20 @@ If an application doesn't set the `search_path` for the connection, the `search_
 
 ## Installation
 
+### Binaries
+
+Binaries are available for Linux, macOS & Windows on our [Releases](https://github.com/xataio/pgroll/releases) page.
+
+### From source
+
+To install `pgroll` from source, run the following command:
+
+```sh
+go install github.com/xataio/pgroll@latest
+```
+
+Note: requires [Go 1.21](https://golang.org/doc/install) or later.
+
 ## Tutorial
 
 This section will walk you through applying your first migrations using `pgroll`.
