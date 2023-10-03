@@ -46,6 +46,7 @@ When no more client applications are using the old schema version, the migration
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Documentation](#documentation)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
@@ -148,9 +149,9 @@ At any point during a migration, it can be rolled back to the previous version. 
 pgroll --postgres-url postgres://user:password@host:port/dbname rollback
 ```
 
-### Advanced Usage
+## Documentation
 
-For more advanced usage and detailed options, refer to the [Documentation](docs/README.md).
+For more advanced usage, a tutorial, and detailed options refer to the full [Documentation](docs/README.md).
 
 ## Contributing
 
