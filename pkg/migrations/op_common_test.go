@@ -141,7 +141,9 @@ func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := roll.New(ctx, cStr, "public", st)
+
+	const lockTimeoutMs = 500
+	mig, err := roll.New(ctx, cStr, "public", lockTimeoutMs, st)
 	if err != nil {
 		t.Fatal(err)
 	}

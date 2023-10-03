@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/state"
 )
 
@@ -18,13 +19,13 @@ var analyzeCmd = &cobra.Command{
 	Args:   cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
-		state, err := state.New(ctx, PGURL, StateSchema)
+		state, err := state.New(ctx, flags.PostgresURL(), flags.StateSchema())
 		if err != nil {
 			return err
 		}
 		defer state.Close()
 
-		schema, err := state.ReadSchema(ctx, Schema)
+		schema, err := state.ReadSchema(ctx, flags.Schema())
 		if err != nil {
 			return err
 		}

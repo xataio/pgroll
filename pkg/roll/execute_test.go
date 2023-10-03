@@ -5,11 +5,13 @@ package roll_test
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -168,6 +170,60 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 	})
 }
 
+func TestLockTimeoutIsEnforced(t *testing.T) {
+	t.Parallel()
+
+	withMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, "public", 100, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Start a create table migration
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("table1")},
+		})
+		if err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+
+		// Complete the create table migration
+		if err := mig.Complete(ctx); err != nil {
+			t.Fatalf("Failed to complete migration: %v", err)
+		}
+
+		// Start a transaction and take an ACCESS_EXCLUSIVE lock on the table
+		// Don't commit the transaction so that the lock is held indefinitely
+		tx, err := db.Begin()
+		if err != nil {
+			t.Fatalf("Failed to start transaction: %v", err)
+		}
+		t.Cleanup(func() {
+			tx.Commit()
+		})
+		if _, err := tx.ExecContext(ctx, "LOCK TABLE table1 IN ACCESS EXCLUSIVE MODE"); err != nil {
+			t.Fatalf("Failed to take ACCESS_EXCLUSIVE lock on table: %v", err)
+		}
+
+		// Attempt to run a second migration on the table while the lock is held
+		// The migration should fail due to a lock timeout error
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       "02_create_table",
+			Operations: migrations.Operations{addColumnOp("table1")},
+		})
+		if err == nil {
+			t.Fatalf("Expected migration to fail due to lock timeout")
+		}
+		if err != nil {
+			pqErr := &pq.Error{}
+			if ok := errors.As(err, &pqErr); !ok {
+				t.Fatalf("Migration failed with unexpected error: %v", err)
+			}
+			if pqErr.Code != "55P03" { // Lock not available error code
+				t.Fatalf("Migration failed with unexpected error: %v", err)
+			}
+		}
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,
@@ -186,7 +242,18 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 	}
 }
 
-func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(mig *roll.Roll, db *sql.DB)) {
+func addColumnOp(tableName string) *migrations.OpAddColumn {
+	return &migrations.OpAddColumn{
+		Table: tableName,
+		Column: migrations.Column{
+			Name:     "age",
+			Type:     "integer",
+			Nullable: true,
+		},
+	}
+}
+
+func withMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t *testing.T, schema string, lockTimeoutMs int, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -227,7 +294,8 @@ func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 	if err != nil {
 		t.Fatal(err)
 	}
-	mig, err := roll.New(ctx, cStr, schema, st)
+
+	mig, err := roll.New(ctx, cStr, schema, lockTimeoutMs, st)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -257,6 +325,10 @@ func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 	fn(mig, db)
 }
 
+func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(mig *roll.Roll, db *sql.DB)) {
+	withMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, schema, 500, fn)
+}
+
 func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
-	withMigratorInSchemaAndConnectionToContainer(t, "public", fn)
+	withMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, "public", 500, fn)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pterm/pterm"
+	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 
@@ -54,7 +55,7 @@ func startCmd() *cobra.Command {
 			}
 
 			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
-			viewName := roll.VersionedSchemaName(Schema, version)
+			viewName := roll.VersionedSchemaName(flags.Schema(), version)
 			msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
 			sp.Success(msg)
 
