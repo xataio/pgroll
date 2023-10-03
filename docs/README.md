@@ -29,7 +29,7 @@ Once all client applications have been updated to use the latest version of the 
 
 `pgroll` maintains multiple versions of the database schema side-by-side. This is achieved by creating a new Postgres schema for each migration that is applied to the database. The schema will contain views on the underlying tables. These views are used to expose different tables or columns to client applications depending on which version of the schema they are configured to use.
 
-For instance, a rename column migration will create a new schema containing a view on the underlying table with the new column name. This allows for the new version of the schema to become available without breaking existing client applications that are still using the old name. On the migration complete phase, the old schema is dropped and the actual column is renamed (views are updated to point to the new column name automatically).
+For instance, a rename column migration will create a new schema containing a view on the underlying table with the new column name. This allows for the new version of the schema to become available without breaking existing client applications that are still using the old name. In the migration complete phase, the old schema is dropped and the actual column is renamed (views are updated to point to the new column name automatically).
 
 ![multiple schema versions](img/migration-schemas@2x.png)
 
