@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="brand-kit/banner/pgroll-banner@2x.png" alt="pgroll logo" width="332px" height="260px" />
+  <img src="brand-kit/banner/pgroll-banner@2x.png" alt="pgroll logo" style="max-width: 260px;" />
 </div>
 
 <p align="center">
