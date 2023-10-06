@@ -40,7 +40,7 @@
 
 ![migration flow](img/migration-flow@2x.png)
 
-During the migration start phase, `pgroll` will perform only additive changes to the database schema. This includes: creating new tables, adding new columns, and creating new indexes. In the cases were a required change is not backwards compatible, `pgroll` will take the necessary steps to ensure that the current schema is still valid. For example, if a new column is added to a table with a `NOT NULL` constraint, `pgroll` will backfill the new column with a default value.
+During the migration start phase, `pgroll` will perform only additive changes to the database schema. This includes: creating new tables, adding new columns, and creating new indexes. In the cases where a required change is not backwards compatible, `pgroll` will take the necessary steps to ensure that the current schema is still valid. For example, if a new column is added to a table with a `NOT NULL` constraint, `pgroll` will backfill the new column with a default value.
 
 After a successful migration start, the database will contain two versions of the schema: the old version and the new version. The old version of the schema is still available to client applications. This allows client applications to be updated to use the new version of the schema without any downtime.
 
