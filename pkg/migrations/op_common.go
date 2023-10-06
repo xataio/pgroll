@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 )
 
 type OpName string
@@ -37,16 +36,8 @@ func TemporaryName(name string) string {
 	return "_pgroll_new_" + name
 }
 
-func ReadMigrationFile(file string) (*Migration, error) {
-	// read operations from file
-	jsonFile, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer jsonFile.Close()
-
-	// read our opened xmlFile as a byte array.
-	byteValue, err := io.ReadAll(jsonFile)
+func ReadMigration(r io.Reader) (*Migration, error) {
+	byteValue, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +32,13 @@ func startCmd() *cobra.Command {
 			}
 			defer m.Close()
 
-			migration, err := migrations.ReadMigrationFile(args[0])
+			file, err := os.Open(args[0])
+			if err != nil {
+				return fmt.Errorf("opening migration file: %w", err)
+			}
+			defer file.Close()
+
+			migration, err := migrations.ReadMigration(file)
 			if err != nil {
 				return fmt.Errorf("reading migration file: %w", err)
 			}
