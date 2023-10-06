@@ -115,19 +115,19 @@ jobs:
         go-version: '1.21'
 
     - name: Build pgroll (Linux amd64)
-      run: GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.linux.amd64
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.linux.amd64
 
     - name: Build pgroll (Linux arm64)
-      run: GOOS=linux GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.linux.arm64
+      run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.linux.arm64
 
     - name: Build pgroll (MacOS amd64)
-      run: GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.amd64
+      run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.amd64
 
     - name: Build pgroll (MacOS arm64)
-      run: GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.arm64
+      run: CGO_ENABLED=0 CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.arm64
 
     - name: Build pgroll (Windows)
-      run: GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.win.amd64
+      run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.win.amd64
 
     - uses: actions/upload-artifact@v3
       with:
