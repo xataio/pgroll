@@ -124,7 +124,7 @@ jobs:
       run: CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.amd64
 
     - name: Build pgroll (MacOS arm64)
-      run: CGO_ENABLED=0 CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.arm64
+      run: CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.macos.arm64
 
     - name: Build pgroll (Windows)
       run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/xataio/pgroll/cmd.Version=${PGROLL_VERSION}" -o pgroll.win.amd64
