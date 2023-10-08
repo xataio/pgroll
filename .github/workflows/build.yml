@@ -101,7 +101,7 @@ jobs:
           fi
         done
 
-  setup:
+  release:
     runs-on: ubuntu-latest
     needs: [test, lint, examples]
     env:
@@ -114,14 +114,11 @@ jobs:
       with:
         go-version: '1.21'
 
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v3
-        with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v3
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
