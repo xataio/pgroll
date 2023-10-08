@@ -27,9 +27,9 @@ brews:
     name: pgroll
     homepage: "https://www.xata.io"
     description: "Postgres zero-downtime migrations made easy"
-    tap:
+    repository:
       owner: xataio
-      name: homebrew-pgroll
+      name: pgroll
 
 archives:
   - format: binary
