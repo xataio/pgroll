@@ -51,10 +51,10 @@ func TestSetNotNull(t *testing.T) {
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:   "reviews",
-							Column:  "review",
-							NotNull: ptr(true),
-							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Table:    "reviews",
+							Column:   "review",
+							Nullable: ptr(true),
+							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
 				},
@@ -193,11 +193,11 @@ func TestSetNotNull(t *testing.T) {
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:   "reviews",
-							Column:  "review",
-							NotNull: ptr(true),
-							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:    "review || ' (from new column)'",
+							Table:    "reviews",
+							Column:   "review",
+							Nullable: ptr(true),
+							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:     "review || ' (from new column)'",
 						},
 					},
 				},
@@ -268,10 +268,10 @@ func TestSetNotNullValidation(t *testing.T) {
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:   "reviews",
-							Column:  "review",
-							NotNull: ptr(true),
-							Down:    "review",
+							Table:    "reviews",
+							Column:   "review",
+							Nullable: ptr(true),
+							Down:     "review",
 						},
 					},
 				},
@@ -315,11 +315,11 @@ func TestSetNotNullValidation(t *testing.T) {
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:   "reviews",
-							Column:  "review",
-							NotNull: ptr(true),
-							Up:      "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:    "review",
+							Table:    "reviews",
+							Column:   "review",
+							Nullable: ptr(true),
+							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:     "review",
 						},
 					},
 				},
