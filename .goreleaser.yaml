@@ -22,18 +22,17 @@ builds:
       - goos: windows
         goarch: arm64
 
-# brews:
-#   -
-#     name: mediumautopost
-#     homepage: "https://www.xata.io"
-#     description: "Postgres zero-downtime migrations made easy"
-#     tap:
-#       owner: xataio
-#       name: homebrew-pgroll
+brews:
+  -
+    name: pgroll
+    homepage: "https://www.xata.io"
+    description: "Postgres zero-downtime migrations made easy"
+    tap:
+      owner: xataio
+      name: homebrew-pgroll
 
 archives:
   - format: binary
-    # pgroll.win.amd64
     name_template: >-
       {{ .ProjectName }}.{{ if eq .Os "windows" }}win{{ else if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}.{{ .Arch }}
     files:
