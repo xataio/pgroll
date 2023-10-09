@@ -234,7 +234,7 @@ Here is the `pgroll` migration that will perform the migration to make the `desc
 
 ```json
 {
-  "name": "02_user_description_nullable",
+  "name": "02_user_description_set_nullable",
   "operations": [
     {
       "alter_column": {
@@ -249,10 +249,10 @@ Here is the `pgroll` migration that will perform the migration to make the `desc
 }
 ```
 
-Save this migration as `sql/02_user_description_nullable.json` and start the migration:
+Save this migration as `sql/02_user_description_set_nullable.json` and start the migration:
 
 ```
-pgroll start 02_user_description_nullable.json
+pgroll start 02_user_description_set_nullable.json
 ```
 
 After some progress updates you should see a message saying that the migration has been started successfully.
@@ -280,7 +280,7 @@ You should see something like this:
 | 10  | user_10  | description for user_10 | description for user_10  |
 ```
 
-`pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_nullable.json` file:
+`pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.json` file:
 
 ```json
 "up": "(SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END)",
@@ -334,11 +334,11 @@ You should see something like this:
 | pgroll                              | postgres          |
 | public                              | pg_database_owner |
 | public_01_create_users_table        | postgres          |
-| public_02_user_description_nullable | postgres          |
+| public_02_user_description_set_nullable | postgres          |
 +-------------------------------------+-------------------+
 ```
 
-We have two schemas: one corresponding to the old schema, `public_01_create_users_table`, and one for the migration we just started, `public_02_user_description_nullable`. Each schema contains one view on the `users` table. Let's look at the view in the first schema:
+We have two schemas: one corresponding to the old schema, `public_01_create_users_table`, and one for the migration we just started, `public_02_user_description_set_nullable`. Each schema contains one view on the `users` table. Let's look at the view in the first schema:
 
 ```
 \d+ public_01_create_users_table.users
@@ -356,7 +356,7 @@ The output should contain something like this:
 and for the second view:
 
 ```
-\d+ public_02_user_description_nullable.users
+\d+ public_02_user_description_set_nullable.users
 ```
 
 The output should contain something like this:
@@ -370,7 +370,7 @@ The output should contain something like this:
 
 The second view exposes the same three columns as the first, but its `description` field is mapped to the `_pgroll_new_description` field in the underlying table. 
 
-By choosing to access the `users` table through either the `public_01_create_users_table.users` or `public_02_user_description_nullable.users` view, applications have a choice of which version of the schema they want to see; either the old version without the `NOT NULL` constraint on the `description` field or the new version with the constraint.
+By choosing to access the `users` table through either the `public_01_create_users_table.users` or `public_02_user_description_set_nullable.users` view, applications have a choice of which version of the schema they want to see; either the old version without the `NOT NULL` constraint on the `description` field or the new version with the constraint.
 
 When we looked at the schema of the `users` table, we saw that `pgroll` has created two triggers:
 
@@ -419,7 +419,7 @@ The trigger should have copied the data that was just written into the old `desc
 Let's check. Set the search path to the new version of the schema:
 
 ```sql
-SET search_path = 'public_02_user_description_nullable'
+SET search_path = 'public_02_user_description_set_nullable'
 ```
 
 and find the users we just inserted:
@@ -463,11 +463,11 @@ shows something like:
 +-------------------------------------+-------------------+
 | pgroll                              | postgres          |
 | public                              | pg_database_owner |
-| public_02_user_description_nullable | postgres          |
+| public_02_user_description_set_nullable | postgres          |
 +-------------------------------------+-------------------+
 ```
 
-Only the new version schema `public_02_user_description_nullable` remains in the database.
+Only the new version schema `public_02_user_description_set_nullable` remains in the database.
 
 Let's look at the schema of the `users` table to see what's changed there:
 
