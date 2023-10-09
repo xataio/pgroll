@@ -5,7 +5,7 @@
       "alter_column": {
         "table": "reviews",
         "column": "review",
-        "nullable": true,
+        "nullable": false,
         "up": "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
         "down": "review"
       }
