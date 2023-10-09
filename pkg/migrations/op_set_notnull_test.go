@@ -15,7 +15,7 @@ func TestSetNotNull(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "set not null with default down sql",
+			name: "set nullable with default down sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -48,12 +48,12 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(true),
+							Nullable: ptr(false),
 							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
@@ -64,13 +64,13 @@ func TestSetNotNull(t *testing.T) {
 				ColumnMustExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
 
 				// Inserting a NULL into the new `review` column should fail
-				MustNotInsert(t, db, "public", "02_set_not_null", "reviews", map[string]string{
+				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 				})
 
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_not_null", "reviews", map[string]string{
+				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
@@ -91,7 +91,7 @@ func TestSetNotNull(t *testing.T) {
 
 				// The NULL value inserted into the old `review` column has been written into
 				// the new `review` column using the `up` SQL.
-				rows = MustSelect(t, db, "public", "02_set_not_null", "reviews")
+				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
@@ -106,7 +106,7 @@ func TestSetNotNull(t *testing.T) {
 
 				// The non-NULL value inserted into the old `review` column has been copied
 				// unchanged into the new `review` column.
-				rows = MustSelect(t, db, "public", "02_set_not_null", "reviews")
+				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
@@ -132,7 +132,7 @@ func TestSetNotNull(t *testing.T) {
 				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
 
 				// Selecting from the `reviews` view should succeed.
-				rows := MustSelect(t, db, "public", "02_set_not_null", "reviews")
+				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
@@ -140,7 +140,7 @@ func TestSetNotNull(t *testing.T) {
 				}, rows)
 
 				// Writing NULL reviews into the `review` column should fail.
-				MustNotInsert(t, db, "public", "02_set_not_null", "reviews", map[string]string{
+				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "daisy",
 					"product":  "durian",
 				})
@@ -157,7 +157,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "set not null with user-supplied down sql",
+			name: "set nullable with user-supplied down sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -190,12 +190,12 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(true),
+							Nullable: ptr(false),
 							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 							Down:     "review || ' (from new column)'",
 						},
@@ -204,7 +204,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_not_null", "reviews", map[string]string{
+				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
@@ -265,12 +265,12 @@ func TestSetNotNullValidation(t *testing.T) {
 			migrations: []migrations.Migration{
 				createTableMigration,
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(true),
+							Nullable: ptr(false),
 							Down:     "review",
 						},
 					},
@@ -312,12 +312,12 @@ func TestSetNotNullValidation(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(true),
+							Nullable: ptr(false),
 							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 							Down:     "review",
 						},
