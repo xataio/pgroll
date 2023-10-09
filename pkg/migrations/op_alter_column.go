@@ -76,7 +76,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 
 	case *OpSetNotNull:
-		if o.Nullable != nil && !*o.Nullable {
+		if o.Nullable != nil && *o.Nullable {
 			return fmt.Errorf("removing NOT NULL constraints is not supported")
 		}
 	}
