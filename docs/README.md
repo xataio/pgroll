@@ -328,14 +328,14 @@ For now, let's look at the schemas in the database:
 You should see something like this:
 
 ```
-+-------------------------------------+-------------------+
-| Name                                | Owner             |
-+-------------------------------------+-------------------+
-| pgroll                              | postgres          |
-| public                              | pg_database_owner |
-| public_01_create_users_table        | postgres          |
++-----------------------------------------+-------------------+
+| Name                                    | Owner             |
++-----------------------------------------+-------------------+
+| pgroll                                  | postgres          |
+| public                                  | pg_database_owner |
+| public_01_create_users_table            | postgres          |
 | public_02_user_description_set_nullable | postgres          |
-+-------------------------------------+-------------------+
++-----------------------------------------+-------------------+
 ```
 
 We have two schemas: one corresponding to the old schema, `public_01_create_users_table`, and one for the migration we just started, `public_02_user_description_set_nullable`. Each schema contains one view on the `users` table. Let's look at the view in the first schema:
@@ -458,13 +458,13 @@ After the migration has completed, the old version of the schema is no longer pr
 shows something like:
 
 ```
-+-------------------------------------+-------------------+
-| Name                                | Owner             |
-+-------------------------------------+-------------------+
-| pgroll                              | postgres          |
-| public                              | pg_database_owner |
++-----------------------------------------+-------------------+
+| Name                                    | Owner             |
++-----------------------------------------+-------------------+
+| pgroll                                  | postgres          |
+| public                                  | pg_database_owner |
 | public_02_user_description_set_nullable | postgres          |
-+-------------------------------------+-------------------+
++-----------------------------------------+-------------------+
 ```
 
 Only the new version schema `public_02_user_description_set_nullable` remains in the database.
