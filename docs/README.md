@@ -240,7 +240,7 @@ Here is the `pgroll` migration that will perform the migration to make the `desc
       "alter_column": {
         "table": "users",
         "column": "description",
-        "nullable": true,
+        "nullable": false,
         "up": "(SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END)",
         "down": "description"
       }
@@ -812,7 +812,7 @@ Add not null operations add a `NOT NULL` constraint to a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "nullable": true,
+    "nullable": false,
     "up": "SQL expression",
     "down": "SQL expression"
   }
