@@ -17,7 +17,7 @@ type OpAlterColumn struct {
 	Type       string               `json:"type"`
 	Check      *CheckConstraint     `json:"check"`
 	References *ForeignKeyReference `json:"references"`
-	NotNull    *bool                `json:"not_null"`
+	Nullable   *bool                `json:"nullable"`
 	Unique     *UniqueConstraint    `json:"unique"`
 	Up         string               `json:"up"`
 	Down       string               `json:"down"`
@@ -76,7 +76,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 
 	case *OpSetNotNull:
-		if o.NotNull != nil && !*o.NotNull {
+		if o.Nullable != nil && *o.Nullable {
 			return fmt.Errorf("removing NOT NULL constraints is not supported")
 		}
 	}
@@ -121,7 +121,7 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Down:       o.Down,
 		}
 
-	case o.NotNull != nil:
+	case o.Nullable != nil:
 		return &OpSetNotNull{
 			Table:  o.Table,
 			Column: o.Column,
@@ -158,7 +158,7 @@ func (o *OpAlterColumn) numChanges() int {
 	if o.References != nil {
 		fieldsSet++
 	}
-	if o.NotNull != nil {
+	if o.Nullable != nil {
 		fieldsSet++
 	}
 	if o.Unique != nil {
