@@ -1,0 +1,45 @@
+project_name: pgroll
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: build_noncgo
+    binary: pgroll
+    ldflags:
+      - -X github.com/xataio/pgroll/cmd.Version={{ .Version }}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+brews:
+  -
+    name: pgroll
+    homepage: "https://www.xata.io"
+    description: "Postgres zero-downtime migrations made easy"
+    license: "Apache-2.0"
+    repository:
+      owner: xataio
+      name: homebrew-pgroll
+archives:
+  - format: binary
+    name_template: >-
+      {{ .ProjectName }}.{{ if eq .Os "windows" }}win{{ else if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}.{{ .Arch }}
+    files:
+      - LICENSE*
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
