@@ -82,7 +82,6 @@ branches:
       - examples (postgres 16.0)
       - examples (postgres latest)
       - lint
-      - build
 
     # Required. Require at least one approving review on a pull request, before merging. Set to null to disable.
     required_pull_request_reviews:
