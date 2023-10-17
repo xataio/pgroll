@@ -147,16 +147,27 @@ func (m *Roll) Rollback(ctx context.Context) error {
 }
 
 // create view creates a view for the new version of the schema
-func (m *Roll) createView(ctx context.Context, version string, name string, table schema.Table) error {
+func (m *Roll) createView(ctx context.Context, version, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
 		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
 	}
 
+	// Create view with security_invoker option for PG 15+
+	//
+	// This ensures that any row level security permissions on the underlying
+	// table are respected. `security_invoker` views are not supported in PG 14
+	// and below.
+	withOptions := ""
+	if m.PGVersion() >= PGVersion15 {
+		withOptions = "WITH (security_invoker = true)"
+	}
+
 	_, err := m.pgConn.ExecContext(ctx,
-		fmt.Sprintf("CREATE OR REPLACE VIEW %s.%s AS SELECT %s FROM %s",
+		fmt.Sprintf("CREATE OR REPLACE VIEW %s.%s %s AS SELECT %s FROM %s",
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
+			withOptions,
 			strings.Join(columns, ","),
 			pq.QuoteIdentifier(table.Name)))
 	if err != nil {
