@@ -63,7 +63,7 @@ STABLE;
 -- Get the name of the previous version of the schema, or NULL if there is none.
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
-  SELECT parent FROM %[1]s.migrations WHERE name = (SELECT %[1]s.latest_version('public')) AND schema=schemaname;
+  SELECT parent FROM %[1]s.migrations WHERE name = (SELECT %[1]s.latest_version(schemaname)) AND schema=schemaname;
 $$
 LANGUAGE SQL
 STABLE;
