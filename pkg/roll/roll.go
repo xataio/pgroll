@@ -12,13 +12,18 @@ import (
 	"github.com/xataio/pgroll/pkg/state"
 )
 
+type PGVersion int
+
+const PGVersion15 PGVersion = 15
+
 type Roll struct {
 	pgConn *sql.DB // TODO abstract sql connection
 
 	// schema we are acting on
 	schema string
 
-	state *state.State
+	state     *state.State
+	pgVersion PGVersion
 }
 
 func New(ctx context.Context, pgURL, schema string, lockTimeoutMs int, state *state.State) (*Roll, error) {
@@ -44,15 +49,26 @@ func New(ctx context.Context, pgURL, schema string, lockTimeoutMs int, state *st
 		return nil, fmt.Errorf("unable to set lock_timeout: %w", err)
 	}
 
+	var pgMajorVersion PGVersion
+	err = conn.QueryRowContext(ctx, "SELECT split_part(split_part(version(), ' ', 2), '.', 1)").Scan(&pgMajorVersion)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
+	}
+
 	return &Roll{
-		pgConn: conn,
-		schema: schema,
-		state:  state,
+		pgConn:    conn,
+		schema:    schema,
+		state:     state,
+		pgVersion: PGVersion(pgMajorVersion),
 	}, nil
 }
 
 func (m *Roll) Init(ctx context.Context) error {
 	return m.state.Init(ctx)
+}
+
+func (m *Roll) PGVersion() PGVersion {
+	return m.pgVersion
 }
 
 func (m *Roll) Close() error {
