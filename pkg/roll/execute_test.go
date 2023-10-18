@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -224,6 +225,88 @@ func TestLockTimeoutIsEnforced(t *testing.T) {
 	})
 }
 
+func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
+	t.Parallel()
+
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		version := "1_create_table"
+
+		if mig.PGVersion() < roll.PGVersion15 {
+			t.Skip("Skipping test for postgres < 15 as `security_invoker` views are not supported")
+		}
+
+		// Start and complete a migration to create a simple `users` table
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("users")}}); err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+		if err := mig.Complete(ctx); err != nil {
+			t.Fatalf("Failed to complete migration: %v", err)
+		}
+
+		// Insert two rows into the underlying table
+		_, err := db.ExecContext(ctx, "INSERT INTO users (id, name) VALUES (1, 'alice'), (2, 'bob')")
+		if err != nil {
+			t.Fatalf("Failed to insert rows into table: %v", err)
+		}
+
+		// Enable row level security on the underlying table
+		_, err = db.ExecContext(ctx, "ALTER TABLE users ENABLE ROW LEVEL SECURITY")
+		if err != nil {
+			t.Fatalf("Failed to enable row level security: %v", err)
+		}
+
+		// Add a security policy to the underlying table
+		_, err = db.ExecContext(ctx, "CREATE POLICY user_policy ON users USING (name = current_user)")
+		if err != nil {
+			t.Fatalf("Failed to create security policy: %v", err)
+		}
+
+		// Create user 'alice'
+		_, err = db.ExecContext(ctx, "CREATE USER alice")
+		if err != nil {
+			t.Fatalf("Failed to create user: %v", err)
+		}
+
+		// Grant access to the underlying table to user 'alice'
+		_, err = db.ExecContext(ctx, "GRANT SELECT ON users TO alice")
+		if err != nil {
+			t.Fatalf("Failed to grant access to user: %v", err)
+		}
+
+		// Grant access to the versioned schema to user 'alice'
+		_, err = db.ExecContext(ctx, "GRANT USAGE ON SCHEMA public_1_create_table TO alice")
+		if err != nil {
+			t.Fatalf("Failed to grant usage on schema to user: %v", err)
+		}
+
+		// Grant access to the versioned view to user 'alice'
+		_, err = db.ExecContext(ctx, "GRANT SELECT ON public_1_create_table.users TO alice")
+		if err != nil {
+			t.Fatalf("Failed to grant select on view to user: %v", err)
+		}
+
+		// Ensure that the superuser can see all rows
+		rows := MustSelect(t, db, "public", "1_create_table", "users")
+		assert.Equal(t, []map[string]any{
+			{"id": 1, "name": "alice"},
+			{"id": 2, "name": "bob"},
+		}, rows)
+
+		// Switch roles to 'alice'
+		_, err = db.ExecContext(ctx, "SET ROLE alice")
+		if err != nil {
+			t.Fatalf("Failed to switch roles: %v", err)
+		}
+
+		// Ensure that 'alice' can only see her own row
+		rows = MustSelect(t, db, "public", "1_create_table", "users")
+		assert.Equal(t, []map[string]any{
+			{"id": 1, "name": "alice"},
+		}, rows)
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,
@@ -331,4 +414,47 @@ func withMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 
 func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
 	withMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, "public", 500, fn)
+}
+
+func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]any {
+	t.Helper()
+	versionSchema := roll.VersionedSchemaName(schema, version)
+
+	//nolint:gosec // this is a test so we don't care about SQL injection
+	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
+
+	q, err := db.Query(selectStmt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res := make([]map[string]any, 0)
+
+	for q.Next() {
+		cols, err := q.Columns()
+		if err != nil {
+			t.Fatal(err)
+		}
+		values := make([]any, len(cols))
+		valuesPtr := make([]any, len(cols))
+		for i := range values {
+			valuesPtr[i] = &values[i]
+		}
+		if err := q.Scan(valuesPtr...); err != nil {
+			t.Fatal(err)
+		}
+
+		row := map[string]any{}
+		for i, col := range cols {
+			// avoid having to cast int literals to int64 in tests
+			if v, ok := values[i].(int64); ok {
+				values[i] = int(v)
+			}
+			row[col] = values[i]
+		}
+
+		res = append(res, row)
+	}
+
+	return res
 }
