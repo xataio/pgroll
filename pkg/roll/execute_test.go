@@ -141,9 +141,13 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 
 	withMigratorInSchemaAndConnectionToContainer(t, "schema1", func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
-		version := "1_create_table"
+		const version1 = "1_create_table"
+		const version2 = "2_create_another_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{
+			Name:       version1,
+			Operations: migrations.Operations{createTableOp("table1")},
+		}); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 		if err := mig.Complete(ctx); err != nil {
@@ -167,6 +171,32 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 
 		if !exists {
 			t.Errorf("Expected table %q to exist in schema %q", "table1", "schema1")
+		}
+
+		// Apply another migration to the same schema
+		if err := mig.Start(ctx, &migrations.Migration{
+			Name:       version2,
+			Operations: migrations.Operations{createTableOp("table2")},
+		}); err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+		if err := mig.Complete(ctx); err != nil {
+			t.Fatalf("Failed to complete migration: %v", err)
+		}
+
+		// Ensure that the versioned schema for the first migration has been dropped
+		err = db.QueryRow(`
+    SELECT EXISTS(
+      SELECT 1
+      FROM pg_catalog.pg_namespace
+      WHERE nspname = $1
+    )`, roll.VersionedSchemaName("schema1", version1)).Scan(&exists)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if exists {
+			t.Errorf("Expected schema %q to not exist", version1)
 		}
 	})
 }
