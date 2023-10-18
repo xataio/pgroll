@@ -153,7 +153,8 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION %[1]s.raw_migration() RETURNS event_trigger
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql 
+SECURITY DEFINER AS $$
 DECLARE
 	schemaname TEXT;
 BEGIN
