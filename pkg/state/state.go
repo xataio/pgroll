@@ -172,7 +172,7 @@ BEGIN
 
 	ELSIF tg_event = 'ddl_command_end' THEN
 		-- Guess the schema from ddl commands, ignore migrations that touch several schemas
-		IF (SELECT COUNT(DISTINCT schema_name) FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
+		IF (SELECT pg_catalog.count(DISTINCT schema_name) FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
 			RAISE NOTICE 'pgroll: ignoring migration that changes several schemas';
 			RETURN;
 		END IF;
