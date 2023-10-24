@@ -52,6 +52,7 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
 SECURITY DEFINER
+SET search_path = %[1]s, pg_catalog
 AS $$ 
   SELECT p.name FROM %[1]s.migrations p 
   WHERE NOT EXISTS (
@@ -155,27 +156,28 @@ $$;
 
 CREATE OR REPLACE FUNCTION %[1]s.raw_migration() RETURNS event_trigger
 LANGUAGE plpgsql 
-SECURITY DEFINER AS $$
+SECURITY DEFINER
+SET search_path = %[1]s, pg_catalog AS $$
 DECLARE
 	schemaname TEXT;
 BEGIN
 	-- Ignore migrations done by pgroll
-	IF (current_setting('pgroll.internal', 'TRUE') <> 'TRUE') THEN
+	IF (pg_catalog.current_setting('pgroll.internal', 'TRUE') <> 'TRUE') THEN
 		RETURN;
 	END IF;
 
 	IF tg_event = 'sql_drop' THEN
 		-- Guess the schema from drop commands
-		SELECT schema_name INTO schemaname FROM pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
+		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
 
 	ELSIF tg_event = 'ddl_command_end' THEN
 		-- Guess the schema from ddl commands, ignore migrations that touch several schemas
-		IF (SELECT COUNT(DISTINCT schema_name) FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
+		IF (SELECT COUNT(DISTINCT schema_name) FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
 			RAISE NOTICE 'pgroll: ignoring migration that changes several schemas';
 			RETURN;
 		END IF;
 
-		SELECT schema_name INTO schemaname FROM pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
 	END IF;
 
 	IF schemaname IS NULL THEN
@@ -194,7 +196,7 @@ BEGIN
 	VALUES (
 		schemaname,
 		format('sql_%%s', substr(md5(random()::text), 0, 15)),
-		json_build_object('sql', json_build_object('up', current_query())),
+		pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query())),
 		%[1]s.read_schema(schemaname),
 		true,
 		%[1]s.latest_version(schemaname)
