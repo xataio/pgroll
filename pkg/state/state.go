@@ -52,7 +52,7 @@ CREATE OR REPLACE FUNCTION %[1]s.is_active_migration_period(schemaname NAME) RET
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION %[1]s.latest_version(schemaname NAME) RETURNS text
 SECURITY DEFINER
-SET search_path = %[1]s, pg_catalog
+SET search_path = %[1]s, pg_catalog, pg_temp
 AS $$ 
   SELECT p.name FROM %[1]s.migrations p 
   WHERE NOT EXISTS (
@@ -157,7 +157,7 @@ $$;
 CREATE OR REPLACE FUNCTION %[1]s.raw_migration() RETURNS event_trigger
 LANGUAGE plpgsql 
 SECURITY DEFINER
-SET search_path = %[1]s, pg_catalog AS $$
+SET search_path = %[1]s, pg_catalog, pg_temp AS $$
 DECLARE
 	schemaname TEXT;
 BEGIN
@@ -195,7 +195,7 @@ BEGIN
 	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
 	VALUES (
 		schemaname,
-		format('sql_%%s', substr(md5(random()::text), 0, 15)),
+		pg_catalog.format('sql_%%s',pg_catalog.substr(md5(random()::text), 0, 15)),
 		pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query())),
 		%[1]s.read_schema(schemaname),
 		true,
