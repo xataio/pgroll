@@ -195,7 +195,7 @@ BEGIN
 	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
 	VALUES (
 		schemaname,
-		pg_catalog.format('sql_%%s',pg_catalog.substr(md5(random()::text), 0, 15)),
+		pg_catalog.format('sql_%%s',pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15)),
 		pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query())),
 		%[1]s.read_schema(schemaname),
 		true,
