@@ -41,6 +41,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON %[1]s.m
 -- History is linear
 CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON %[1]s.migrations (schema, parent);
 
+-- Add a column to tell whether the row represents an auto-detected DDL capture or a pgroll migration
+ALTER TABLE %[1]s.migrations ADD COLUMN IF NOT EXISTS migration_type
+  VARCHAR(32)
+  DEFAULT 'pgroll'
+  CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred')
+);
+
 -- Helper functions
 
 -- Are we in the middle of a migration?
