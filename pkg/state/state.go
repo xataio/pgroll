@@ -199,14 +199,15 @@ BEGIN
 	END IF;
 
 	-- Someone did a schema change without pgroll, include it in the history
-	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
+	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent, migration_type)
 	VALUES (
 		schemaname,
 		pg_catalog.format('sql_%%s',pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15)),
 		pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query())),
 		%[1]s.read_schema(schemaname),
 		true,
-		%[1]s.latest_version(schemaname)
+		%[1]s.latest_version(schemaname),
+		'inferred'
 	);
 END;
 $$;
