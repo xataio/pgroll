@@ -128,7 +128,6 @@ BEGIN
 					WHERE
 						indrelid = t.oid AND
 						nspname = schemaname AND
-						t.relnamespace = ns.oid AND
 						pg_attribute.attrelid = t.oid AND
 						pg_attribute.attnum = any(pg_index.indkey)
 						AND indisprimary
