@@ -124,13 +124,13 @@ BEGIN
 				),
 				'primaryKey', (
 					SELECT json_agg(pg_attribute.attname) AS primary_key_columns
-					FROM pg_index, pg_class, pg_attribute, pg_namespace
+					FROM pg_index, pg_attribute
 					WHERE
-						pg_class.oid = t.oid::regclass AND
-						indrelid = pg_class.oid AND
+						t.oid = t.oid::regclass AND
+						indrelid = t.oid AND
 						nspname = schemaname AND
-						pg_class.relnamespace = pg_namespace.oid AND
-						pg_attribute.attrelid = pg_class.oid AND
+						t.relnamespace = ns.oid AND
+						pg_attribute.attrelid = t.oid AND
 						pg_attribute.attnum = any(pg_index.indkey)
 						AND indisprimary
 				),
