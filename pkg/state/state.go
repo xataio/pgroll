@@ -123,13 +123,16 @@ BEGIN
 					) c
 				),
 				'primaryKey', (
-				  SELECT json_agg(kcu.column_name) AS primary_key_columns
-				  FROM information_schema.table_constraints AS tc 
-				  JOIN information_schema.key_column_usage AS kcu 
-				  ON tc.constraint_name = kcu.constraint_name
-				  WHERE tc.table_name = t.relname
-				  AND tc.table_schema = schemaname
-				  AND tc.constraint_type = 'PRIMARY KEY'
+					SELECT json_agg(pg_attribute.attname) AS primary_key_columns
+					FROM pg_index, pg_class, pg_attribute, pg_namespace
+					WHERE
+						pg_class.oid = t.oid::regclass AND
+						indrelid = pg_class.oid AND
+						nspname = schemaname AND
+						pg_class.relnamespace = pg_namespace.oid AND
+						pg_attribute.attrelid = pg_class.oid AND
+						pg_attribute.attnum = any(pg_index.indkey)
+						AND indisprimary
 				),
 				'indexes', (
 				  SELECT json_object_agg(pi.indexrelid::regclass, json_build_object(
