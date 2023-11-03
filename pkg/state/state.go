@@ -126,7 +126,6 @@ BEGIN
 					SELECT json_agg(pg_attribute.attname) AS primary_key_columns
 					FROM pg_index, pg_attribute
 					WHERE
-						t.oid = t.oid::regclass AND
 						indrelid = t.oid AND
 						nspname = schemaname AND
 						t.relnamespace = ns.oid AND
@@ -139,7 +138,6 @@ BEGIN
 				    'name', pi.indexrelid::regclass
 				  ))
 				  FROM pg_index pi 
-				  INNER JOIN pg_class pgc ON pi.indexrelid = pgc.oid
 				  WHERE pi.indrelid = t.oid::regclass
 				)
 			)) FROM pg_class AS t
