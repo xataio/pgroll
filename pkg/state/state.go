@@ -41,6 +41,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON %[1]s.m
 -- History is linear
 CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON %[1]s.migrations (schema, parent);
 
+-- Add a column to tell whether the row represents an auto-detected DDL capture or a pgroll migration
+ALTER TABLE %[1]s.migrations ADD COLUMN IF NOT EXISTS migration_type
+  VARCHAR(32)
+  DEFAULT 'pgroll'
+  CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred')
+);
+
 -- Helper functions
 
 -- Are we in the middle of a migration?
@@ -65,7 +72,20 @@ STABLE;
 -- Get the name of the previous version of the schema, or NULL if there is none.
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
-  SELECT parent FROM %[1]s.migrations WHERE name = (SELECT %[1]s.latest_version(schemaname)) AND schema=schemaname;
+  WITH RECURSIVE find_ancestor AS (
+    SELECT schema, name, parent, migration_type FROM pgroll.migrations 
+      WHERE name = (SELECT %[1]s.latest_version(schemaname)) AND schema = schemaname
+
+    UNION ALL
+
+    SELECT m.schema, m.name, m.parent, m.migration_type FROM pgroll.migrations m
+      INNER JOIN find_ancestor fa ON fa.parent = m.name AND fa.schema = m.schema
+      WHERE m.migration_type = 'inferred'
+  )
+  SELECT a.parent
+  FROM find_ancestor AS a
+  JOIN pgroll.migrations AS b ON a.parent = b.name AND a.schema = b.schema
+  WHERE b.migration_type = 'pgroll';
 $$
 LANGUAGE SQL
 STABLE;
@@ -192,14 +212,15 @@ BEGIN
 	END IF;
 
 	-- Someone did a schema change without pgroll, include it in the history
-	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent)
+	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent, migration_type)
 	VALUES (
 		schemaname,
 		pg_catalog.format('sql_%%s',pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15)),
 		pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query())),
 		%[1]s.read_schema(schemaname),
 		true,
-		%[1]s.latest_version(schemaname)
+		%[1]s.latest_version(schemaname),
+		'inferred'
 	);
 END;
 $$;

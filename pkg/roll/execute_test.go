@@ -62,43 +62,95 @@ func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
 func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	t.Parallel()
 
-	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		const (
-			firstVersion  = "1_create_table"
-			secondVersion = "2_create_table"
-		)
+	t.Run("when the previous version is a pgroll migration", func(t *testing.T) {
+		withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+			const (
+				firstVersion  = "1_create_table"
+				secondVersion = "2_create_table"
+			)
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
-			t.Fatalf("Failed to start first migration: %v", err)
-		}
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete first migration: %v", err)
-		}
-		if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}); err != nil {
-			t.Fatalf("Failed to start second migration: %v", err)
-		}
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete second migration: %v", err)
-		}
+			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+				t.Fatalf("Failed to start first migration: %v", err)
+			}
+			if err := mig.Complete(ctx); err != nil {
+				t.Fatalf("Failed to complete first migration: %v", err)
+			}
+			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}); err != nil {
+				t.Fatalf("Failed to start second migration: %v", err)
+			}
+			if err := mig.Complete(ctx); err != nil {
+				t.Fatalf("Failed to complete second migration: %v", err)
+			}
 
-		//
-		// Check that the schema for the first version has been dropped
-		//
-		var exists bool
-		err := db.QueryRow(`
+			//
+			// Check that the schema for the first version has been dropped
+			//
+			var exists bool
+			err := db.QueryRow(`
     SELECT EXISTS(
       SELECT 1
       FROM pg_catalog.pg_namespace
       WHERE nspname = $1
     )`, roll.VersionedSchemaName(schema, firstVersion)).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		if exists {
-			t.Errorf("Expected schema %q to not exist", firstVersion)
-		}
+			if exists {
+				t.Errorf("Expected schema %q to not exist", firstVersion)
+			}
+		})
+	})
+
+	t.Run("when the previous version is an inferred DDL migration", func(t *testing.T) {
+		withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+			const (
+				firstVersion  = "1_create_table"
+				secondVersion = "2_create_table"
+			)
+
+			// Run the first pgroll migration
+			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+				t.Fatalf("Failed to start first migration: %v", err)
+			}
+			if err := mig.Complete(ctx); err != nil {
+				t.Fatalf("Failed to complete first migration: %v", err)
+			}
+
+			// Run a manual DDL migration
+			_, err := db.ExecContext(ctx, "CREATE TABLE foo (id integer)")
+			if err != nil {
+				t.Fatalf("Failed to create table: %v", err)
+			}
+
+			// Run the second pgroll migration
+			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}); err != nil {
+				t.Fatalf("Failed to start second migration: %v", err)
+			}
+			if err := mig.Complete(ctx); err != nil {
+				t.Fatalf("Failed to complete second migration: %v", err)
+			}
+
+			//
+			// Check that the schema for the first version has been dropped
+			//
+			var exists bool
+			err = db.QueryRow(`
+    SELECT EXISTS(
+      SELECT 1
+      FROM pg_catalog.pg_namespace
+      WHERE nspname = $1
+    )`, roll.VersionedSchemaName(schema, firstVersion)).Scan(&exists)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if exists {
+				t.Errorf("Expected schema %q to not exist", firstVersion)
+			}
+		})
 	})
 }
 
