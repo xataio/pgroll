@@ -925,6 +925,7 @@ Example **create table** migrations:
 * [19_create_orders_table.json](../examples/19_create_orders_table.json)
 * [20_create_posts_table.json](../examples/20_create_posts_table.json)
 * [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
+* [28_different_defaults.json](../examples/28_different_defaults.json)
 
 ### Drop column
 

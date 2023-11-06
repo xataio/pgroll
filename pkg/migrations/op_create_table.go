@@ -127,7 +127,7 @@ func ColumnToSQL(col Column) string {
 		sql += " NOT NULL"
 	}
 	if col.Default != nil {
-		sql += fmt.Sprintf(" DEFAULT %s", pq.QuoteLiteral(*col.Default))
+		sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
 	}
 	if col.References != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s)",
