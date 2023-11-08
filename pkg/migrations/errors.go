@@ -147,3 +147,12 @@ type InvalidPrimaryKeyError struct {
 func (e InvalidPrimaryKeyError) Error() string {
 	return fmt.Sprintf("primary key on table %q must be defined on exactly one column, found %d", e.Table, e.Fields)
 }
+
+type InvalidReplicaIdentityError struct {
+	Table    string
+	Identity string
+}
+
+func (e InvalidReplicaIdentityError) Error() string {
+	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
+}
