@@ -12,16 +12,17 @@ import (
 type OpName string
 
 const (
-	OpNameCreateTable    OpName = "create_table"
-	OpNameRenameTable    OpName = "rename_table"
-	OpNameDropTable      OpName = "drop_table"
-	OpNameAddColumn      OpName = "add_column"
-	OpNameDropColumn     OpName = "drop_column"
-	OpNameAlterColumn    OpName = "alter_column"
-	OpNameCreateIndex    OpName = "create_index"
-	OpNameDropIndex      OpName = "drop_index"
-	OpNameDropConstraint OpName = "drop_constraint"
-	OpRawSQLName         OpName = "sql"
+	OpNameCreateTable        OpName = "create_table"
+	OpNameRenameTable        OpName = "rename_table"
+	OpNameDropTable          OpName = "drop_table"
+	OpNameAddColumn          OpName = "add_column"
+	OpNameDropColumn         OpName = "drop_column"
+	OpNameAlterColumn        OpName = "alter_column"
+	OpNameCreateIndex        OpName = "create_index"
+	OpNameDropIndex          OpName = "drop_index"
+	OpNameDropConstraint     OpName = "drop_constraint"
+	OpNameSetReplicaIdentity OpName = "set_replica_identity"
+	OpRawSQLName             OpName = "sql"
 
 	// Internal operation types used by `alter_column`
 	OpNameRenameColumn       OpName = "rename_column"
@@ -94,6 +95,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameDropConstraint:
 			item = &OpDropConstraint{}
+
+		case OpNameSetReplicaIdentity:
+			item = &OpSetReplicaIdentity{}
 
 		case OpNameAlterColumn:
 			item = &OpAlterColumn{}
@@ -171,6 +175,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpDropConstraint:
 		return OpNameDropConstraint
+
+	case *OpSetReplicaIdentity:
+		return OpNameSetReplicaIdentity
 
 	case *OpAlterColumn:
 		return OpNameAlterColumn
