@@ -282,6 +282,27 @@ func IndexMustNotExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	}
 }
 
+func ReplicaIdentityMustBe(t *testing.T, db *sql.DB, schema, table, replicaIdentity string) {
+	t.Helper()
+
+	var actualReplicaIdentity string
+	err := db.QueryRow(`
+    SELECT c.relreplident
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'r' -- regular table
+    AND n.nspname = $1
+    AND c.relname = $2;
+  `, schema, table).Scan(&actualReplicaIdentity)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if replicaIdentity != actualReplicaIdentity {
+		t.Fatalf("Expected replica identity to be %q, got %q", replicaIdentity, actualReplicaIdentity)
+	}
+}
+
 func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
 	t.Helper()
 
