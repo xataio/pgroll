@@ -29,6 +29,7 @@
     * [Drop table](#drop-table)
     * [Raw SQL](#raw-sql)
     * [Rename table](#rename-table)
+    * [Set replica identity](#set-replica-identity)
 
 ## Concepts
 
@@ -674,6 +675,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Drop table](#drop-table)
 * [Raw SQL](#raw-sql)
 * [Rename table](#rename-table)
+* [Set replica identity](#set-replica-identity)
 
 ### Add column
 
@@ -1048,3 +1050,27 @@ A rename table operation renames a table.
 Example **rename table** migrations:
 
 * [04_rename_table.json](../examples/04_rename_table.json)
+
+### Set replica identity
+
+A set replica identity operation sets the replica identity for a table. 
+
+**set replica identity** operations have this structure:
+
+```json
+{
+  "set_replica_identity": {
+    "table": "name of the table",
+    "identity": {
+      "type": "full | default | nothing | index"
+      "index": "name of the index, if type is 'index'"
+    }
+  }
+}
+```
+
+:warning: A **set replica identity** operation is applied directly to the underlying table on migration start. This means that both versions of the table exposed in the old and new version schemas will have the new replica identity set. :warning:
+
+Example **set replica identity** migrations:
+
+* [29_set_replica_identity.json](../examples/29_set_replica_identity.json)
