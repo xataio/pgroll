@@ -13,12 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type statusLine struct {
-	Schema  string
-	Version string
-	Status  string
-}
-
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show pgroll status",
@@ -30,12 +24,12 @@ var statusCmd = &cobra.Command{
 		}
 		defer state.Close()
 
-		statusLine, err := statusForSchema(ctx, state, flags.Schema())
+		status, err := statusForSchema(ctx, state, flags.Schema())
 		if err != nil {
 			return err
 		}
 
-		statusJSON, err := json.MarshalIndent(statusLine, "", "  ")
+		statusJSON, err := json.MarshalIndent(status, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -45,7 +39,7 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-func statusForSchema(ctx context.Context, st *state.State, schema string) (*statusLine, error) {
+func statusForSchema(ctx context.Context, st *state.State, schema string) (*state.Status, error) {
 	latestVersion, err := st.LatestVersion(ctx, schema)
 	if err != nil {
 		return nil, err
@@ -68,7 +62,7 @@ func statusForSchema(ctx context.Context, st *state.State, schema string) (*stat
 		status = "Complete"
 	}
 
-	return &statusLine{
+	return &state.Status{
 		Schema:  schema,
 		Version: *latestVersion,
 		Status:  status,
