@@ -3,7 +3,6 @@
 package cmd
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -24,7 +23,7 @@ var statusCmd = &cobra.Command{
 		}
 		defer state.Close()
 
-		status, err := statusForSchema(ctx, state, flags.Schema())
+		status, err := state.Status(ctx, flags.Schema())
 		if err != nil {
 			return err
 		}
@@ -37,34 +36,4 @@ var statusCmd = &cobra.Command{
 		fmt.Println(string(statusJSON))
 		return nil
 	},
-}
-
-func statusForSchema(ctx context.Context, st *state.State, schema string) (*state.Status, error) {
-	latestVersion, err := st.LatestVersion(ctx, schema)
-	if err != nil {
-		return nil, err
-	}
-	if latestVersion == nil {
-		latestVersion = new(string)
-	}
-
-	isActive, err := st.IsActiveMigrationPeriod(ctx, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	var status string
-	if *latestVersion == "" {
-		status = "No migrations"
-	} else if isActive {
-		status = "In Progress"
-	} else {
-		status = "Complete"
-	}
-
-	return &state.Status{
-		Schema:  schema,
-		Version: *latestVersion,
-		Status:  status,
-	}, nil
 }
