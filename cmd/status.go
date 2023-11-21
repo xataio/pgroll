@@ -30,7 +30,7 @@ var statusCmd = &cobra.Command{
 		}
 		defer state.Close()
 
-		statusLine, err := statusForSchema(ctx, state, flags.StateSchema())
+		statusLine, err := statusForSchema(ctx, state, flags.Schema())
 		if err != nil {
 			return err
 		}
