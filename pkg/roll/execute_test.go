@@ -389,6 +389,78 @@ func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
 	})
 }
 
+func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
+	t.Parallel()
+
+	withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Get the initial migration status before any migrations are run
+		status, err := mig.Status(ctx, "public")
+		assert.NoError(t, err)
+
+		// Ensure that the status shows "No migrations"
+		assert.Equal(t, &state.Status{
+			Schema:  "public",
+			Version: "",
+			Status:  state.NoneMigrationStatus,
+		}, status)
+
+		// Start a migration
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: []migrations.Operation{createTableOp("table1")},
+		})
+		assert.NoError(t, err)
+
+		// Get the migration status
+		status, err = mig.Status(ctx, "public")
+		assert.NoError(t, err)
+
+		// Ensure that the status shows "In progress"
+		assert.Equal(t, &state.Status{
+			Schema:  "public",
+			Version: "01_create_table",
+			Status:  state.InProgressMigrationStatus,
+		}, status)
+
+		// Rollback the migration
+		err = mig.Rollback(ctx)
+		assert.NoError(t, err)
+
+		// Get the migration status
+		status, err = mig.Status(ctx, "public")
+		assert.NoError(t, err)
+
+		// Ensure that the status shows "No migrations"
+		assert.Equal(t, &state.Status{
+			Schema:  "public",
+			Version: "",
+			Status:  state.NoneMigrationStatus,
+		}, status)
+
+		// Start and complete a migration
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: []migrations.Operation{createTableOp("table1")},
+		})
+		assert.NoError(t, err)
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Get the migration status
+		status, err = mig.Status(ctx, "public")
+		assert.NoError(t, err)
+
+		// Ensure that the status shows "Complete"
+		assert.Equal(t, &state.Status{
+			Schema:  "public",
+			Version: "01_create_table",
+			Status:  state.CompleteMigrationStatus,
+		}, status)
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,

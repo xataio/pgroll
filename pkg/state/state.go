@@ -334,6 +334,37 @@ func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, er
 	return parent, nil
 }
 
+// Status returns the current migration status of the specified schema
+func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
+	latestVersion, err := s.LatestVersion(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+	if latestVersion == nil {
+		latestVersion = new(string)
+	}
+
+	isActive, err := s.IsActiveMigrationPeriod(ctx, schema)
+	if err != nil {
+		return nil, err
+	}
+
+	var status MigrationStatus
+	if *latestVersion == "" {
+		status = NoneMigrationStatus
+	} else if isActive {
+		status = InProgressMigrationStatus
+	} else {
+		status = CompleteMigrationStatus
+	}
+
+	return &Status{
+		Schema:  schema,
+		Version: *latestVersion,
+		Status:  status,
+	}, nil
+}
+
 // ReadSchema reads & returns the current schema from postgres
 func ReadSchema(ctx context.Context, conn *sql.DB, stateSchema, schemaname string) (*schema.Schema, error) {
 	var res schema.Schema

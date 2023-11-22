@@ -75,6 +75,10 @@ func (m *Roll) PGVersion() PGVersion {
 	return m.pgVersion
 }
 
+func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {
+	return m.state.Status(ctx, schema)
+}
+
 func (m *Roll) Close() error {
 	err := m.state.Close()
 	if err != nil {
