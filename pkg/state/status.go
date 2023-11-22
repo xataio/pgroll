@@ -2,6 +2,14 @@
 
 package state
 
+type MigrationStatus string
+
+const (
+	NoneMigrationStatus       MigrationStatus = "No migrations"
+	InProgressMigrationStatus MigrationStatus = "In progress"
+	CompleteMigrationStatus   MigrationStatus = "Complete"
+)
+
 // Status describes the current migration status of a database schema.
 type Status struct {
 	// The schema name.
@@ -11,5 +19,5 @@ type Status struct {
 	Version string `json:"version"`
 
 	// The status of the most recent migration.
-	Status string `json:"status"`
+	Status MigrationStatus `json:"status"`
 }

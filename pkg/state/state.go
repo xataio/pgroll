@@ -349,13 +349,13 @@ func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
 		return nil, err
 	}
 
-	var status string
+	var status MigrationStatus
 	if *latestVersion == "" {
-		status = "No migrations"
+		status = NoneMigrationStatus
 	} else if isActive {
-		status = "In Progress"
+		status = InProgressMigrationStatus
 	} else {
-		status = "Complete"
+		status = CompleteMigrationStatus
 	}
 
 	return &Status{
