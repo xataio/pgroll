@@ -33,7 +33,9 @@ func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSch
 	}
 
 	// set the replica identity on the underlying table
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY %s", o.Table, identitySQL))
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY %s",
+		pq.QuoteIdentifier(o.Table),
+		identitySQL))
 	return err
 }
 
