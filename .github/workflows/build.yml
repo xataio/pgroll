@@ -140,4 +140,5 @@ jobs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        GITHUB_USERNAME: ${{ github.repository_owner }}
         DOCKER_USERNAME: ghcr.io/${{ github.repository_owner }}
