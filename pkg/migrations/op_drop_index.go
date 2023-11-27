@@ -10,10 +10,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpDropIndex struct {
-	Name string `json:"name"`
-}
-
 var _ Operation = (*OpDropIndex)(nil)
 
 func (o *OpDropIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {

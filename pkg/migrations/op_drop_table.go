@@ -11,10 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpDropTable struct {
-	Name string `json:"name"`
-}
-
 var _ Operation = (*OpDropTable)(nil)
 
 func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {

@@ -10,19 +10,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpAlterColumn struct {
-	Table      string               `json:"table"`
-	Column     string               `json:"column"`
-	Name       string               `json:"name"`
-	Type       string               `json:"type"`
-	Check      *CheckConstraint     `json:"check"`
-	References *ForeignKeyReference `json:"references"`
-	Nullable   *bool                `json:"nullable"`
-	Unique     *UniqueConstraint    `json:"unique"`
-	Up         string               `json:"up"`
-	Down       string               `json:"down"`
-}
-
 var _ Operation = (*OpAlterColumn)(nil)
 
 func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {

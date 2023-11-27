@@ -13,16 +13,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpSetReplicaIdentity struct {
-	Table    string          `json:"table"`
-	Identity ReplicaIdentity `json:"identity"`
-}
-
-type ReplicaIdentity struct {
-	Type  string `json:"type"`
-	Index string `json:"index"`
-}
-
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
 func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {

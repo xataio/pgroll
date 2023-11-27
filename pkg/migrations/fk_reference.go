@@ -4,12 +4,6 @@ package migrations
 
 import "github.com/xataio/pgroll/pkg/schema"
 
-type ForeignKeyReference struct {
-	Name   string `json:"name"`
-	Table  string `json:"table"`
-	Column string `json:"column"`
-}
-
 func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 	if f.Name == "" {
 		return FieldRequiredError{Name: "name"}

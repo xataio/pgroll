@@ -11,11 +11,6 @@ import (
 
 var _ Operation = (*OpRawSQL)(nil)
 
-type OpRawSQL struct {
-	Up   string `json:"up"`
-	Down string `json:"down,omitempty"`
-}
-
 func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	_, err := conn.ExecContext(ctx, o.Up)
 	if err != nil {
