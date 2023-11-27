@@ -62,7 +62,7 @@ For other more complex changes, like adding a `NOT NULL` constraint to a column,
 
 In order to work with the multiple versioned schema that `pgroll` creates, clients need to be configured to work with one of them. 
 
-This is done by having client applications configure the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) when they connnect to the Postgres database.
+This is done by having client applications configure the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) when they connect to the Postgres database.
 
 For example, this fragment for a Go client application shows how to set the `search_path` after a connection is established:
 
