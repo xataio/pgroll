@@ -6,40 +6,51 @@
       "additionalProperties": false,
       "properties": {
         "constraint": {
-          "type": "string"
+          "type": "string",
+          "description": "Constraint expression"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of check constraint"
         }
       },
       "required": ["constraint", "name"],
       "type": "object"
     },
     "Column": {
+      "description": "Column definition",
       "properties": {
         "check": {
-          "$ref": "#/definitions/CheckConstraint"
+          "$ref": "#/definitions/CheckConstraint",
+          "description": "Check constraint for the column"
         },
         "default": {
-          "type": "string"
+          "type": "string",
+          "description": "Default value for the column"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the column"
         },
         "nullable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates if the column is nullable"
         },
         "pk": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates if the column is part of the primary key"
         },
         "references": {
-          "$ref": "#/definitions/ForeignKeyReference"
+          "$ref": "#/definitions/ForeignKeyReference",
+          "description": "Foreign key constraint for the column"
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "Postgres type of the column"
         },
         "unique": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates if the column values must be unique"
         }
       },
       "required": ["name", "nullable", "pk", "type", "unique"],
@@ -49,13 +60,16 @@
       "additionalProperties": false,
       "properties": {
         "column": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the referenced column"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the foreign key constraint"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the referenced table"
         }
       },
       "required": ["column", "name", "table"],
@@ -65,13 +79,16 @@
       "additionalProperties": false,
       "properties": {
         "column": {
-          "$ref": "#/definitions/Column"
+          "$ref": "#/definitions/Column",
+          "description": "Column to add"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         },
         "up": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for up migration"
         }
       },
       "required": ["column", "table"],
@@ -81,34 +98,44 @@
       "additionalProperties": false,
       "properties": {
         "check": {
-          "$ref": "#/definitions/CheckConstraint"
+          "$ref": "#/definitions/CheckConstraint",
+          "description": "Add check constraint to the column"
         },
         "column": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the column"
         },
         "down": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for down migration"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "New name of the column (for rename column operation)"
         },
         "nullable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Indicates if the column is nullable (for add not null constraint operation)"
         },
         "references": {
-          "$ref": "#/definitions/ForeignKeyReference"
+          "$ref": "#/definitions/ForeignKeyReference",
+          "description": "Add foreign key constraint to the column"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "New type of the column (for change type operation)"
         },
         "unique": {
-          "$ref": "#/definitions/UniqueConstraint"
+          "$ref": "#/definitions/UniqueConstraint",
+          "description": "Add unique constraint to the column"
         },
         "up": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for up migration"
         }
       },
       "required": ["column", "down", "name", "table", "type", "up"],
@@ -121,29 +148,35 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Names of columns on which to define the index"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Index name"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of table on which to define the index"
         }
       },
       "required": ["columns", "name", "table"],
-      "type": "object"
+      "type": "object",
+      "description": "Create index operation"
     },
     "OpCreateTable": {
       "additionalProperties": false,
       "properties": {
         "columns": {
           "items": {
-            "$ref": "#/definitions/Column"
+            "$ref": "#/definitions/Column",
+            "description": "Columns to add to the table"
           },
           "type": "array"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         }
       },
       "required": ["columns", "name"],
@@ -153,13 +186,16 @@
       "additionalProperties": false,
       "properties": {
         "column": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the column"
         },
         "down": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for down migration"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         }
       },
       "required": ["column", "table"],
@@ -169,19 +205,24 @@
       "additionalProperties": false,
       "properties": {
         "column": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the column"
         },
         "down": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for down migration"
         },
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the constraint"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         },
         "up": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for up migration"
         }
       },
       "required": ["column", "down", "name", "table", "up"],
@@ -191,7 +232,8 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Index name"
         }
       },
       "required": ["name"],
@@ -201,7 +243,8 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         }
       },
       "required": ["name"],
@@ -212,10 +255,12 @@
       "properties": {
         "down": {
           "default": "",
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for down migration"
         },
         "up": {
-          "type": "string"
+          "type": "string",
+          "description": "SQL expression for up migration"
         }
       },
       "required": ["up"],
@@ -225,10 +270,12 @@
       "additionalProperties": false,
       "properties": {
         "from": {
-          "type": "string"
+          "type": "string",
+          "description": "Old name of the table"
         },
         "to": {
-          "type": "string"
+          "type": "string",
+          "description": "New name of the table"
         }
       },
       "required": ["from", "to"],
@@ -238,10 +285,12 @@
       "additionalProperties": false,
       "properties": {
         "identity": {
-          "$ref": "#/definitions/ReplicaIdentity"
+          "$ref": "#/definitions/ReplicaIdentity",
+          "description": "Replica identity to set"
         },
         "table": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the table"
         }
       },
       "required": ["identity", "table"],
@@ -251,43 +300,55 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the migration"
         },
         "operations": {
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/OpAddColumn"
+                "$ref": "#/definitions/OpAddColumn",
+                "description": "Add column operation"
               },
               {
-                "$ref": "#/definitions/OpAlterColumn"
+                "$ref": "#/definitions/OpAlterColumn",
+                "description": "Alter column operation"
               },
               {
-                "$ref": "#/definitions/OpCreateIndex"
+                "$ref": "#/definitions/OpCreateIndex",
+                "description": "Create index operation"
               },
               {
-                "$ref": "#/definitions/OpCreateTable"
+                "$ref": "#/definitions/OpCreateTable",
+                "description": "Create table operation"
               },
               {
-                "$ref": "#/definitions/OpDropColumn"
+                "$ref": "#/definitions/OpDropColumn",
+                "description": "Drop column operation"
               },
               {
-                "$ref": "#/definitions/OpDropConstraint"
+                "$ref": "#/definitions/OpDropConstraint",
+                "description": "Drop constraint operation"
               },
               {
-                "$ref": "#/definitions/OpDropIndex"
+                "$ref": "#/definitions/OpDropIndex",
+                "description": "Drop index operation"
               },
               {
-                "$ref": "#/definitions/OpDropTable"
+                "$ref": "#/definitions/OpDropTable",
+                "description": "Drop table operation"
               },
               {
-                "$ref": "#/definitions/OpRawSQL"
+                "$ref": "#/definitions/OpRawSQL",
+                "description": "Raw SQL operation"
               },
               {
-                "$ref": "#/definitions/OpRenameTable"
+                "$ref": "#/definitions/OpRenameTable",
+                "description": "Rename table operation"
               },
               {
-                "$ref": "#/definitions/OpSetReplicaIdentity"
+                "$ref": "#/definitions/OpSetReplicaIdentity",
+                "description": "Set replica identity operation"
               }
             ]
           },
@@ -301,10 +362,12 @@
       "additionalProperties": false,
       "properties": {
         "Index": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of the index to use as replica identity"
         },
         "Type": {
-          "type": "string"
+          "type": "string",
+          "description": "Type of replica identity"
         }
       },
       "required": ["Index", "Type"],
@@ -314,7 +377,8 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "description": "Name of unique constraint"
         }
       },
       "required": ["name"],

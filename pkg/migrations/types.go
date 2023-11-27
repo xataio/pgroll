@@ -3,101 +3,103 @@
 package migrations
 
 type CheckConstraint struct {
-	// Constraint corresponds to the JSON schema field "constraint".
+	// Constraint expression
 	Constraint string `json:"constraint"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Name of check constraint
 	Name string `json:"name"`
 }
 
+// Column definition
 type Column struct {
-	// Check corresponds to the JSON schema field "check".
+	// Check constraint for the column
 	Check *CheckConstraint `json:"check,omitempty"`
 
-	// Default corresponds to the JSON schema field "default".
+	// Default value for the column
 	Default *string `json:"default,omitempty"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Name of the column
 	Name string `json:"name"`
 
-	// Nullable corresponds to the JSON schema field "nullable".
+	// Indicates if the column is nullable
 	Nullable bool `json:"nullable"`
 
-	// Pk corresponds to the JSON schema field "pk".
+	// Indicates if the column is part of the primary key
 	Pk bool `json:"pk"`
 
-	// References corresponds to the JSON schema field "references".
+	// Foreign key constraint for the column
 	References *ForeignKeyReference `json:"references,omitempty"`
 
-	// Type corresponds to the JSON schema field "type".
+	// Postgres type of the column
 	Type string `json:"type"`
 
-	// Unique corresponds to the JSON schema field "unique".
+	// Indicates if the column values must be unique
 	Unique bool `json:"unique"`
 }
 
 type ForeignKeyReference struct {
-	// Column corresponds to the JSON schema field "column".
+	// Name of the referenced column
 	Column string `json:"column"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Name of the foreign key constraint
 	Name string `json:"name"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the referenced table
 	Table string `json:"table"`
 }
 
 type OpAddColumn struct {
-	// Column corresponds to the JSON schema field "column".
+	// Column to add
 	Column Column `json:"column"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the table
 	Table string `json:"table"`
 
-	// Up corresponds to the JSON schema field "up".
+	// SQL expression for up migration
 	Up *string `json:"up,omitempty"`
 }
 
 type OpAlterColumn struct {
-	// Check corresponds to the JSON schema field "check".
+	// Add check constraint to the column
 	Check *CheckConstraint `json:"check,omitempty"`
 
-	// Column corresponds to the JSON schema field "column".
+	// Name of the column
 	Column string `json:"column"`
 
-	// Down corresponds to the JSON schema field "down".
+	// SQL expression for down migration
 	Down string `json:"down"`
 
-	// Name corresponds to the JSON schema field "name".
+	// New name of the column (for rename column operation)
 	Name string `json:"name"`
 
-	// Nullable corresponds to the JSON schema field "nullable".
+	// Indicates if the column is nullable (for add not null constraint operation)
 	Nullable *bool `json:"nullable,omitempty"`
 
-	// References corresponds to the JSON schema field "references".
+	// Add foreign key constraint to the column
 	References *ForeignKeyReference `json:"references,omitempty"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the table
 	Table string `json:"table"`
 
-	// Type corresponds to the JSON schema field "type".
+	// New type of the column (for change type operation)
 	Type string `json:"type"`
 
-	// Unique corresponds to the JSON schema field "unique".
+	// Add unique constraint to the column
 	Unique *UniqueConstraint `json:"unique,omitempty"`
 
-	// Up corresponds to the JSON schema field "up".
+	// SQL expression for up migration
 	Up string `json:"up"`
 }
 
+// Create index operation
 type OpCreateIndex struct {
-	// Columns corresponds to the JSON schema field "columns".
+	// Names of columns on which to define the index
 	Columns []string `json:"columns"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Index name
 	Name string `json:"name"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of table on which to define the index
 	Table string `json:"table"`
 }
 
@@ -105,74 +107,74 @@ type OpCreateTable struct {
 	// Columns corresponds to the JSON schema field "columns".
 	Columns []Column `json:"columns"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Name of the table
 	Name string `json:"name"`
 }
 
 type OpDropColumn struct {
-	// Column corresponds to the JSON schema field "column".
+	// Name of the column
 	Column string `json:"column"`
 
-	// Down corresponds to the JSON schema field "down".
+	// SQL expression for down migration
 	Down *string `json:"down,omitempty"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the table
 	Table string `json:"table"`
 }
 
 type OpDropConstraint struct {
-	// Column corresponds to the JSON schema field "column".
+	// Name of the column
 	Column string `json:"column"`
 
-	// Down corresponds to the JSON schema field "down".
+	// SQL expression for down migration
 	Down string `json:"down"`
 
-	// Name corresponds to the JSON schema field "name".
+	// Name of the constraint
 	Name string `json:"name"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the table
 	Table string `json:"table"`
 
-	// Up corresponds to the JSON schema field "up".
+	// SQL expression for up migration
 	Up string `json:"up"`
 }
 
 type OpDropIndex struct {
-	// Name corresponds to the JSON schema field "name".
+	// Index name
 	Name string `json:"name"`
 }
 
 type OpDropTable struct {
-	// Name corresponds to the JSON schema field "name".
+	// Name of the table
 	Name string `json:"name"`
 }
 
 type OpRawSQL struct {
-	// Down corresponds to the JSON schema field "down".
+	// SQL expression for down migration
 	Down string `json:"down,omitempty"`
 
-	// Up corresponds to the JSON schema field "up".
+	// SQL expression for up migration
 	Up string `json:"up"`
 }
 
 type OpRenameTable struct {
-	// From corresponds to the JSON schema field "from".
+	// Old name of the table
 	From string `json:"from"`
 
-	// To corresponds to the JSON schema field "to".
+	// New name of the table
 	To string `json:"to"`
 }
 
 type OpSetReplicaIdentity struct {
-	// Identity corresponds to the JSON schema field "identity".
+	// Replica identity to set
 	Identity ReplicaIdentity `json:"identity"`
 
-	// Table corresponds to the JSON schema field "table".
+	// Name of the table
 	Table string `json:"table"`
 }
 
 type PgRollMigration struct {
-	// Name corresponds to the JSON schema field "name".
+	// Name of the migration
 	Name string `json:"name"`
 
 	// Operations corresponds to the JSON schema field "operations".
@@ -180,14 +182,14 @@ type PgRollMigration struct {
 }
 
 type ReplicaIdentity struct {
-	// Index corresponds to the JSON schema field "Index".
+	// Name of the index to use as replica identity
 	Index string `json:"Index"`
 
-	// Type corresponds to the JSON schema field "Type".
+	// Type of replica identity
 	Type string `json:"Type"`
 }
 
 type UniqueConstraint struct {
-	// Name corresponds to the JSON schema field "name".
+	// Name of unique constraint
 	Name string `json:"name"`
 }
