@@ -466,9 +466,9 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 		Name: tableName,
 		Columns: []migrations.Column{
 			{
-				Name:       "id",
-				Type:       "integer",
-				PrimaryKey: true,
+				Name: "id",
+				Type: "integer",
+				Pk:   true,
 			},
 			{
 				Name:   "name",

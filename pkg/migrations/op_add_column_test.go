@@ -24,9 +24,9 @@ func TestAddColumn(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -121,9 +121,9 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -136,9 +136,9 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Name: "orders",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -223,9 +223,9 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -238,9 +238,9 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Name: "orders",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -332,9 +332,9 @@ func TestAddColumnWithUpSql(t *testing.T) {
 						Name: "products",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -419,9 +419,9 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 						Name: "products",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -485,9 +485,9 @@ func TestAddColumnValidation(t *testing.T) {
 				Name: "users",
 				Columns: []migrations.Column{
 					{
-						Name:       "id",
-						Type:       "serial",
-						PrimaryKey: true,
+						Name: "id",
+						Type: "serial",
+						Pk:   true,
 					},
 					{
 						Name:   "name",
@@ -604,9 +604,9 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:   "name",

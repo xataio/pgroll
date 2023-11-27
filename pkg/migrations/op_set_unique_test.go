@@ -24,9 +24,9 @@ func TestSetColumnUnique(t *testing.T) {
 							Name: "reviews",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:     "username",
@@ -125,9 +125,9 @@ func TestSetColumnUnique(t *testing.T) {
 							Name: "reviews",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:     "username",

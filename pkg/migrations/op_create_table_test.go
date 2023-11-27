@@ -25,9 +25,9 @@ func TestCreateTable(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -84,9 +84,9 @@ func TestCreateTable(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -104,9 +104,9 @@ func TestCreateTable(t *testing.T) {
 							Name: "orders",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "user_id",
@@ -181,9 +181,9 @@ func TestCreateTable(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -246,9 +246,9 @@ func TestCreateTableValidation(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -266,9 +266,9 @@ func TestCreateTableValidation(t *testing.T) {
 						Name: "orders",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name: "user_id",
