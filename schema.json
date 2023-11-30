@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$ref": "#/$defs/PgRollMigration",
+  "allOf": [{ "$ref": "#/$defs/PgRollMigration" }],
   "$defs": {
     "CheckConstraint": {
       "additionalProperties": false,
@@ -376,16 +376,16 @@
       "additionalProperties": false,
       "description": "Replica identity definition",
       "properties": {
-        "Index": {
+        "index": {
           "description": "Name of the index to use as replica identity",
           "type": "string"
         },
-        "Type": {
+        "type": {
           "description": "Type of replica identity",
           "type": "string"
         }
       },
-      "required": ["Index", "Type"],
+      "required": ["index", "type"],
       "type": "object"
     },
     "UniqueConstraint": {
