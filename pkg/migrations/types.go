@@ -3,6 +3,7 @@
 
 package migrations
 
+// Check constraint definition
 type CheckConstraint struct {
 	// Constraint expression
 	Constraint string `json:"constraint"`
@@ -38,6 +39,7 @@ type Column struct {
 	Unique bool `json:"unique"`
 }
 
+// Foreign key reference definition
 type ForeignKeyReference struct {
 	// Name of the referenced column
 	Column string `json:"column"`
@@ -49,6 +51,7 @@ type ForeignKeyReference struct {
 	Table string `json:"table"`
 }
 
+// Add column operation
 type OpAddColumn struct {
 	// Column to add
 	Column Column `json:"column"`
@@ -60,6 +63,7 @@ type OpAddColumn struct {
 	Up *string `json:"up,omitempty"`
 }
 
+// Alter column operation
 type OpAlterColumn struct {
 	// Add check constraint to the column
 	Check *CheckConstraint `json:"check,omitempty"`
@@ -104,6 +108,7 @@ type OpCreateIndex struct {
 	Table string `json:"table"`
 }
 
+// Create table operation
 type OpCreateTable struct {
 	// Columns corresponds to the JSON schema field "columns".
 	Columns []Column `json:"columns"`
@@ -112,6 +117,7 @@ type OpCreateTable struct {
 	Name string `json:"name"`
 }
 
+// Drop column operation
 type OpDropColumn struct {
 	// Name of the column
 	Column string `json:"column"`
@@ -123,6 +129,7 @@ type OpDropColumn struct {
 	Table string `json:"table"`
 }
 
+// Drop constraint operation
 type OpDropConstraint struct {
 	// Name of the column
 	Column string `json:"column"`
@@ -140,16 +147,19 @@ type OpDropConstraint struct {
 	Up string `json:"up"`
 }
 
+// Drop index operation
 type OpDropIndex struct {
 	// Index name
 	Name string `json:"name"`
 }
 
+// Drop table operation
 type OpDropTable struct {
 	// Name of the table
 	Name string `json:"name"`
 }
 
+// Raw SQL operation
 type OpRawSQL struct {
 	// SQL expression for down migration
 	Down string `json:"down,omitempty"`
@@ -158,6 +168,7 @@ type OpRawSQL struct {
 	Up string `json:"up"`
 }
 
+// Rename table operation
 type OpRenameTable struct {
 	// Old name of the table
 	From string `json:"from"`
@@ -166,6 +177,7 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// Set replica identity operation
 type OpSetReplicaIdentity struct {
 	// Replica identity to set
 	Identity ReplicaIdentity `json:"identity"`
@@ -174,6 +186,7 @@ type OpSetReplicaIdentity struct {
 	Table string `json:"table"`
 }
 
+// PgRoll migration definition
 type PgRollMigration struct {
 	// Name of the migration
 	Name string `json:"name"`
@@ -182,6 +195,7 @@ type PgRollMigration struct {
 	Operations []interface{} `json:"operations"`
 }
 
+// Replica identity definition
 type ReplicaIdentity struct {
 	// Name of the index to use as replica identity
 	Index string `json:"Index"`
@@ -190,6 +204,7 @@ type ReplicaIdentity struct {
 	Type string `json:"Type"`
 }
 
+// Unique constraint definition
 type UniqueConstraint struct {
 	// Name of unique constraint
 	Name string `json:"name"`
