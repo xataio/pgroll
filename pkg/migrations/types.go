@@ -198,10 +198,10 @@ type PgRollMigration struct {
 // Replica identity definition
 type ReplicaIdentity struct {
 	// Name of the index to use as replica identity
-	Index string `json:"Index"`
+	Index string `json:"index"`
 
 	// Type of replica identity
-	Type string `json:"Type"`
+	Type string `json:"type"`
 }
 
 // Unique constraint definition
