@@ -57,8 +57,8 @@ dockers:
     - --platform=linux/amd64
     - --label=org.opencontainers.image.title={{ .ProjectName }}
     - --label=org.opencontainers.image.description={{ .ProjectName }}
-    - --label=org.opencontainers.image.url=https://github.com/xataio/{{ .ProjectName }}
-    - --label=org.opencontainers.image.source=https://github.com/xataio/{{ .ProjectName }}
+    - --label=org.opencontainers.image.url=https://github.com/{{ .Env.GITHUB_USERNAME }}/{{ .ProjectName }}
+    - --label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_USERNAME }}/{{ .ProjectName }}
     - --label=org.opencontainers.image.version={{ .Version }}
     - --label=org.opencontainers.image.created={{ .Date }}
     - --label=org.opencontainers.image.revision={{ .FullCommit }}
@@ -72,8 +72,8 @@ dockers:
     - --platform=linux/arm64/v8
     - --label=org.opencontainers.image.title={{ .ProjectName }}
     - --label=org.opencontainers.image.description={{ .ProjectName }}
-    - --label=org.opencontainers.image.url=https://github.com/xataio/{{ .ProjectName }}
-    - --label=org.opencontainers.image.source=https://github.com/xataio/{{ .ProjectName }}
+    - --label=org.opencontainers.image.url=https://github.com/{{ .Env.GITHUB_USERNAME }}/{{ .ProjectName }}
+    - --label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_USERNAME }}/{{ .ProjectName }}
     - --label=org.opencontainers.image.version={{ .Version }}
     - --label=org.opencontainers.image.created={{ .Date }}
     - --label=org.opencontainers.image.revision={{ .FullCommit }}
