@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$ref": "#/definitions/PgRollMigration",
+  "$ref": "#/$defs/PgRollMigration",
   "$defs": {
     "CheckConstraint": {
       "additionalProperties": false,
@@ -23,7 +23,7 @@
       "description": "Column definition",
       "properties": {
         "check": {
-          "$ref": "#/definitions/CheckConstraint",
+          "$ref": "#/$defs/CheckConstraint",
           "description": "Check constraint for the column"
         },
         "default": {
@@ -43,7 +43,7 @@
           "type": "boolean"
         },
         "references": {
-          "$ref": "#/definitions/ForeignKeyReference",
+          "$ref": "#/$defs/ForeignKeyReference",
           "description": "Foreign key constraint for the column"
         },
         "type": {
@@ -83,7 +83,7 @@
       "description": "Add column operation",
       "properties": {
         "column": {
-          "$ref": "#/definitions/Column",
+          "$ref": "#/$defs/Column",
           "description": "Column to add"
         },
         "table": {
@@ -103,7 +103,7 @@
       "description": "Alter column operation",
       "properties": {
         "check": {
-          "$ref": "#/definitions/CheckConstraint",
+          "$ref": "#/$defs/CheckConstraint",
           "description": "Add check constraint to the column"
         },
         "column": {
@@ -123,7 +123,7 @@
           "type": "boolean"
         },
         "references": {
-          "$ref": "#/definitions/ForeignKeyReference",
+          "$ref": "#/$defs/ForeignKeyReference",
           "description": "Add foreign key constraint to the column"
         },
         "table": {
@@ -135,7 +135,7 @@
           "type": "string"
         },
         "unique": {
-          "$ref": "#/definitions/UniqueConstraint",
+          "$ref": "#/$defs/UniqueConstraint",
           "description": "Add unique constraint to the column"
         },
         "up": {
@@ -175,7 +175,7 @@
       "properties": {
         "columns": {
           "items": {
-            "$ref": "#/definitions/Column",
+            "$ref": "#/$defs/Column",
             "description": "Columns to add to the table"
           },
           "type": "array"
@@ -298,7 +298,7 @@
       "description": "Set replica identity operation",
       "properties": {
         "identity": {
-          "$ref": "#/definitions/ReplicaIdentity",
+          "$ref": "#/$defs/ReplicaIdentity",
           "description": "Replica identity to set"
         },
         "table": {
@@ -321,47 +321,47 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/definitions/OpAddColumn",
+                "$ref": "#/$defs/OpAddColumn",
                 "description": "Add column operation"
               },
               {
-                "$ref": "#/definitions/OpAlterColumn",
+                "$ref": "#/$defs/OpAlterColumn",
                 "description": "Alter column operation"
               },
               {
-                "$ref": "#/definitions/OpCreateIndex",
+                "$ref": "#/$defs/OpCreateIndex",
                 "description": "Create index operation"
               },
               {
-                "$ref": "#/definitions/OpCreateTable",
+                "$ref": "#/$defs/OpCreateTable",
                 "description": "Create table operation"
               },
               {
-                "$ref": "#/definitions/OpDropColumn",
+                "$ref": "#/$defs/OpDropColumn",
                 "description": "Drop column operation"
               },
               {
-                "$ref": "#/definitions/OpDropConstraint",
+                "$ref": "#/$defs/OpDropConstraint",
                 "description": "Drop constraint operation"
               },
               {
-                "$ref": "#/definitions/OpDropIndex",
+                "$ref": "#/$defs/OpDropIndex",
                 "description": "Drop index operation"
               },
               {
-                "$ref": "#/definitions/OpDropTable",
+                "$ref": "#/$defs/OpDropTable",
                 "description": "Drop table operation"
               },
               {
-                "$ref": "#/definitions/OpRawSQL",
+                "$ref": "#/$defs/OpRawSQL",
                 "description": "Raw SQL operation"
               },
               {
-                "$ref": "#/definitions/OpRenameTable",
+                "$ref": "#/$defs/OpRenameTable",
                 "description": "Rename table operation"
               },
               {
-                "$ref": "#/definitions/OpSetReplicaIdentity",
+                "$ref": "#/$defs/OpSetReplicaIdentity",
                 "description": "Set replica identity operation"
               }
             ]
