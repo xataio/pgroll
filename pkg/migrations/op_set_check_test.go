@@ -23,9 +23,9 @@ func TestSetCheckConstraint(t *testing.T) {
 						Name: "posts",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name: "title",
@@ -148,9 +148,9 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				Name: "posts",
 				Columns: []migrations.Column{
 					{
-						Name:       "id",
-						Type:       "serial",
-						PrimaryKey: true,
+						Name: "id",
+						Type: "serial",
+						Pk:   true,
 					},
 					{
 						Name: "title",

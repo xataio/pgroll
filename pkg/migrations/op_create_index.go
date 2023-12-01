@@ -12,12 +12,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpCreateIndex struct {
-	Name    string   `json:"name"`
-	Table   string   `json:"table"`
-	Columns []string `json:"columns"`
-}
-
 var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {

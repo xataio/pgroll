@@ -23,9 +23,9 @@ func TestSetForeignKey(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name: "name",
@@ -37,9 +37,9 @@ func TestSetForeignKey(t *testing.T) {
 						Name: "posts",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name: "title",
@@ -183,9 +183,9 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				Name: "users",
 				Columns: []migrations.Column{
 					{
-						Name:       "id",
-						Type:       "serial",
-						PrimaryKey: true,
+						Name: "id",
+						Type: "serial",
+						Pk:   true,
 					},
 					{
 						Name: "name",
@@ -197,9 +197,9 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				Name: "posts",
 				Columns: []migrations.Column{
 					{
-						Name:       "id",
-						Type:       "serial",
-						PrimaryKey: true,
+						Name: "id",
+						Type: "serial",
+						Pk:   true,
 					},
 					{
 						Name: "title",

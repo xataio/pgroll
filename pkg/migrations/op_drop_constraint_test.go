@@ -24,9 +24,9 @@ func TestDropConstraint(t *testing.T) {
 							Name: "posts",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "title",
@@ -153,9 +153,9 @@ func TestDropConstraint(t *testing.T) {
 							Name: "posts",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "title",
@@ -219,9 +219,9 @@ func TestDropConstraint(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -233,9 +233,9 @@ func TestDropConstraint(t *testing.T) {
 							Name: "posts",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name: "title",
@@ -384,9 +384,9 @@ func TestDropConstraint(t *testing.T) {
 							Name: "users",
 							Columns: []migrations.Column{
 								{
-									Name:       "id",
-									Type:       "serial",
-									PrimaryKey: true,
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -466,9 +466,9 @@ func TestDropConstraintValidation(t *testing.T) {
 				Name: "posts",
 				Columns: []migrations.Column{
 					{
-						Name:       "id",
-						Type:       "serial",
-						PrimaryKey: true,
+						Name: "id",
+						Type: "serial",
+						Pk:   true,
 					},
 					{
 						Name: "title",

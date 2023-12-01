@@ -13,22 +13,6 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-type OpCreateTable struct {
-	Name    string   `json:"name"`
-	Columns []Column `json:"columns"`
-}
-
-type Column struct {
-	Name       string               `json:"name"`
-	Type       string               `json:"type"`
-	Nullable   bool                 `json:"nullable"`
-	Unique     bool                 `json:"unique"`
-	PrimaryKey bool                 `json:"pk"`
-	Default    *string              `json:"default"`
-	Check      *CheckConstraint     `json:"check"`
-	References *ForeignKeyReference `json:"references"`
-}
-
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
@@ -117,7 +101,7 @@ func columnsToSQL(cols []Column) string {
 func ColumnToSQL(col Column) string {
 	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
 
-	if col.PrimaryKey {
+	if col.Pk {
 		sql += " PRIMARY KEY"
 	}
 	if col.Unique {

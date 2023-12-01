@@ -22,9 +22,9 @@ func TestCreateIndex(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:     "name",
@@ -73,9 +73,9 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:     "name",

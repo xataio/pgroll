@@ -23,9 +23,9 @@ func TestRenameColumn(t *testing.T) {
 						Name: "users",
 						Columns: []migrations.Column{
 							{
-								Name:       "id",
-								Type:       "serial",
-								PrimaryKey: true,
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
 							},
 							{
 								Name:     "username",

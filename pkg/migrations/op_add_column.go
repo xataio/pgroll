@@ -12,12 +12,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpAddColumn struct {
-	Table  string  `json:"table"`
-	Up     *string `json:"up"`
-	Column Column  `json:"column"`
-}
-
 var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
@@ -173,7 +167,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "up"}
 	}
 
-	if o.Column.PrimaryKey {
+	if o.Column.Pk {
 		return errors.New("adding primary key columns is not supported")
 	}
 
