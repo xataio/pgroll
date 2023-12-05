@@ -716,12 +716,15 @@ An add column operation creates a new column on an existing table.
 }
 ```
 
+Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
+
 Example **add column** migrations:
 
 * [03_add_column.json](../examples/03_add_column.json)
 * [06_add_column_to_sql_table.json](../examples/06_add_column_to_sql_table.json)
 * [17_add_rating_column.json](../examples/17_add_rating_column.json)
 * [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
+* [30_add_column_simple_up.json](../examples/30_add_column_simple_up.json)
 
 ### Alter column
 
@@ -923,6 +926,8 @@ where each `column` is defined as:
   }
 },
 ```
+
+Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
 Example **create table** migrations:
 
