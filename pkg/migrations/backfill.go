@@ -54,7 +54,7 @@ func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...Cal
 type batcher struct {
 	table     *schema.Table
 	pkColumn  *schema.Column
-	lastPK    interface{}
+	lastPK    *string
 	batchSize int
 }
 
@@ -85,7 +85,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn *sql.DB) error {
 func (b *batcher) buildQuery() string {
 	whereClause := ""
 	if b.lastPK != nil {
-		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.pkColumn.Name), b.lastPK)
+		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.pkColumn.Name), pq.QuoteLiteral(*b.lastPK))
 	}
 
 	return fmt.Sprintf(`
