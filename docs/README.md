@@ -716,6 +716,8 @@ An add column operation creates a new column on an existing table.
 }
 ```
 
+Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
+
 Example **add column** migrations:
 
 * [03_add_column.json](../examples/03_add_column.json)
@@ -923,6 +925,8 @@ where each `column` is defined as:
   }
 },
 ```
+
+Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
 Example **create table** migrations:
 
