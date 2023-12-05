@@ -724,6 +724,7 @@ Example **add column** migrations:
 * [06_add_column_to_sql_table.json](../examples/06_add_column_to_sql_table.json)
 * [17_add_rating_column.json](../examples/17_add_rating_column.json)
 * [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
+* [30_add_column_simple_up.json](../examples/30_add_column_simple_up.json)
 
 ### Alter column
 
