@@ -25,14 +25,14 @@ builds:
 release:
   draft: true
 
-brews:
-  - name: pgroll
-    homepage: "https://www.xata.io"
-    description: "Postgres zero-downtime migrations made easy"
-    license: "Apache-2.0"
-    repository:
-      owner: "{{ .Env.GITHUB_USERNAME }}"
-      name: homebrew-pgroll
+# brews:
+#   - name: pgroll
+#     homepage: "https://www.xata.io"
+#     description: "Postgres zero-downtime migrations made easy"
+#     license: "Apache-2.0"
+#     repository:
+#       owner: "{{ .Env.GITHUB_USERNAME }}"
+#       name: homebrew-pgroll
 
 archives:
   - format: binary
