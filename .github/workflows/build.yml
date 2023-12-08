@@ -1,5 +1,8 @@
 name: Build
 on: [push, pull_request]
+permissions:
+  contents: write
+  packages: write
 jobs:
   test:
     name: test (postgres ${{ matrix.pgVersion }})
@@ -122,7 +125,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
-        password: ${{ secrets.GIT_TOKEN }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -136,6 +139,6 @@ jobs:
         version: latest
         args: release --clean
       env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
         DOCKER_USERNAME: ghcr.io/${{ github.repository_owner }}
