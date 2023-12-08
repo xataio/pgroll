@@ -31,6 +31,7 @@ brews:
     description: "Postgres zero-downtime migrations made easy"
     license: "Apache-2.0"
     repository:
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
       owner: "{{ .Env.GITHUB_USERNAME }}"
       name: homebrew-pgroll
 
