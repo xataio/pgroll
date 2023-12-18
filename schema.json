@@ -325,111 +325,111 @@
             "anyOf": [
               {
                 "type": "object",
+                "description": "Add column operation",
                 "additionalProperties": false,
                 "properties": {
                   "add_column": {
-                    "$ref": "#/$defs/OpAddColumn",
-                    "description": "Add column operation"
+                    "$ref": "#/$defs/OpAddColumn"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Alter column operation",
                 "additionalProperties": false,
                 "properties": {
                   "alter_column": {
-                    "$ref": "#/$defs/OpAlterColumn",
-                    "description": "Alter column operation"
+                    "$ref": "#/$defs/OpAlterColumn"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Create index operation",
                 "additionalProperties": false,
                 "properties": {
                   "create_index": {
-                    "$ref": "#/$defs/OpCreateIndex",
-                    "description": "Create index operation"
+                    "$ref": "#/$defs/OpCreateIndex"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Create table operation",
                 "additionalProperties": false,
                 "properties": {
                   "create_table": {
-                    "$ref": "#/$defs/OpCreateTable",
-                    "description": "Create table operation"
+                    "$ref": "#/$defs/OpCreateTable"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Drop column operation",
                 "additionalProperties": false,
                 "properties": {
                   "drop_column": {
-                    "$ref": "#/$defs/OpDropColumn",
-                    "description": "Drop column operation"
+                    "$ref": "#/$defs/OpDropColumn"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Drop constraint operation",
                 "additionalProperties": false,
                 "properties": {
                   "drop_constraint": {
-                    "$ref": "#/$defs/OpDropConstraint",
-                    "description": "Drop constraint operation"
+                    "$ref": "#/$defs/OpDropConstraint"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Drop index operation",
                 "additionalProperties": false,
                 "properties": {
                   "drop_index": {
-                    "$ref": "#/$defs/OpDropIndex",
-                    "description": "Drop index operation"
+                    "$ref": "#/$defs/OpDropIndex"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Drop table operation",
                 "additionalProperties": false,
                 "properties": {
                   "drop_table": {
-                    "$ref": "#/$defs/OpDropTable",
-                    "description": "Drop table operation"
+                    "$ref": "#/$defs/OpDropTable"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Raw SQL operation",
                 "additionalProperties": false,
                 "properties": {
                   "raw_sql": {
-                    "$ref": "#/$defs/OpRawSQL",
-                    "description": "Raw SQL operation"
+                    "$ref": "#/$defs/OpRawSQL"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Rename table operation",
                 "additionalProperties": false,
                 "properties": {
                   "rename_table": {
-                    "$ref": "#/$defs/OpRenameTable",
-                    "description": "Rename table operation"
+                    "$ref": "#/$defs/OpRenameTable"
                   }
                 }
               },
               {
                 "type": "object",
+                "description": "Set replica identity operation",
                 "additionalProperties": false,
                 "properties": {
                   "set_replica_identity": {
-                    "$ref": "#/$defs/OpSetReplicaIdentity",
-                    "description": "Set replica identity operation"
+                    "$ref": "#/$defs/OpSetReplicaIdentity"
                   }
                 }
               }
