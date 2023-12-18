@@ -312,27 +312,6 @@
       "required": ["identity", "table"],
       "type": "object"
     },
-    "PgRollMigration": {
-      "additionalProperties": false,
-      "description": "PgRoll migration definition",
-      "properties": {
-        "name": {
-          "description": "Name of the migration",
-          "type": "string"
-        },
-        "operations": {
-          "$ref": "#/$defs/PgRollOperations"
-        }
-      },
-      "required": ["name", "operations"],
-      "type": "object"
-    },
-    "PgRollOperations": {
-      "items": {
-        "$ref": "#/$defs/PgRollOperation"
-      },
-      "type": "array"
-    },
     "PgRollOperation": {
       "anyOf": [
         {
@@ -457,6 +436,27 @@
           "required": ["set_replica_identity"]
         }
       ]
+    },
+    "PgRollOperations": {
+      "items": {
+        "$ref": "#/$defs/PgRollOperation"
+      },
+      "type": "array"
+    },
+    "PgRollMigration": {
+      "additionalProperties": false,
+      "description": "PgRoll migration definition",
+      "properties": {
+        "name": {
+          "description": "Name of the migration",
+          "type": "string"
+        },
+        "operations": {
+          "$ref": "#/$defs/PgRollOperations"
+        }
+      },
+      "required": ["name", "operations"],
+      "type": "object"
     },
     "ReplicaIdentity": {
       "additionalProperties": false,
