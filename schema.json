@@ -331,7 +331,8 @@
                   "add_column": {
                     "$ref": "#/$defs/OpAddColumn"
                   }
-                }
+                },
+                "required": ["add_column"]
               },
               {
                 "type": "object",
@@ -341,7 +342,8 @@
                   "alter_column": {
                     "$ref": "#/$defs/OpAlterColumn"
                   }
-                }
+                },
+                "required": ["alter_column"]
               },
               {
                 "type": "object",
@@ -351,7 +353,8 @@
                   "create_index": {
                     "$ref": "#/$defs/OpCreateIndex"
                   }
-                }
+                },
+                "required": ["create_index"]
               },
               {
                 "type": "object",
@@ -361,7 +364,8 @@
                   "create_table": {
                     "$ref": "#/$defs/OpCreateTable"
                   }
-                }
+                },
+                "required": ["create_table"]
               },
               {
                 "type": "object",
@@ -371,7 +375,8 @@
                   "drop_column": {
                     "$ref": "#/$defs/OpDropColumn"
                   }
-                }
+                },
+                "required": ["drop_column"]
               },
               {
                 "type": "object",
@@ -381,7 +386,8 @@
                   "drop_constraint": {
                     "$ref": "#/$defs/OpDropConstraint"
                   }
-                }
+                },
+                "required": ["drop_constraint"]
               },
               {
                 "type": "object",
@@ -391,7 +397,8 @@
                   "drop_index": {
                     "$ref": "#/$defs/OpDropIndex"
                   }
-                }
+                },
+                "required": ["drop_index"]
               },
               {
                 "type": "object",
@@ -401,7 +408,8 @@
                   "drop_table": {
                     "$ref": "#/$defs/OpDropTable"
                   }
-                }
+                },
+                "required": ["drop_table"]
               },
               {
                 "type": "object",
@@ -411,7 +419,8 @@
                   "raw_sql": {
                     "$ref": "#/$defs/OpRawSQL"
                   }
-                }
+                },
+                "required": ["raw_sql"]
               },
               {
                 "type": "object",
@@ -421,7 +430,8 @@
                   "rename_table": {
                     "$ref": "#/$defs/OpRenameTable"
                   }
-                }
+                },
+                "required": ["rename_table"]
               },
               {
                 "type": "object",
@@ -431,7 +441,8 @@
                   "set_replica_identity": {
                     "$ref": "#/$defs/OpSetReplicaIdentity"
                   }
-                }
+                },
+                "required": ["set_replica_identity"]
               }
             ]
           },
