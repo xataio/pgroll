@@ -321,136 +321,142 @@
           "type": "string"
         },
         "operations": {
-          "items": {
-            "anyOf": [
-              {
-                "type": "object",
-                "description": "Add column operation",
-                "additionalProperties": false,
-                "properties": {
-                  "add_column": {
-                    "$ref": "#/$defs/OpAddColumn"
-                  }
-                },
-                "required": ["add_column"]
-              },
-              {
-                "type": "object",
-                "description": "Alter column operation",
-                "additionalProperties": false,
-                "properties": {
-                  "alter_column": {
-                    "$ref": "#/$defs/OpAlterColumn"
-                  }
-                },
-                "required": ["alter_column"]
-              },
-              {
-                "type": "object",
-                "description": "Create index operation",
-                "additionalProperties": false,
-                "properties": {
-                  "create_index": {
-                    "$ref": "#/$defs/OpCreateIndex"
-                  }
-                },
-                "required": ["create_index"]
-              },
-              {
-                "type": "object",
-                "description": "Create table operation",
-                "additionalProperties": false,
-                "properties": {
-                  "create_table": {
-                    "$ref": "#/$defs/OpCreateTable"
-                  }
-                },
-                "required": ["create_table"]
-              },
-              {
-                "type": "object",
-                "description": "Drop column operation",
-                "additionalProperties": false,
-                "properties": {
-                  "drop_column": {
-                    "$ref": "#/$defs/OpDropColumn"
-                  }
-                },
-                "required": ["drop_column"]
-              },
-              {
-                "type": "object",
-                "description": "Drop constraint operation",
-                "additionalProperties": false,
-                "properties": {
-                  "drop_constraint": {
-                    "$ref": "#/$defs/OpDropConstraint"
-                  }
-                },
-                "required": ["drop_constraint"]
-              },
-              {
-                "type": "object",
-                "description": "Drop index operation",
-                "additionalProperties": false,
-                "properties": {
-                  "drop_index": {
-                    "$ref": "#/$defs/OpDropIndex"
-                  }
-                },
-                "required": ["drop_index"]
-              },
-              {
-                "type": "object",
-                "description": "Drop table operation",
-                "additionalProperties": false,
-                "properties": {
-                  "drop_table": {
-                    "$ref": "#/$defs/OpDropTable"
-                  }
-                },
-                "required": ["drop_table"]
-              },
-              {
-                "type": "object",
-                "description": "Raw SQL operation",
-                "additionalProperties": false,
-                "properties": {
-                  "raw_sql": {
-                    "$ref": "#/$defs/OpRawSQL"
-                  }
-                },
-                "required": ["raw_sql"]
-              },
-              {
-                "type": "object",
-                "description": "Rename table operation",
-                "additionalProperties": false,
-                "properties": {
-                  "rename_table": {
-                    "$ref": "#/$defs/OpRenameTable"
-                  }
-                },
-                "required": ["rename_table"]
-              },
-              {
-                "type": "object",
-                "description": "Set replica identity operation",
-                "additionalProperties": false,
-                "properties": {
-                  "set_replica_identity": {
-                    "$ref": "#/$defs/OpSetReplicaIdentity"
-                  }
-                },
-                "required": ["set_replica_identity"]
-              }
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/PgRollOperations"
         }
       },
       "required": ["name", "operations"],
       "type": "object"
+    },
+    "PgRollOperations": {
+      "items": {
+        "$ref": "#/$defs/PgRollOperation"
+      },
+      "type": "array"
+    },
+    "PgRollOperation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "description": "Add column operation",
+          "additionalProperties": false,
+          "properties": {
+            "add_column": {
+              "$ref": "#/$defs/OpAddColumn"
+            }
+          },
+          "required": ["add_column"]
+        },
+        {
+          "type": "object",
+          "description": "Alter column operation",
+          "additionalProperties": false,
+          "properties": {
+            "alter_column": {
+              "$ref": "#/$defs/OpAlterColumn"
+            }
+          },
+          "required": ["alter_column"]
+        },
+        {
+          "type": "object",
+          "description": "Create index operation",
+          "additionalProperties": false,
+          "properties": {
+            "create_index": {
+              "$ref": "#/$defs/OpCreateIndex"
+            }
+          },
+          "required": ["create_index"]
+        },
+        {
+          "type": "object",
+          "description": "Create table operation",
+          "additionalProperties": false,
+          "properties": {
+            "create_table": {
+              "$ref": "#/$defs/OpCreateTable"
+            }
+          },
+          "required": ["create_table"]
+        },
+        {
+          "type": "object",
+          "description": "Drop column operation",
+          "additionalProperties": false,
+          "properties": {
+            "drop_column": {
+              "$ref": "#/$defs/OpDropColumn"
+            }
+          },
+          "required": ["drop_column"]
+        },
+        {
+          "type": "object",
+          "description": "Drop constraint operation",
+          "additionalProperties": false,
+          "properties": {
+            "drop_constraint": {
+              "$ref": "#/$defs/OpDropConstraint"
+            }
+          },
+          "required": ["drop_constraint"]
+        },
+        {
+          "type": "object",
+          "description": "Drop index operation",
+          "additionalProperties": false,
+          "properties": {
+            "drop_index": {
+              "$ref": "#/$defs/OpDropIndex"
+            }
+          },
+          "required": ["drop_index"]
+        },
+        {
+          "type": "object",
+          "description": "Drop table operation",
+          "additionalProperties": false,
+          "properties": {
+            "drop_table": {
+              "$ref": "#/$defs/OpDropTable"
+            }
+          },
+          "required": ["drop_table"]
+        },
+        {
+          "type": "object",
+          "description": "Raw SQL operation",
+          "additionalProperties": false,
+          "properties": {
+            "raw_sql": {
+              "$ref": "#/$defs/OpRawSQL"
+            }
+          },
+          "required": ["raw_sql"]
+        },
+        {
+          "type": "object",
+          "description": "Rename table operation",
+          "additionalProperties": false,
+          "properties": {
+            "rename_table": {
+              "$ref": "#/$defs/OpRenameTable"
+            }
+          },
+          "required": ["rename_table"]
+        },
+        {
+          "type": "object",
+          "description": "Set replica identity operation",
+          "additionalProperties": false,
+          "properties": {
+            "set_replica_identity": {
+              "$ref": "#/$defs/OpSetReplicaIdentity"
+            }
+          },
+          "required": ["set_replica_identity"]
+        }
+      ]
     },
     "ReplicaIdentity": {
       "additionalProperties": false,
