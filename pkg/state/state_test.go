@@ -9,11 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/schema"
 	"github.com/xataio/pgroll/pkg/state"
 )
 
@@ -54,6 +57,134 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 
 		assert.Equal(t, 1, len(currentSchema.Tables))
 		assert.Equal(t, "public", currentSchema.Name)
+	})
+}
+
+func TestReadSchema(t *testing.T) {
+	t.Parallel()
+
+	witStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+		ctx := context.Background()
+
+		tests := []struct {
+			name       string
+			createStmt string
+			wantSchema *schema.Schema
+		}{
+			{
+				name:       "one table",
+				createStmt: "CREATE TABLE public.table1 (id int)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "unique, not null",
+				createStmt: "CREATE TABLE public.table1 (id int NOT NULL, CONSTRAINT id_unique UNIQUE(id))",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+							},
+							Indexes: map[string]schema.Index{
+								"id_unique": {
+									Name: "id_unique",
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "foreign key",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id))",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name: "table1_pkey",
+								},
+							},
+						},
+						"table2": {
+							Name: "table2",
+							Columns: map[string]schema.Column{
+								"fk": {
+									Name:     "fk",
+									Type:     "integer",
+									Nullable: false,
+								},
+							},
+							ForeignKeys: []schema.ForeignKey{
+								{
+									Name:              "fk_fkey",
+									Columns:           []string{"fk"},
+									ReferencedTable:   "table1",
+									ReferencedColumns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// init the state
+		if err := state.Init(ctx); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				if _, err := db.ExecContext(ctx, "DROP SCHEMA public CASCADE; CREATE SCHEMA public"); err != nil {
+					t.Fatal(err)
+				}
+
+				if _, err := db.ExecContext(ctx, tt.createStmt); err != nil {
+					t.Fatal(err)
+				}
+
+				gotSchema, err := state.ReadSchema(ctx, "public")
+				if err != nil {
+					t.Fatal(err)
+				}
+				if diff := cmp.Diff(tt.wantSchema, gotSchema, cmpopts.IgnoreFields(schema.Table{}, "OID")); diff != "" {
+					t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
+				}
+			})
+		}
 	})
 }
 

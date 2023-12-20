@@ -46,6 +46,8 @@ type Table struct {
 
 	// The columns that make up the primary key
 	PrimaryKey []string `json:"primaryKey"`
+
+	ForeignKeys []ForeignKey `json:"foreignKeys"`
 }
 
 type Column struct {
@@ -57,6 +59,7 @@ type Column struct {
 
 	Default  *string `json:"default"`
 	Nullable bool    `json:"nullable"`
+	Unique   bool    `json:"unique"`
 
 	// Optional comment for the column
 	Comment string `json:"comment"`
@@ -65,6 +68,20 @@ type Column struct {
 type Index struct {
 	// Name is the name of the index in postgres
 	Name string `json:"name"`
+}
+
+type ForeignKey struct {
+	// Name is the name of the foreign key in postgres
+	Name string `json:"name"`
+
+	// The columns that the foreign key is defined on
+	Columns []string `json:"columns"`
+
+	// The table that the foreign key references
+	ReferencedTable string `json:"referencedTable"`
+
+	// The columns in the referenced table that the foreign key references
+	ReferencedColumns []string `json:"referencedColumns"`
 }
 
 func (s *Schema) GetTable(name string) *Table {

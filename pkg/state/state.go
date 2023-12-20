@@ -126,7 +126,21 @@ BEGIN
 								)
 								ELSE format_type(attr.atttypid, attr.atttypmod)
 							END AS type,
-							descr.description AS comment
+							descr.description AS comment,
+							(EXISTS (
+								SELECT 1
+								FROM pg_constraint
+								WHERE conrelid = attr.attrelid
+								AND conkey::int[] @> ARRAY[attr.attnum::int]
+								AND contype = 'u'
+							) OR EXISTS (
+								SELECT 1
+								FROM pg_index
+								JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+								WHERE indrelid = attr.attrelid
+								AND indisunique
+								AND pg_index.indkey::int[] @> ARRAY[attr.attnum::int]
+							)) AS unique
 						FROM
 							pg_attribute AS attr
 							INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
@@ -158,6 +172,28 @@ BEGIN
 				  ))
 				  FROM pg_index pi 
 				  WHERE pi.indrelid = t.oid::regclass
+				),
+				'foreignKeys', (
+					SELECT json_agg(json_build_object(
+						'name', fk_details.conname,
+						'columns', fk_details.columns,
+						'referencedTable', fk_details.referencedTable,
+						'referencedColumns', fk_details.referencedColumns
+					))
+					FROM (
+						SELECT
+							fk_constraint.conname,
+							array_agg(fk_attr.attname ORDER BY fk_constraint.conkey::int[]) AS columns,
+							fk_cl.relname AS referencedTable,
+							array_agg(ref_attr.attname ORDER BY fk_constraint.confkey::int[]) AS referencedColumns
+						FROM pg_constraint AS fk_constraint
+						INNER JOIN pg_class fk_cl ON fk_constraint.confrelid = fk_cl.oid
+						INNER JOIN pg_attribute fk_attr ON fk_attr.attrelid = fk_constraint.conrelid AND fk_attr.attnum = ANY(fk_constraint.conkey)
+						INNER JOIN pg_attribute ref_attr ON ref_attr.attrelid = fk_constraint.confrelid AND ref_attr.attnum = ANY(fk_constraint.confkey)
+						WHERE fk_constraint.conrelid = t.oid
+						AND fk_constraint.contype = 'f'
+						GROUP BY fk_constraint.conname, fk_cl.relname
+					) AS fk_details
 				)
 			)) FROM pg_class AS t
 				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
