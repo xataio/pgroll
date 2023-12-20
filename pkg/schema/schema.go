@@ -47,7 +47,7 @@ type Table struct {
 	// The columns that make up the primary key
 	PrimaryKey []string `json:"primaryKey"`
 
-	ForeignKeys []ForeignKey `json:"foreignKeys"`
+	ForeignKeys map[string]ForeignKey `json:"foreignKeys"`
 }
 
 type Column struct {

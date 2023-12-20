@@ -174,7 +174,7 @@ BEGIN
 				  WHERE pi.indrelid = t.oid::regclass
 				),
 				'foreignKeys', (
-					SELECT json_agg(json_build_object(
+					SELECT json_object_agg(fk_details.conname, json_build_object(
 						'name', fk_details.conname,
 						'columns', fk_details.columns,
 						'referencedTable', fk_details.referencedTable,

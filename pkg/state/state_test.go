@@ -147,8 +147,8 @@ func TestReadSchema(t *testing.T) {
 									Nullable: false,
 								},
 							},
-							ForeignKeys: []schema.ForeignKey{
-								{
+							ForeignKeys: map[string]schema.ForeignKey{
+								"fk_fkey": {
 									Name:              "fk_fkey",
 									Columns:           []string{"fk"},
 									ReferencedTable:   "table1",
