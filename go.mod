@@ -3,6 +3,7 @@ module github.com/xataio/pgroll
 go 1.21
 
 require (
+	github.com/google/go-cmp v0.6.0
 	github.com/lib/pq v1.10.9
 	github.com/pterm/pterm v0.12.69
 	github.com/spf13/cobra v1.7.0
@@ -11,6 +12,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.23.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.23.0
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
+	gotest.tools/v3 v3.5.0
 )
 
 require (
