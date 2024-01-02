@@ -7,24 +7,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/lib/pq"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-	"github.com/xataio/pgroll/pkg/state"
+	"github.com/xataio/pgroll/pkg/testutils"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
-
-// The version of postgres against which the tests are run
-// if the POSTGRES_VERSION environment variable is not set.
-const defaultPostgresVersion = "15.3"
 
 type TestCase struct {
 	name          string
@@ -37,10 +28,14 @@ type TestCase struct {
 
 type TestCases []TestCase
 
+func TestMain(m *testing.M) {
+	testutils.SharedTestMain(m)
+}
+
 func ExecuteTests(t *testing.T, tests TestCases) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			withMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
 
 				// run all migrations except the last one
@@ -98,74 +93,6 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 			})
 		})
 	}
-}
-
-func withMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
-	t.Helper()
-	ctx := context.Background()
-
-	waitForLogs := wait.
-		ForLog("database system is ready to accept connections").
-		WithOccurrence(2).
-		WithStartupTimeout(5 * time.Second)
-
-	pgVersion := os.Getenv("POSTGRES_VERSION")
-	if pgVersion == "" {
-		pgVersion = defaultPostgresVersion
-	}
-
-	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:"+pgVersion),
-		testcontainers.WithWaitStrategy(waitForLogs),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := ctr.Terminate(ctx); err != nil {
-			t.Fatalf("Failed to terminate container: %v", err)
-		}
-	})
-
-	cStr, err := ctr.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	st, err := state.New(ctx, cStr, "pgroll")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = st.Init(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	const lockTimeoutMs = 500
-	mig, err := roll.New(ctx, cStr, "public", lockTimeoutMs, st)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := mig.Close(); err != nil {
-			t.Fatalf("Failed to close migrator connection: %v", err)
-		}
-	})
-
-	db, err := sql.Open("postgres", cStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	fn(mig, db)
 }
 
 // Common assertions
