@@ -5,29 +5,25 @@ package state_test
 import (
 	"context"
 	"database/sql"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/modules/postgres"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 	"github.com/xataio/pgroll/pkg/state"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
-// The version of postgres against which the tests are run
-// if the POSTGRES_VERSION environment variable is not set.
-const defaultPostgresVersion = "15.3"
+func TestMain(m *testing.M) {
+	testutils.SharedTestMain(m)
+}
 
 func TestSchemaOptionIsRespected(t *testing.T) {
 	t.Parallel()
 
-	witStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+	testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
 		ctx := context.Background()
 
 		// create a table in the public schema
@@ -63,7 +59,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 func TestReadSchema(t *testing.T) {
 	t.Parallel()
 
-	witStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+	testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
 		ctx := context.Background()
 
 		tests := []struct {
@@ -186,56 +182,4 @@ func TestReadSchema(t *testing.T) {
 			})
 		}
 	})
-}
-
-func witStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.DB)) {
-	t.Helper()
-	ctx := context.Background()
-
-	waitForLogs := wait.
-		ForLog("database system is ready to accept connections").
-		WithOccurrence(2).
-		WithStartupTimeout(5 * time.Second)
-
-	pgVersion := os.Getenv("POSTGRES_VERSION")
-	if pgVersion == "" {
-		pgVersion = defaultPostgresVersion
-	}
-
-	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:"+pgVersion),
-		testcontainers.WithWaitStrategy(waitForLogs),
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := ctr.Terminate(ctx); err != nil {
-			t.Fatalf("Failed to terminate container: %v", err)
-		}
-	})
-
-	cStr, err := ctr.ConnectionString(ctx, "sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	db, err := sql.Open("postgres", cStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	st, err := state.New(ctx, cStr, "pgroll")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fn(st, db)
 }
