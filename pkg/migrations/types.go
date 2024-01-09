@@ -17,6 +17,9 @@ type Column struct {
 	// Check constraint for the column
 	Check *CheckConstraint `json:"check,omitempty"`
 
+	// Postgres comment for the column
+	Comment *string `json:"comment,omitempty"`
+
 	// Default value for the column
 	Default *string `json:"default,omitempty"`
 
@@ -112,6 +115,9 @@ type OpCreateIndex struct {
 type OpCreateTable struct {
 	// Columns corresponds to the JSON schema field "columns".
 	Columns []Column `json:"columns"`
+
+	// Postgres comment for the table
+	Comment *string `json:"comment,omitempty"`
 
 	// Name of the table
 	Name string `json:"name"`
