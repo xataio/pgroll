@@ -22,6 +22,22 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 		return err
 	}
 
+	// Add comments to any columns that have them
+	for _, col := range o.Columns {
+		if col.Comment != nil {
+			if err := addCommentToColumn(ctx, conn, tempName, col.Name, *col.Comment); err != nil {
+				return fmt.Errorf("failed to add comment to column: %w", err)
+			}
+		}
+	}
+
+	// Add comment to the table itself
+	if o.Comment != nil {
+		if err := addCommentToTable(ctx, conn, tempName, *o.Comment); err != nil {
+			return fmt.Errorf("failed to add comment to table: %w", err)
+		}
+	}
+
 	columns := make(map[string]schema.Column, len(o.Columns))
 	for _, col := range o.Columns {
 		columns[col.Name] = schema.Column{

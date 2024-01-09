@@ -21,6 +21,12 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 		return fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
+	if o.Column.Comment != nil {
+		if err := addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column.Name), *o.Column.Comment); err != nil {
+			return fmt.Errorf("failed to add comment to column: %w", err)
+		}
+	}
+
 	if !o.Column.Nullable && o.Column.Default == nil {
 		if err := addNotNullConstraint(ctx, conn, o.Table, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
 			return fmt.Errorf("failed to add not null constraint: %w", err)
