@@ -8,7 +8,8 @@
         "column": {
           "name": "description",
           "type": "varchar(255)",
-          "nullable": false
+          "nullable": false,
+          "comment": "This is a comment for the description column"
         }
       }
     }
