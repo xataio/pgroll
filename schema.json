@@ -56,6 +56,10 @@
         "unique": {
           "description": "Indicates if the column values must be unique",
           "type": "boolean"
+        },
+        "comment": {
+          "description": "Postgres comment for the column",
+          "type": "string"
         }
       },
       "required": ["name", "nullable", "pk", "type", "unique"],
@@ -185,6 +189,10 @@
         },
         "name": {
           "description": "Name of the table",
+          "type": "string"
+        },
+        "comment": {
+          "description": "Postgres comment for the table",
           "type": "string"
         }
       },

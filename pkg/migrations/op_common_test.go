@@ -146,6 +146,20 @@ func ColumnMustHaveType(t *testing.T, db *sql.DB, schema, table, column, expecte
 	}
 }
 
+func ColumnMustHaveComment(t *testing.T, db *sql.DB, schema, table, column, expectedComment string) {
+	t.Helper()
+	if !columnHasComment(t, db, schema, table, column, expectedComment) {
+		t.Fatalf("Expected column %q to have comment %q", column, expectedComment)
+	}
+}
+
+func TableMustHaveComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) {
+	t.Helper()
+	if !tableHasComment(t, db, schema, table, expectedComment) {
+		t.Fatalf("Expected table %q to have comment %q", table, expectedComment)
+	}
+}
+
 func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n int) {
 	t.Helper()
 	if !tableMustHaveColumnCount(t, db, schema, table, n) {
@@ -398,6 +412,40 @@ func columnHasType(t *testing.T, db *sql.DB, schema, table, column, expectedType
 	}
 
 	return expectedType == actualType
+}
+
+func columnHasComment(t *testing.T, db *sql.DB, schema, table, column, expectedComment string) bool {
+	t.Helper()
+
+	var actualComment string
+	err := db.QueryRow(fmt.Sprintf(`
+    SELECT col_description(
+      %[1]s::regclass,
+      (SELECT attnum FROM pg_attribute WHERE attname=%[2]s and attrelid=%[1]s::regclass)
+    )`,
+		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+		pq.QuoteLiteral(column)),
+	).Scan(&actualComment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return expectedComment == actualComment
+}
+
+func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) bool {
+	t.Helper()
+
+	var actualComment string
+	err := db.QueryRow(fmt.Sprintf(`
+    SELECT obj_description(%[1]s::regclass, 'pg_class')`,
+		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table))),
+	).Scan(&actualComment)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return expectedComment == actualComment
 }
 
 func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {

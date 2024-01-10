@@ -698,6 +698,7 @@ An add column operation creates a new column on an existing table.
     "column": {
       "name": "name of column",
       "type": "postgres type",
+      "comment": "postgres comment for the column",
       "nullable": true|false,
       "unique": true|false,
       "pk": true|false,
@@ -911,6 +912,7 @@ where each `column` is defined as:
 {
   "name": "column name",
   "type": "postgres type",
+  "comment": "postgres comment for the column",
   "nullable": true|false,
   "unique": true|false,
   "pk": true|false,

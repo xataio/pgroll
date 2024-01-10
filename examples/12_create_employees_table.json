@@ -4,6 +4,7 @@
     {
       "create_table": {
         "name": "employees",
+        "comment": "This is a comment for the employees table",
         "columns": [
           {
             "name": "id",
@@ -12,7 +13,8 @@
           },
           {
             "name": "role",
-            "type": "varchar(255)"
+            "type": "varchar(255)",
+            "comment": "This is a comment for the role column"
           }
         ]
       }
