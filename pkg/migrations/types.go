@@ -192,8 +192,12 @@ type PgRollMigration struct {
 	Name string `json:"name"`
 
 	// Operations corresponds to the JSON schema field "operations".
-	Operations []interface{} `json:"operations"`
+	Operations PgRollOperations `json:"operations"`
 }
+
+type PgRollOperation interface{}
+
+type PgRollOperations []interface{}
 
 // Replica identity definition
 type ReplicaIdentity struct {
