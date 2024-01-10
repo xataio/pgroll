@@ -58,7 +58,7 @@ jobs:
         done
 
   license-check:
-    name: License check
+    name: license check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
