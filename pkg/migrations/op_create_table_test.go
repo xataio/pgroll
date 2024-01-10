@@ -230,6 +230,48 @@ func TestCreateTable(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "create table with column and table comments",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name:    "users",
+							Comment: ptr("the users table"),
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:    "name",
+									Type:    "varchar(255)",
+									Unique:  true,
+									Comment: ptr("the username"),
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				tableName := migrations.TemporaryName("users")
+				// The comment has been added to the underlying table.
+				TableMustHaveComment(t, db, "public", tableName, "the users table")
+				// The comment has been added to the underlying column.
+				ColumnMustHaveComment(t, db, "public", tableName, "name", "the username")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The comment is still present on the underlying table.
+				TableMustHaveComment(t, db, "public", "users", "the users table")
+				// The comment is still present on the underlying column.
+				ColumnMustHaveComment(t, db, "public", "users", "name", "the username")
+			},
+		},
 	})
 }
 

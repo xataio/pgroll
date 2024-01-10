@@ -47,6 +47,7 @@ func TestAddColumn(t *testing.T) {
 							Type:     "integer",
 							Nullable: false,
 							Default:  ptr("0"),
+							Comment:  ptr("the age of the user"),
 						},
 					},
 				},
@@ -748,6 +749,62 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 				"name": "dana",
 				"age":  "3",
 			})
+		},
+	}})
+}
+
+func TestAddColumnWithComment(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{{
+		name: "add column",
+		migrations: []migrations.Migration{
+			{
+				Name: "01_add_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "users",
+						Columns: []migrations.Column{
+							{
+								Name: "id",
+								Type: "serial",
+								Pk:   true,
+							},
+							{
+								Name:   "name",
+								Type:   "varchar(255)",
+								Unique: true,
+							},
+						},
+					},
+				},
+			},
+			{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "users",
+						Column: migrations.Column{
+							Name:     "age",
+							Type:     "integer",
+							Nullable: false,
+							Default:  ptr("0"),
+							Comment:  ptr("the age of the user"),
+						},
+					},
+				},
+			},
+		},
+		afterStart: func(t *testing.T, db *sql.DB) {
+			// The comment has been added to the underlying column.
+			columnName := migrations.TemporaryName("age")
+			ColumnMustHaveComment(t, db, "public", "users", columnName, "the age of the user")
+		},
+		afterRollback: func(t *testing.T, db *sql.DB) {
+		},
+		afterComplete: func(t *testing.T, db *sql.DB) {
+			// The comment is still present on the underlying column.
+			ColumnMustHaveComment(t, db, "public", "users", "age", "the age of the user")
 		},
 	}})
 }
