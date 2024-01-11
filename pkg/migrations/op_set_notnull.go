@@ -25,7 +25,8 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	column := table.GetColumn(o.Column)
 
 	// Create a copy of the column on the underlying table.
-	if err := duplicateColumn(ctx, conn, table, *column); err != nil {
+	d := NewColumnDuplicator(conn, table, column)
+	if err := d.Duplicate(ctx); err != nil {
 		return fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
