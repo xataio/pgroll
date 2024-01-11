@@ -47,6 +47,7 @@ type Table struct {
 	// The columns that make up the primary key
 	PrimaryKey []string `json:"primaryKey"`
 
+	// ForeignKeys is a map of all foreign keys defined on the table
 	ForeignKeys map[string]ForeignKey `json:"foreignKeys"`
 }
 
