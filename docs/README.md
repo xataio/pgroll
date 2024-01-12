@@ -537,7 +537,7 @@ The `pgroll` CLI has the following top-level flags:
 * `--schema`: The Postgres schema in which migrations will be run (default `"public"`).
 * `--pgroll-schema`: The Postgres schema in which `pgroll` will store its internal state (default: `"pgroll"`).
 * `--lock-timeout`: The Postgres `lock_timeout` value to use for all `pgroll` DDL operations, specified in milliseconds (default `500`).
-* --role: The Postgres role to use for all `pgroll` DDL operations (default: `""`, which doesn't set any role).
+* `--role``: The Postgres role to use for all `pgroll` DDL operations (default: `""`, which doesn't set any role).
 
 Each of these flags can also be set via an environment variable:
 * `PGROLL_PG_URL`
