@@ -55,6 +55,17 @@ func SharedTestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	db, err := sql.Open("postgres", tConnStr)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	// create handy role for tets
+	_, err = db.ExecContext(ctx, "CREATE ROLE pgroll")
+	if err != nil {
+		os.Exit(1)
+	}
+
 	exitCode := m.Run()
 
 	if err := ctr.Terminate(ctx); err != nil {
@@ -153,12 +164,6 @@ func WithMigratorInSchemaConnectionToContainerWithOptions(t *testing.T, schema s
 			t.Fatalf("Failed to close database connection: %v", err)
 		}
 	})
-
-	// handy role for tets
-	_, err = db.ExecContext(ctx, "CREATE ROLE pgroll")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	st, err := state.New(ctx, connStr, "pgroll")
 	if err != nil {
