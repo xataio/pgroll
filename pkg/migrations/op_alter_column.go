@@ -21,7 +21,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema str
 func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	op := o.innerOperation()
 
-	return op.Complete(ctx, conn)
+	return op.Complete(ctx, conn, s)
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB) error {
