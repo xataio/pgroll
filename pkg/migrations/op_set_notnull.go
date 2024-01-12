@@ -131,11 +131,9 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Sch
 	}
 
 	// Rename the new column to the old column name
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
-		pq.QuoteIdentifier(o.Column)))
-	if err != nil {
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
+	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
 		return err
 	}
 
