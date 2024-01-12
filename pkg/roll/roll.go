@@ -26,7 +26,12 @@ type Roll struct {
 	pgVersion PGVersion
 }
 
-func New(ctx context.Context, pgURL, schema string, lockTimeoutMs int, state *state.State) (*Roll, error) {
+func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...Option) (*Roll, error) {
+	options := &options{}
+	for _, o := range opts {
+		o(options)
+	}
+
 	dsn, err := pq.ParseURL(pgURL)
 	if err != nil {
 		dsn = pgURL
@@ -48,9 +53,18 @@ func New(ctx context.Context, pgURL, schema string, lockTimeoutMs int, state *st
 		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("SET lock_timeout to '%dms'", lockTimeoutMs))
-	if err != nil {
-		return nil, fmt.Errorf("unable to set lock_timeout: %w", err)
+	if options.lockTimeoutMs > 0 {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("SET lock_timeout to '%dms'", options.lockTimeoutMs))
+		if err != nil {
+			return nil, fmt.Errorf("unable to set lock_timeout: %w", err)
+		}
+	}
+
+	if options.role != "" {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("SET ROLE %s", options.role))
+		if err != nil {
+			return nil, fmt.Errorf("unable to set role to '%s': %w", options.role, err)
+		}
 	}
 
 	var pgMajorVersion PGVersion
