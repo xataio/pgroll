@@ -401,17 +401,6 @@ func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
 	}, nil
 }
 
-// ReadSchema reads & returns the current schema from postgres
-func ReadSchema(ctx context.Context, conn *sql.DB, stateSchema, schemaname string) (*schema.Schema, error) {
-	var res schema.Schema
-	err := conn.QueryRowContext(ctx, fmt.Sprintf("SELECT %[1]s.read_schema($1)", pq.QuoteIdentifier(stateSchema)), schemaname).Scan(&res)
-	if err != nil {
-		return nil, err
-	}
-
-	return &res, nil
-}
-
 // Start creates a new migration, storing its name and raw content
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
