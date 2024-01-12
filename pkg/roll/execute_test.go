@@ -253,7 +253,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 func TestLockTimeoutIsEnforced(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, "public", 100, func(mig *roll.Roll, db *sql.DB) {
+	testutils.WithMigratorInSchemaConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(100)}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Start a create table migration
@@ -455,6 +455,38 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 			Version: "01_create_table",
 			Status:  state.CompleteMigrationStatus,
 		}, status)
+	})
+}
+
+func TestRoleIsRespected(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorInSchemaConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithRole("pgroll")}, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Start a create table migration
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("table1")},
+		})
+		assert.NoError(t, err)
+
+		// Complete the create table migration
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Ensure that the table exists in the correct schema and owned by the correct role
+		var exists bool
+		err = db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1
+				FROM pg_catalog.pg_tables
+				WHERE tablename = $1
+					AND schemaname = $2
+					AND tableowner = $3
+		)`, "table1", "public", "pgroll").Scan(&exists)
+		assert.NoError(t, err)
+		assert.True(t, exists)
 	})
 }
 

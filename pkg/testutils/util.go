@@ -113,7 +113,7 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 	fn(st, db)
 }
 
-func WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t *testing.T, schema string, lockTimeoutMs int, fn func(mig *roll.Roll, db *sql.DB)) {
+func WithMigratorInSchemaConnectionToContainerWithOptions(t *testing.T, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -143,33 +143,7 @@ func WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t *testing.T, s
 	u.Path = "/" + dbName
 	connStr := u.String()
 
-	st, err := state.New(ctx, connStr, "pgroll")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = st.Init(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	mig, err := roll.New(ctx, connStr, schema, st, roll.WithLockTimeoutMs(lockTimeoutMs))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := mig.Close(); err != nil {
-			t.Fatalf("Failed to close migrator connection: %v", err)
-		}
-	})
-
 	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schema))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,13 +154,55 @@ func WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t *testing.T, s
 		}
 	})
 
+	// handy role for tets
+	_, err = db.ExecContext(ctx, "CREATE ROLE pgroll")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	st, err := state.New(ctx, connStr, "pgroll")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = st.Init(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mig, err := roll.New(ctx, connStr, schema, st, opts...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := mig.Close(); err != nil {
+			t.Fatalf("Failed to close migrator connection: %v", err)
+		}
+	})
+
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", schema))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON SCHEMA %s TO pgroll", schema))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO pgroll", dbName))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	fn(mig, db)
 }
 
 func WithMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(mig *roll.Roll, db *sql.DB)) {
-	WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, schema, 500, fn)
+	WithMigratorInSchemaConnectionToContainerWithOptions(t, schema, []roll.Option{roll.WithLockTimeoutMs(500)}, fn)
 }
 
 func WithMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
-	WithMigratorInSchemaWithLockTimeoutAndConnectionToContainer(t, "public", 500, fn)
+	WithMigratorInSchemaConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(500)}, fn)
 }
