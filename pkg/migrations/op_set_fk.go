@@ -80,7 +80,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema s
 	return nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),

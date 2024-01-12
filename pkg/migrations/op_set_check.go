@@ -80,7 +80,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 	return nil
 }
 
-func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),

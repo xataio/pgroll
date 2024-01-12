@@ -53,7 +53,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return nil
 }
 
-func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(tempName),

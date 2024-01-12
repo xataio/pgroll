@@ -75,7 +75,7 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return nil
 }
 
-func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	// Remove the up function and trigger
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))

@@ -65,7 +65,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	return nil
 }
 
-func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
