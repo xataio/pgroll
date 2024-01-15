@@ -59,6 +59,11 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		}
 	}
 
+	if m.disableVersionSchemas {
+		// skip creating version schemas
+		return nil
+	}
+
 	// create schema for the new version
 	versionSchema := VersionedSchemaName(m.schema, migration.Name)
 	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
@@ -86,15 +91,17 @@ func (m *Roll) Complete(ctx context.Context) error {
 	}
 
 	// Drop the old schema
-	prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
-	if err != nil {
-		return fmt.Errorf("unable to get name of previous version: %w", err)
-	}
-	if prevVersion != nil {
-		versionSchema := VersionedSchemaName(m.schema, *prevVersion)
-		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+	if !m.disableVersionSchemas {
+		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
 		if err != nil {
-			return fmt.Errorf("unable to drop previous version: %w", err)
+			return fmt.Errorf("unable to get name of previous version: %w", err)
+		}
+		if prevVersion != nil {
+			versionSchema := VersionedSchemaName(m.schema, *prevVersion)
+			_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+			if err != nil {
+				return fmt.Errorf("unable to drop previous version: %w", err)
+			}
 		}
 	}
 
@@ -122,11 +129,13 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
-	// delete the schema and view for the new version
-	versionSchema := VersionedSchemaName(m.schema, migration.Name)
-	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
-	if err != nil {
-		return err
+	if !m.disableVersionSchemas {
+		// delete the schema and view for the new version
+		versionSchema := VersionedSchemaName(m.schema, migration.Name)
+		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+		if err != nil {
+			return err
+		}
 	}
 
 	// execute operations
