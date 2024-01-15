@@ -222,6 +222,71 @@ func TestChangeColumnType(t *testing.T) {
 				ConstraintMustExist(t, db, "public", "employees", "fk_employee_department")
 			},
 		},
+		{
+			name: "changing column type preserves any defaults on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   true,
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Default:  ptr("'alice'"),
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id": "1",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_change_type", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "username": "alice"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id": "2",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_change_type", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "username": "alice"},
+					{"id": 2, "username": "alice"},
+				}, rows)
+			},
+		},
 	})
 }
 
