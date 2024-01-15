@@ -204,6 +204,86 @@ func TestSetCheckConstraint(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "foreign keys are preserved when adding a check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_departments_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "departments",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_employees_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "employees",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:     "department_id",
+									Type:     "integer",
+									Nullable: true,
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_employee_department",
+										Table:  "departments",
+										Column: "id",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "03_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "employees",
+							Column: "department_id",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_valid_department_id",
+								Constraint: "department_id > 1",
+							},
+							Up:   "(SELECT CASE WHEN department_id <= 1 THEN 2 ELSE department_id END)",
+							Down: "department_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A temporary FK constraint has been created on the temporary column
+				ConstraintMustExist(t, db, "public", "employees", migrations.TemporaryName("fk_employee_department"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint still exists on the column
+				ConstraintMustExist(t, db, "public", "employees", "fk_employee_department")
+			},
+		},
 	})
 }
 
