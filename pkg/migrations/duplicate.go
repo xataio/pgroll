@@ -14,20 +14,27 @@ import (
 )
 
 type Duplicator struct {
-	conn   *sql.DB
-	table  *schema.Table
-	column *schema.Column
-	asName string
+	conn     *sql.DB
+	table    *schema.Table
+	column   *schema.Column
+	asName   string
+	withType string
 }
 
 // NewColumnDuplicator creates a new Duplicator for a column.
 func NewColumnDuplicator(conn *sql.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	return &Duplicator{
-		conn:   conn,
-		table:  table,
-		column: column,
-		asName: TemporaryName(column.Name),
+		conn:     conn,
+		table:    table,
+		column:   column,
+		asName:   TemporaryName(column.Name),
+		withType: column.Type,
 	}
+}
+
+func (d *Duplicator) WithType(t string) *Duplicator {
+	d.withType = t
+	return d
 }
 
 // Duplicate creates a new column with the same type and foreign key
@@ -41,7 +48,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	sql := fmt.Sprintf(cAlterTableSQL,
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(d.asName),
-		d.column.Type)
+		d.withType)
 
 	for _, fk := range d.table.ForeignKeys {
 		if slices.Contains(fk.Columns, d.column.Name) {
