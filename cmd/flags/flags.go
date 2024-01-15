@@ -21,3 +21,7 @@ func StateSchema() string {
 func LockTimeout() int {
 	return viper.GetInt("LOCK_TIMEOUT")
 }
+
+func Role() string {
+	return viper.GetString("ROLE")
+}
