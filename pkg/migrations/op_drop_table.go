@@ -18,7 +18,7 @@ func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	return nil
 }
 
-func (o *OpDropTable) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpDropTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", pq.QuoteIdentifier(o.Name)))
 
 	return err

@@ -66,7 +66,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema 
 	return nil
 }
 
-func (o *OpDropConstraint) Complete(ctx context.Context, conn *sql.DB) error {
+func (o *OpDropConstraint) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	// Remove the up function and trigger
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))

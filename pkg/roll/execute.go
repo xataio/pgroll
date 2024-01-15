@@ -105,9 +105,15 @@ func (m *Roll) Complete(ctx context.Context) error {
 		}
 	}
 
+	// read the current schema
+	schema, err := m.state.ReadSchema(ctx, m.schema)
+	if err != nil {
+		return fmt.Errorf("unable to read schema: %w", err)
+	}
+
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.pgConn)
+		err := op.Complete(ctx, m.pgConn, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
