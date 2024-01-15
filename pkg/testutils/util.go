@@ -60,7 +60,7 @@ func SharedTestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	// create handy role for tets
+	// create handy role for tests
 	_, err = db.ExecContext(ctx, "CREATE ROLE pgroll")
 	if err != nil {
 		os.Exit(1)
