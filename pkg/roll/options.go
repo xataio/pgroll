@@ -8,6 +8,9 @@ type options struct {
 
 	// optional role to set before executing migrations
 	role string
+
+	// disable pgroll version schemas creation and deletion
+	disableVersionSchemas bool
 }
 
 type Option func(*options)
@@ -23,5 +26,13 @@ func WithLockTimeoutMs(lockTimeoutMs int) Option {
 func WithRole(role string) Option {
 	return func(o *options) {
 		o.role = role
+	}
+}
+
+// WithDisableViewsManagement disables pgroll version schemas management
+// when passed, pgroll will not create or drop version schemas
+func WithDisableViewsManagement() Option {
+	return func(o *options) {
+		o.disableVersionSchemas = true
 	}
 }

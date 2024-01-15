@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	testutils.SharedTestMain(m)
 }
 
-func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
+func TestSchemaIsCreatedAfterMigrationStart(t *testing.T) {
 	t.Parallel()
 
 	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
@@ -39,21 +39,62 @@ func TestSchemaIsCreatedfterMigrationStart(t *testing.T) {
 		//
 		// Check that the schema exists
 		//
-		var exists bool
-		err := db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, roll.VersionedSchemaName(schema, version)).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if !exists {
+		if !schemaExists(t, db, roll.VersionedSchemaName(schema, version)) {
 			t.Errorf("Expected schema %q to exist", version)
 		}
 	})
+}
+
+func TestDisabledSchemaManagement(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithDisableViewsManagement()}, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		version := "1_create_table"
+
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			t.Fatalf("Failed to start migration: %v", err)
+		}
+
+		//
+		// Check that the schema doesn't get created
+		//
+		if schemaExists(t, db, roll.VersionedSchemaName(schema, version)) {
+			t.Errorf("Expected schema %q to not exist", version)
+		}
+
+		if err := mig.Rollback(ctx); err != nil {
+			t.Fatalf("Failed to rollback migration: %v", err)
+		}
+
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			t.Fatalf("Failed to start migration again: %v", err)
+		}
+
+		// complete the migration, check that the schema still doesn't exist
+		if err := mig.Complete(ctx); err != nil {
+			t.Fatalf("Failed to complete migration: %v", err)
+		}
+
+		if schemaExists(t, db, roll.VersionedSchemaName(schema, version)) {
+			t.Errorf("Expected schema %q to not exist", version)
+		}
+	})
+}
+
+func schemaExists(t *testing.T, db *sql.DB, schema string) bool {
+	t.Helper()
+	var exists bool
+	err := db.QueryRow(`
+	SELECT EXISTS(
+		SELECT 1
+		FROM pg_catalog.pg_namespace
+		WHERE nspname = $1
+	)`, schema).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return exists
 }
 
 func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
@@ -83,18 +124,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			//
 			// Check that the schema for the first version has been dropped
 			//
-			var exists bool
-			err := db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, roll.VersionedSchemaName(schema, firstVersion)).Scan(&exists)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if exists {
+			if schemaExists(t, db, roll.VersionedSchemaName(schema, firstVersion)) {
 				t.Errorf("Expected schema %q to not exist", firstVersion)
 			}
 		})
@@ -133,18 +163,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			//
 			// Check that the schema for the first version has been dropped
 			//
-			var exists bool
-			err = db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, roll.VersionedSchemaName(schema, firstVersion)).Scan(&exists)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if exists {
+			if schemaExists(t, db, roll.VersionedSchemaName(schema, firstVersion)) {
 				t.Errorf("Expected schema %q to not exist", firstVersion)
 			}
 		})
@@ -168,18 +187,7 @@ func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 		//
 		// Check that the schema has been dropped
 		//
-		var exists bool
-		err := db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, roll.VersionedSchemaName(schema, version)).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if exists {
+		if schemaExists(t, db, roll.VersionedSchemaName(schema, version)) {
 			t.Errorf("Expected schema %q to not exist", version)
 		}
 	})
@@ -234,17 +242,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 		}
 
 		// Ensure that the versioned schema for the first migration has been dropped
-		err = db.QueryRow(`
-    SELECT EXISTS(
-      SELECT 1
-      FROM pg_catalog.pg_namespace
-      WHERE nspname = $1
-    )`, roll.VersionedSchemaName("schema1", version1)).Scan(&exists)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if exists {
+		if schemaExists(t, db, roll.VersionedSchemaName("schema1", version1)) {
 			t.Errorf("Expected schema %q to not exist", version1)
 		}
 	})
