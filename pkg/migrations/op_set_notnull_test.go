@@ -222,6 +222,83 @@ func TestSetNotNull(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB) {
 			},
 		},
+		{
+			name: "setting a foreign key column to not null retains the foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_departments_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "departments",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_employees_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "employees",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:     "department_id",
+									Type:     "integer",
+									Nullable: true,
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_employee_department",
+										Table:  "departments",
+										Column: "id",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "03_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "employees",
+							Column:   "department_id",
+							Nullable: ptr(false),
+							Up:       "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
+							Down:     "department_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A temporary FK constraint has been created on the temporary column
+				ConstraintMustExist(t, db, "public", "employees", migrations.TemporaryName("fk_employee_department"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint still exists on the column
+				ConstraintMustExist(t, db, "public", "employees", "fk_employee_department")
+			},
+		},
 	})
 }
 
