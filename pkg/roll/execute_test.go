@@ -253,7 +253,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 func TestLockTimeoutIsEnforced(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(100)}, func(mig *roll.Roll, db *sql.DB) {
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(100)}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Start a create table migration
@@ -461,7 +461,7 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 func TestRoleIsRespected(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithRole("pgroll")}, func(mig *roll.Roll, db *sql.DB) {
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithRole("pgroll")}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Start a create table migration
