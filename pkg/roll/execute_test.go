@@ -63,6 +63,14 @@ func TestDisabledSchemaManagement(t *testing.T) {
 			t.Errorf("Expected schema %q to not exist", version)
 		}
 
+		if err := mig.Rollback(ctx); err != nil {
+			t.Fatalf("Failed to rollback migration: %v", err)
+		}
+
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			t.Fatalf("Failed to start migration again: %v", err)
+		}
+
 		// complete the migration, check that the schema still doesn't exist
 		if err := mig.Complete(ctx); err != nil {
 			t.Fatalf("Failed to complete migration: %v", err)
