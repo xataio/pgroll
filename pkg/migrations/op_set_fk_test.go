@@ -265,6 +265,91 @@ func TestSetForeignKey(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "existing FK constraints on a column are preserved when adding a foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:    "user_id",
+									Type:    "integer",
+									Default: ptr("1"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id_1",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+				{
+					Name: "03_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id_2",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A temporary FK constraint has been created on the temporary column
+				ConstraintMustExist(t, db, "public", "posts", migrations.TemporaryName("fk_users_id_1"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint still exists on the column
+				ConstraintMustExist(t, db, "public", "posts", "fk_users_id_1")
+			},
+		},
 	})
 }
 
