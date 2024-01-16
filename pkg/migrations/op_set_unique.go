@@ -26,7 +26,8 @@ func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	column := table.GetColumn(o.Column)
 
 	// create a copy of the column on the underlying table.
-	if err := duplicateColumn(ctx, conn, table, *column); err != nil {
+	d := NewColumnDuplicator(conn, table, column)
+	if err := d.Duplicate(ctx); err != nil {
 		return fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
@@ -115,10 +116,11 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 	}
 
 	// Rename the new column to the old column name
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
-		pq.QuoteIdentifier(o.Column)))
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
+	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
+		return err
+	}
 
 	return err
 }
