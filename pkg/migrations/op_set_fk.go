@@ -85,7 +85,7 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB, s *schema.
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.References.Name)))
+		pq.QuoteIdentifier(TemporaryName(o.References.Name))))
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn *sql
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.References.Name),
+		pq.QuoteIdentifier(TemporaryName(o.References.Name)),
 		pq.QuoteIdentifier(tempColumnName),
 		pq.QuoteIdentifier(o.References.Table),
 		pq.QuoteIdentifier(o.References.Column),
