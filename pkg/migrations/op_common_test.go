@@ -496,6 +496,36 @@ func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[
 	return err
 }
 
+func MustDelete(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) {
+	t.Helper()
+
+	if err := delete(t, db, schema, version, table, record); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func delete(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) error {
+	t.Helper()
+	versionSchema := roll.VersionedSchemaName(schema, version)
+
+	cols := maps.Keys(record)
+	slices.Sort(cols)
+
+	recordStr := ""
+	for i, c := range cols {
+		if i > 0 {
+			recordStr += " AND "
+		}
+		recordStr += fmt.Sprintf("%s = '%s'", c, record[c])
+	}
+
+	//nolint:gosec // this is a test so we don't care about SQL injection
+	stmt := fmt.Sprintf("DELETE FROM %s.%s WHERE %s", versionSchema, table, recordStr)
+
+	_, err := db.Exec(stmt)
+	return err
+}
+
 func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[string]any {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
