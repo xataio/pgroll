@@ -116,7 +116,7 @@ func TestSetColumnUnique(t *testing.T) {
 			},
 		},
 		{
-			name: "set unique with default user supplied down sql",
+			name: "set unique with user supplied down sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
