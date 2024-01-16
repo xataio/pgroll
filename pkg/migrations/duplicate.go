@@ -42,14 +42,22 @@ func (d *Duplicator) WithType(t string) *Duplicator {
 func (d *Duplicator) Duplicate(ctx context.Context) error {
 	const (
 		cAlterTableSQL    = `ALTER TABLE %s ADD COLUMN %s %s`
+		cSetDefaultSQL    = `ALTER COLUMN %s SET DEFAULT %s`
 		cAddForeignKeySQL = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)`
 	)
 
+	// Generate SQL to duplicate the column's name and type
 	sql := fmt.Sprintf(cAlterTableSQL,
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(d.asName),
 		d.withType)
 
+	// Generate SQL to duplicate the column's default value
+	if d.column.Default != nil {
+		sql += fmt.Sprintf(", "+cSetDefaultSQL, d.asName, *d.column.Default)
+	}
+
+	// Generate SQL to duplicate any foreign key constraints on the column
 	for _, fk := range d.table.ForeignKeys {
 		if slices.Contains(fk.Columns, d.column.Name) {
 			sql += fmt.Sprintf(", "+cAddForeignKeySQL,
