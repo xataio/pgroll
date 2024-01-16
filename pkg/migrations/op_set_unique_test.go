@@ -179,5 +179,85 @@ func TestSetColumnUnique(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB) {
 			},
 		},
+		{
+			name: "column defaults are preserved when adding a unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reviews",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:    "username",
+									Type:    "text",
+									Default: ptr("'anonymous'"),
+								},
+								{
+									Name: "product",
+									Type: "text",
+								},
+								{
+									Name: "review",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "reviews",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{
+								Name: "reviews_username_unique",
+							},
+							Up:   "username",
+							Down: "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
+					"product": "apple", "review": "awesome",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_set_unique", "reviews")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "username": "anonymous", "product": "apple", "review": "awesome"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Delete the row that was inserted in the `afterStart` hook to
+				// ensure that another row with a default 'username' can be inserted
+				// without violating the UNIQUE constraint on the column.
+				MustDelete(t, db, "public", "02_set_unique", "reviews", map[string]string{
+					"id": "1",
+				})
+
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
+					"product": "banana", "review": "bent",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_set_unique", "reviews")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "username": "anonymous", "product": "banana", "review": "bent"},
+				}, rows)
+			},
+		},
 	})
 }
