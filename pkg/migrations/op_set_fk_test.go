@@ -75,6 +75,9 @@ func TestSetForeignKey(t *testing.T) {
 				// The new (temporary) `user_id` column should exist on the underlying table.
 				ColumnMustExist(t, db, "public", "posts", migrations.TemporaryName("user_id"))
 
+				// A temporary FK constraint has been created on the temporary column
+				NotValidatedForeignKeyMustExist(t, db, "public", "posts", migrations.TemporaryName("fk_users_id"))
+
 				// Inserting some data into the `users` table works.
 				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
@@ -139,6 +142,9 @@ func TestSetForeignKey(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The new (temporary) `user_id` column should not exist on the underlying table.
 				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("user_id"))
+
+				// A validated foreign key constraint exists on the underlying table.
+				ValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id")
 
 				// Inserting data into the new `posts` view with a valid user reference works.
 				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
@@ -341,13 +347,13 @@ func TestSetForeignKey(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// A temporary FK constraint has been created on the temporary column
-				ConstraintMustExist(t, db, "public", "posts", migrations.TemporaryName("fk_users_id_1"))
+				ValidatedForeignKeyMustExist(t, db, "public", "posts", migrations.TemporaryName("fk_users_id_1"))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the column
-				ConstraintMustExist(t, db, "public", "posts", "fk_users_id_1")
+				ValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id_1")
 			},
 		},
 	})

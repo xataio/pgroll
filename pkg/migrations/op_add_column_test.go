@@ -170,7 +170,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -194,7 +194,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the new table
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
@@ -273,7 +273,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -297,7 +297,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the new table
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
