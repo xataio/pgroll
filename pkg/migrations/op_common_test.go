@@ -195,16 +195,16 @@ func TriggerMustExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
 	}
 }
 
-func ConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+func CheckConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
-	if constraintExists(t, db, schema, table, constraint) {
+	if checkConstraintExists(t, db, schema, table, constraint) {
 		t.Fatalf("Expected constraint %q to not exist", constraint)
 	}
 }
 
-func ConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+func CheckConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
-	if !constraintExists(t, db, schema, table, constraint) {
+	if !checkConstraintExists(t, db, schema, table, constraint) {
 		t.Fatalf("Expected constraint %q to exist", constraint)
 	}
 }
@@ -278,7 +278,7 @@ func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
 	return exists
 }
 
-func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
+func checkConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
 	t.Helper()
 
 	var exists bool
@@ -288,6 +288,7 @@ func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string
       FROM pg_catalog.pg_constraint
       WHERE conrelid = $1::regclass
       AND conname = $2
+      AND contype = 'c'
     )`,
 		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
 	if err != nil {

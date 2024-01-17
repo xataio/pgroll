@@ -57,7 +57,7 @@ func TestSetCheckConstraint(t *testing.T) {
 				ColumnMustExist(t, db, "public", "posts", migrations.TemporaryName("title"))
 
 				// A check constraint has been added to the temporary column
-				ConstraintMustExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the old view works.
 				MustInsert(t, db, "public", "01_add_table", "posts", map[string]string{
@@ -100,7 +100,7 @@ func TestSetCheckConstraint(t *testing.T) {
 				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("title"))
 
 				// The check constraint no longer exists.
-				ConstraintMustNotExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustNotExist(t, db, "public", "posts", "check_title_length")
 
 				// The up function no longer exists.
 				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "title"))
@@ -114,7 +114,7 @@ func TestSetCheckConstraint(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The check constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the new view works.
 				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
