@@ -209,6 +209,20 @@ func ConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint str
 	}
 }
 
+func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !foreignKeyExists(t, db, schema, table, constraint, true) {
+		t.Fatalf("Expected validated foreign key %q to exist", constraint)
+	}
+}
+
+func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !foreignKeyExists(t, db, schema, table, constraint, false) {
+		t.Fatalf("Expected not validated foreign key %q to exist", constraint)
+	}
+}
+
 func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	t.Helper()
 	if !indexExists(t, db, schema, table, index) {
@@ -276,6 +290,27 @@ func constraintExists(t *testing.T, db *sql.DB, schema, table, constraint string
       AND conname = $2
     )`,
 		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, validated bool) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_constraint
+      WHERE conrelid = $1::regclass
+      AND conname = $2
+      AND contype = 'f'
+      AND convalidated = $3
+    )`,
+		fmt.Sprintf("%s.%s", schema, table), constraint, validated).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}
