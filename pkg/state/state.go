@@ -191,6 +191,23 @@ BEGIN
 						GROUP BY cc_constraint.oid
 					) AS cc_details
         ),
+				'uniqueConstraints', (
+					SELECT json_object_agg(uc_details.conname, json_build_object(
+						'name', uc_details.conname,
+						'columns', uc_details.columns
+					))
+					FROM (
+						SELECT
+							uc_constraint.conname,
+							array_agg(uc_attr.attname ORDER BY uc_constraint.conkey::int[]) AS columns,
+							pg_get_constraintdef(uc_constraint.oid) AS definition
+						FROM pg_constraint AS uc_constraint
+						INNER JOIN pg_attribute uc_attr ON uc_attr.attrelid = uc_constraint.conrelid AND uc_attr.attnum = ANY(uc_constraint.conkey)
+						WHERE uc_constraint.conrelid = t.oid
+						AND uc_constraint.contype = 'u'
+						GROUP BY uc_constraint.oid
+					) AS uc_details
+        ),
 				'foreignKeys', (
 					SELECT json_object_agg(fk_details.conname, json_build_object(
 						'name', fk_details.conname,
