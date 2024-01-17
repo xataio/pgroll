@@ -170,7 +170,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -194,7 +194,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the new table
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
@@ -273,7 +273,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -297,7 +297,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the new table
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
@@ -547,12 +547,12 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 		afterRollback: func(t *testing.T, db *sql.DB) {
 			// the check constraint has been dropped.
 			constraintName := migrations.NotNullConstraintName("description")
-			ConstraintMustNotExist(t, db, "public", "products", constraintName)
+			CheckConstraintMustNotExist(t, db, "public", "products", constraintName)
 		},
 		afterComplete: func(t *testing.T, db *sql.DB) {
 			// the check constraint has been dropped.
 			constraintName := migrations.NotNullConstraintName("description")
-			ConstraintMustNotExist(t, db, "public", "products", constraintName)
+			CheckConstraintMustNotExist(t, db, "public", "products", constraintName)
 
 			// can't insert a null description into the new view; the column now has a NOT NULL constraint.
 			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{

@@ -128,7 +128,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", migrations.TemporaryName("orders"), "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", migrations.TemporaryName("orders"), "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -151,7 +151,7 @@ func TestCreateTable(t *testing.T) {
 				// The table has been dropped, so the foreign key constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
-				ConstraintMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, "public", "02_create_table_with_fk", "users", map[string]string{
@@ -200,7 +200,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// The check constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", migrations.TemporaryName("users"), "check_name_length")
+				CheckConstraintMustExist(t, db, "public", migrations.TemporaryName("users"), "check_name_length")
 
 				// Inserting a row into the table succeeds when the check constraint is satisfied.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
@@ -217,7 +217,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The check constraint exists on the new table.
-				ConstraintMustExist(t, db, "public", "users", "check_name_length")
+				CheckConstraintMustExist(t, db, "public", "users", "check_name_length")
 
 				// Inserting a row into the table succeeds when the check constraint is satisfied.
 				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{

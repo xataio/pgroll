@@ -56,6 +56,9 @@ func TestSetCheckConstraint(t *testing.T) {
 				// The new (temporary) `title` column should exist on the underlying table.
 				ColumnMustExist(t, db, "public", "posts", migrations.TemporaryName("title"))
 
+				// A check constraint has been added to the temporary column
+				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
+
 				// Inserting a row that meets the check constraint into the old view works.
 				MustInsert(t, db, "public", "01_add_table", "posts", map[string]string{
 					"title": "post by alice",
@@ -96,6 +99,9 @@ func TestSetCheckConstraint(t *testing.T) {
 				// The new (temporary) `title` column should not exist on the underlying table.
 				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("title"))
 
+				// The check constraint no longer exists.
+				CheckConstraintMustNotExist(t, db, "public", "posts", "check_title_length")
+
 				// The up function no longer exists.
 				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "title"))
 				// The down function no longer exists.
@@ -107,6 +113,9 @@ func TestSetCheckConstraint(t *testing.T) {
 				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
+
 				// Inserting a row that meets the check constraint into the new view works.
 				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
 					"title": "post by dana",
@@ -275,13 +284,13 @@ func TestSetCheckConstraint(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// A temporary FK constraint has been created on the temporary column
-				ConstraintMustExist(t, db, "public", "employees", migrations.TemporaryName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.TemporaryName("fk_employee_department"))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB) {
 				// The foreign key constraint still exists on the column
-				ConstraintMustExist(t, db, "public", "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
 			},
 		},
 	})
