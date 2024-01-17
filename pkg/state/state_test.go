@@ -155,6 +155,44 @@ func TestReadSchema(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:       "check constraint",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, age INTEGER, CONSTRAINT age_check CHECK (age > 18));",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+								"age": {
+									Name:     "age",
+									Type:     "integer",
+									Nullable: true,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name: "table1_pkey",
+								},
+							},
+							CheckConstraints: map[string]schema.CheckConstraint{
+								"age_check": {
+									Name:       "age_check",
+									Columns:    []string{"age"},
+									Definition: "CHECK ((age > 18))",
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		// init the state
