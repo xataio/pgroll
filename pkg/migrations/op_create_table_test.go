@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -145,7 +146,7 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// The table has been dropped, so the foreign key constraint is gone.
@@ -168,7 +169,7 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 		},
 		{
@@ -210,7 +211,7 @@ func TestCreateTable(t *testing.T) {
 				// Inserting a row into the table fails when the check constraint is not satisfied.
 				MustNotInsert(t, db, "public", "01_create_table", "users", map[string]string{
 					"name": "b",
-				})
+				}, testutils.CheckViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// The table has been dropped, so the check constraint is gone.
@@ -227,7 +228,7 @@ func TestCreateTable(t *testing.T) {
 				// Inserting a row into the table fails when the check constraint is not satisfied.
 				MustNotInsert(t, db, "public", "01_create_table", "users", map[string]string{
 					"name": "c",
-				})
+				}, testutils.CheckViolationErrorCode)
 			},
 		},
 		{

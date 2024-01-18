@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetNotNull(t *testing.T) {
@@ -67,7 +68,7 @@ func TestSetNotNull(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
-				})
+				}, testutils.CheckViolationErrorCode)
 
 				// Inserting a non-NULL value into the new `review` column should succeed
 				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
@@ -143,7 +144,7 @@ func TestSetNotNull(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "daisy",
 					"product":  "durian",
-				})
+				}, testutils.NotNullViolationErrorCode)
 
 				// The up function no longer exists.
 				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))

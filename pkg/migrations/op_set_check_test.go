@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetCheckConstraint(t *testing.T) {
@@ -85,7 +86,7 @@ func TestSetCheckConstraint(t *testing.T) {
 				// Inserting a row that does not meet the check constraint into the new view fails.
 				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
 					"title": "d",
-				})
+				}, testutils.CheckViolationErrorCode)
 
 				// The row that was inserted into the new view has been backfilled into the old view.
 				rows = MustSelect(t, db, "public", "01_add_table", "posts")
@@ -124,7 +125,7 @@ func TestSetCheckConstraint(t *testing.T) {
 				// Inserting a row that does not meet the check constraint into the new view fails.
 				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
 					"title": "e",
-				})
+				}, testutils.CheckViolationErrorCode)
 
 				// The data in the new `posts` view is as expected.
 				rows := MustSelect(t, db, "public", "02_add_check_constraint", "posts")

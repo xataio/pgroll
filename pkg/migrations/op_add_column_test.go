@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestAddColumn(t *testing.T) {
@@ -184,10 +185,10 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
+				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// The new column has been dropped, so the foreign key constraint is gone.
@@ -211,7 +212,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 		},
 		{
@@ -287,10 +288,10 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_create_table_with_fk", "orders", map[string]string{
+				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// The new column has been dropped, so the foreign key constraint is gone.
@@ -314,7 +315,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				})
+				}, testutils.FKViolationErrorCode)
 			},
 		},
 	})
@@ -542,7 +543,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 			// Inserting a null description through the new view fails.
 			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
 				"name": "banana",
-			})
+			}, testutils.CheckViolationErrorCode)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
 			// the check constraint has been dropped.
@@ -557,7 +558,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 			// can't insert a null description into the new view; the column now has a NOT NULL constraint.
 			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
 				"name": "orange",
-			})
+			}, testutils.NotNullViolationErrorCode)
 		},
 	}})
 }
@@ -733,7 +734,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
 				"name": "bob",
 				"age":  "3",
-			})
+			}, testutils.CheckViolationErrorCode)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB) {
 		},
@@ -748,7 +749,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
 				"name": "dana",
 				"age":  "3",
-			})
+			}, testutils.CheckViolationErrorCode)
 		},
 	}})
 }
