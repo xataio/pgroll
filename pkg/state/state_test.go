@@ -107,6 +107,12 @@ func TestReadSchema(t *testing.T) {
 									Name: "id_unique",
 								},
 							},
+							UniqueConstraints: map[string]schema.UniqueConstraint{
+								"id_unique": {
+									Name:    "id_unique",
+									Columns: []string{"id"},
+								},
+							},
 						},
 					},
 				},
@@ -187,6 +193,47 @@ func TestReadSchema(t *testing.T) {
 									Name:       "age_check",
 									Columns:    []string{"age"},
 									Definition: "CHECK ((age > 18))",
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "unique constraint",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_unique UNIQUE(name) );",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Unique:   true,
+									Nullable: true,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name: "table1_pkey",
+								},
+								"name_unique": {
+									Name: "name_unique",
+								},
+							},
+							UniqueConstraints: map[string]schema.UniqueConstraint{
+								"name_unique": {
+									Name:    "name_unique",
+									Columns: []string{"name"},
 								},
 							},
 						},
