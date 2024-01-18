@@ -48,8 +48,9 @@ func TestSetForeignKey(t *testing.T) {
 									Type: "text",
 								},
 								{
-									Name: "user_id",
-									Type: "integer",
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: true,
 								},
 							},
 						},
