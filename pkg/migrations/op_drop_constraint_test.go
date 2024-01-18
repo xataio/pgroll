@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestDropConstraint(t *testing.T) {
@@ -75,7 +76,7 @@ func TestDropConstraint(t *testing.T) {
 				// Inserting a row that does not meet the check constraint into the old view fails.
 				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
 					"title": "b",
-				})
+				}, testutils.CheckViolationErrorCode)
 
 				// The inserted row has been backfilled into the new view.
 				rows := MustSelect(t, db, "public", "03_drop_check_constraint", "posts")
@@ -320,7 +321,7 @@ func TestDropConstraint(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
-				})
+				}, testutils.FKViolationErrorCode)
 
 				// The post that was inserted successfully has been backfilled into the new view.
 				rows = MustSelect(t, db, "public", "03_drop_fk_constraint", "posts")
@@ -422,7 +423,7 @@ func TestDropConstraint(t *testing.T) {
 				// Inserting a row that does not meet the unique constraint into the old view fails.
 				MustNotInsert(t, db, "public", "01_add_tables", "users", map[string]string{
 					"name": "alice",
-				})
+				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row that does not meet the unique constraint into the new view works.
 				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{

@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetForeignKey(t *testing.T) {
@@ -96,7 +97,7 @@ func TestSetForeignKey(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
-				})
+				}, testutils.FKViolationErrorCode)
 
 				// The post that was inserted successfully has been backfilled into the old view.
 				rows := MustSelect(t, db, "public", "01_add_tables", "posts")
@@ -156,7 +157,7 @@ func TestSetForeignKey(t *testing.T) {
 				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
-				})
+				}, testutils.FKViolationErrorCode)
 
 				// The data in the new `posts` view is as expected.
 				rows := MustSelect(t, db, "public", "02_add_fk_constraint", "posts")

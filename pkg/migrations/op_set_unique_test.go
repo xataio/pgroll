@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetColumnUnique(t *testing.T) {
@@ -76,7 +77,7 @@ func TestSetColumnUnique(t *testing.T) {
 				})
 				MustNotInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
 					"username": "dana", "product": "durian", "review": "bad",
-				})
+				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 				// The new (temporary) `review` column should not exist on the underlying table.
@@ -112,7 +113,7 @@ func TestSetColumnUnique(t *testing.T) {
 				})
 				MustNotInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
 					"username": "flora", "product": "fig", "review": "ok",
-				})
+				}, testutils.UniqueViolationErrorCode)
 			},
 		},
 		{
