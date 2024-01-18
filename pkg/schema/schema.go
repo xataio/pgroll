@@ -49,6 +49,9 @@ type Table struct {
 
 	// ForeignKeys is a map of all foreign keys defined on the table
 	ForeignKeys map[string]ForeignKey `json:"foreignKeys"`
+
+	// CheckConstraints is a map of all check constraints defined on the table
+	CheckConstraints map[string]CheckConstraint `json:"checkConstraints"`
 }
 
 type Column struct {
@@ -83,6 +86,17 @@ type ForeignKey struct {
 
 	// The columns in the referenced table that the foreign key references
 	ReferencedColumns []string `json:"referencedColumns"`
+}
+
+type CheckConstraint struct {
+	// Name is the name of the check constraint in postgres
+	Name string `json:"name"`
+
+	// The columns that the check constraint is defined on
+	Columns []string `json:"columns"`
+
+	// The definition of the check constraint
+	Definition string `json:"definition"`
 }
 
 func (s *Schema) GetTable(name string) *Table {

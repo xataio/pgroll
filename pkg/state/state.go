@@ -173,6 +173,24 @@ BEGIN
 				  FROM pg_index pi 
 				  WHERE pi.indrelid = t.oid::regclass
 				),
+				'checkConstraints', (
+					SELECT json_object_agg(cc_details.conname, json_build_object(
+						'name', cc_details.conname,
+						'columns', cc_details.columns,
+						'definition', cc_details.definition
+					))
+					FROM (
+						SELECT
+							cc_constraint.conname,
+							array_agg(cc_attr.attname ORDER BY cc_constraint.conkey::int[]) AS columns,
+							pg_get_constraintdef(cc_constraint.oid) AS definition
+						FROM pg_constraint AS cc_constraint
+						INNER JOIN pg_attribute cc_attr ON cc_attr.attrelid = cc_constraint.conrelid AND cc_attr.attnum = ANY(cc_constraint.conkey)
+						WHERE cc_constraint.conrelid = t.oid
+						AND cc_constraint.contype = 'c'
+						GROUP BY cc_constraint.oid
+					) AS cc_details
+        ),
 				'foreignKeys', (
 					SELECT json_object_agg(fk_details.conname, json_build_object(
 						'name', fk_details.conname,
