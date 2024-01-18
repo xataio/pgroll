@@ -294,6 +294,71 @@ func TestSetCheckConstraint(t *testing.T) {
 				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
 			},
 		},
+		{
+			name: "existing check constraints are preserved when adding a check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "title",
+									Type: "text",
+									Check: &migrations.CheckConstraint{
+										Name:       "check_title_length",
+										Constraint: "length(title) > 3",
+									},
+								},
+								{
+									Name: "body",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "body",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_body_length",
+								Constraint: "length(body) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(body) <= 3 THEN LPAD(body, 4, '-') ELSE body END)",
+							Down: "body",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// The check constraint on the `title` column still exists.
+				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+					"id":    "1",
+					"title": "a",
+					"body":  "this is the post body",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The check constraint on the `title` column still exists.
+				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+					"id":    "2",
+					"title": "b",
+					"body":  "this is another post body",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
 	})
 }
 
