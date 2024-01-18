@@ -35,11 +35,15 @@ func RenameDuplicatedColumn(ctx context.Context, conn *sql.DB, table *schema.Tab
 	// to their original name
 	var renameConstraintSQL string
 	for _, fk := range table.ForeignKeys {
+		if !IsDuplicatedName(fk.Name) {
+			continue
+		}
+
 		if slices.Contains(fk.Columns, TemporaryName(column.Name)) {
 			renameConstraintSQL = fmt.Sprintf(cRenameConstraintSQL,
 				pq.QuoteIdentifier(table.Name),
 				pq.QuoteIdentifier(fk.Name),
-				pq.QuoteIdentifier(StripTemporaryPrefix(fk.Name)),
+				pq.QuoteIdentifier(StripDuplicationPrefix(fk.Name)),
 			)
 
 			_, err = conn.ExecContext(ctx, renameConstraintSQL)
