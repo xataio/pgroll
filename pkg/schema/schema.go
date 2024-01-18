@@ -52,6 +52,9 @@ type Table struct {
 
 	// CheckConstraints is a map of all check constraints defined on the table
 	CheckConstraints map[string]CheckConstraint `json:"checkConstraints"`
+
+	// UniqueConstraints is a map of all unique constraints defined on the table
+	UniqueConstraints map[string]UniqueConstraint `json:"uniqueConstraints"`
 }
 
 type Column struct {
@@ -97,6 +100,14 @@ type CheckConstraint struct {
 
 	// The definition of the check constraint
 	Definition string `json:"definition"`
+}
+
+type UniqueConstraint struct {
+	// Name is the name of the unique constraint in postgres
+	Name string `json:"name"`
+
+	// The columns that the unique constraint is defined on
+	Columns []string `json:"columns"`
 }
 
 func (s *Schema) GetTable(name string) *Table {
