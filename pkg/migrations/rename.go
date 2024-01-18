@@ -21,6 +21,8 @@ func RenameDuplicatedColumn(ctx context.Context, conn *sql.DB, table *schema.Tab
 		cRenameColumnSQL       = `ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s`
 		cRenameConstraintSQL   = `ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s`
 		cValidateConstraintSQL = `ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s`
+		cSetNotNullSQL         = `ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL`
+		cDropConstraintSQL     = `ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s`
 	)
 
 	// Rename the old column to the new column name
@@ -86,5 +88,41 @@ func RenameDuplicatedColumn(ctx context.Context, conn *sql.DB, table *schema.Tab
 		}
 	}
 
+	// If the original column was NOT NULL, convert the duplicated unchecked `NOT
+	// NULL` constraint into a `NOT NULL` attribute on the column.
+	if !column.Nullable {
+		// Validate the constraint
+		validateConstraintSQL := fmt.Sprintf(cValidateConstraintSQL,
+			pq.QuoteIdentifier(table.Name),
+			pq.QuoteIdentifier(NotNullConstraintName(column.Name)),
+		)
+
+		_, err = conn.ExecContext(ctx, validateConstraintSQL)
+		if err != nil {
+			return fmt.Errorf("failed to validate not null constraint: %w", err)
+		}
+
+		// Apply `NOT NULL` attribute to the column. This uses the validated constraint
+		setNotNullSQL := fmt.Sprintf(cSetNotNullSQL,
+			pq.QuoteIdentifier(table.Name),
+			pq.QuoteIdentifier(column.Name),
+		)
+
+		_, err = conn.ExecContext(ctx, setNotNullSQL)
+		if err != nil {
+			return fmt.Errorf("failed to set column not null: %w", err)
+		}
+
+		// Drop the constraint
+		dropConstraintSQL := fmt.Sprintf(cDropConstraintSQL,
+			pq.QuoteIdentifier(table.Name),
+			pq.QuoteIdentifier(NotNullConstraintName(column.Name)),
+		)
+
+		_, err = conn.ExecContext(ctx, dropConstraintSQL)
+		if err != nil {
+			return fmt.Errorf("failed to drop not null constraint: %w", err)
+		}
+	}
 	return nil
 }
