@@ -61,7 +61,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	for _, fk := range d.table.ForeignKeys {
 		if slices.Contains(fk.Columns, d.column.Name) {
 			sql += fmt.Sprintf(", "+cAddForeignKeySQL,
-				pq.QuoteIdentifier(TemporaryName(fk.Name)),
+				pq.QuoteIdentifier(DuplicationName(fk.Name)),
 				strings.Join(quoteColumnNames(copyAndReplace(fk.Columns, d.column.Name, d.asName)), ", "),
 				pq.QuoteIdentifier(fk.ReferencedTable),
 				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "))
@@ -71,6 +71,18 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	_, err := d.conn.ExecContext(ctx, sql)
 
 	return err
+}
+
+func DuplicationName(name string) string {
+	return "_pgroll_dup_" + name
+}
+
+func IsDuplicatedName(name string) bool {
+	return strings.HasPrefix(name, "_pgroll_dup_")
+}
+
+func StripDuplicationPrefix(name string) string {
+	return strings.TrimPrefix(name, "_pgroll_dup_")
 }
 
 func copyAndReplace(xs []string, oldValue, newValue string) []string {

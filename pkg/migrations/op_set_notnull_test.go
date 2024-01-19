@@ -291,7 +291,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.TemporaryName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
 			},
