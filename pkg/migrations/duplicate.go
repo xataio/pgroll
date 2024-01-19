@@ -41,9 +41,10 @@ func (d *Duplicator) WithType(t string) *Duplicator {
 // constraints as the original column.
 func (d *Duplicator) Duplicate(ctx context.Context) error {
 	const (
-		cAlterTableSQL    = `ALTER TABLE %s ADD COLUMN %s %s`
-		cSetDefaultSQL    = `ALTER COLUMN %s SET DEFAULT %s`
-		cAddForeignKeySQL = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)`
+		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
+		cSetDefaultSQL         = `ALTER COLUMN %s SET DEFAULT %s`
+		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)`
+		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
 	)
 
 	// Generate SQL to duplicate the column's name and type
@@ -65,6 +66,16 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 				strings.Join(quoteColumnNames(copyAndReplace(fk.Columns, d.column.Name, d.asName)), ", "),
 				pq.QuoteIdentifier(fk.ReferencedTable),
 				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "))
+		}
+	}
+
+	// Generate SQL to duplicate any check constraints on the column
+	for _, cc := range d.table.CheckConstraints {
+		if slices.Contains(cc.Columns, d.column.Name) {
+			sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
+				pq.QuoteIdentifier(DuplicationName(cc.Name)),
+				rewriteCheckExpression(cc.Definition, d.column.Name, d.asName),
+			)
 		}
 	}
 

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestChangeColumnType(t *testing.T) {
@@ -285,6 +286,63 @@ func TestChangeColumnType(t *testing.T) {
 					{"id": 1, "username": "alice"},
 					{"id": 2, "username": "alice"},
 				}, rows)
+			},
+		},
+		{
+			name: "changing column type preserves any check constraints on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   true,
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: true,
+									Check: &migrations.CheckConstraint{
+										Name:       "username_length",
+										Constraint: "length(username) > 3",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id":       "1",
+					"username": "a",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id":       "2",
+					"username": "b",
+				}, testutils.CheckViolationErrorCode)
 			},
 		},
 	})

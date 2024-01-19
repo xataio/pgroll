@@ -301,7 +301,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "setting a nullable column to not null retains any default defined on the column",
+			name: "setting a column to not null retains any default defined on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -362,6 +362,62 @@ func TestSetNotNull(t *testing.T) {
 					{"id": 1, "name": "anonymous"},
 					{"id": 2, "name": "anonymous"},
 				}, rows)
+			},
+		},
+		{
+			name: "setting a column to not null retains any check constraints defined on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+									Check: &migrations.CheckConstraint{
+										Name:       "name_length",
+										Constraint: "length(name) > 3",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(false),
+							Up:       "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"id":   "1",
+					"name": "a",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"id":   "2",
+					"name": "b",
+				}, testutils.CheckViolationErrorCode)
 			},
 		},
 	})

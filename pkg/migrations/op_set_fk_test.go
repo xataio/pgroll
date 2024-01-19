@@ -357,6 +357,91 @@ func TestSetForeignKey(t *testing.T) {
 				ValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id_1")
 			},
 		},
+		{
+			name: "check constraints on a column are preserved when adding a foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "title",
+									Type: "text",
+									Check: &migrations.CheckConstraint{
+										Name:       "title_length",
+										Constraint: "length(title) > 3",
+									},
+								},
+								{
+									Name: "user_id",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Set up the users table with a reference row
+				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"id":      "1",
+					"user_id": "1",
+					"title":   "a",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"id":      "2",
+					"user_id": "1",
+					"title":   "b",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
 	})
 }
 
