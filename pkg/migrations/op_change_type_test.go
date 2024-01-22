@@ -345,6 +345,57 @@ func TestChangeColumnType(t *testing.T) {
 				}, testutils.CheckViolationErrorCode)
 			},
 		},
+		{
+			name: "changing column type preserves column not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   true,
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id": "1",
+				}, testutils.NotNullViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"id": "2",
+				}, testutils.NotNullViolationErrorCode)
+			},
+		},
 	})
 }
 

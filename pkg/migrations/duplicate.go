@@ -58,6 +58,15 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		sql += fmt.Sprintf(", "+cSetDefaultSQL, d.asName, *d.column.Default)
 	}
 
+	// Generate SQL to add an unchecked NOT NULL constraint if the original column
+	// is NOT NULL. The constraint will be validated on migration completion.
+	if !d.column.Nullable {
+		sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
+			pq.QuoteIdentifier(DuplicationName(NotNullConstraintName(d.column.Name))),
+			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(d.asName)),
+		)
+	}
+
 	// Generate SQL to duplicate any foreign key constraints on the column
 	for _, fk := range d.table.ForeignKeys {
 		if slices.Contains(fk.Columns, d.column.Name) {

@@ -401,5 +401,66 @@ func TestSetColumnUnique(t *testing.T) {
 				}, testutils.CheckViolationErrorCode)
 			},
 		},
+		{
+			name: "not null is preserved when adding a unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reviews",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name: "product",
+									Type: "text",
+								},
+								{
+									Name: "review",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "reviews",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{
+								Name: "reviews_username_unique",
+							},
+							Up:   "username",
+							Down: "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint on `username` should fail.
+				MustNotInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
+					"product": "apple", "review": "awesome",
+				}, testutils.NotNullViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint on `username` should fail.
+				MustNotInsert(t, db, "public", "02_set_unique", "reviews", map[string]string{
+					"product": "apple", "review": "awesome",
+				}, testutils.NotNullViolationErrorCode)
+			},
+		},
 	})
 }
