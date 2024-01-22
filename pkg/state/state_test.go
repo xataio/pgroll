@@ -119,6 +119,36 @@ func TestReadSchema(t *testing.T) {
 				},
 			},
 			{
+				name:       "non-unique index",
+				createStmt: "CREATE TABLE public.table1 (id int, name text); CREATE INDEX idx_name ON public.table1 (name)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: true,
+								},
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+							Indexes: map[string]schema.Index{
+								"idx_name": {
+									Name:   "idx_name",
+									Unique: false,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				name:       "foreign key",
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id))",
 				wantSchema: &schema.Schema{
