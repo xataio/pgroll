@@ -75,6 +75,9 @@ type Column struct {
 type Index struct {
 	// Name is the name of the index in postgres
 	Name string `json:"name"`
+
+	// Unique indicates whether or not the index is unique
+	Unique bool `json:"unique"`
 }
 
 type ForeignKey struct {

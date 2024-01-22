@@ -104,13 +104,44 @@ func TestReadSchema(t *testing.T) {
 							},
 							Indexes: map[string]schema.Index{
 								"id_unique": {
-									Name: "id_unique",
+									Name:   "id_unique",
+									Unique: true,
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
 								"id_unique": {
 									Name:    "id_unique",
 									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "non-unique index",
+				createStmt: "CREATE TABLE public.table1 (id int, name text); CREATE INDEX idx_name ON public.table1 (name)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: true,
+								},
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+							Indexes: map[string]schema.Index{
+								"idx_name": {
+									Name:   "idx_name",
+									Unique: false,
 								},
 							},
 						},
@@ -136,7 +167,8 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name: "table1_pkey",
+									Name:   "table1_pkey",
+									Unique: true,
 								},
 							},
 						},
@@ -185,7 +217,8 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name: "table1_pkey",
+									Name:   "table1_pkey",
+									Unique: true,
 								},
 							},
 							CheckConstraints: map[string]schema.CheckConstraint{
@@ -224,10 +257,12 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name: "table1_pkey",
+									Name:   "table1_pkey",
+									Unique: true,
 								},
 								"name_unique": {
-									Name: "name_unique",
+									Name:   "name_unique",
+									Unique: true,
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{

@@ -168,7 +168,8 @@ BEGIN
 				),
 				'indexes', (
 				  SELECT json_object_agg(pi.indexrelid::regclass, json_build_object(
-				    'name', pi.indexrelid::regclass
+				    'name', pi.indexrelid::regclass,
+				    'unique', pi.indisunique
 				  ))
 				  FROM pg_index pi 
 				  WHERE pi.indrelid = t.oid::regclass
