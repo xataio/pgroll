@@ -104,8 +104,9 @@ func TestReadSchema(t *testing.T) {
 							},
 							Indexes: map[string]schema.Index{
 								"id_unique": {
-									Name:   "id_unique",
-									Unique: true,
+									Name:    "id_unique",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
@@ -140,8 +141,9 @@ func TestReadSchema(t *testing.T) {
 							},
 							Indexes: map[string]schema.Index{
 								"idx_name": {
-									Name:   "idx_name",
-									Unique: false,
+									Name:    "idx_name",
+									Unique:  false,
+									Columns: []string{"name"},
 								},
 							},
 						},
@@ -167,8 +169,9 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 						},
@@ -217,8 +220,9 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 							CheckConstraints: map[string]schema.CheckConstraint{
@@ -257,12 +261,14 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 								"name_unique": {
-									Name:   "name_unique",
-									Unique: true,
+									Name:    "name_unique",
+									Unique:  true,
+									Columns: []string{"name"},
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
