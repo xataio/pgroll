@@ -78,6 +78,9 @@ type Index struct {
 
 	// Unique indicates whether or not the index is unique
 	Unique bool `json:"unique"`
+
+	// Columns is the set of key columns on which the index is defined
+	Columns []string `json:"columns"`
 }
 
 type ForeignKey struct {
