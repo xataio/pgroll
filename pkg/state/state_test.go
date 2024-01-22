@@ -281,6 +281,37 @@ func TestReadSchema(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:       "multi-column index",
+				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"a": {
+									Name:     "a",
+									Type:     "text",
+									Nullable: true,
+								},
+								"b": {
+									Name:     "b",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+							Indexes: map[string]schema.Index{
+								"idx_ab": {
+									Name:    "idx_ab",
+									Unique:  false,
+									Columns: []string{"a", "b"},
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		// init the state
