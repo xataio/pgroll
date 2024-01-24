@@ -104,8 +104,9 @@ func TestReadSchema(t *testing.T) {
 							},
 							Indexes: map[string]schema.Index{
 								"id_unique": {
-									Name:   "id_unique",
-									Unique: true,
+									Name:    "id_unique",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
@@ -140,8 +141,9 @@ func TestReadSchema(t *testing.T) {
 							},
 							Indexes: map[string]schema.Index{
 								"idx_name": {
-									Name:   "idx_name",
-									Unique: false,
+									Name:    "idx_name",
+									Unique:  false,
+									Columns: []string{"name"},
 								},
 							},
 						},
@@ -167,8 +169,9 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 						},
@@ -217,8 +220,9 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 							},
 							CheckConstraints: map[string]schema.CheckConstraint{
@@ -257,18 +261,51 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:   "table1_pkey",
-									Unique: true,
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
 								},
 								"name_unique": {
-									Name:   "name_unique",
-									Unique: true,
+									Name:    "name_unique",
+									Unique:  true,
+									Columns: []string{"name"},
 								},
 							},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
 								"name_unique": {
 									Name:    "name_unique",
 									Columns: []string{"name"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "multi-column index",
+				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"a": {
+									Name:     "a",
+									Type:     "text",
+									Nullable: true,
+								},
+								"b": {
+									Name:     "b",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+							Indexes: map[string]schema.Index{
+								"idx_ab": {
+									Name:    "idx_ab",
+									Unique:  false,
+									Columns: []string{"a", "b"},
 								},
 							},
 						},

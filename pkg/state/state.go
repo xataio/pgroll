@@ -167,12 +167,21 @@ BEGIN
 						AND indisprimary
 				),
 				'indexes', (
-				  SELECT json_object_agg(pi.indexrelid::regclass, json_build_object(
-				    'name', pi.indexrelid::regclass,
-				    'unique', pi.indisunique
+				  SELECT json_object_agg(ix_details.indexrelid::regclass, json_build_object(
+				    'name', ix_details.indexrelid::regclass,
+				    'unique', ix_details.indisunique,
+				    'columns', ix_details.columns
 				  ))
-				  FROM pg_index pi 
-				  WHERE pi.indrelid = t.oid::regclass
+				  FROM (
+				    SELECT 
+				      pi.indexrelid, 
+				      pi.indisunique,
+				      array_agg(a.attname) AS columns
+				    FROM pg_index pi
+				    JOIN pg_attribute a ON a.attrelid = pi.indrelid AND a.attnum = ANY(pi.indkey)
+				    WHERE indrelid = t.oid::regclass
+				    GROUP BY pi.indexrelid
+				  ) as ix_details
 				),
 				'checkConstraints', (
 					SELECT json_object_agg(cc_details.conname, json_build_object(
