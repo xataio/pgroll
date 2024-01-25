@@ -519,6 +519,105 @@ func TestSetForeignKey(t *testing.T) {
 				}, testutils.NotNullViolationErrorCode)
 			},
 		},
+		{
+			name: "unique constraints are preserved when adding a foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:   "user_id",
+									Type:   "integer",
+									Unique: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Set up the users table with a reference row
+				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+					"id":   "1",
+				})
+
+				// Inserting an initial row succeeds
+				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice",
+					"user_id": "1",
+				})
+
+				// Inserting a row with a duplicate `user_id` fails.
+				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice 2",
+					"user_id": "1",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row with a duplicate `user_id` fails
+				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice 3",
+					"user_id": "1",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Set up the users table with another reference row
+				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+					"id":   "2",
+				})
+
+				// Inserting a row with a different `user_id` succeeds
+				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by bob",
+					"user_id": "2",
+				})
+			},
+		},
 	})
 }
 
