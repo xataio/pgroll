@@ -167,13 +167,6 @@ func TableMustHaveColumnCount(t *testing.T, db *sql.DB, schema, table string, n 
 	}
 }
 
-func FunctionMustExist(t *testing.T, db *sql.DB, schema, function string) {
-	t.Helper()
-	if !functionExists(t, db, schema, function) {
-		t.Fatalf("Expected function %q to exist", function)
-	}
-}
-
 func FunctionMustNotExist(t *testing.T, db *sql.DB, schema, function string) {
 	t.Helper()
 	if functionExists(t, db, schema, function) {
@@ -185,13 +178,6 @@ func TriggerMustNotExist(t *testing.T, db *sql.DB, schema, table, trigger string
 	t.Helper()
 	if triggerExists(t, db, schema, table, trigger) {
 		t.Fatalf("Expected trigger %q to not exist", trigger)
-	}
-}
-
-func TriggerMustExist(t *testing.T, db *sql.DB, schema, table, trigger string) {
-	t.Helper()
-	if !triggerExists(t, db, schema, table, trigger) {
-		t.Fatalf("Expected trigger %q to exist", trigger)
 	}
 }
 
