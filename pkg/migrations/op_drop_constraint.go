@@ -142,6 +142,10 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if !table.ConstraintExists(o.Name) {
+		return ConstraintDoesNotExistError{Table: o.Table, Constraint: o.Name}
+	}
+
 	if o.Down == "" {
 		return FieldRequiredError{Name: "down"}
 	}
