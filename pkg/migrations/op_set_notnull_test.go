@@ -420,6 +420,67 @@ func TestSetNotNull(t *testing.T) {
 				}, testutils.CheckViolationErrorCode)
 			},
 		},
+		{
+			name: "setting a column to not null retains any unique constraints defined on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+									Unique:   true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(false),
+							Up:       "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting an initial row succeeds
+				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row with a duplicate `name` value fails
+				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"name": "alice",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row with a duplicate `name` value fails
+				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"name": "alice",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Inserting a row with a different `name` value succeeds
+				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+					"name": "bob",
+				})
+			},
+		},
 	})
 }
 

@@ -45,6 +45,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		cSetDefaultSQL         = `ALTER COLUMN %s SET DEFAULT %s`
 		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)`
 		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
+		cCreateUniqueIndexSQL  = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
 	)
 
 	// Generate SQL to duplicate the column's name and type
@@ -89,8 +90,29 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	}
 
 	_, err := d.conn.ExecContext(ctx, sql)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Generate SQL to duplicate any unique constraints on the column
+	// The constraint is duplicated by adding a unique index on the column concurrently.
+	// The index is converted into a unique constraint on migration completion.
+	for _, uc := range d.table.UniqueConstraints {
+		if slices.Contains(uc.Columns, d.column.Name) {
+			sql = fmt.Sprintf(cCreateUniqueIndexSQL,
+				pq.QuoteIdentifier(DuplicationName(uc.Name)),
+				pq.QuoteIdentifier(d.table.Name),
+				strings.Join(quoteColumnNames(copyAndReplace(uc.Columns, d.column.Name, d.asName)), ", "),
+			)
+
+			_, err = d.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func DuplicationName(name string) string {

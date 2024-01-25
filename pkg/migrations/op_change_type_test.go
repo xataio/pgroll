@@ -396,6 +396,67 @@ func TestChangeColumnType(t *testing.T) {
 				}, testutils.NotNullViolationErrorCode)
 			},
 		},
+		{
+			name: "changing column type preserves any unique constraints on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "username",
+									Type:   "text",
+									Unique: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting an initial row succeeds
+				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"username": "alice",
+				})
+
+				// Inserting a row with a duplicate `username` value fails
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"username": "alice",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row with a duplicate `username` value fails
+				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"username": "alice",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Inserting a row with a different `username` value succeeds
+				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+					"username": "bob",
+				})
+			},
+		},
 	})
 }
 

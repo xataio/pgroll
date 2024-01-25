@@ -462,5 +462,10 @@ func TestSetColumnUnique(t *testing.T) {
 				}, testutils.NotNullViolationErrorCode)
 			},
 		},
+		// It should be possible to add multiple unique constraints to a column
+		// once unique constraints covering multiple columns are supported.
+		//
+		// In that case it should be possible to test that existing unique constraints are
+		// preserved when adding a new unique constraint covering the same column.
 	})
 }
