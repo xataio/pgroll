@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 )
 
 type OpName string
@@ -38,10 +37,6 @@ const temporaryPrefix = "_pgroll_new_"
 
 func TemporaryName(name string) string {
 	return temporaryPrefix + name
-}
-
-func StripTemporaryPrefix(name string) string {
-	return strings.TrimPrefix(name, temporaryPrefix)
 }
 
 func ReadMigration(r io.Reader) (*Migration, error) {
