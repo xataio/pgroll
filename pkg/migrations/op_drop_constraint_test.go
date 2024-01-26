@@ -526,6 +526,83 @@ func TestDropConstraint(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves a foreign key constraint on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_departments_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "departments",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_employees_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "employees",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:   "department_id",
+									Type:   "integer",
+									Unique: true,
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_employee_department",
+										Table:  "departments",
+										Column: "id",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "03_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "employees",
+							Column: "department_id",
+							Name:   "_pgroll_new_employees_department_id_key",
+							Up:     "department_id",
+							Down:   "department_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A temporary FK constraint has been created on the temporary column
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint still exists on the column
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+			},
+		},
 	})
 }
 
