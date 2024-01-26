@@ -147,5 +147,47 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 				ColumnMustNotExist(t, db, "public", "users", "array")
 			},
 		},
+		{
+			name: "can drop a column in a table with a reserved word as its name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "array",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_column",
+					Operations: migrations.Operations{
+						&migrations.OpDropColumn{
+							Table:  "array",
+							Column: "name",
+							Down:   ptr("UPPER(email)"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The column has been deleted from the underlying table.
+				ColumnMustNotExist(t, db, "public", "users", "array")
+			},
+		},
 	})
 }
