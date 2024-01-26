@@ -538,6 +538,26 @@ func TestDropConstraintValidation(t *testing.T) {
 			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
 		},
 		{
+			name: "constraint must exist",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				addCheckMigration,
+				{
+					Name: "03_drop_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "doesntexist",
+							Up:     "title",
+							Down:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ConstraintDoesNotExistError{Table: "posts", Constraint: "doesntexist"},
+		},
+		{
 			name: "name is mandatory",
 			migrations: []migrations.Migration{
 				createTableMigration,

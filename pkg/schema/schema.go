@@ -164,6 +164,19 @@ func (t *Table) GetColumn(name string) *Column {
 	return &c
 }
 
+func (t *Table) ConstraintExists(name string) bool {
+	_, ok := t.CheckConstraints[name]
+	if ok {
+		return true
+	}
+	_, ok = t.UniqueConstraints[name]
+	if ok {
+		return true
+	}
+	_, ok = t.ForeignKeys[name]
+	return ok
+}
+
 func (t *Table) GetPrimaryKey() (columns []*Column) {
 	for _, name := range t.PrimaryKey {
 		columns = append(columns, t.GetColumn(name))
