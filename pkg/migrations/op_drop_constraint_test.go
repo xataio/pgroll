@@ -749,6 +749,58 @@ func TestDropConstraint(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves column not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Unique:   true,
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "_pgroll_new_posts_title_key",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_drop_unique_constraint", "posts", map[string]string{
+					"id": "1",
+				}, testutils.NotNullViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_drop_unique_constraint", "posts", map[string]string{
+					"id": "2",
+				}, testutils.NotNullViolationErrorCode)
+			},
+		},
 	})
 }
 
