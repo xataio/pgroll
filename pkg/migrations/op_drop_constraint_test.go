@@ -455,6 +455,77 @@ func TestDropConstraint(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves the column's default value",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Unique:  true,
+									Default: ptr("'anonymous'"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "users",
+							Column: "name",
+							Name:   "_pgroll_new_users_name_key",
+							Up:     "name",
+							Down:   "name || '-' || (random()*1000000)::integer",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "1",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_drop_unique_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "anonymous"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Delete the row that was inserted in the `afterStart` hook to
+				// ensure that another row with a default 'name` can be inserted
+				// without violating the UNIQUE constraint on the column.
+				MustDelete(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "1",
+				})
+
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "2",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_drop_unique_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "anonymous"},
+				}, rows)
+			},
+		},
 	})
 }
 
