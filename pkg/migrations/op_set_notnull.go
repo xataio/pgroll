@@ -187,20 +187,3 @@ func (o *OpSetNotNull) downSQL() string {
 	}
 	return o.Down
 }
-
-func duplicateColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column schema.Column) error {
-	column.Name = TemporaryName(column.Name)
-
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
-		pq.QuoteIdentifier(table.Name),
-		schemaColumnToSQL(column),
-	))
-
-	return err
-}
-
-// TODO: This function needs to be able to duplicate a column more precisely
-// including constraints, indexes, defaults, etc.
-func schemaColumnToSQL(c schema.Column) string {
-	return fmt.Sprintf("%s %s", pq.QuoteIdentifier(c.Name), c.Type)
-}

@@ -18,7 +18,8 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema 
 	column := table.GetColumn(o.Column)
 
 	// Create a copy of the column on the underlying table.
-	if err := duplicateColumn(ctx, conn, table, *column); err != nil {
+	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
+	if err := d.Duplicate(ctx); err != nil {
 		return fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
@@ -90,11 +91,9 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn *sql.DB, s *schema
 	}
 
 	// Rename the new column to the old column name
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
-		pq.QuoteIdentifier(o.Column)))
-	if err != nil {
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
+	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
 		return err
 	}
 

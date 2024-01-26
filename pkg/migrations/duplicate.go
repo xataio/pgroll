@@ -14,11 +14,12 @@ import (
 )
 
 type Duplicator struct {
-	conn     *sql.DB
-	table    *schema.Table
-	column   *schema.Column
-	asName   string
-	withType string
+	conn              *sql.DB
+	table             *schema.Table
+	column            *schema.Column
+	asName            string
+	withType          string
+	withoutConstraint string
 }
 
 // NewColumnDuplicator creates a new Duplicator for a column.
@@ -34,6 +35,11 @@ func NewColumnDuplicator(conn *sql.DB, table *schema.Table, column *schema.Colum
 
 func (d *Duplicator) WithType(t string) *Duplicator {
 	d.withType = t
+	return d
+}
+
+func (d *Duplicator) WithoutConstraint(c string) *Duplicator {
+	d.withoutConstraint = c
 	return d
 }
 
@@ -70,6 +76,10 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 
 	// Generate SQL to duplicate any foreign key constraints on the column
 	for _, fk := range d.table.ForeignKeys {
+		if fk.Name == d.withoutConstraint {
+			continue
+		}
+
 		if slices.Contains(fk.Columns, d.column.Name) {
 			sql += fmt.Sprintf(", "+cAddForeignKeySQL,
 				pq.QuoteIdentifier(DuplicationName(fk.Name)),
@@ -81,6 +91,10 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 
 	// Generate SQL to duplicate any check constraints on the column
 	for _, cc := range d.table.CheckConstraints {
+		if cc.Name == d.withoutConstraint {
+			continue
+		}
+
 		if slices.Contains(cc.Columns, d.column.Name) {
 			sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
@@ -98,6 +112,10 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	// The constraint is duplicated by adding a unique index on the column concurrently.
 	// The index is converted into a unique constraint on migration completion.
 	for _, uc := range d.table.UniqueConstraints {
+		if uc.Name == d.withoutConstraint {
+			continue
+		}
+
 		if slices.Contains(uc.Columns, d.column.Name) {
 			sql = fmt.Sprintf(cCreateUniqueIndexSQL,
 				pq.QuoteIdentifier(DuplicationName(uc.Name)),

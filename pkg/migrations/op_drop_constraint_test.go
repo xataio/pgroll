@@ -455,6 +455,352 @@ func TestDropConstraint(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves the column's default value",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Unique:  true,
+									Default: ptr("'anonymous'"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "users",
+							Column: "name",
+							Name:   "_pgroll_new_users_name_key",
+							Up:     "name",
+							Down:   "name || '-' || (random()*1000000)::integer",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "1",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_drop_unique_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "anonymous"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Delete the row that was inserted in the `afterStart` hook to
+				// ensure that another row with a default 'name` can be inserted
+				// without violating the UNIQUE constraint on the column.
+				MustDelete(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "1",
+				})
+
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, "public", "02_drop_unique_constraint", "users", map[string]string{
+					"id": "2",
+				})
+
+				// The newly inserted row respects the default value of the column.
+				rows := MustSelect(t, db, "public", "02_drop_unique_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "anonymous"},
+				}, rows)
+			},
+		},
+		{
+			name: "dropping a unique constraint preserves a foreign key constraint on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_departments_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "departments",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_employees_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "employees",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: false,
+								},
+								{
+									Name:   "department_id",
+									Type:   "integer",
+									Unique: true,
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_employee_department",
+										Table:  "departments",
+										Column: "id",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "03_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "employees",
+							Column: "department_id",
+							Name:   "_pgroll_new_employees_department_id_key",
+							Up:     "department_id",
+							Down:   "department_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// A temporary FK constraint has been created on the temporary column
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// The foreign key constraint still exists on the column
+				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+			},
+		},
+		{
+			name: "dropping a unique constraint preserves a check constraint on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Nullable: true,
+									Unique:   true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
+						},
+					},
+				},
+				{
+					Name: "03_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "_pgroll_new_posts_title_key",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail
+				MustNotInsert(t, db, "public", "03_drop_unique_constraint", "posts", map[string]string{
+					"id":    "1",
+					"title": "a",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "03_drop_unique_constraint", "posts", map[string]string{
+					"id":    "2",
+					"title": "b",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
+		{
+			name: "dropping a check constraint preserves a unique constraint on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Nullable: true,
+									Unique:   true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
+						},
+					},
+				},
+				{
+					Name: "03_drop_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "check_title_length",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting an initial row into the `posts` table succeeds
+				MustInsert(t, db, "public", "03_drop_check_constraint", "posts", map[string]string{
+					"title": "post by alice",
+				})
+
+				// Inserting another row with a duplicate `title` value fails
+				MustNotInsert(t, db, "public", "03_drop_check_constraint", "posts", map[string]string{
+					"title": "post by alice",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row with a duplicate `title` value fails
+				MustNotInsert(t, db, "public", "03_drop_check_constraint", "posts", map[string]string{
+					"title": "post by alice",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Inserting a row with a different `title` value succeeds
+				MustInsert(t, db, "public", "03_drop_check_constraint", "posts", map[string]string{
+					"title": "post by bob",
+				})
+			},
+		},
+		{
+			name: "dropping a unique constraint preserves column not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Unique:   true,
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "_pgroll_new_posts_title_key",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_drop_unique_constraint", "posts", map[string]string{
+					"id": "1",
+				}, testutils.NotNullViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the NOT NULL constraint fails.
+				MustNotInsert(t, db, "public", "02_drop_unique_constraint", "posts", map[string]string{
+					"id": "2",
+				}, testutils.NotNullViolationErrorCode)
+			},
+		},
 	})
 }
 
