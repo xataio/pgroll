@@ -603,6 +603,75 @@ func TestDropConstraint(t *testing.T) {
 				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves a check constraint on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Nullable: true,
+									Unique:   true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
+						},
+					},
+				},
+				{
+					Name: "03_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "_pgroll_new_posts_title_key",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail
+				MustNotInsert(t, db, "public", "03_drop_unique_constraint", "posts", map[string]string{
+					"id":    "1",
+					"title": "a",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB) {
+				// Inserting a row that violates the check constraint should fail.
+				MustNotInsert(t, db, "public", "03_drop_unique_constraint", "posts", map[string]string{
+					"id":    "2",
+					"title": "b",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
 	})
 }
 
