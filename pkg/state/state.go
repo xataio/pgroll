@@ -180,7 +180,7 @@ BEGIN
 				    FROM pg_index pi
 				    JOIN pg_attribute a ON a.attrelid = pi.indrelid AND a.attnum = ANY(pi.indkey)
 				    WHERE indrelid = t.oid::regclass
-				    GROUP BY pi.indexrelid
+				    GROUP BY pi.indexrelid, pi.indisunique
 				  ) as ix_details
 				),
 				'checkConstraints', (
@@ -198,7 +198,7 @@ BEGIN
 						INNER JOIN pg_attribute cc_attr ON cc_attr.attrelid = cc_constraint.conrelid AND cc_attr.attnum = ANY(cc_constraint.conkey)
 						WHERE cc_constraint.conrelid = t.oid
 						AND cc_constraint.contype = 'c'
-						GROUP BY cc_constraint.oid
+						GROUP BY cc_constraint.oid, cc_constraint.conname
 					) AS cc_details
         ),
 				'uniqueConstraints', (
@@ -215,7 +215,7 @@ BEGIN
 						INNER JOIN pg_attribute uc_attr ON uc_attr.attrelid = uc_constraint.conrelid AND uc_attr.attnum = ANY(uc_constraint.conkey)
 						WHERE uc_constraint.conrelid = t.oid
 						AND uc_constraint.contype = 'u'
-						GROUP BY uc_constraint.oid
+						GROUP BY uc_constraint.oid, uc_constraint.conname
 					) AS uc_details
         ),
 				'foreignKeys', (
