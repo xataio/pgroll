@@ -1,0 +1,14 @@
+{
+  "name": "31_unset_not_null",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "posts",
+        "column": "title",
+        "nullable": true,
+        "up": "title",
+        "down": "(SELECT CASE WHEN title IS NULL THEN 'placeholder title' ELSE title END)"
+      }
+    }
+  ]
+}
