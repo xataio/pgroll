@@ -16,7 +16,7 @@ func TestSetNotNull(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "set nullable with default down sql",
+			name: "set not null with default down sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -158,7 +158,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "set nullable with user-supplied down sql",
+			name: "set not null with user-supplied down sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
