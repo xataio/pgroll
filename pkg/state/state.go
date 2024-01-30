@@ -274,7 +274,6 @@ BEGIN
 	ELSIF tg_event = 'ddl_command_end' THEN
 		-- Guess the schema from ddl commands, ignore migrations that touch several schemas
 		IF (SELECT pg_catalog.count(DISTINCT schema_name) FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL) > 1 THEN
-			RAISE NOTICE 'pgroll: ignoring migration that changes several schemas';
 			RETURN;
 		END IF;
 
@@ -282,13 +281,11 @@ BEGIN
 	END IF;
 
 	IF schemaname IS NULL THEN
-		RAISE NOTICE 'pgroll: ignoring migration with null schema';
 		RETURN;
 	END IF;
 
 	-- Ignore migrations done during a migration period
 	IF %[1]s.is_active_migration_period(schemaname) THEN
-		RAISE NOTICE 'pgroll: ignoring migration during active migration period';
 		RETURN;
 	END IF;
 
