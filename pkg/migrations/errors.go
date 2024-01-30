@@ -61,6 +61,15 @@ func (e ColumnIsNotNullableError) Error() string {
 	return fmt.Sprintf("column %q on table %q is NOT NULL", e.Name, e.Table)
 }
 
+type ColumnIsNullableError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnIsNullableError) Error() string {
+	return fmt.Sprintf("column %q on table %q is nullable", e.Name, e.Table)
+}
+
 type IndexAlreadyExistsError struct {
 	Name string
 }
