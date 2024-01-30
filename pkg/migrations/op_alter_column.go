@@ -5,7 +5,6 @@ package migrations
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -53,18 +52,12 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	// Apply any special validation rules for the inner operation
 	op := o.innerOperation()
-	switch op.(type) {
-	case *OpRenameColumn:
+	if _, ok := op.(*OpRenameColumn); ok {
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
 		if o.Down != "" {
 			return NoDownSQLAllowedError{}
-		}
-
-	case *OpSetNotNull:
-		if o.Nullable != nil && *o.Nullable {
-			return fmt.Errorf("removing NOT NULL constraints is not supported")
 		}
 	}
 
@@ -108,8 +101,16 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Down:       o.Down,
 		}
 
-	case o.Nullable != nil:
+	case o.Nullable != nil && !*o.Nullable:
 		return &OpSetNotNull{
+			Table:  o.Table,
+			Column: o.Column,
+			Up:     o.Up,
+			Down:   o.Down,
+		}
+
+	case o.Nullable != nil && *o.Nullable:
+		return &OpDropNotNull{
 			Table:  o.Table,
 			Column: o.Column,
 			Up:     o.Up,
