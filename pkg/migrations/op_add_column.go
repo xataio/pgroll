@@ -227,5 +227,5 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) erro
 }
 
 func NotNullConstraintName(columnName string) string {
-	return "_pgroll_add_column_check_" + columnName
+	return "_pgroll_check_not_null_" + columnName
 }
