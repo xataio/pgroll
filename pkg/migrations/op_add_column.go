@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -228,4 +229,8 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) erro
 
 func NotNullConstraintName(columnName string) string {
 	return "_pgroll_check_not_null_" + columnName
+}
+
+func IsNotNullConstraintName(name string) bool {
+	return strings.HasPrefix(name, "_pgroll_check_not_null_")
 }
