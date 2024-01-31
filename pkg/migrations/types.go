@@ -75,10 +75,10 @@ type OpAlterColumn struct {
 	Column string `json:"column"`
 
 	// SQL expression for down migration
-	Down string `json:"down"`
+	Down *string `json:"down,omitempty"`
 
 	// New name of the column (for rename column operation)
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 
 	// Indicates if the column is nullable (for add/remove not null constraint
 	// operation)
@@ -91,13 +91,13 @@ type OpAlterColumn struct {
 	Table string `json:"table"`
 
 	// New type of the column (for change type operation)
-	Type string `json:"type"`
+	Type *string `json:"type,omitempty"`
 
 	// Add unique constraint to the column
 	Unique *UniqueConstraint `json:"unique,omitempty"`
 
 	// SQL expression for up migration
-	Up string `json:"up"`
+	Up *string `json:"up,omitempty"`
 }
 
 // Create index operation
