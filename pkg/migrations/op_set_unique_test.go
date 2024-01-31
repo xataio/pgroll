@@ -57,7 +57,7 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "reviews_review_unique",
 							},
-							Up: "review || '-' || (random()*1000000)::integer",
+							Up: ptr("review || '-' || (random()*1000000)::integer"),
 						},
 					},
 				},
@@ -158,8 +158,8 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "reviews_review_unique",
 							},
-							Up:   "review || '-' || (random()*1000000)::integer",
-							Down: "review || '!'",
+							Up:   ptr("review || '-' || (random()*1000000)::integer"),
+							Down: ptr("review || '!'"),
 						},
 					},
 				},
@@ -220,8 +220,8 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "reviews_username_unique",
 							},
-							Up:   "username",
-							Down: "username",
+							Up:   ptr("username"),
+							Down: ptr("username"),
 						},
 					},
 				},
@@ -322,8 +322,8 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "employees_department_id_unique",
 							},
-							Up:   "department_id",
-							Down: "department_id",
+							Up:   ptr("department_id"),
+							Down: ptr("department_id"),
 						},
 					},
 				},
@@ -378,8 +378,8 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "reviews_username_unique",
 							},
-							Up:   "username",
-							Down: "username",
+							Up:   ptr("username"),
+							Down: ptr("username"),
 						},
 					},
 				},
@@ -441,8 +441,8 @@ func TestSetColumnUnique(t *testing.T) {
 							Unique: &migrations.UniqueConstraint{
 								Name: "reviews_username_unique",
 							},
-							Up:   "username",
-							Down: "username",
+							Up:   ptr("username"),
+							Down: ptr("username"),
 						},
 					},
 				},
