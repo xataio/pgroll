@@ -106,7 +106,6 @@
       "type": "object"
     },
     "OpAlterColumn": {
-      "additionalProperties": false,
       "description": "Alter column operation",
       "properties": {
         "column": {
