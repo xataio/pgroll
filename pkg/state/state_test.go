@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -31,11 +32,6 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 
 		// create a table in the public schema
 		if _, err := db.ExecContext(ctx, "CREATE TABLE public.table1 (id int)"); err != nil {
-			t.Fatal(err)
-		}
-
-		// init the state
-		if err := state.Init(ctx); err != nil {
 			t.Fatal(err)
 		}
 
@@ -83,11 +79,6 @@ func TestInferredMigration(t *testing.T) {
 			},
 		}
 
-		// init the state
-		if err := state.Init(ctx); err != nil {
-			t.Fatal(err)
-		}
-
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				if _, err := db.ExecContext(ctx, "DROP SCHEMA public CASCADE; CREATE SCHEMA public"); err != nil {
@@ -112,7 +103,7 @@ func TestInferredMigration(t *testing.T) {
 				}
 
 				// test there is a name for the migration, then remove it for the comparison
-				assert.True(t, len(gotMigration.Name) > 1)
+				assert.True(t, strings.HasPrefix(gotMigration.Name, "sql_") && len(gotMigration.Name) > 10)
 				gotMigration.Name = ""
 
 				if diff := cmp.Diff(tt.wantMigration, gotMigration); diff != "" {
@@ -379,11 +370,6 @@ func TestReadSchema(t *testing.T) {
 					},
 				},
 			},
-		}
-
-		// init the state
-		if err := state.Init(ctx); err != nil {
-			t.Fatal(err)
 		}
 
 		for _, tt := range tests {
