@@ -80,7 +80,8 @@ type OpAlterColumn struct {
 	// New name of the column (for rename column operation)
 	Name string `json:"name"`
 
-	// Indicates if the column is nullable (for add not null constraint operation)
+	// Indicates if the column is nullable (for add/remove not null constraint
+	// operation)
 	Nullable *bool `json:"nullable,omitempty"`
 
 	// Add foreign key constraint to the column

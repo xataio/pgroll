@@ -18,6 +18,7 @@ type Duplicator struct {
 	table             *schema.Table
 	column            *schema.Column
 	asName            string
+	withoutNotNull    bool
 	withType          string
 	withoutConstraint string
 }
@@ -40,6 +41,11 @@ func (d *Duplicator) WithType(t string) *Duplicator {
 
 func (d *Duplicator) WithoutConstraint(c string) *Duplicator {
 	d.withoutConstraint = c
+	return d
+}
+
+func (d *Duplicator) WithoutNotNull() *Duplicator {
+	d.withoutNotNull = true
 	return d
 }
 
@@ -67,7 +73,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 
 	// Generate SQL to add an unchecked NOT NULL constraint if the original column
 	// is NOT NULL. The constraint will be validated on migration completion.
-	if !d.column.Nullable {
+	if !d.column.Nullable && !d.withoutNotNull {
 		sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
 			pq.QuoteIdentifier(DuplicationName(NotNullConstraintName(d.column.Name))),
 			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(d.asName)),

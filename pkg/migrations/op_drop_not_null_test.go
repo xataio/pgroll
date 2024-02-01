@@ -11,12 +11,12 @@ import (
 	"github.com/xataio/pgroll/pkg/testutils"
 )
 
-func TestSetNotNull(t *testing.T) {
+func TestDropNotNull(t *testing.T) {
 	t.Parallel()
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "set not null with default down sql",
+			name: "remove not null with default up sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -42,7 +42,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: true,
+									Nullable: false,
 								},
 							},
 						},
@@ -54,8 +54,8 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Nullable: ptr(true),
+							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
 				},
@@ -64,54 +64,47 @@ func TestSetNotNull(t *testing.T) {
 				// The new (temporary) `review` column should exist on the underlying table.
 				ColumnMustExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
 
-				// Inserting a NULL into the new `review` column should fail
-				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
-					"username": "alice",
-					"product":  "apple",
-				}, testutils.CheckViolationErrorCode)
-
-				// Inserting a non-NULL value into the new `review` column should succeed
+				// Inserting a NULL into the new `review` column should succeed
 				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
-					"review":   "amazing",
 				})
 
-				// The value inserted into the new `review` column has been backfilled into the
+				// Inserting a non-NULL value into the new `review` column should succeed
+				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+					"username": "bob",
+					"product":  "banana",
+					"review":   "brilliant",
+				})
+
+				// The rows inserted into the new `review` column have been backfilled into the
 				// old `review` column.
 				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
+					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
+					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
 				}, rows)
 
-				// Inserting a NULL value into the old `review` column should succeed
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
-					"username": "bob",
-					"product":  "banana",
-				})
-
-				// The NULL value inserted into the old `review` column has been written into
-				// the new `review` column using the `up` SQL.
-				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
-				assert.Equal(t, []map[string]any{
-					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
-					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
-				}, rows)
+				// Inserting a NULL value into the old `review` column should fail
+				MustNotInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+					"username": "carl",
+					"product":  "carrot",
+				}, testutils.NotNullViolationErrorCode)
 
 				// Inserting a non-NULL value into the old `review` column should succeed
 				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
-					"username": "carl",
-					"product":  "carrot",
-					"review":   "crunchy",
+					"username": "dana",
+					"product":  "durian",
+					"review":   "delicious",
 				})
 
 				// The non-NULL value inserted into the old `review` column has been copied
 				// unchanged into the new `review` column.
 				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
-					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
-					{"id": 4, "username": "carl", "product": "carrot", "review": "crunchy"},
+					{"id": 1, "username": "alice", "product": "apple", "review": nil},
+					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
+					{"id": 4, "username": "dana", "product": "durian", "review": "delicious"},
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
@@ -132,19 +125,20 @@ func TestSetNotNull(t *testing.T) {
 				// The new (temporary) `review` column should not exist on the underlying table.
 				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
 
+				// Writing a NULL review into the `review` column should succeed.
+				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+					"username": "earl",
+					"product":  "eggplant",
+				})
+
 				// Selecting from the `reviews` view should succeed.
 				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
-					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
-					{"id": 4, "username": "carl", "product": "carrot", "review": "crunchy"},
+					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
+					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
+					{"id": 4, "username": "dana", "product": "durian", "review": "delicious"},
+					{"id": 5, "username": "earl", "product": "eggplant", "review": nil},
 				}, rows)
-
-				// Writing NULL reviews into the `review` column should fail.
-				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
-					"username": "daisy",
-					"product":  "durian",
-				}, testutils.NotNullViolationErrorCode)
 
 				// The up function no longer exists.
 				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
@@ -158,7 +152,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "set not null with user-supplied down sql",
+			name: "remove not null with user-supplied up sql",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -184,7 +178,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: true,
+									Nullable: false,
 								},
 							},
 						},
@@ -196,26 +190,26 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
 							Column:   "review",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:     "review || ' (from new column)'",
+							Nullable: ptr(true),
+							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Up:       "review || ' (from the old column)'",
 						},
 					},
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB) {
-				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				// Inserting a non-NULL value into the old `review` column should succeed
+				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
 				})
 
-				// The value inserted into the new `review` column has been backfilled into the
-				// old `review` column using the user-supplied `down` SQL.
-				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
+				// The value inserted into the old `review` column has been backfilled into the
+				// new `review` column using the user-supplied `up` SQL.
+				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
-					{"id": 1, "username": "alice", "product": "apple", "review": "amazing (from new column)"},
+					{"id": 1, "username": "alice", "product": "apple", "review": "amazing (from the old column)"},
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB) {
@@ -224,7 +218,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "setting a foreign key column to not null retains the foreign key constraint",
+			name: "dropping not null from a foreign key column retains the foreign key constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_departments_table",
@@ -265,7 +259,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: true,
+									Nullable: false,
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -282,9 +276,9 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "employees",
 							Column:   "department_id",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
-							Down:     "department_id",
+							Nullable: ptr(true),
+							Down:     "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
+							Up:       "department_id",
 						},
 					},
 				},
@@ -301,7 +295,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "setting a column to not null retains any default defined on the column",
+			name: "dropping not null retains any default defined on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -317,7 +311,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: false,
 									Default:  ptr("'anonymous'"),
 								},
 							},
@@ -330,8 +324,9 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "users",
 							Column:   "name",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Nullable: ptr(true),
+							Up:       "name",
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -365,7 +360,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "setting a column to not null retains any check constraints defined on the column",
+			name: "dropping not null retains any check constraints defined on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -381,7 +376,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: false,
 									Check: &migrations.CheckConstraint{
 										Name:       "name_length",
 										Constraint: "length(name) > 3",
@@ -397,8 +392,9 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "users",
 							Column:   "name",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Nullable: ptr(true),
+							Up:       "name",
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -421,7 +417,7 @@ func TestSetNotNull(t *testing.T) {
 			},
 		},
 		{
-			name: "setting a column to not null retains any unique constraints defined on the column",
+			name: "dropping not null retains any unique constraints defined on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -437,7 +433,7 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: false,
 									Unique:   true,
 								},
 							},
@@ -450,8 +446,9 @@ func TestSetNotNull(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "users",
 							Column:   "name",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Nullable: ptr(true),
+							Up:       "name",
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -484,67 +481,18 @@ func TestSetNotNull(t *testing.T) {
 	})
 }
 
-func TestSetNotNullValidation(t *testing.T) {
+func TestDropNotNullValidation(t *testing.T) {
 	t.Parallel()
-
-	createTableMigration := migrations.Migration{
-		Name: "01_add_table",
-		Operations: migrations.Operations{
-			&migrations.OpCreateTable{
-				Name: "reviews",
-				Columns: []migrations.Column{
-					{
-						Name: "id",
-						Type: "serial",
-						Pk:   true,
-					},
-					{
-						Name:     "username",
-						Type:     "text",
-						Nullable: false,
-					},
-					{
-						Name:     "product",
-						Type:     "text",
-						Nullable: false,
-					},
-					{
-						Name:     "review",
-						Type:     "text",
-						Nullable: true,
-					},
-				},
-			},
-		},
-	}
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "up SQL is mandatory",
-			migrations: []migrations.Migration{
-				createTableMigration,
-				{
-					Name: "02_set_nullable",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Down:     "review",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.FieldRequiredError{Name: "up"},
-		},
-		{
-			name: "column is nullable",
+			name: "down SQL is mandatory",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
-							Name: "reviews",
+							Name: "users",
 							Columns: []migrations.Column{
 								{
 									Name: "id",
@@ -552,17 +500,7 @@ func TestSetNotNullValidation(t *testing.T) {
 									Pk:   true,
 								},
 								{
-									Name:     "username",
-									Type:     "text",
-									Nullable: false,
-								},
-								{
-									Name:     "product",
-									Type:     "text",
-									Nullable: false,
-								},
-								{
-									Name:     "review",
+									Name:     "name",
 									Type:     "text",
 									Nullable: false,
 								},
@@ -574,16 +512,53 @@ func TestSetNotNullValidation(t *testing.T) {
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Up:       "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Down:     "review",
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(true),
+							Up:       "name",
 						},
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsNotNullableError{Table: "reviews", Name: "review"},
+			wantStartErr: migrations.FieldRequiredError{Name: "down"},
+		},
+		{
+			name: "can't remove not null from a column that is already nullable",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_nullable",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(true),
+							Up:       "name",
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsNullableError{Table: "users", Name: "name"},
 		},
 	})
 }

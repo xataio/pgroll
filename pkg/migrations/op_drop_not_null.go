@@ -11,28 +11,23 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpSetNotNull struct {
+type OpDropNotNull struct {
 	Table  string `json:"table"`
 	Column string `json:"column"`
 	Up     string `json:"up"`
 	Down   string `json:"down"`
 }
 
-var _ Operation = (*OpSetNotNull)(nil)
+var _ Operation = (*OpDropNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
 	// Create a copy of the column on the underlying table.
-	d := NewColumnDuplicator(conn, table, column)
+	d := NewColumnDuplicator(conn, table, column).WithoutNotNull()
 	if err := d.Duplicate(ctx); err != nil {
 		return fmt.Errorf("failed to duplicate column: %w", err)
-	}
-
-	// Add an unchecked NOT NULL constraint to the new column.
-	if err := addNotNullConstraint(ctx, conn, o.Table, o.Column, TemporaryName(o.Column)); err != nil {
-		return fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
@@ -44,7 +39,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
-		SQL:            o.Up,
+		SQL:            o.upSQL(),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create up trigger: %w", err)
@@ -71,7 +66,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
 		StateSchema:    stateSchema,
-		SQL:            o.downSQL(),
+		SQL:            o.Down,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create down trigger: %w", err)
@@ -80,36 +75,9 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
-	// Validate the NOT NULL constraint on the old column.
-	// The constraint must be valid because:
-	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
-	// * New NULL values written to the old column during the migration period were also rewritten using `up` SQL.
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(NotNullConstraintName(o.Column))))
-	if err != nil {
-		return err
-	}
-
-	// Use the validated constraint to add `NOT NULL` to the new column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column))))
-	if err != nil {
-		return err
-	}
-
-	// Drop the NOT NULL constraint
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(NotNullConstraintName(o.Column))))
-	if err != nil {
-		return err
-	}
-
+func (o *OpDropNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
 	// Drop the old column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Column)))
 	if err != nil {
@@ -140,7 +108,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Sch
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpDropNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
@@ -166,24 +134,24 @@ func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
 	return err
 }
 
-func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
+func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	column := s.GetTable(o.Table).GetColumn(o.Column)
-
-	if !column.Nullable {
-		return ColumnIsNotNullableError{Table: o.Table, Name: o.Column}
+	if column.Nullable {
+		return ColumnIsNullableError{Table: o.Table, Name: o.Column}
 	}
 
-	if o.Up == "" {
-		return FieldRequiredError{Name: "up"}
+	if o.Down == "" {
+		return FieldRequiredError{Name: "down"}
 	}
 
 	return nil
 }
 
-// Down SQL is either user-specified or defaults to copying the value from the new column to the old.
-func (o *OpSetNotNull) downSQL() string {
-	if o.Down == "" {
-		return fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column)))
+// When removing `NOT NULL` from a column, up SQL is either user-specified or
+// defaults to copying the value from the old column to the new.
+func (o *OpDropNotNull) upSQL() string {
+	if o.Up == "" {
+		return pq.QuoteIdentifier(o.Column)
 	}
-	return o.Down
+	return o.Up
 }

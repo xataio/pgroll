@@ -21,6 +21,7 @@
         * [Add check constraint](#add-check-constraint)
         * [Add foreign key](#add-foreign-key)
         * [Add not null constraint](#add-not-null-constraint)
+        * [Drop not null constraint](#drop-not-null-constraint)
         * [Add unique constraint](#add-unique-constraint)
     * [Create index](#create-index)
     * [Create table](#create-table)
@@ -675,6 +676,7 @@ See the [examples](../examples) directory for examples of each kind of operation
     * [Add check constraint](#add-check-constraint)
     * [Add foreign key](#add-foreign-key)
     * [Add not null constraint](#add-not-null-constraint)
+    * [Drop not null constraint](#drop-not-null-constraint)
     * [Add unique constraint](#add-unique-constraint)
 * [Create index](#create-index)
 * [Create table](#create-table)
@@ -847,6 +849,28 @@ Add not null operations add a `NOT NULL` constraint to a column.
 Example **add not null** migrations:
 
 * [16_set_nullable.json](../examples/16_set_nullable.json)
+
+#### Drop not null constraint
+
+Drop not null operations drop a `NOT NULL` constraint from a column.
+
+**drop not null** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "nullable": true,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **drop not null** migrations:
+
+* [31_unset_not_null.json](../examples/31_unset_not_null.json)
 
 #### Add unique constraint
 

@@ -126,7 +126,7 @@
           "type": "string"
         },
         "nullable": {
-          "description": "Indicates if the column is nullable (for add not null constraint operation)",
+          "description": "Indicates if the column is nullable (for add/remove not null constraint operation)",
           "type": "boolean"
         },
         "references": {
