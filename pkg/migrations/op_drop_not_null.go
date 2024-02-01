@@ -30,7 +30,7 @@ func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema str
 		return fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
-	// Add a trigger to copy values from the old column to the new, rewriting NULL values using the `up` SQL.
+	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	err := createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,

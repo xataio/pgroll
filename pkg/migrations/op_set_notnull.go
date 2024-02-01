@@ -35,7 +35,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		return fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
-	// Add a trigger to copy values from the old column to the new, rewriting NULL values using the `up` SQL.
+	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	err := createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
