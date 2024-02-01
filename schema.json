@@ -109,67 +109,85 @@
       "additionalProperties": false,
       "description": "Alter column operation",
       "properties": {
-        "check": {
-          "$ref": "#/$defs/CheckConstraint",
-          "description": "Add check constraint to the column"
-        },
         "column": {
           "description": "Name of the column",
           "type": "string"
         },
-        "down": {
-          "description": "SQL expression for down migration",
-          "type": "string"
-        },
-        "name": {
-          "description": "New name of the column (for rename column operation)",
-          "type": "string"
-        },
-        "nullable": {
-          "description": "Indicates if the column is nullable (for add/remove not null constraint operation)",
-          "type": "boolean"
-        },
-        "references": {
-          "$ref": "#/$defs/ForeignKeyReference",
-          "description": "Add foreign key constraint to the column"
-        },
         "table": {
           "description": "Name of the table",
-          "type": "string"
-        },
-        "type": {
-          "description": "New type of the column (for change type operation)",
-          "type": "string"
-        },
-        "unique": {
-          "$ref": "#/$defs/UniqueConstraint",
-          "description": "Add unique constraint to the column"
-        },
-        "up": {
-          "description": "SQL expression for up migration",
           "type": "string"
         }
       },
       "required": ["table", "column"],
       "oneOf": [
         {
-          "required": ["name"],
-          "not": {
-            "required": ["up", "down"]
-          }
+          "properties": {
+            "name": {
+              "description": "New name of the column (for rename column operation)",
+              "type": "string"
+            }
+          },
+          "required": ["name"]
         },
         {
+          "properties": {
+            "down": {
+              "description": "SQL expression for down migration",
+              "type": "string"
+            },
+            "up": {
+              "description": "SQL expression for up migration",
+              "type": "string"
+            }
+          },
           "required": ["up", "down"],
           "oneOf": [
-            {"required": ["check"]},
-            {"required": ["type"]},
-            {"required": ["nullable"]},
-            {"required": ["unique"]},
-            {"required": ["references"]}
-          ],
-          "not": {
-            "required": ["name"]
-          }
+            {
+              "properties": {
+                "check": {
+                  "$ref": "#/$defs/CheckConstraint",
+                  "description": "Add check constraint to the column"
+                }
+              },
+              "required": ["check"]
+            },
+            {
+              "properties": {
+                "type": {
+                  "description": "New type of the column (for change type operation)",
+                  "type": "string"
+                }
+              },
+              "required": ["type"]
+            },
+            {
+              "properties": {
+                "nullable": {
+                  "description": "Indicates if the column is nullable (for add/remove not null constraint operation)",
+                  "type": "boolean"
+                }
+              },
+              "required": ["nullable"]
+            },
+            {
+              "properties": {
+                "unique": {
+                  "$ref": "#/$defs/UniqueConstraint",
+                  "description": "Add unique constraint to the column"
+                }
+              },
+              "required": ["unique"]
+            },
+            {
+              "properties": {
+                "references": {
+                  "$ref": "#/$defs/ForeignKeyReference",
+                  "description": "Add foreign key constraint to the column"
+                }
+              },
+              "required": ["references"]
+            }
+          ]
         }
       ],
       "type": "object"
