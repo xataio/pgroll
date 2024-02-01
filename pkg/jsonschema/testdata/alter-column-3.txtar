@@ -1,0 +1,21 @@
+This is an invalid 'alter_column' migration.
+It sets `name` but also sets `up` and `down`.
+
+-- alter_column.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "reviews",
+        "column": "review",
+        "name": "new_name",
+        "up": "foo",
+        "down": "foo"
+      }
+    }
+  ]
+}
+
+-- valid --
+false

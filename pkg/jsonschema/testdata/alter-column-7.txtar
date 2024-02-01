@@ -1,0 +1,20 @@
+This is an invalid 'alter_column' migration.
+It sets both `name` and `nullable`.
+
+-- alter_column.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "reviews",
+        "column": "review",
+        "name": "new_name",
+        "nullable": true
+      }
+    }
+  ]
+}
+
+-- valid --
+false
