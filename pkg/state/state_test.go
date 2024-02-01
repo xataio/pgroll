@@ -5,10 +5,13 @@ package state_test
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -53,6 +56,70 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 
 		assert.Equal(t, 1, len(currentSchema.Tables))
 		assert.Equal(t, "public", currentSchema.Name)
+	})
+}
+
+func TestInferredMigration(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+		ctx := context.Background()
+
+		tests := []struct {
+			name          string
+			sqlStmt       string
+			wantMigration migrations.Migration
+		}{
+			{
+				name:    "create table",
+				sqlStmt: "CREATE TABLE public.table1 (id int)",
+				wantMigration: migrations.Migration{
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: "CREATE TABLE public.table1 (id int)",
+						},
+					},
+				},
+			},
+		}
+
+		// init the state
+		if err := state.Init(ctx); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				if _, err := db.ExecContext(ctx, "DROP SCHEMA public CASCADE; CREATE SCHEMA public"); err != nil {
+					t.Fatal(err)
+				}
+
+				if _, err := db.ExecContext(ctx, tt.sqlStmt); err != nil {
+					t.Fatal(err)
+				}
+
+				var migrationStr []byte
+				err := db.QueryRowContext(ctx,
+					fmt.Sprintf("SELECT migration FROM %s.migrations WHERE schema=$1", pq.QuoteIdentifier(state.Schema())), "public").
+					Scan(&migrationStr)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				var gotMigration migrations.Migration
+				if err := json.Unmarshal(migrationStr, &gotMigration); err != nil {
+					t.Fatal(err)
+				}
+
+				// test there is a name for the migration, then remove it for the comparison
+				assert.True(t, len(gotMigration.Name) > 1)
+				gotMigration.Name = ""
+
+				if diff := cmp.Diff(tt.wantMigration, gotMigration); diff != "" {
+					t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
+				}
+			})
+		}
 	})
 }
 
