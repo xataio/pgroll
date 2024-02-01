@@ -121,6 +121,11 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 		}
 	})
 
+	// init the state
+	if err := st.Init(ctx); err != nil {
+		t.Fatal(err)
+	}
+
 	fn(st, db)
 }
 
