@@ -20,7 +20,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "name",
@@ -34,7 +34,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "title",

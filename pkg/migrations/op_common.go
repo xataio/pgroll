@@ -200,3 +200,7 @@ func OperationName(op Operation) OpName {
 
 	panic(fmt.Errorf("unknown operation for %T", op))
 }
+
+func ptr[T any](v T) *T {
+	return &v
+}

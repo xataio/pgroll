@@ -27,7 +27,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -41,7 +41,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -50,7 +50,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -192,7 +192,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -206,7 +206,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -285,7 +285,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -299,7 +299,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -370,7 +370,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -384,7 +384,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -455,7 +455,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -469,17 +469,17 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -531,7 +531,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -545,7 +545,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -554,7 +554,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:   "user_id",
 									Type:   "integer",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -633,7 +633,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "name",
@@ -647,7 +647,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "title",

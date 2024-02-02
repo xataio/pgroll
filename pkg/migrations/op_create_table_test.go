@@ -28,12 +28,12 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -87,12 +87,12 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -107,7 +107,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "user_id",
@@ -184,7 +184,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -244,12 +244,12 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:    "name",
 									Type:    "varchar(255)",
-									Unique:  true,
+									Unique:  ptr(true),
 									Comment: ptr("the username"),
 								},
 							},
@@ -291,12 +291,12 @@ func TestCreateTableValidation(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: true,
+								Unique: ptr(true),
 							},
 						},
 					},
@@ -311,7 +311,7 @@ func TestCreateTableValidation(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name: "user_id",

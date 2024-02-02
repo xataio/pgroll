@@ -27,22 +27,22 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -163,22 +163,22 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -229,12 +229,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -249,17 +249,17 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: false,
+									Nullable: ptr(false),
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -306,12 +306,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 									Default:  ptr("'anonymous'"),
 								},
 							},
@@ -371,12 +371,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 									Check: &migrations.CheckConstraint{
 										Name:       "name_length",
 										Constraint: "length(name) > 3",
@@ -428,13 +428,13 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
-									Unique:   true,
+									Nullable: ptr(false),
+									Unique:   ptr(true),
 								},
 							},
 						},
@@ -497,12 +497,12 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -534,12 +534,12 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},

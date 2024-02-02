@@ -1,0 +1,33 @@
+This is a valid 'create_table' migration.
+Some optional column fields are specified and some aren't.
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+true

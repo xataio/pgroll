@@ -28,7 +28,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "username",
@@ -159,12 +159,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -179,12 +179,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name: "department_id",
@@ -235,13 +235,13 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
 									Default:  ptr("'alice'"),
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -300,12 +300,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 									Check: &migrations.CheckConstraint{
 										Name:       "username_length",
 										Constraint: "length(username) > 3",
@@ -357,12 +357,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -408,12 +408,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "username",
 									Type:   "text",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -472,7 +472,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "username",

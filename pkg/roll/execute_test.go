@@ -495,12 +495,12 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 			{
 				Name: "id",
 				Type: "integer",
-				Pk:   true,
+				Pk:   ptr(true),
 			},
 			{
 				Name:   "name",
 				Type:   "varchar(255)",
-				Unique: true,
+				Unique: ptr(true),
 			},
 		},
 	}
@@ -512,7 +512,7 @@ func addColumnOp(tableName string) *migrations.OpAddColumn {
 		Column: migrations.Column{
 			Name:     "age",
 			Type:     "integer",
-			Nullable: true,
+			Nullable: ptr(true),
 		},
 	}
 }
@@ -558,4 +558,8 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	}
 
 	return res
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

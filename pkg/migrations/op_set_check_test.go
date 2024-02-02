@@ -27,7 +27,7 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -159,7 +159,7 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:    "title",
@@ -226,12 +226,12 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -246,17 +246,17 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: true,
+									Nullable: ptr(true),
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -306,7 +306,7 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -371,12 +371,12 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -425,12 +425,12 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "title",
 									Type:   "text",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -492,7 +492,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "title",

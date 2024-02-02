@@ -25,12 +25,12 @@ func TestRenameColumn(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "username",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},

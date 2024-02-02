@@ -24,12 +24,12 @@ func TestCreateIndex(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -75,17 +75,17 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 							{
 								Name:     "email",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
