@@ -28,7 +28,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 		}
 	}
 
-	if !o.Column.Nullable && o.Column.Default == nil {
+	if !o.Column.IsNullable() && o.Column.Default == nil {
 		if err := addNotNullConstraint(ctx, conn, o.Table, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
 			return fmt.Errorf("failed to add not null constraint: %w", err)
 		}
@@ -84,7 +84,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 		return err
 	}
 
-	if !o.Column.Nullable && o.Column.Default == nil {
+	if !o.Column.IsNullable() && o.Column.Default == nil {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name))))
@@ -170,11 +170,11 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
 	}
 
-	if !o.Column.Nullable && o.Column.Default == nil && o.Up == nil {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == nil {
 		return FieldRequiredError{Name: "up"}
 	}
 
-	if o.Column.Pk {
+	if o.Column.IsPrimaryKey() {
 		return errors.New("adding primary key columns is not supported")
 	}
 
@@ -189,8 +189,8 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 	// - validating the constraint and converting the column to not null
 	//   on migration completion
 	// This is to avoid unnecessary exclusive table locks.
-	if !o.Column.Nullable && o.Column.Default == nil {
-		o.Column.Nullable = true
+	if !o.Column.IsNullable() && o.Column.Default == nil {
+		o.Column.Nullable = ptr(true)
 	}
 
 	// Don't add a column with a CHECK constraint directly.

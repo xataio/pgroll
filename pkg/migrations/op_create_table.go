@@ -117,13 +117,13 @@ func columnsToSQL(cols []Column) string {
 func ColumnToSQL(col Column) string {
 	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
 
-	if col.Pk {
+	if col.IsPrimaryKey() {
 		sql += " PRIMARY KEY"
 	}
-	if col.Unique {
+	if col.IsUnique() {
 		sql += " UNIQUE"
 	}
-	if !col.Nullable {
+	if !col.IsNullable() {
 		sql += " NOT NULL"
 	}
 	if col.Default != nil {
