@@ -53,10 +53,10 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Apply any special validation rules for the inner operation
 	op := o.innerOperation()
 	if _, ok := op.(*OpRenameColumn); ok {
-		if o.Up != "" {
+		if o.Up != nil {
 			return NoUpSQLAllowedError{}
 		}
-		if o.Down != "" {
+		if o.Down != nil {
 			return NoDownSQLAllowedError{}
 		}
 	}
@@ -67,20 +67,20 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 func (o *OpAlterColumn) innerOperation() Operation {
 	switch {
-	case o.Name != "":
+	case o.Name != nil:
 		return &OpRenameColumn{
 			Table: o.Table,
 			From:  o.Column,
-			To:    o.Name,
+			To:    *o.Name,
 		}
 
-	case o.Type != "":
+	case o.Type != nil:
 		return &OpChangeType{
 			Table:  o.Table,
 			Column: o.Column,
-			Type:   o.Type,
-			Up:     o.Up,
-			Down:   o.Down,
+			Type:   *o.Type,
+			Up:     ptrToStr(o.Up),
+			Down:   ptrToStr(o.Down),
 		}
 
 	case o.Check != nil:
@@ -88,8 +88,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Check:  *o.Check,
-			Up:     o.Up,
-			Down:   o.Down,
+			Up:     ptrToStr(o.Up),
+			Down:   ptrToStr(o.Down),
 		}
 
 	case o.References != nil:
@@ -97,24 +97,24 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:      o.Table,
 			Column:     o.Column,
 			References: *o.References,
-			Up:         o.Up,
-			Down:       o.Down,
+			Up:         ptrToStr(o.Up),
+			Down:       ptrToStr(o.Down),
 		}
 
 	case o.Nullable != nil && !*o.Nullable:
 		return &OpSetNotNull{
 			Table:  o.Table,
 			Column: o.Column,
-			Up:     o.Up,
-			Down:   o.Down,
+			Up:     ptrToStr(o.Up),
+			Down:   ptrToStr(o.Down),
 		}
 
 	case o.Nullable != nil && *o.Nullable:
 		return &OpDropNotNull{
 			Table:  o.Table,
 			Column: o.Column,
-			Up:     o.Up,
-			Down:   o.Down,
+			Up:     ptrToStr(o.Up),
+			Down:   ptrToStr(o.Down),
 		}
 
 	case o.Unique != nil:
@@ -122,8 +122,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Name:   o.Unique.Name,
-			Up:     o.Up,
-			Down:   o.Down,
+			Up:     ptrToStr(o.Up),
+			Down:   ptrToStr(o.Down),
 		}
 	}
 	return nil
@@ -134,10 +134,10 @@ func (o *OpAlterColumn) innerOperation() Operation {
 func (o *OpAlterColumn) numChanges() int {
 	fieldsSet := 0
 
-	if o.Name != "" {
+	if o.Name != nil {
 		fieldsSet++
 	}
-	if o.Type != "" {
+	if o.Type != nil {
 		fieldsSet++
 	}
 	if o.Check != nil {
@@ -154,4 +154,11 @@ func (o *OpAlterColumn) numChanges() int {
 	}
 
 	return fieldsSet
+}
+
+func ptrToStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

@@ -60,7 +60,7 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "doesntexist",
 							Column: "title",
-							Name:   "renamed_title",
+							Name:   ptr("renamed_title"),
 						},
 					},
 				},
@@ -77,7 +77,7 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "doesntexist",
-							Name:   "renamed_title",
+							Name:   ptr("renamed_title"),
 						},
 					},
 				},
@@ -94,8 +94,8 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "title",
-							Name:   "renamed_title",
-							Up:     "some up sql",
+							Name:   ptr("renamed_title"),
+							Up:     ptr("some up sql"),
 						},
 					},
 				},
@@ -112,8 +112,8 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "title",
-							Name:   "renamed_title",
-							Down:   "some down sql",
+							Name:   ptr("renamed_title"),
+							Down:   ptr("some down sql"),
 						},
 					},
 				},
@@ -146,8 +146,8 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "posts",
 							Column: "title",
-							Name:   "renamed_title",
-							Type:   "varchar(255)",
+							Name:   ptr("renamed_title"),
+							Type:   ptr("varchar(255)"),
 						},
 					},
 				},
@@ -172,7 +172,7 @@ func TestAlterColumnValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "orders",
 							Column: "quantity",
-							Name:   "renamed_quantity",
+							Name:   ptr("renamed_quantity"),
 						},
 					},
 				},

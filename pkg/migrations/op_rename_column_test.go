@@ -42,7 +42,7 @@ func TestRenameColumn(t *testing.T) {
 					&migrations.OpAlterColumn{
 						Table:  "users",
 						Column: "username",
-						Name:   "name",
+						Name:   ptr("name"),
 					},
 				},
 			},
