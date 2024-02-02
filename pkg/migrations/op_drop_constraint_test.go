@@ -27,7 +27,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -156,7 +156,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -222,7 +222,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "name",
@@ -236,7 +236,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "title",
@@ -245,7 +245,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -388,12 +388,12 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "text",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -467,12 +467,12 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:    "name",
 									Type:    "text",
-									Unique:  true,
+									Unique:  ptr(true),
 									Default: ptr("'anonymous'"),
 								},
 							},
@@ -538,12 +538,12 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -558,17 +558,17 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:   "department_id",
 									Type:   "integer",
-									Unique: true,
+									Unique: ptr(true),
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -615,13 +615,13 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: true,
-									Unique:   true,
+									Nullable: ptr(true),
+									Unique:   ptr(true),
 								},
 							},
 						},
@@ -684,13 +684,13 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: true,
-									Unique:   true,
+									Nullable: ptr(true),
+									Unique:   ptr(true),
 								},
 							},
 						},
@@ -761,13 +761,13 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "title",
 									Type:     "text",
-									Unique:   true,
-									Nullable: false,
+									Unique:   ptr(true),
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -816,7 +816,7 @@ func TestDropConstraintValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "title",

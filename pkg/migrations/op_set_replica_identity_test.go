@@ -21,12 +21,12 @@ func TestSetReplicaIdentity(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:     "name",
 						Type:     "varchar(255)",
-						Nullable: false,
+						Nullable: ptr(false),
 					},
 				},
 			},
@@ -152,12 +152,12 @@ func TestSetReplicaIdentityValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:   "name",
 						Type:   "varchar(255)",
-						Unique: true,
+						Unique: ptr(true),
 					},
 				},
 			},

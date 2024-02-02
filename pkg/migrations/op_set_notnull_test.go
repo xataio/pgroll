@@ -27,22 +27,22 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -169,22 +169,22 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -235,12 +235,12 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -255,17 +255,17 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: true,
+									Nullable: ptr(true),
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -312,12 +312,12 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 									Default:  ptr("'anonymous'"),
 								},
 							},
@@ -376,12 +376,12 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 									Check: &migrations.CheckConstraint{
 										Name:       "name_length",
 										Constraint: "length(name) > 3",
@@ -432,13 +432,13 @@ func TestSetNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
-									Unique:   true,
+									Nullable: ptr(true),
+									Unique:   ptr(true),
 								},
 							},
 						},
@@ -496,22 +496,22 @@ func TestSetNotNullValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:     "username",
 						Type:     "text",
-						Nullable: false,
+						Nullable: ptr(false),
 					},
 					{
 						Name:     "product",
 						Type:     "text",
-						Nullable: false,
+						Nullable: ptr(false),
 					},
 					{
 						Name:     "review",
 						Type:     "text",
-						Nullable: true,
+						Nullable: ptr(true),
 					},
 				},
 			},
@@ -549,22 +549,22 @@ func TestSetNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
