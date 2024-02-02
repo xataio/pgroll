@@ -415,11 +415,11 @@
           "description": "Raw SQL operation",
           "additionalProperties": false,
           "properties": {
-            "raw_sql": {
+            "sql": {
               "$ref": "#/$defs/OpRawSQL"
             }
           },
-          "required": ["raw_sql"]
+          "required": ["sql"]
         },
         {
           "type": "object",
