@@ -1,0 +1,22 @@
+This is a valid 'add_column' migration.
+Some optional column fields are specified and some aren't.
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "add_column": {
+        "table": "reviews",
+        "column": {
+          "name": "rating",
+          "type": "text",
+          "default": "0"
+        }
+      }
+    }
+  ]
+}
+
+-- valid --
+true
