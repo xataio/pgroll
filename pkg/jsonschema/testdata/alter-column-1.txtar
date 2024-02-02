@@ -1,0 +1,21 @@
+This is a valid 'alter_column' migration.
+It sets `nullable`, `up` and `down`.
+
+-- alter_column.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "reviews",
+        "column": "review",
+        "nullable": false,
+        "up": "foo",
+        "down": "foo"
+      }
+    }
+  ]
+}
+
+-- valid --
+true
