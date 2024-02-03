@@ -279,62 +279,64 @@ func TestCreateTable(t *testing.T) {
 func TestCreateTableValidation(t *testing.T) {
 	t.Parallel()
 
-	ExecuteTests(t, TestCases{TestCase{
-		name: "foreign key validity",
-		migrations: []migrations.Migration{
-			{
-				Name: "01_create_table",
-				Operations: migrations.Operations{
-					&migrations.OpCreateTable{
-						Name: "users",
-						Columns: []migrations.Column{
-							{
-								Name: "id",
-								Type: "serial",
-								Pk:   ptr(true),
-							},
-							{
-								Name:   "name",
-								Type:   "varchar(255)",
-								Unique: ptr(true),
-							},
-						},
-					},
-				},
-			},
-			{
-				Name: "02_create_table_with_fk",
-				Operations: migrations.Operations{
-					&migrations.OpCreateTable{
-						Name: "orders",
-						Columns: []migrations.Column{
-							{
-								Name: "id",
-								Type: "serial",
-								Pk:   ptr(true),
-							},
-							{
-								Name: "user_id",
-								Type: "integer",
-								References: &migrations.ForeignKeyReference{
-									Name:   "fk_users_doesntexist",
-									Table:  "users",
-									Column: "doesntexist",
+	ExecuteTests(t, TestCases{
+		{
+			name: "foreign key validity",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
 								},
 							},
-							{
-								Name: "quantity",
-								Type: "integer",
+						},
+					},
+				},
+				{
+					Name: "02_create_table_with_fk",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "user_id",
+									Type: "integer",
+									References: &migrations.ForeignKeyReference{
+										Name:   "fk_users_doesntexist",
+										Table:  "users",
+										Column: "doesntexist",
+									},
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
 							},
 						},
 					},
 				},
 			},
+			wantStartErr: migrations.ColumnReferenceError{
+				Table:  "orders",
+				Column: "user_id",
+				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
+			},
 		},
-		wantStartErr: migrations.ColumnReferenceError{
-			Table:  "orders",
-			Column: "user_id",
-			Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
-		},
-	}})
+	})
 }
