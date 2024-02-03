@@ -45,19 +45,19 @@ func TestDropTable(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The view for the deleted table does not exist in the new version schema.
-				ViewMustNotExist(t, db, "public", "02_drop_table", "users")
+				ViewMustNotExist(t, db, schema, "02_drop_table", "users")
 
 				// But the underlying table has not been deleted.
-				TableMustExist(t, db, "public", "users")
+				TableMustExist(t, db, schema, "users")
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op.
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The underlying table has been deleted.
-				TableMustNotExist(t, db, "public", "users")
+				TableMustNotExist(t, db, schema, "users")
 			},
 		},
 	})

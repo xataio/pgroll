@@ -60,18 +60,18 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should exist on the underlying table.
-				ColumnMustExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// Inserting a NULL into the new `review` column should fail
-				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 				}, testutils.CheckViolationErrorCode)
 
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
@@ -79,27 +79,27 @@ func TestSetNotNull(t *testing.T) {
 
 				// The value inserted into the new `review` column has been backfilled into the
 				// old `review` column.
-				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
+				rows := MustSelect(t, db, schema, "01_add_table", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 				}, rows)
 
 				// Inserting a NULL value into the old `review` column should succeed
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "bob",
 					"product":  "banana",
 				})
 
 				// The NULL value inserted into the old `review` column has been written into
 				// the new `review` column using the `up` SQL.
-				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows = MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
 				}, rows)
 
 				// Inserting a non-NULL value into the old `review` column should succeed
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "carl",
 					"product":  "carrot",
 					"review":   "crunchy",
@@ -107,33 +107,33 @@ func TestSetNotNull(t *testing.T) {
 
 				// The non-NULL value inserted into the old `review` column has been copied
 				// unchanged into the new `review` column.
-				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows = MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
 					{"id": 4, "username": "carl", "product": "carrot", "review": "crunchy"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// Selecting from the `reviews` view should succeed.
-				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows := MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "username": "alice", "product": "apple", "review": "amazing"},
 					{"id": 3, "username": "bob", "product": "banana", "review": "banana is good"},
@@ -141,20 +141,20 @@ func TestSetNotNull(t *testing.T) {
 				}, rows)
 
 				// Writing NULL reviews into the `review` column should fail.
-				MustNotInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "daisy",
 					"product":  "durian",
 				}, testutils.NotNullViolationErrorCode)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 			},
 		},
 		{
@@ -203,9 +203,9 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
@@ -213,14 +213,14 @@ func TestSetNotNull(t *testing.T) {
 
 				// The value inserted into the new `review` column has been backfilled into the
 				// old `review` column using the user-supplied `down` SQL.
-				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
+				rows := MustSelect(t, db, schema, "01_add_table", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "amazing (from new column)"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			},
 		},
 		{
@@ -289,15 +289,15 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
 			},
 		},
 		{
@@ -336,28 +336,28 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id": "1",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id": "2",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 					{"id": 2, "name": "anonymous"},
@@ -403,18 +403,18 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id":   "1",
 					"name": "a",
 				}, testutils.CheckViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id":   "2",
 					"name": "b",
 				}, testutils.CheckViolationErrorCode)
@@ -456,27 +456,27 @@ func TestSetNotNull(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `name` value succeeds
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "bob",
 				})
 			},

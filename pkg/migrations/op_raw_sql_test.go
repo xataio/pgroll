@@ -33,22 +33,22 @@ func TestRawSQL(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// table can be accessed after start
-				ViewMustExist(t, db, "public", "01_create_table", "test_table")
+				ViewMustExist(t, db, schema, "01_create_table", "test_table")
 
 				// inserts work
-				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// table is dropped after rollback
-				TableMustNotExist(t, db, "public", "test_table")
+				TableMustNotExist(t, db, schema, "test_table")
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// inserts still work after complete
-				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
 			},
@@ -82,27 +82,27 @@ func TestRawSQL(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// table can be accessed after start
-				ViewMustExist(t, db, "public", "01_create_table", "test_table")
+				ViewMustExist(t, db, schema, "01_create_table", "test_table")
 
 				// table is renamed in new version
-				ViewMustExist(t, db, "public", "02_rename_table", "test_table_renamed")
+				ViewMustExist(t, db, schema, "02_rename_table", "test_table_renamed")
 
 				// inserts work
-				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
-				MustInsert(t, db, "public", "02_rename_table", "test_table_renamed", map[string]string{
+				MustInsert(t, db, schema, "02_rename_table", "test_table_renamed", map[string]string{
 					"name": "foo",
 				})
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// table can still be accessed after complete
-				ViewMustExist(t, db, "public", "02_rename_table", "test_table_renamed")
+				ViewMustExist(t, db, schema, "02_rename_table", "test_table_renamed")
 
 				// inserts work
-				MustInsert(t, db, "public", "02_rename_table", "test_table_renamed", map[string]string{
+				MustInsert(t, db, schema, "02_rename_table", "test_table_renamed", map[string]string{
 					"name": "foo",
 				})
 			},
