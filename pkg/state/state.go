@@ -104,7 +104,7 @@ BEGIN
 				'oid', t.oid,
 				'comment', descr.description,
 				'columns', (
-					SELECT json_object_agg(name, c) FROM (
+					SELECT COALESCE(json_object_agg(name, c), '{}'::json) FROM (
 						SELECT
 							attr.attname AS name,
 							pg_get_expr(def.adbin, def.adrelid) AS default,
@@ -157,7 +157,7 @@ BEGIN
 					) c
 				),
 				'primaryKey', (
-					SELECT json_agg(pg_attribute.attname) AS primary_key_columns
+					SELECT COALESCE(json_agg(pg_attribute.attname), '[]'::json) AS primary_key_columns
 					FROM pg_index, pg_attribute
 					WHERE
 						indrelid = t.oid AND
@@ -167,11 +167,11 @@ BEGIN
 						AND indisprimary
 				),
 				'indexes', (
-				  SELECT json_object_agg(ix_details.indexrelid::regclass, json_build_object(
+				  SELECT COALESCE(json_object_agg(ix_details.indexrelid::regclass, json_build_object(
 				    'name', ix_details.indexrelid::regclass,
 				    'unique', ix_details.indisunique,
 				    'columns', ix_details.columns
-				  ))
+				  )), '{}'::json)
 				  FROM (
 				    SELECT 
 				      pi.indexrelid, 
