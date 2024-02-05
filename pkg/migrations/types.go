@@ -4,7 +4,7 @@
 package migrations
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-const maxLengthOfName int8 = 63
+const maxNameLength = 63
 
 // Check constraint definition
 type CheckConstraint struct {

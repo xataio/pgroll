@@ -135,6 +135,12 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	if len(o.Column.Name) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: o.Column.Name,
+			Max:      maxNameLength,
+		}
+	}
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

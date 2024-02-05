@@ -40,6 +40,13 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if len(o.Name) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: o.Name,
+			Max:      maxNameLength,
+		}
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

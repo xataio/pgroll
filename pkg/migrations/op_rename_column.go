@@ -40,6 +40,12 @@ func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	if len(o.To) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: o.To,
+			Max:      maxNameLength,
+		}
+	}
 	table := s.GetTable(o.Table)
 
 	if table.GetColumn(o.To) != nil {

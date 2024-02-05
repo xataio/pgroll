@@ -174,3 +174,12 @@ type InvalidReplicaIdentityError struct {
 func (e InvalidReplicaIdentityError) Error() string {
 	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
 }
+
+type InvalidNameLengthError struct {
+	Identity string
+	Max      int
+}
+
+func (e InvalidNameLengthError) Error() string {
+	return fmt.Sprintf("%d", e.Max)
+}
