@@ -36,7 +36,11 @@ const (
 const temporaryPrefix = "_pgroll_new_"
 
 func TemporaryName(name string) string {
-	return temporaryPrefix + name
+	tmp := temporaryPrefix + name
+	if len(tmp) > int(maxLengthOfName) {
+		panic(fmt.Sprintf("max legnth of name is %d", int(maxLengthOfName)-len(temporaryPrefix)))
+	}
+	return tmp
 }
 
 func ReadMigration(r io.Reader) (*Migration, error) {
