@@ -73,95 +73,95 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `user_id` column should exist on the underlying table.
-				ColumnMustExist(t, db, "public", "posts", migrations.TemporaryName("user_id"))
+				ColumnMustExist(t, db, schema, "posts", migrations.TemporaryName("user_id"))
 
 				// A temporary FK constraint has been created on the temporary column
-				NotValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id")
+				NotValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id")
 
 				// Inserting some data into the `users` table works.
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 				})
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "bob",
 				})
 
 				// Inserting data into the new `posts` view with a valid user reference works.
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting data into the new `posts` view with an invalid user reference fails.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				}, testutils.FKViolationErrorCode)
 
 				// The post that was inserted successfully has been backfilled into the old view.
-				rows := MustSelect(t, db, "public", "01_add_tables", "posts")
+				rows := MustSelect(t, db, schema, "01_add_tables", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 				}, rows)
 
 				// Inserting data into the old `posts` view with a valid user reference works.
-				MustInsert(t, db, "public", "01_add_tables", "posts", map[string]string{
+				MustInsert(t, db, schema, "01_add_tables", "posts", map[string]string{
 					"title":   "post by bob",
 					"user_id": "2",
 				})
 
 				// Inserting data into the old `posts` view with an invalid user reference also works.
-				MustInsert(t, db, "public", "01_add_tables", "posts", map[string]string{
+				MustInsert(t, db, schema, "01_add_tables", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				})
 
 				// The post that was inserted successfully has been backfilled into the new view.
 				// The post by an unknown user has been backfilled with a NULL user_id.
-				rows = MustSelect(t, db, "public", "02_add_fk_constraint", "posts")
+				rows = MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 					{"id": 3, "title": "post by bob", "user_id": 2},
 					{"id": 4, "title": "post by unknown user", "user_id": nil},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `user_id` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("user_id"))
+				ColumnMustNotExist(t, db, schema, "posts", migrations.TemporaryName("user_id"))
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "user_id"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "user_id"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", "user_id"))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "user_id"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `user_id` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("user_id"))
+				ColumnMustNotExist(t, db, schema, "posts", migrations.TemporaryName("user_id"))
 
 				// A validated foreign key constraint exists on the underlying table.
-				ValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id")
 
 				// Inserting data into the new `posts` view with a valid user reference works.
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "another post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting data into the new `posts` view with an invalid user reference fails.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				}, testutils.FKViolationErrorCode)
 
 				// The data in the new `posts` view is as expected.
-				rows := MustSelect(t, db, "public", "02_add_fk_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 					{"id": 3, "title": "post by bob", "user_id": 2},
@@ -170,14 +170,14 @@ func TestSetForeignKey(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "user_id"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "user_id"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", "user_id"))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "user_id"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
 			},
 		},
 		{
@@ -238,35 +238,35 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Set up the users table with a reference row
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// A row can be inserted into the new version of the table.
 				// The new row does not specify `user_id`, so the default value should be used.
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				})
 
 				// The newly inserted row respects the default value of the `user_id` column.
-				rows := MustSelect(t, db, "public", "02_add_fk_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
 				// The new row does not specify `user_id`, so the default value should be used.
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title": "another post by alice",
 				})
 
 				// The newly inserted row respects the default value of the `user_id` column.
-				rows := MustSelect(t, db, "public", "02_add_fk_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 					{"id": 2, "title": "another post by alice", "user_id": 1},
@@ -347,15 +347,15 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "posts", migrations.DuplicationName("fk_users_id_1"))
+				ValidatedForeignKeyMustExist(t, db, schema, "posts", migrations.DuplicationName("fk_users_id_1"))
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, "public", "posts", "fk_users_id_1")
+				ValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id_1")
 			},
 		},
 		{
@@ -419,24 +419,24 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Set up the users table with a reference row
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"id":      "1",
 					"user_id": "1",
 					"title":   "a",
 				}, testutils.CheckViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"id":      "2",
 					"user_id": "1",
 					"title":   "b",
@@ -502,18 +502,18 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint on `user_id` fails.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"id":    "1",
 					"title": "post by alice",
 				}, testutils.NotNullViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint on `user_id` fails.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"id":    "1",
 					"title": "post by alice",
 				}, testutils.NotNullViolationErrorCode)
@@ -577,42 +577,42 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Set up the users table with a reference row
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 					"id":   "1",
 				})
 
 				// Inserting an initial row succeeds
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting a row with a duplicate `user_id` fails.
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice 2",
 					"user_id": "1",
 				}, testutils.UniqueViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row with a duplicate `user_id` fails
-				MustNotInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice 3",
 					"user_id": "1",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Set up the users table with another reference row
-				MustInsert(t, db, "public", "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
 					"name": "bob",
 					"id":   "2",
 				})
 
 				// Inserting a row with a different `user_id` succeeds
-				MustInsert(t, db, "public", "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by bob",
 					"user_id": "2",
 				})

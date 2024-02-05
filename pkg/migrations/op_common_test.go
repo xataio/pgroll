@@ -21,9 +21,9 @@ type TestCase struct {
 	name          string
 	migrations    []migrations.Migration
 	wantStartErr  error
-	afterStart    func(t *testing.T, db *sql.DB)
-	afterComplete func(t *testing.T, db *sql.DB)
-	afterRollback func(t *testing.T, db *sql.DB)
+	afterStart    func(t *testing.T, db *sql.DB, schema string)
+	afterComplete func(t *testing.T, db *sql.DB, schema string)
+	afterRollback func(t *testing.T, db *sql.DB, schema string)
 }
 
 type TestCases []TestCase
@@ -33,9 +33,11 @@ func TestMain(m *testing.M) {
 }
 
 func ExecuteTests(t *testing.T, tests TestCases) {
+	testSchema := testutils.TestSchema()
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			testutils.WithMigratorInSchemaAndConnectionToContainer(t, testSchema, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
 
 				// run all migrations except the last one
@@ -63,7 +65,7 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 
 				// run the afterStart hook
 				if tt.afterStart != nil {
-					tt.afterStart(t, db)
+					tt.afterStart(t, db, testSchema)
 				}
 
 				// roll back the migration
@@ -73,7 +75,7 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 
 				// run the afterRollback hook
 				if tt.afterRollback != nil {
-					tt.afterRollback(t, db)
+					tt.afterRollback(t, db, testSchema)
 				}
 
 				// re-start the last migration
@@ -88,7 +90,7 @@ func ExecuteTests(t *testing.T, tests TestCases) {
 
 				// run the afterComplete hook
 				if tt.afterComplete != nil {
-					tt.afterComplete(t, db)
+					tt.afterComplete(t, db, testSchema)
 				}
 			})
 		})

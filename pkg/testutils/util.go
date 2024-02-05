@@ -75,6 +75,16 @@ func SharedTestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
+// TestSchema returns the schema in which migration tests apply migrations. By
+// default, migrations will be applied to the "public" schema.
+func TestSchema() string {
+	testSchema := os.Getenv("PGROLL_TEST_SCHEMA")
+	if testSchema != "" {
+		return testSchema
+	}
+	return "public"
+}
+
 func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
