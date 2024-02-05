@@ -99,12 +99,12 @@ BEGIN
 	SELECT json_build_object(
 		'name', schemaname,
 		'tables', (
-			SELECT json_object_agg(t.relname, jsonb_build_object(
+			SELECT COALESCE(json_object_agg(t.relname, jsonb_build_object(
 				'name', t.relname,
 				'oid', t.oid,
 				'comment', descr.description,
 				'columns', (
-					SELECT json_object_agg(name, c) FROM (
+					SELECT COALESCE(json_object_agg(name, c), '{}'::json) FROM (
 						SELECT
 							attr.attname AS name,
 							pg_get_expr(def.adbin, def.adrelid) AS default,
@@ -157,7 +157,7 @@ BEGIN
 					) c
 				),
 				'primaryKey', (
-					SELECT json_agg(pg_attribute.attname) AS primary_key_columns
+					SELECT COALESCE(json_agg(pg_attribute.attname), '[]'::json) AS primary_key_columns
 					FROM pg_index, pg_attribute
 					WHERE
 						indrelid = t.oid AND
@@ -167,11 +167,11 @@ BEGIN
 						AND indisprimary
 				),
 				'indexes', (
-				  SELECT json_object_agg(ix_details.indexrelid::regclass, json_build_object(
+				  SELECT COALESCE(json_object_agg(ix_details.indexrelid::regclass, json_build_object(
 				    'name', ix_details.indexrelid::regclass,
 				    'unique', ix_details.indisunique,
 				    'columns', ix_details.columns
-				  ))
+				  )), '{}'::json)
 				  FROM (
 				    SELECT 
 				      pi.indexrelid, 
@@ -184,11 +184,11 @@ BEGIN
 				  ) as ix_details
 				),
 				'checkConstraints', (
-					SELECT json_object_agg(cc_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(cc_details.conname, json_build_object(
 						'name', cc_details.conname,
 						'columns', cc_details.columns,
 						'definition', cc_details.definition
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							cc_constraint.conname,
@@ -202,10 +202,10 @@ BEGIN
 					) AS cc_details
         ),
 				'uniqueConstraints', (
-					SELECT json_object_agg(uc_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(uc_details.conname, json_build_object(
 						'name', uc_details.conname,
 						'columns', uc_details.columns
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							uc_constraint.conname,
@@ -219,12 +219,12 @@ BEGIN
 					) AS uc_details
         ),
 				'foreignKeys', (
-					SELECT json_object_agg(fk_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(fk_details.conname, json_build_object(
 						'name', fk_details.conname,
 						'columns', fk_details.columns,
 						'referencedTable', fk_details.referencedTable,
 						'referencedColumns', fk_details.referencedColumns
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							fk_constraint.conname,
@@ -240,7 +240,7 @@ BEGIN
 						GROUP BY fk_constraint.conname, fk_cl.relname
 					) AS fk_details
 				)
-			)) FROM pg_class AS t
+			)), '{}'::json) FROM pg_class AS t
 				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
 				LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
 				AND descr.objsubid = 0
