@@ -184,11 +184,11 @@ BEGIN
 				  ) as ix_details
 				),
 				'checkConstraints', (
-					SELECT json_object_agg(cc_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(cc_details.conname, json_build_object(
 						'name', cc_details.conname,
 						'columns', cc_details.columns,
 						'definition', cc_details.definition
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							cc_constraint.conname,
@@ -202,10 +202,10 @@ BEGIN
 					) AS cc_details
         ),
 				'uniqueConstraints', (
-					SELECT json_object_agg(uc_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(uc_details.conname, json_build_object(
 						'name', uc_details.conname,
 						'columns', uc_details.columns
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							uc_constraint.conname,
