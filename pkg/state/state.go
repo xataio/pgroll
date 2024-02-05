@@ -98,8 +98,8 @@ DECLARE
 BEGIN
 	SELECT json_build_object(
 		'name', schemaname,
-		'tables', (
-			SELECT COALESCE(json_object_agg(t.relname, jsonb_build_object(
+		'tables', COALESCE(
+			SELECT json_object_agg(t.relname, jsonb_build_object(
 				'name', t.relname,
 				'oid', t.oid,
 				'comment', descr.description,
@@ -200,7 +200,7 @@ BEGIN
 						AND cc_constraint.contype = 'c'
 						GROUP BY cc_constraint.oid, cc_constraint.conname
 					) AS cc_details
-        ), '{}'::json),
+        ),
 				'uniqueConstraints', (
 					SELECT json_object_agg(uc_details.conname, json_build_object(
 						'name', uc_details.conname,
@@ -240,7 +240,7 @@ BEGIN
 						GROUP BY fk_constraint.conname, fk_cl.relname
 					) AS fk_details
 				)
-			)) FROM pg_class AS t
+			), '{}'::json) FROM pg_class AS t
 				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
 				LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
 				AND descr.objsubid = 0
