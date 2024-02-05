@@ -98,7 +98,8 @@ DECLARE
 BEGIN
 	SELECT json_build_object(
 		'name', schemaname,
-		'tables', COALESCE(
+		'tables', (
+			COALESCE(
 			SELECT json_object_agg(t.relname, jsonb_build_object(
 				'name', t.relname,
 				'oid', t.oid,
@@ -240,7 +241,7 @@ BEGIN
 						GROUP BY fk_constraint.conname, fk_cl.relname
 					) AS fk_details
 				)
-			), '{}'::json) FROM pg_class AS t
+			)) FROM pg_class AS t
 				INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
 				LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
 				AND descr.objsubid = 0
@@ -248,7 +249,7 @@ BEGIN
 				ns.nspname = schemaname
 				AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
 			)
-		)
+		), '{}'::json)
 	INTO tables;
 
 	RETURN tables;
