@@ -219,12 +219,12 @@ BEGIN
 					) AS uc_details
         ),
 				'foreignKeys', (
-					SELECT json_object_agg(fk_details.conname, json_build_object(
+					SELECT COALESCE(json_object_agg(fk_details.conname, json_build_object(
 						'name', fk_details.conname,
 						'columns', fk_details.columns,
 						'referencedTable', fk_details.referencedTable,
 						'referencedColumns', fk_details.referencedColumns
-					))
+					)), '{}'::json)
 					FROM (
 						SELECT
 							fk_constraint.conname,
