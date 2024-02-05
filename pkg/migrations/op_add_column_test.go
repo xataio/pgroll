@@ -27,12 +27,12 @@ func TestAddColumn(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: true,
+								Unique: ptr(true),
 							},
 						},
 					},
@@ -46,7 +46,7 @@ func TestAddColumn(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "age",
 							Type:     "integer",
-							Nullable: false,
+							Nullable: ptr(false),
 							Default:  ptr("0"),
 							Comment:  ptr("the age of the user"),
 						},
@@ -54,52 +54,52 @@ func TestAddColumn(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// old and new views of the table should exist
-			ViewMustExist(t, db, "public", "01_add_table", "users")
-			ViewMustExist(t, db, "public", "02_add_column", "users")
+			ViewMustExist(t, db, schema, "01_add_table", "users")
+			ViewMustExist(t, db, schema, "02_add_column", "users")
 
 			// inserting via both the old and the new views works
-			MustInsert(t, db, "public", "01_add_table", "users", map[string]string{
+			MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
 				"name": "Alice",
 			})
-			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "Bob",
 				"age":  "21",
 			})
 
 			// selecting from both the old and the new views works
-			resOld := MustSelect(t, db, "public", "01_add_table", "users")
+			resOld := MustSelect(t, db, schema, "01_add_table", "users")
 			assert.Equal(t, []map[string]any{
 				{"id": 1, "name": "Alice"},
 				{"id": 2, "name": "Bob"},
 			}, resOld)
-			resNew := MustSelect(t, db, "public", "02_add_column", "users")
+			resNew := MustSelect(t, db, schema, "02_add_column", "users")
 			assert.Equal(t, []map[string]any{
 				{"id": 1, "name": "Alice", "age": 0},
 				{"id": 2, "name": "Bob", "age": 21},
 			}, resNew)
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// The new column has been dropped from the underlying table
 			columnName := migrations.TemporaryName("age")
-			ColumnMustNotExist(t, db, "public", "users", columnName)
+			ColumnMustNotExist(t, db, schema, "users", columnName)
 
 			// The table's column count reflects the drop of the new column
-			TableMustHaveColumnCount(t, db, "public", "users", 2)
+			TableMustHaveColumnCount(t, db, schema, "users", 2)
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// The new view still exists
-			ViewMustExist(t, db, "public", "02_add_column", "users")
+			ViewMustExist(t, db, schema, "02_add_column", "users")
 
 			// Inserting into the new view still works
-			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "Carl",
 				"age":  "31",
 			})
 
 			// Selecting from the new view still works
-			res := MustSelect(t, db, "public", "02_add_column", "users")
+			res := MustSelect(t, db, schema, "02_add_column", "users")
 			assert.Equal(t, []map[string]any{
 				{"id": 1, "name": "Alice", "age": 0},
 				{"id": 2, "name": "Bob", "age": 0},
@@ -125,12 +125,12 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -140,7 +140,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "quantity",
@@ -163,53 +163,53 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Table:  "users",
 									Column: "id",
 								},
-								Nullable: true,
+								Nullable: ptr(true),
 							},
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
-				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row into the referencing table succeeds as the referenced row exists.
-				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "1",
 					"quantity": "100",
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
 				}, testutils.FKViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped, so the foreign key constraint is gone.
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the new table
-				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
-				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 					"name": "bob",
 				})
 
 				// Inserting a row into the referencing table succeeds as the referenced row exists.
-				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
 				}, testutils.FKViolationErrorCode)
@@ -227,12 +227,12 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -242,7 +242,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "quantity",
@@ -265,54 +265,54 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Table:  "users",
 									Column: "id",
 								},
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 							Up: ptr("1"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
-				MustInsert(t, db, "public", "01_create_table", "users", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row into the referencing table succeeds as the referenced row exists.
-				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "1",
 					"quantity": "100",
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
 				}, testutils.FKViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped, so the foreign key constraint is gone.
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the new table
-				ValidatedForeignKeyMustExist(t, db, "public", "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
-				MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 					"name": "bob",
 				})
 
 				// Inserting a row into the referencing table succeeds as the referenced row exists.
-				MustInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
 				})
 
 				// Inserting a row into the referencing table fails as the referenced row does not exist.
-				MustNotInsert(t, db, "public", "02_add_column", "orders", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
 				}, testutils.FKViolationErrorCode)
@@ -337,12 +337,12 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -357,23 +357,23 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: true,
+								Nullable: ptr(true),
 							},
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// inserting via both the old and the new views works
-				MustInsert(t, db, "public", "01_add_table", "products", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
 					"name": "apple",
 				})
-				MustInsert(t, db, "public", "02_add_column", "products", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "products", map[string]string{
 					"name":        "banana",
 					"description": "a yellow banana",
 				})
 
-				res := MustSelect(t, db, "public", "02_add_column", "products")
+				res := MustSelect(t, db, schema, "02_add_column", "products")
 				assert.Equal(t, []map[string]any{
 					// the description column has been populated for the product inserted into the old view.
 					{"id": 1, "name": "apple", "description": "APPLE"},
@@ -381,18 +381,18 @@ func TestAddColumnWithUpSql(t *testing.T) {
 					{"id": 2, "name": "banana", "description": "a yellow banana"},
 				}, res)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The trigger function has been dropped.
 				triggerFnName := migrations.TriggerFunctionName("products", "description")
-				FunctionMustNotExist(t, db, "public", triggerFnName)
+				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
 				triggerName := migrations.TriggerName("products", "description")
-				TriggerMustNotExist(t, db, "public", "products", triggerName)
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// after rollback + restart + complete, all 'description' values are the backfilled ones.
-				res := MustSelect(t, db, "public", "02_add_column", "products")
+				res := MustSelect(t, db, schema, "02_add_column", "products")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "apple", "description": "APPLE"},
 					{"id": 2, "name": "banana", "description": "BANANA"},
@@ -400,11 +400,11 @@ func TestAddColumnWithUpSql(t *testing.T) {
 
 				// The trigger function has been dropped.
 				triggerFnName := migrations.TriggerFunctionName("products", "description")
-				FunctionMustNotExist(t, db, "public", triggerFnName)
+				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
 				triggerName := migrations.TriggerName("products", "description")
-				TriggerMustNotExist(t, db, "public", "products", triggerName)
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
 			},
 		},
 		{
@@ -419,12 +419,12 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "text",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -439,25 +439,25 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: true,
+								Nullable: ptr(true),
 							},
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// inserting via both the old and the new views works
-				MustInsert(t, db, "public", "01_add_table", "products", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
 					"id":   "a",
 					"name": "apple",
 				})
-				MustInsert(t, db, "public", "02_add_column", "products", map[string]string{
+				MustInsert(t, db, schema, "02_add_column", "products", map[string]string{
 					"id":          "b",
 					"name":        "banana",
 					"description": "a yellow banana",
 				})
 
-				res := MustSelect(t, db, "public", "02_add_column", "products")
+				res := MustSelect(t, db, schema, "02_add_column", "products")
 				assert.Equal(t, []map[string]any{
 					// the description column has been populated for the product inserted into the old view.
 					{"id": "a", "name": "apple", "description": "APPLE"},
@@ -465,18 +465,18 @@ func TestAddColumnWithUpSql(t *testing.T) {
 					{"id": "b", "name": "banana", "description": "a yellow banana"},
 				}, res)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The trigger function has been dropped.
 				triggerFnName := migrations.TriggerFunctionName("products", "description")
-				FunctionMustNotExist(t, db, "public", triggerFnName)
+				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
 				triggerName := migrations.TriggerName("products", "description")
-				TriggerMustNotExist(t, db, "public", "products", triggerName)
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// after rollback + restart + complete, all 'description' values are the backfilled ones.
-				res := MustSelect(t, db, "public", "02_add_column", "products")
+				res := MustSelect(t, db, schema, "02_add_column", "products")
 				assert.Equal(t, []map[string]any{
 					{"id": "a", "name": "apple", "description": "APPLE"},
 					{"id": "b", "name": "banana", "description": "BANANA"},
@@ -484,11 +484,11 @@ func TestAddColumnWithUpSql(t *testing.T) {
 
 				// The trigger function has been dropped.
 				triggerFnName := migrations.TriggerFunctionName("products", "description")
-				FunctionMustNotExist(t, db, "public", triggerFnName)
+				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
 				triggerName := migrations.TriggerName("products", "description")
-				TriggerMustNotExist(t, db, "public", "products", triggerName)
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
 			},
 		},
 	})
@@ -509,12 +509,12 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: true,
+								Unique: ptr(true),
 							},
 						},
 					},
@@ -529,34 +529,34 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "description",
 							Type:     "varchar(255)",
-							Nullable: false,
+							Nullable: ptr(false),
 						},
 					},
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// Inserting a null description through the old view works (due to `up` sql populating the column).
-			MustInsert(t, db, "public", "01_add_table", "products", map[string]string{
+			MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
 				"name": "apple",
 			})
 			// Inserting a null description through the new view fails.
-			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
+			MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
 				"name": "banana",
 			}, testutils.CheckViolationErrorCode)
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// the check constraint has been dropped.
 			constraintName := migrations.NotNullConstraintName("description")
-			CheckConstraintMustNotExist(t, db, "public", "products", constraintName)
+			CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// the check constraint has been dropped.
 			constraintName := migrations.NotNullConstraintName("description")
-			CheckConstraintMustNotExist(t, db, "public", "products", constraintName)
+			CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
 
 			// can't insert a null description into the new view; the column now has a NOT NULL constraint.
-			MustNotInsert(t, db, "public", "02_add_column", "products", map[string]string{
+			MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
 				"name": "orange",
 			}, testutils.NotNullViolationErrorCode)
 		},
@@ -575,12 +575,12 @@ func TestAddColumnValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:   "name",
 						Type:   "varchar(255)",
-						Unique: true,
+						Unique: ptr(true),
 					},
 				},
 			},
@@ -600,7 +600,7 @@ func TestAddColumnValidation(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: false,
+								Nullable: ptr(false),
 								Default:  ptr("0"),
 							},
 						},
@@ -640,7 +640,7 @@ func TestAddColumnValidation(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -694,12 +694,12 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: true,
+								Unique: ptr(true),
 							},
 						},
 					},
@@ -723,30 +723,30 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// Inserting a row that meets the constraint into the new view succeeds.
-			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "alice",
 				"age":  "30",
 			})
 
 			// Inserting a row that does not meet the constraint into the new view fails.
-			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "bob",
 				"age":  "3",
 			}, testutils.CheckViolationErrorCode)
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// Inserting a row that meets the constraint into the new view succeeds.
-			MustInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "carl",
 				"age":  "30",
 			})
 
 			// Inserting a row that does not meet the constraint into the new view fails.
-			MustNotInsert(t, db, "public", "02_add_column", "users", map[string]string{
+			MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "dana",
 				"age":  "3",
 			}, testutils.CheckViolationErrorCode)
@@ -769,12 +769,12 @@ func TestAddColumnWithComment(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: true,
+								Unique: ptr(true),
 							},
 						},
 					},
@@ -788,7 +788,7 @@ func TestAddColumnWithComment(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "age",
 							Type:     "integer",
-							Nullable: false,
+							Nullable: ptr(false),
 							Default:  ptr("0"),
 							Comment:  ptr("the age of the user"),
 						},
@@ -796,16 +796,16 @@ func TestAddColumnWithComment(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// The comment has been added to the underlying column.
 			columnName := migrations.TemporaryName("age")
-			ColumnMustHaveComment(t, db, "public", "users", columnName, "the age of the user")
+			ColumnMustHaveComment(t, db, schema, "users", columnName, "the age of the user")
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// The comment is still present on the underlying column.
-			ColumnMustHaveComment(t, db, "public", "users", "age", "the age of the user")
+			ColumnMustHaveComment(t, db, schema, "users", "age", "the age of the user")
 		},
 	}})
 }

@@ -28,7 +28,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name: "username",
@@ -53,24 +53,24 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   "integer",
-							Up:     "CAST (rating AS integer)",
-							Down:   "CAST (rating AS text)",
+							Type:   ptr("integer"),
+							Up:     ptr("CAST (rating AS integer)"),
+							Down:   ptr("CAST (rating AS text)"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
-				newVersionSchema := roll.VersionedSchemaName("public", "02_change_type")
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				newVersionSchema := roll.VersionedSchemaName(schema, "02_change_type")
 
 				// The new (temporary) `rating` column should exist on the underlying table.
-				ColumnMustExist(t, db, "public", "reviews", migrations.TemporaryName("rating"))
+				ColumnMustExist(t, db, schema, "reviews", migrations.TemporaryName("rating"))
 
 				// The `rating` column in the new view must have the correct type.
 				ColumnMustHaveType(t, db, newVersionSchema, "reviews", "rating", "integer")
 
 				// Inserting into the new `rating` column should work.
-				MustInsert(t, db, "public", "02_change_type", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"rating":   "5",
@@ -78,13 +78,13 @@ func TestChangeColumnType(t *testing.T) {
 
 				// The value inserted into the new `rating` column has been backfilled into
 				// the old `rating` column.
-				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
+				rows := MustSelect(t, db, schema, "01_add_table", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "rating": "5"},
 				}, rows)
 
 				// Inserting into the old `rating` column should work.
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "bob",
 					"product":  "banana",
 					"rating":   "8",
@@ -92,44 +92,44 @@ func TestChangeColumnType(t *testing.T) {
 
 				// The value inserted into the old `rating` column has been backfilled into
 				// the new `rating` column.
-				rows = MustSelect(t, db, "public", "02_change_type", "reviews")
+				rows = MustSelect(t, db, schema, "02_change_type", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "rating": 5},
 					{"id": 2, "username": "bob", "product": "banana", "rating": 8},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `rating` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("rating"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("rating"))
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "rating"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "rating"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "rating"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "rating"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
-				newVersionSchema := roll.VersionedSchemaName("public", "02_change_type")
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				newVersionSchema := roll.VersionedSchemaName(schema, "02_change_type")
 
 				// The new (temporary) `rating` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("rating"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("rating"))
 
 				// The `rating` column in the new view must have the correct type.
 				ColumnMustHaveType(t, db, newVersionSchema, "reviews", "rating", "integer")
 
 				// Inserting into the new view should work.
-				MustInsert(t, db, "public", "02_change_type", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "reviews", map[string]string{
 					"username": "carl",
 					"product":  "carrot",
 					"rating":   "3",
 				})
 
 				// Selecting from the new view should succeed.
-				rows := MustSelect(t, db, "public", "02_change_type", "reviews")
+				rows := MustSelect(t, db, schema, "02_change_type", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "rating": 5},
 					{"id": 2, "username": "bob", "product": "banana", "rating": 8},
@@ -137,14 +137,14 @@ func TestChangeColumnType(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "rating"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "rating"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "rating"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "rating"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
 			},
 		},
 		{
@@ -159,12 +159,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -179,12 +179,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name: "department_id",
@@ -205,22 +205,22 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "employees",
 							Column: "department_id",
-							Type:   "bigint",
-							Up:     "department_id",
-							Down:   "department_id",
+							Type:   ptr("bigint"),
+							Up:     ptr("department_id"),
+							Down:   ptr("department_id"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
 			},
 		},
 		{
@@ -235,13 +235,13 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
 									Default:  ptr("'alice'"),
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -253,35 +253,35 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "users",
 							Column: "username",
-							Type:   "varchar(255)",
-							Up:     "username",
-							Down:   "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id": "1",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_change_type", "users")
+				rows := MustSelect(t, db, schema, "02_change_type", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id": "2",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_change_type", "users")
+				rows := MustSelect(t, db, schema, "02_change_type", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice"},
 					{"id": 2, "username": "alice"},
@@ -300,12 +300,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 									Check: &migrations.CheckConstraint{
 										Name:       "username_length",
 										Constraint: "length(username) > 3",
@@ -321,25 +321,25 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "users",
 							Column: "username",
-							Type:   "varchar(255)",
-							Up:     "username",
-							Down:   "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id":       "1",
 					"username": "a",
 				}, testutils.CheckViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id":       "2",
 					"username": "b",
 				}, testutils.CheckViolationErrorCode)
@@ -357,12 +357,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -374,24 +374,24 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "users",
 							Column: "username",
-							Type:   "varchar(255)",
-							Up:     "username",
-							Down:   "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint fails.
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id": "1",
 				}, testutils.NotNullViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint fails.
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"id": "2",
 				}, testutils.NotNullViolationErrorCode)
 			},
@@ -408,12 +408,12 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:   "username",
 									Type:   "text",
-									Unique: true,
+									Unique: ptr(true),
 								},
 							},
 						},
@@ -425,34 +425,34 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "users",
 							Column: "username",
-							Type:   "varchar(255)",
-							Up:     "username",
-							Down:   "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"username": "alice",
 				})
 
 				// Inserting a row with a duplicate `username` value fails
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"username": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row with a duplicate `username` value fails
-				MustNotInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"username": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `username` value succeeds
-				MustInsert(t, db, "public", "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
 					"username": "bob",
 				})
 			},
@@ -472,7 +472,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name: "username",
@@ -502,8 +502,8 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   "integer",
-							Down:   "CAST (rating AS text)",
+							Type:   ptr("integer"),
+							Down:   ptr("CAST (rating AS text)"),
 						},
 					},
 				},
@@ -520,8 +520,8 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   "integer",
-							Up:     "CAST (rating AS integer)",
+							Type:   ptr("integer"),
+							Up:     ptr("CAST (rating AS integer)"),
 						},
 					},
 				},

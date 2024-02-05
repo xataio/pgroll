@@ -21,12 +21,12 @@ func TestSetReplicaIdentity(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:     "name",
 						Type:     "varchar(255)",
-						Nullable: false,
+						Nullable: ptr(false),
 					},
 				},
 			},
@@ -48,14 +48,14 @@ func TestSetReplicaIdentity(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The replica identity has been set to 'f' (full).
-				ReplicaIdentityMustBe(t, db, "public", "users", "f")
+				ReplicaIdentityMustBe(t, db, schema, "users", "f")
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op
 			},
 		},
@@ -73,14 +73,14 @@ func TestSetReplicaIdentity(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The replica identity has been set to 'n' (nothing).
-				ReplicaIdentityMustBe(t, db, "public", "users", "n")
+				ReplicaIdentityMustBe(t, db, schema, "users", "n")
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op
 			},
 		},
@@ -98,14 +98,14 @@ func TestSetReplicaIdentity(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The replica identity has been set to 'd' (default).
-				ReplicaIdentityMustBe(t, db, "public", "users", "d")
+				ReplicaIdentityMustBe(t, db, schema, "users", "d")
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op
 			},
 		},
@@ -126,14 +126,14 @@ func TestSetReplicaIdentity(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The replica identity has been set to 'i' (index).
-				ReplicaIdentityMustBe(t, db, "public", "users", "i")
+				ReplicaIdentityMustBe(t, db, schema, "users", "i")
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op
 			},
 		},
@@ -152,12 +152,12 @@ func TestSetReplicaIdentityValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   true,
+						Pk:   ptr(true),
 					},
 					{
 						Name:   "name",
 						Type:   "varchar(255)",
-						Unique: true,
+						Unique: ptr(true),
 					},
 				},
 			},

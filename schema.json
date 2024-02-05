@@ -62,7 +62,7 @@
           "type": "string"
         }
       },
-      "required": ["name", "nullable", "pk", "type", "unique"],
+      "required": ["name", "type"],
       "type": "object"
     },
     "ForeignKeyReference": {
@@ -150,7 +150,36 @@
           "type": "string"
         }
       },
-      "required": ["column", "down", "name", "table", "type", "up"],
+      "required": ["table", "column"],
+      "oneOf": [
+        {
+          "required": ["up", "down"],
+          "oneOf": [
+            {"required": ["check"]},
+            {"required": ["type"]},
+            {"required": ["nullable"]},
+            {"required": ["unique"]},
+            {"required": ["references"]}
+          ],
+          "not": {
+            "required": ["name"]
+          }
+        },
+        {
+          "required": ["name"],
+          "not": {
+            "anyOf": [
+              { "required": [ "up" ] },
+              { "required": [ "down" ] },
+              { "required": [ "check" ] },
+              { "required": [ "type" ] },
+              { "required": [ "nullable" ] },
+              { "required": [ "unique" ] },
+              { "required": [ "references" ] }
+            ]
+          }
+        }
+      ],
       "type": "object"
     },
     "OpCreateIndex": {
@@ -415,11 +444,11 @@
           "description": "Raw SQL operation",
           "additionalProperties": false,
           "properties": {
-            "raw_sql": {
+            "sql": {
               "$ref": "#/$defs/OpRawSQL"
             }
           },
-          "required": ["raw_sql"]
+          "required": ["sql"]
         },
         {
           "type": "object",

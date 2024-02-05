@@ -24,12 +24,12 @@ func TestCreateIndex(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -46,15 +46,15 @@ func TestCreateIndex(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has been created on the underlying table.
-			IndexMustExist(t, db, "public", "users", "idx_users_name")
+			IndexMustExist(t, db, schema, "users", "idx_users_name")
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has been dropped from the the underlying table.
-			IndexMustNotExist(t, db, "public", "users", "idx_users_name")
+			IndexMustNotExist(t, db, schema, "users", "idx_users_name")
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// Complete is a no-op.
 		},
 	}})
@@ -75,17 +75,17 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 							{
 								Name:     "email",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -102,15 +102,15 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has been created on the underlying table.
-			IndexMustExist(t, db, "public", "users", "idx_users_name_email")
+			IndexMustExist(t, db, schema, "users", "idx_users_name_email")
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has been dropped from the the underlying table.
-			IndexMustNotExist(t, db, "public", "users", "idx_users_name_email")
+			IndexMustNotExist(t, db, schema, "users", "idx_users_name_email")
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// Complete is a no-op.
 		},
 	}})

@@ -27,22 +27,22 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -55,23 +55,23 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "reviews",
 							Column:   "review",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should exist on the underlying table.
-				ColumnMustExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// Inserting a NULL into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 				})
 
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "bob",
 					"product":  "banana",
 					"review":   "brilliant",
@@ -79,20 +79,20 @@ func TestDropNotNull(t *testing.T) {
 
 				// The rows inserted into the new `review` column have been backfilled into the
 				// old `review` column.
-				rows := MustSelect(t, db, "public", "01_add_table", "reviews")
+				rows := MustSelect(t, db, schema, "01_add_table", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
 				}, rows)
 
 				// Inserting a NULL value into the old `review` column should fail
-				MustNotInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "carl",
 					"product":  "carrot",
 				}, testutils.NotNullViolationErrorCode)
 
 				// Inserting a non-NULL value into the old `review` column should succeed
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "dana",
 					"product":  "durian",
 					"review":   "delicious",
@@ -100,39 +100,39 @@ func TestDropNotNull(t *testing.T) {
 
 				// The non-NULL value inserted into the old `review` column has been copied
 				// unchanged into the new `review` column.
-				rows = MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows = MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": nil},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
 					{"id": 4, "username": "dana", "product": "durian", "review": "delicious"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "reviews", migrations.TemporaryName("review"))
+				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// Writing a NULL review into the `review` column should succeed.
-				MustInsert(t, db, "public", "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
 					"username": "earl",
 					"product":  "eggplant",
 				})
 
 				// Selecting from the `reviews` view should succeed.
-				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows := MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
@@ -141,14 +141,14 @@ func TestDropNotNull(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", "review"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", "review"))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
 			},
 		},
 		{
@@ -163,22 +163,22 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -191,15 +191,15 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "reviews",
 							Column:   "review",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
-							Up:       "review || ' (from the old column)'",
+							Down:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+							Up:       ptr("review || ' (from the old column)'"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a non-NULL value into the old `review` column should succeed
-				MustInsert(t, db, "public", "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 					"review":   "amazing",
@@ -207,14 +207,14 @@ func TestDropNotNull(t *testing.T) {
 
 				// The value inserted into the old `review` column has been backfilled into the
 				// new `review` column using the user-supplied `up` SQL.
-				rows := MustSelect(t, db, "public", "02_set_nullable", "reviews")
+				rows := MustSelect(t, db, schema, "02_set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "amazing (from the old column)"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			},
 		},
 		{
@@ -229,12 +229,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -249,17 +249,17 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: false,
+									Nullable: ptr(false),
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -277,21 +277,21 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "employees",
 							Column:   "department_id",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
-							Up:       "department_id",
+							Down:     ptr("(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)"),
+							Up:       ptr("department_id"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
 			},
 		},
 		{
@@ -306,12 +306,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 									Default:  ptr("'anonymous'"),
 								},
 							},
@@ -325,34 +325,34 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "users",
 							Column:   "name",
 							Nullable: ptr(true),
-							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Up:       ptr("name"),
+							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id": "1",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id": "2",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 					{"id": 2, "name": "anonymous"},
@@ -371,12 +371,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 									Check: &migrations.CheckConstraint{
 										Name:       "name_length",
 										Constraint: "length(name) > 3",
@@ -393,24 +393,24 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "users",
 							Column:   "name",
 							Nullable: ptr(true),
-							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Up:       ptr("name"),
+							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id":   "1",
 					"name": "a",
 				}, testutils.CheckViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"id":   "2",
 					"name": "b",
 				}, testutils.CheckViolationErrorCode)
@@ -428,13 +428,13 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
-									Unique:   true,
+									Nullable: ptr(false),
+									Unique:   ptr(true),
 								},
 							},
 						},
@@ -447,33 +447,33 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "users",
 							Column:   "name",
 							Nullable: ptr(true),
-							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Up:       ptr("name"),
+							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `name` value succeeds
-				MustInsert(t, db, "public", "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
 					"name": "bob",
 				})
 			},
@@ -497,12 +497,12 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: false,
+									Nullable: ptr(false),
 								},
 							},
 						},
@@ -515,7 +515,7 @@ func TestDropNotNullValidation(t *testing.T) {
 							Table:    "users",
 							Column:   "name",
 							Nullable: ptr(true),
-							Up:       "name",
+							Up:       ptr("name"),
 						},
 					},
 				},
@@ -534,12 +534,12 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   true,
+									Pk:   ptr(true),
 								},
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: true,
+									Nullable: ptr(true),
 								},
 							},
 						},
@@ -552,8 +552,8 @@ func TestDropNotNullValidation(t *testing.T) {
 							Table:    "users",
 							Column:   "name",
 							Nullable: ptr(true),
-							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+							Up:       ptr("name"),
+							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)"),
 						},
 					},
 				},

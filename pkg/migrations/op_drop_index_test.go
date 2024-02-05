@@ -24,12 +24,12 @@ func TestDropIndex(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -54,16 +54,16 @@ func TestDropIndex(t *testing.T) {
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has not yet been dropped.
-			IndexMustExist(t, db, "public", "users", "idx_users_name")
+			IndexMustExist(t, db, schema, "users", "idx_users_name")
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// Rollback is a no-op.
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// The index has been removed from the underlying table.
-			IndexMustNotExist(t, db, "public", "users", "idx_users_name")
+			IndexMustNotExist(t, db, schema, "users", "idx_users_name")
 		},
 	}})
 }

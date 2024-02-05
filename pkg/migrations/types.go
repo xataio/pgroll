@@ -27,10 +27,10 @@ type Column struct {
 	Name string `json:"name"`
 
 	// Indicates if the column is nullable
-	Nullable bool `json:"nullable"`
+	Nullable *bool `json:"nullable,omitempty"`
 
 	// Indicates if the column is part of the primary key
-	Pk bool `json:"pk"`
+	Pk *bool `json:"pk,omitempty"`
 
 	// Foreign key constraint for the column
 	References *ForeignKeyReference `json:"references,omitempty"`
@@ -39,7 +39,7 @@ type Column struct {
 	Type string `json:"type"`
 
 	// Indicates if the column values must be unique
-	Unique bool `json:"unique"`
+	Unique *bool `json:"unique,omitempty"`
 }
 
 // Foreign key reference definition
@@ -75,10 +75,10 @@ type OpAlterColumn struct {
 	Column string `json:"column"`
 
 	// SQL expression for down migration
-	Down string `json:"down"`
+	Down *string `json:"down,omitempty"`
 
 	// New name of the column (for rename column operation)
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 
 	// Indicates if the column is nullable (for add/remove not null constraint
 	// operation)
@@ -91,13 +91,13 @@ type OpAlterColumn struct {
 	Table string `json:"table"`
 
 	// New type of the column (for change type operation)
-	Type string `json:"type"`
+	Type *string `json:"type,omitempty"`
 
 	// Add unique constraint to the column
 	Unique *UniqueConstraint `json:"unique,omitempty"`
 
 	// SQL expression for up migration
-	Up string `json:"up"`
+	Up *string `json:"up,omitempty"`
 }
 
 // Create index operation

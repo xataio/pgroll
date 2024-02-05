@@ -25,12 +25,12 @@ func TestRenameColumn(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   true,
+								Pk:   ptr(true),
 							},
 							{
 								Name:     "username",
 								Type:     "varchar(255)",
-								Nullable: false,
+								Nullable: ptr(false),
 							},
 						},
 					},
@@ -42,37 +42,37 @@ func TestRenameColumn(t *testing.T) {
 					&migrations.OpAlterColumn{
 						Table:  "users",
 						Column: "username",
-						Name:   "name",
+						Name:   ptr("name"),
 					},
 				},
 			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB) {
+		afterStart: func(t *testing.T, db *sql.DB, schema string) {
 			// The column in the underlying table has not been renamed.
-			ColumnMustExist(t, db, "public", "users", "username")
+			ColumnMustExist(t, db, schema, "users", "username")
 
 			// Insertions to the new column name in the new version schema should work.
-			MustInsert(t, db, "public", "02_rename_column", "users", map[string]string{"name": "alice"})
+			MustInsert(t, db, schema, "02_rename_column", "users", map[string]string{"name": "alice"})
 
 			// Insertions to the old column name in the old version schema should work.
-			MustInsert(t, db, "public", "01_add_table", "users", map[string]string{"username": "bob"})
+			MustInsert(t, db, schema, "01_add_table", "users", map[string]string{"username": "bob"})
 
 			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, "public", "02_rename_column", "users")
+			rows := MustSelect(t, db, schema, "02_rename_column", "users")
 			assert.Equal(t, []map[string]any{
 				{"id": 1, "name": "alice"},
 				{"id": 2, "name": "bob"},
 			}, rows)
 		},
-		afterRollback: func(t *testing.T, db *sql.DB) {
+		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			// no-op
 		},
-		afterComplete: func(t *testing.T, db *sql.DB) {
+		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 			// The column in the underlying table has been renamed.
-			ColumnMustExist(t, db, "public", "users", "name")
+			ColumnMustExist(t, db, schema, "users", "name")
 
 			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, "public", "02_rename_column", "users")
+			rows := MustSelect(t, db, schema, "02_rename_column", "users")
 			assert.Equal(t, []map[string]any{
 				{"id": 1, "name": "alice"},
 				{"id": 2, "name": "bob"},
