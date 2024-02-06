@@ -113,12 +113,13 @@ jobs:
           ./bin/license-header-checker -a -r .github/license-header.txt . go && [[ -z `git status -s` ]]
 
   examples:
-    name: examples (postgres ${{ matrix.pgVersion }})
+    name: 'examples (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         pgVersion: ['14.8', '15.3', '16.0', 'latest']
+        testSchema: [ 'public', 'non_public' ]
     services:
       postgres:
         image: postgres:${{ matrix.pgVersion }}
@@ -141,12 +142,21 @@ jobs:
 
     - name: Run example migrations
       run: |
+        if [ "$PGROLL_SCHEMA" != "public" ]; then
+          psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE SCHEMA $PGROLL_SCHEMA;"
+        fi
+
         go run . init
         for file in ./examples/*.json; do
           if [ -f "$file" ]; then
             go run . start --complete $file;
           fi
         done
+      env:
+        POSTGRES_PORT: 5432
+        POSTGRES_HOST: localhost
+        PGPASSWORD: postgres
+        PGROLL_SCHEMA: ${{ matrix.testSchema }}
 
   release:
     runs-on: ubuntu-latest
