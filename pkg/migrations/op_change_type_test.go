@@ -411,16 +411,27 @@ func TestChangeColumnType(t *testing.T) {
 									Pk:   ptr(true),
 								},
 								{
-									Name:   "username",
-									Type:   "text",
-									Unique: ptr(true),
+									Name: "username",
+									Type: "text",
 								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_change_type",
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{Name: "unique_username"},
+							Up:     ptr("username"),
+							Down:   ptr("username"),
+						},
+					},
+				},
+				{
+					Name: "03_change_type",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "users",
@@ -434,25 +445,28 @@ func TestChangeColumnType(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "03_change_type", "users", map[string]string{
 					"username": "alice",
 				})
 
 				// Inserting a row with a duplicate `username` value fails
-				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_change_type", "users", map[string]string{
 					"username": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has a unique constraint defined on it
+				UniqueConstraintMustExist(t, db, schema, "users", "unique_username")
+
 				// Inserting a row with a duplicate `username` value fails
-				MustNotInsert(t, db, schema, "02_change_type", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_change_type", "users", map[string]string{
 					"username": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `username` value succeeds
-				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+				MustInsert(t, db, schema, "03_change_type", "users", map[string]string{
 					"username": "bob",
 				})
 			},

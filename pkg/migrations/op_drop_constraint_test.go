@@ -690,14 +690,25 @@ func TestDropConstraint(t *testing.T) {
 									Name:     "title",
 									Type:     "text",
 									Nullable: ptr(true),
-									Unique:   ptr(true),
 								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_add_check_constraint",
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Unique: &migrations.UniqueConstraint{Name: "unique_title"},
+							Up:     ptr("title"),
+							Down:   ptr("title"),
+						},
+					},
+				},
+				{
+					Name: "03_add_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "posts",
@@ -712,7 +723,7 @@ func TestDropConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "03_drop_check_constraint",
+					Name: "04_drop_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table:  "posts",
@@ -726,25 +737,28 @@ func TestDropConstraint(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row into the `posts` table succeeds
-				MustInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "04_drop_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				})
 
 				// Inserting another row with a duplicate `title` value fails
-				MustNotInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "04_drop_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has a unique constraint defined on it
+				UniqueConstraintMustExist(t, db, schema, "posts", "unique_title")
+
 				// Inserting a row with a duplicate `title` value fails
-				MustNotInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "04_drop_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `title` value succeeds
-				MustInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "04_drop_check_constraint", "posts", map[string]string{
 					"title": "post by bob",
 				})
 			},

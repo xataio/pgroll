@@ -552,16 +552,27 @@ func TestSetForeignKey(t *testing.T) {
 									Type: "text",
 								},
 								{
-									Name:   "user_id",
-									Type:   "integer",
-									Unique: ptr(true),
+									Name: "user_id",
+									Type: "integer",
 								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_add_fk_constraint",
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							Unique: &migrations.UniqueConstraint{Name: "unique_user_id"},
+							Up:     ptr("user_id"),
+							Down:   ptr("user_id"),
+						},
+					},
+				},
+				{
+					Name: "03_add_fk_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "posts",
@@ -579,19 +590,19 @@ func TestSetForeignKey(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Set up the users table with a reference row
-				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "03_add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 					"id":   "1",
 				})
 
 				// Inserting an initial row succeeds
-				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "03_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting a row with a duplicate `user_id` fails.
-				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "03_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice 2",
 					"user_id": "1",
 				}, testutils.UniqueViolationErrorCode)
@@ -599,20 +610,23 @@ func TestSetForeignKey(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The 'posts' table has a unique constraint defined on it
+				UniqueConstraintMustExist(t, db, schema, "posts", "unique_user_id")
+
 				// Inserting a row with a duplicate `user_id` fails
-				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "03_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice 3",
 					"user_id": "1",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Set up the users table with another reference row
-				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "03_add_fk_constraint", "users", map[string]string{
 					"name": "bob",
 					"id":   "2",
 				})
 
 				// Inserting a row with a different `user_id` succeeds
-				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "03_add_fk_constraint", "posts", map[string]string{
 					"title":   "post by bob",
 					"user_id": "2",
 				})

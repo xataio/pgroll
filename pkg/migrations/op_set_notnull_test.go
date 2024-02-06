@@ -438,14 +438,25 @@ func TestSetNotNull(t *testing.T) {
 									Name:     "name",
 									Type:     "text",
 									Nullable: ptr(true),
-									Unique:   ptr(true),
 								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "name",
+							Unique: &migrations.UniqueConstraint{Name: "unique_name"},
+							Up:     ptr("name"),
+							Down:   ptr("name"),
+						},
+					},
+				},
+				{
+					Name: "03_set_not_null",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "users",
@@ -458,25 +469,28 @@ func TestSetNotNull(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has a unique constraint defined on it
+				UniqueConstraintMustExist(t, db, schema, "users", "unique_name")
+
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `name` value succeeds
-				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
 					"name": "bob",
 				})
 			},
