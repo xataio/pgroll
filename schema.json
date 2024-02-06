@@ -312,6 +312,10 @@
         "up": {
           "description": "SQL expression for up migration",
           "type": "string"
+        },
+        "onComplete": {
+          "description": "SQL expression will run on complete step (rather than on start)",
+          "type": "boolean"
         }
       },
       "required": ["up"],
