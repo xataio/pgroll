@@ -181,5 +181,5 @@ type InvalidNameLengthError struct {
 }
 
 func (e InvalidNameLengthError) Error() string {
-	return fmt.Sprintf("%d", e.Max)
+	return fmt.Sprintf("max length of %s is %d", e.Identity, e.Max)
 }
