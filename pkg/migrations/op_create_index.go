@@ -40,10 +40,10 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 
-	if len(o.Name) > maxNameLength {
+	if len(o.Name) > MaxNameLength {
 		return InvalidNameLengthError{
 			Identity: o.Name,
-			Max:      maxNameLength,
+			Max:      MaxNameLength,
 		}
 	}
 

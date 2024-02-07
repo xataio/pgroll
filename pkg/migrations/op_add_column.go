@@ -135,17 +135,17 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
-	if len(o.Column.Name) > maxNameLength {
+	if len(o.Column.Name) > MaxNameLength {
 		return InvalidNameLengthError{
 			Identity: o.Column.Name,
-			Max:      maxNameLength,
+			Max:      MaxNameLength,
 		}
 	}
 	triggerName := TriggerName(o.Table, o.Column.Name)
-	if len(triggerName) > maxNameLength {
+	if len(triggerName) > MaxNameLength {
 		return InvalidNameLengthError{
 			Identity: triggerName,
-			Max:      maxNameLength,
+			Max:      MaxNameLength,
 		}
 	}
 	table := s.GetTable(o.Table)

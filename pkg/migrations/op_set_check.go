@@ -150,10 +150,10 @@ func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn *sql.DB) error
 
 func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) error {
 	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
-	if len(triggerName) > maxNameLength {
+	if len(triggerName) > MaxNameLength {
 		return InvalidNameLengthError{
 			Identity: triggerName,
-			Max:      maxNameLength,
+			Max:      MaxNameLength,
 		}
 	}
 	if err := o.Check.Validate(); err != nil {

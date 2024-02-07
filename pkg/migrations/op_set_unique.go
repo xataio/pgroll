@@ -156,10 +156,10 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 	name := TriggerName(o.Table, TemporaryName(o.Column))
-	if len(name) > maxNameLength {
+	if len(name) > MaxNameLength {
 		return InvalidNameLengthError{
 			Identity: name,
-			Max:      maxNameLength,
+			Max:      MaxNameLength,
 		}
 	}
 
