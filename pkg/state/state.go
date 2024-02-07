@@ -167,14 +167,14 @@ BEGIN
 						AND indisprimary
 				),
 				'indexes', (
-				  SELECT COALESCE(json_object_agg(ix_details.indexrelid::regclass, json_build_object(
-				    'name', ix_details.indexrelid::regclass,
+				  SELECT COALESCE(json_object_agg(ix_details.name, json_build_object(
+				    'name', ix_details.name,
 				    'unique', ix_details.indisunique,
 				    'columns', ix_details.columns
 				  )), '{}'::json)
 				  FROM (
 				    SELECT 
-				      pi.indexrelid, 
+				      reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)) as name,
 				      pi.indisunique,
 				      array_agg(a.attname) AS columns
 				    FROM pg_index pi
