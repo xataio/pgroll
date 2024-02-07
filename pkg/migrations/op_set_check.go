@@ -149,6 +149,13 @@ func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn *sql.DB) error
 }
 
 func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) error {
+	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
+	if len(triggerName) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: triggerName,
+			Max:      maxNameLength,
+		}
+	}
 	if err := o.Check.Validate(); err != nil {
 		return CheckConstraintError{
 			Table:  o.Table,

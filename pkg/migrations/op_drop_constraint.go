@@ -127,6 +127,14 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error {
+	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
+	if len(triggerName) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: triggerName,
+			Max:      maxNameLength,
+		}
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

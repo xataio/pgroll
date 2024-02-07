@@ -141,6 +141,13 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 			Max:      maxNameLength,
 		}
 	}
+	triggerName := TriggerName(o.Table, o.Column.Name)
+	if len(triggerName) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: triggerName,
+			Max:      maxNameLength,
+		}
+	}
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

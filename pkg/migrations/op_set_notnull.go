@@ -167,6 +167,13 @@ func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
+	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
+	if len(triggerName) > maxNameLength {
+		return InvalidNameLengthError{
+			Identity: triggerName,
+			Max:      maxNameLength,
+		}
+	}
 	column := s.GetTable(o.Table).GetColumn(o.Column)
 
 	if !column.Nullable {
