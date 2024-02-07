@@ -73,14 +73,22 @@ branches:
 
       # Required. The list of status checks to require in order to merge into this branch
       contexts:
-      - test (postgres 14.8)
-      - test (postgres 15.3)
-      - test (postgres 16.0)
-      - test (postgres latest)
-      - examples (postgres 14.8)
-      - examples (postgres 15.3)
-      - examples (postgres 16.0)
-      - examples (postgres latest)
+      - test (pg: 14.8, schema: public)
+      - test (pg: 15.3, schema: public)
+      - test (pg: 16.0, schema: public)
+      - test (pg: latest, schema: public)
+      - test (pg: 14.8, schema: non_public)
+      - test (pg: 15.3, schema: non_public)
+      - test (pg: 16.0, schema: non_public)
+      - test (pg: latest, schema: non_public)
+      - examples (pg: 14.8, schema: public)
+      - examples (pg: 15.3, schema: public)
+      - examples (pg: 16.0, schema: public)
+      - examples (pg: latest, schema: public)
+      - examples (pg: 14.8, schema: non_public)
+      - examples (pg: 15.3, schema: non_public)
+      - examples (pg: 16.0, schema: non_public)
+      - examples (pg: latest, schema: non_public)
       - lint
 
     # Required. Require at least one approving review on a pull request, before merging. Set to null to disable.
