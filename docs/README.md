@@ -1072,6 +1072,19 @@ Example **raw SQL** migrations:
 
 * [05_sql.json](../examples/05_sql.json)
 
+For convenience, `sql` migration allows to run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase) by setting the `onComplete` flag:
+
+```json
+{
+  "sql": {
+    "up": "SQL expression",
+    "onComplete": true
+  }
+}
+```
+
+`onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
+
 ### Rename table
 
 A rename table operation renames a table.
