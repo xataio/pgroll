@@ -91,6 +91,49 @@ func TestRawSQL(t *testing.T) {
 			},
 		},
 		{
+			name: "raw SQL after a migration with onComplete",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "test_table",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial"},
+								{Name: "name", Type: "text"},
+							},
+						},
+						&migrations.OpRawSQL{
+							OnComplete: &vTrue,
+							Up: `
+								ALTER TABLE test_table ADD COLUMN age int
+							`,
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// SQL didn't run yet
+				ViewMustExist(t, db, schema, "01_create_table", "test_table")
+				ColumnMustNotExist(t, db, schema, "test_table", "age")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// table is dropped after rollback
+				TableMustNotExist(t, db, schema, "test_table")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// table can be accessed after start
+				TableMustExist(t, db, schema, "test_table")
+				ColumnMustExist(t, db, schema, "test_table", "age")
+
+				// inserts work
+				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
+					"name": "foo",
+					"age":  "42",
+				})
+			},
+		},
+		{
 			name: "migration on top of raw SQL",
 			migrations: []migrations.Migration{
 				{
