@@ -1072,7 +1072,7 @@ Example **raw SQL** migrations:
 
 * [05_sql.json](../examples/05_sql.json)
 
-For convenience, `sql` migration allows to run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase) by setting the `onComplete` flag:
+By default, `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run `sql` operation together with other operations by setting the `onComplete` flag to `true`:
 
 ```json
 {
@@ -1082,6 +1082,8 @@ For convenience, `sql` migration allows to run the `up` expression on the comple
   }
 }
 ```
+
+The `onComplete` flag will make this operation run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase).
 
 `onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
 
