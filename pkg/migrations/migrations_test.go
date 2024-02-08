@@ -17,7 +17,7 @@ func TestMigrationsIsolated(t *testing.T) {
 			&OpRawSQL{
 				Up: `foo`,
 			},
-			&OpRenameColumn{},
+			&OpCreateTable{Name: "foo"},
 		},
 	}
 
@@ -36,5 +36,19 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 		},
 	}
 	err := migration.Validate(context.TODO(), schema.New())
+	assert.NoError(t, err)
+
+	// Test onComplete
+	migration = Migration{
+		Name: "sql",
+		Operations: Operations{
+			&OpRawSQL{
+				Up:         `foo`,
+				OnComplete: &[]bool{true}[0],
+			},
+			&OpCreateTable{Name: "foo"},
+		},
+	}
+	err = migration.Validate(context.TODO(), schema.New())
 	assert.NoError(t, err)
 }
