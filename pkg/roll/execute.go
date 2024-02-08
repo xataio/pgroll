@@ -50,11 +50,13 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 				errRollback)
 		}
 
-		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
-			// refresh schema
-			newSchema, err = m.state.ReadSchema(ctx, m.schema)
-			if err != nil {
-				return fmt.Errorf("unable to refresh schema: %w", err)
+		if refreshOp, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
+			if refreshOp.RequiresSchemaRefresh() {
+				// refresh schema
+				newSchema, err = m.state.ReadSchema(ctx, m.schema)
+				if err != nil {
+					return fmt.Errorf("unable to refresh schema: %w", err)
+				}
 			}
 		}
 	}
@@ -192,5 +194,8 @@ func (m *Roll) createView(ctx context.Context, version, name string, table schem
 }
 
 func VersionedSchemaName(schema string, version string) string {
+	if version == "" {
+		return schema
+	}
 	return schema + "_" + version
 }

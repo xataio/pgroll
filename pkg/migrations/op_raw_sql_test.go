@@ -82,10 +82,10 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// table can be accessed after start
-				ViewMustExist(t, db, schema, "01_create_table", "test_table")
+				TableMustExist(t, db, schema, "test_table")
 
 				// inserts work
-				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "", "test_table", map[string]string{
 					"name": "foo",
 				})
 			},

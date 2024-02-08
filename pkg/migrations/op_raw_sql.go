@@ -54,8 +54,12 @@ func (o *OpRawSQL) onComplete() bool {
 	return false
 }
 
-// this operation is isolated, cannot be executed with other operations
-func (o *OpRawSQL) IsIsolated() {}
+// this operation is isolated when executed on start, cannot be executed with other operations
+func (o *OpRawSQL) IsIsolated() bool {
+	return !o.onComplete()
+}
 
-// this operation requires the resulting schema to be refreshed
-func (o *OpRawSQL) RequiresSchemaRefresh() {}
+// this operation requires the resulting schema to be refreshed when executed on start
+func (o *OpRawSQL) RequiresSchemaRefresh() bool {
+	return !o.onComplete()
+}
