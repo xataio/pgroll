@@ -222,8 +222,5 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 }
 
 func VersionedSchemaName(schema string, version string) string {
-	if version == "" {
-		return schema
-	}
 	return schema + "_" + version
 }
