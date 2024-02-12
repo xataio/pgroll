@@ -320,6 +320,20 @@
         }
       },
       "required": ["up"],
+      "oneOf": [
+        {
+          "required": ["up", "down"],
+          "not": {
+            "required": ["onComplete"]
+          }
+        },
+        {
+          "required": ["up", "onComplete"],
+          "not": {
+            "required": ["down"]
+          }
+        }
+      ],
       "type": "object"
     },
     "OpRenameTable": {
