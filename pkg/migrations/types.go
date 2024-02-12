@@ -172,7 +172,7 @@ type OpRawSQL struct {
 	Down string `json:"down,omitempty"`
 
 	// SQL expression will run on complete step (rather than on start)
-	OnComplete *bool `json:"onComplete,omitempty"`
+	OnComplete bool `json:"onComplete,omitempty"`
 
 	// SQL expression for up migration
 	Up string `json:"up"`

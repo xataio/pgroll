@@ -44,7 +44,7 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 		Operations: Operations{
 			&OpRawSQL{
 				Up:         `foo`,
-				OnComplete: &[]bool{true}[0],
+				OnComplete: true,
 			},
 			&OpCreateTable{Name: "foo"},
 		},

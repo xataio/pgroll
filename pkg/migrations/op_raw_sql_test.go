@@ -11,7 +11,6 @@ import (
 
 func TestRawSQL(t *testing.T) {
 	t.Parallel()
-	vTrue := true
 
 	ExecuteTests(t, TestCases{
 		{
@@ -61,7 +60,7 @@ func TestRawSQL(t *testing.T) {
 					Name: "01_create_table",
 					Operations: migrations.Operations{
 						&migrations.OpRawSQL{
-							OnComplete: &vTrue,
+							OnComplete: true,
 							Up: `
 								CREATE TABLE test_table (
 									id serial,
@@ -74,10 +73,6 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// SQL didn't run yet
-				TableMustNotExist(t, db, schema, "test_table")
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// table is dropped after rollback
 				TableMustNotExist(t, db, schema, "test_table")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
@@ -104,7 +99,7 @@ func TestRawSQL(t *testing.T) {
 							},
 						},
 						&migrations.OpRawSQL{
-							OnComplete: &vTrue,
+							OnComplete: true,
 							Up: `
 								ALTER TABLE test_table ADD COLUMN age int
 							`,

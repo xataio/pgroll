@@ -12,7 +12,7 @@ import (
 var _ Operation = (*OpRawSQL)(nil)
 
 func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
-	if !o.onComplete() {
+	if !o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return err
 	}
@@ -20,7 +20,7 @@ func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, 
 }
 
 func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
-	if o.onComplete() {
+	if o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return err
 	}
@@ -40,23 +40,16 @@ func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 		return EmptyMigrationError{}
 	}
 
-	if o.onComplete() && o.Down != "" {
+	if o.OnComplete && o.Down != "" {
 		return InvalidMigrationError{Reason: "down is not allowed with onComplete"}
 	}
 
 	return nil
 }
 
-func (o *OpRawSQL) onComplete() bool {
-	if o.OnComplete != nil {
-		return *o.OnComplete
-	}
-	return false
-}
-
 // this operation is isolated when executed on start, cannot be executed with other operations
 func (o *OpRawSQL) IsIsolated() bool {
-	return !o.onComplete()
+	return !o.OnComplete
 }
 
 // this operation requires the resulting schema to be refreshed when executed on start

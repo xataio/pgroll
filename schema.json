@@ -315,7 +315,8 @@
         },
         "onComplete": {
           "description": "SQL expression will run on complete step (rather than on start)",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         }
       },
       "required": ["up"],
