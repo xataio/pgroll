@@ -60,6 +60,4 @@ func (o *OpRawSQL) IsIsolated() bool {
 }
 
 // this operation requires the resulting schema to be refreshed when executed on start
-func (o *OpRawSQL) RequiresSchemaRefresh() bool {
-	return true
-}
+func (o *OpRawSQL) RequiresSchemaRefresh() {}

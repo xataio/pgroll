@@ -40,7 +40,7 @@ type IsolatedOperation interface {
 
 // RequiresSchemaRefreshOperation is an operation that requires the resulting schema to be refreshed
 type RequiresSchemaRefreshOperation interface {
-	RequiresSchemaRefresh() bool
+	RequiresSchemaRefresh()
 }
 
 type (

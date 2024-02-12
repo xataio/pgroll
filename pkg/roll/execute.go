@@ -52,7 +52,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		// refresh schema when the op is isolated and requires a refresh (for example raw sql)
 		// we don't want to refresh the schema if the operation is not isolated as it would
 		// override changes made by other operations
-		if refreshOp, ok := op.(migrations.RequiresSchemaRefreshOperation); ok && refreshOp.RequiresSchemaRefresh() {
+		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
 			if isolatedOp, ok := op.(migrations.IsolatedOperation); ok && isolatedOp.IsIsolated() {
 				newSchema, err = m.state.ReadSchema(ctx, m.schema)
 				if err != nil {
@@ -127,10 +127,8 @@ func (m *Roll) Complete(ctx context.Context) error {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
 
-		if refreshOp, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
-			if refreshOp.RequiresSchemaRefresh() {
-				refreshViews = true
-			}
+		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
+			refreshViews = true
 		}
 	}
 
