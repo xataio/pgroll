@@ -35,11 +35,13 @@ type Operation interface {
 // IsolatedOperation is an operation that cannot be executed with other operations
 // in the same migration
 type IsolatedOperation interface {
+	// this operation is isolated when executed on start, cannot be executed with other operations
 	IsIsolated() bool
 }
 
 // RequiresSchemaRefreshOperation is an operation that requires the resulting schema to be refreshed
 type RequiresSchemaRefreshOperation interface {
+	// this operation requires the resulting schema to be refreshed when executed on start
 	RequiresSchemaRefresh()
 }
 

@@ -47,10 +47,8 @@ func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-// this operation is isolated when executed on start, cannot be executed with other operations
 func (o *OpRawSQL) IsIsolated() bool {
 	return !o.OnComplete
 }
 
-// this operation requires the resulting schema to be refreshed when executed on start
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
