@@ -1077,7 +1077,7 @@ The `onComplete` flag will make this operation run the `up` expression on the co
 Example **raw SQL** migrations:
 
 * [05_sql.json](../examples/05_sql.json)
-* [32_sql_onComplete.json](../examples/32_sql_onComplete.json)
+* [32_sql_on_complete.json](../examples/32_sql_on_complete.json)
 
 
 ```json
