@@ -1068,11 +1068,17 @@ A raw SQL operation runs arbitrary SQL against the database. This is intended as
 }
 ```
 
+By default, `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run `sql` operation together with other operations by setting the `onComplete` flag to `true`.
+
+The `onComplete` flag will make this operation run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase).
+
+`onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
+
 Example **raw SQL** migrations:
 
 * [05_sql.json](../examples/05_sql.json)
+* [32_sql_onComplete.json](../examples/32_sql_onComplete.json)
 
-By default, `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run `sql` operation together with other operations by setting the `onComplete` flag to `true`:
 
 ```json
 {
@@ -1083,9 +1089,6 @@ By default, `sql` operation cannot run together with other operations in the sam
 }
 ```
 
-The `onComplete` flag will make this operation run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase).
-
-`onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
 
 ### Rename table
 

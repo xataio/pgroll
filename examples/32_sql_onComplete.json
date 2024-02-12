@@ -1,0 +1,11 @@
+{
+  "name": "32_sql_onComplete",
+  "operations": [
+    {
+      "sql": {
+        "up": "ALTER TABLE people ADD COLUMN age INTEGER",
+        "onComplete": true
+      }
+    }
+  ]
+}
