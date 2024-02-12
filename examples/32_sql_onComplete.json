@@ -3,7 +3,7 @@
   "operations": [
     {
       "sql": {
-        "up": "ALTER TABLE people ADD COLUMN age INTEGER",
+        "up": "ALTER TABLE people ADD COLUMN birth_date timestamp",
         "onComplete": true
       }
     }
