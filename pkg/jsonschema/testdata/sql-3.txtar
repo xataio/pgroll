@@ -1,5 +1,5 @@
 This is a valid 'sql' migration.
-It specifies `up`, `down` and `on_complete
+It specifies `up`, and `on_complete`
 
 -- create_table.json --
 {
