@@ -1074,10 +1074,7 @@ The `onComplete` flag will make this operation run the `up` expression on the co
 
 `onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
 
-Example **raw SQL** migrations:
 
-* [05_sql.json](../examples/05_sql.json)
-* [32_sql_on_complete.json](../examples/32_sql_on_complete.json)
 
 
 ```json
@@ -1088,6 +1085,11 @@ Example **raw SQL** migrations:
   }
 }
 ```
+
+Example **raw SQL** migrations:
+
+* [05_sql.json](../examples/05_sql.json)
+* [32_sql_on_complete.json](../examples/32_sql_on_complete.json)
 
 
 ### Rename table
