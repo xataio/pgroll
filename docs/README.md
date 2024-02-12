@@ -1068,7 +1068,7 @@ A raw SQL operation runs arbitrary SQL against the database. This is intended as
 }
 ```
 
-By default, `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run `sql` operation together with other operations by setting the `onComplete` flag to `true`.
+By default, a `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run a `sql` operation together with other operations by setting the `onComplete` flag to `true`.
 
 The `onComplete` flag will make this operation run the `up` expression on the complete phase (instead of the default, which is to run it on the start phase).
 
