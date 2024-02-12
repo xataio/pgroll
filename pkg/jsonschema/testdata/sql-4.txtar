@@ -1,4 +1,4 @@
-This is a valid 'sql' migration.
+This is an invalid 'sql' migration.
 It specifies `up`, `down` and `on_complete`
 
 -- create_table.json --
