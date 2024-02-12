@@ -322,6 +322,11 @@
       "required": ["up"],
       "oneOf": [
         {
+          "not": {
+            "required": ["down", "onComplete"]
+          }
+        },
+        {
           "required": ["up", "down"],
           "not": {
             "required": ["onComplete"]
