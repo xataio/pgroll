@@ -1,0 +1,19 @@
+This is a valid 'sql' migration.
+It specifies `up`, `down` and `on_complete
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "sql": {
+        "up": "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)",
+        "down": "DROP TABLE users",
+        "onComplete": true
+      }
+    }
+  ]
+}
+
+-- valid --
+false

@@ -322,20 +322,21 @@
       "required": ["up"],
       "oneOf": [
         {
-          "not": {
-            "required": ["down", "onComplete"]
-          }
+          "required": ["down"]
         },
         {
-          "required": ["up", "down"],
-          "not": {
-            "required": ["onComplete"]
-          }
+          "required": ["onComplete"]
         },
         {
-          "required": ["up", "onComplete"],
           "not": {
-            "required": ["down"]
+            "anyOf": [
+              {
+                "required": ["down"]
+              },
+              {
+                "required": ["onComplete"]
+              }
+            ]
           }
         }
       ],
