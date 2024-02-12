@@ -37,9 +37,10 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 	}
 	err := migration.Validate(context.TODO(), schema.New())
 	assert.NoError(t, err)
+}
 
-	// Test onComplete
-	migration = Migration{
+func TestOnCompleteSQLMigrationsAreNotIsolated(t *testing.T) {
+	migration := Migration{
 		Name: "sql",
 		Operations: Operations{
 			&OpRawSQL{
@@ -49,6 +50,6 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 			&OpCreateTable{Name: "foo"},
 		},
 	}
-	err = migration.Validate(context.TODO(), schema.New())
+	err := migration.Validate(context.TODO(), schema.New())
 	assert.NoError(t, err)
 }
