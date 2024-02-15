@@ -176,7 +176,7 @@ func (e InvalidReplicaIdentityError) Error() string {
 }
 
 type InvalidNameLengthError struct {
-	Identity string
+	Name string
 	Max      int
 }
 
