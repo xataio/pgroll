@@ -70,11 +70,8 @@ func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
-	if len(o.Name) > MaxNameLength-len(temporaryPrefix) {
-		return InvalidNameLengthError{
-			Name: o.Name,
-			Max:  MaxNameLength - len(temporaryPrefix),
-		}
+	if err := validateName(o.Name); err != nil {
+		return err
 	}
 	table := s.GetTable(o.Name)
 	if table != nil {

@@ -155,12 +155,8 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
 	}
-	name := TriggerName(o.Table, TemporaryName(o.Column))
-	if len(name) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: name,
-			Max:  MaxNameLength,
-		}
+	if err := validateName(o.Column); err != nil {
+		return err
 	}
 
 	table := s.GetTable(o.Table)

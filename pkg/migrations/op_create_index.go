@@ -39,12 +39,9 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
 	}
-
-	if len(o.Name) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: o.Name,
-			Max:  MaxNameLength,
-		}
+	
+	if err := validateName(o.Name); err != nil {
+		return err
 	}
 
 	table := s.GetTable(o.Table)

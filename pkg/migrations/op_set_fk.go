@@ -149,12 +149,9 @@ func (o *OpSetForeignKey) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error {
-	name := TriggerName(o.Table, TemporaryName(o.Column))
-	if len(name) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: name,
-			Max:  MaxNameLength,
-		}
+
+	if err := validateName(o.Column); err != nil {
+		return err
 	}
 	if err := o.References.Validate(s); err != nil {
 		return ColumnReferenceError{

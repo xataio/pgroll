@@ -143,12 +143,10 @@ func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Down == "" {
 		return FieldRequiredError{Name: "down"}
 	}
-	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
-	if len(triggerName) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: triggerName,
-			Max:  MaxNameLength,
-		}
+	
+	if err := validateName(o.Column); err != nil {
+		return err
 	}
+	
 	return nil
 }

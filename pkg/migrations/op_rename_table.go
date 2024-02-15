@@ -29,12 +29,10 @@ func (o *OpRenameTable) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
-	if len(o.To) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: o.To,
-			Max:  MaxNameLength,
-		}
+	if err := validateName(o.To); err != nil {
+		return err
 	}
+	
 	if s.GetTable(o.From) == nil {
 		return TableDoesNotExistError{Name: o.From}
 	}

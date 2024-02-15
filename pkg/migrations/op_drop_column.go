@@ -56,12 +56,8 @@ func (o *OpDropColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {
-	triggerName := TriggerName(o.Table, o.Column)
-	if len(triggerName) > MaxNameLength {
-		return InvalidNameLengthError{
-			Name: triggerName,
-			Max:  MaxNameLength,
-		}
+	if err := validateName(o.Column); err != nil {
+		return err
 	}
 	table := s.GetTable(o.Table)
 
