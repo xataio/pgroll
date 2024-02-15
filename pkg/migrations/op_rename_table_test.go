@@ -45,22 +45,22 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// check that the table with the new name can be accessed
-				ViewMustExist(t, db, "public", "01_create_table", "test_table")
-				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
+				ViewMustExist(t, db, schema, "01_create_table", "test_table")
+				ViewMustExist(t, db, schema, "02_rename_table", "renamed_table")
 
 				// inserts work
-				MustInsert(t, db, "public", "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
-				MustInsert(t, db, "public", "02_rename_table", "renamed_table", map[string]string{
+				MustInsert(t, db, schema, "02_rename_table", "renamed_table", map[string]string{
 					"name": "bar",
 				})
 
 				// selects work in both versions
-				resNew := MustSelect(t, db, "public", "01_create_table", "test_table")
-				resOld := MustSelect(t, db, "public", "02_rename_table", "renamed_table")
+				resNew := MustSelect(t, db, schema, "01_create_table", "test_table")
+				resOld := MustSelect(t, db, schema, "02_rename_table", "renamed_table")
 
 				assert.Equal(t, resOld, resNew)
 				assert.Equal(t, []map[string]any{
@@ -74,16 +74,16 @@ func TestRenameTable(t *testing.T) {
 					},
 				}, resNew)
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// the table still exists with the new name
-				ViewMustNotExist(t, db, "public", "02_rename_table", "testTable")
-				ViewMustExist(t, db, "public", "02_rename_table", "renamed_table")
+				ViewMustNotExist(t, db, schema, "02_rename_table", "testTable")
+				ViewMustExist(t, db, schema, "02_rename_table", "renamed_table")
 
 				// inserts & select work
-				MustInsert(t, db, "public", "02_rename_table", "renamed_table", map[string]string{
+				MustInsert(t, db, schema, "02_rename_table", "renamed_table", map[string]string{
 					"name": "baz",
 				})
-				res := MustSelect(t, db, "public", "02_rename_table", "renamed_table")
+				res := MustSelect(t, db, schema, "02_rename_table", "renamed_table")
 				assert.Equal(t, []map[string]any{
 					{
 						"id":   1,

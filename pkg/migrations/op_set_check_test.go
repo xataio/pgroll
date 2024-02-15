@@ -53,82 +53,82 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `title` column should exist on the underlying table.
-				ColumnMustExist(t, db, "public", "posts", migrations.TemporaryName("title"))
+				ColumnMustExist(t, db, schema, "posts", migrations.TemporaryName("title"))
 
 				// A check constraint has been added to the temporary column
-				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the old view works.
-				MustInsert(t, db, "public", "01_add_table", "posts", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "posts", map[string]string{
 					"title": "post by alice",
 				})
 
 				// Inserting a row that does not meet the check constraint into the old view also works.
-				MustInsert(t, db, "public", "01_add_table", "posts", map[string]string{
+				MustInsert(t, db, schema, "01_add_table", "posts", map[string]string{
 					"title": "b",
 				})
 
 				// Both rows have been backfilled into the new view; the short title has
 				// been rewritten using `up` SQL to meet the length constraint.
-				rows := MustSelect(t, db, "public", "02_add_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 					{"id": 2, "title": "---b"},
 				}, rows)
 
 				// Inserting a row that meets the check constraint into the new view works.
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"title": "post by carl",
 				})
 
 				// Inserting a row that does not meet the check constraint into the new view fails.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"title": "d",
 				}, testutils.CheckViolationErrorCode)
 
 				// The row that was inserted into the new view has been backfilled into the old view.
-				rows = MustSelect(t, db, "public", "01_add_table", "posts")
+				rows = MustSelect(t, db, schema, "01_add_table", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 					{"id": 2, "title": "b"},
 					{"id": 3, "title": "post by carl"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `title` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, "public", "posts", migrations.TemporaryName("title"))
+				ColumnMustNotExist(t, db, schema, "posts", migrations.TemporaryName("title"))
 
 				// The check constraint no longer exists.
-				CheckConstraintMustNotExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustNotExist(t, db, schema, "posts", "check_title_length")
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "title"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "title"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", "title"))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "title"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint exists on the new table.
-				CheckConstraintMustExist(t, db, "public", "posts", "check_title_length")
+				CheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the new view works.
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"title": "post by dana",
 				})
 
 				// Inserting a row that does not meet the check constraint into the new view fails.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"title": "e",
 				}, testutils.CheckViolationErrorCode)
 
 				// The data in the new `posts` view is as expected.
-				rows := MustSelect(t, db, "public", "02_add_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 					{"id": 2, "title": "---b"},
@@ -137,14 +137,14 @@ func TestSetCheckConstraint(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", "title"))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "title"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, "public", migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
+				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", "title"))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "title"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, "public", "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
 			},
 		},
 		{
@@ -186,28 +186,28 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id": "1",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_add_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "untitled"},
 				}, rows)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id": "2",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, "public", "02_add_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "02_add_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "untitled"},
 					{"id": 2, "title": "untitled"},
@@ -283,15 +283,15 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, "public", "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
 			},
 		},
 		{
@@ -340,19 +340,19 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint on the `title` column still exists.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id":    "1",
 					"title": "a",
 					"body":  "this is the post body",
 				}, testutils.CheckViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint on the `title` column still exists.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id":    "2",
 					"title": "b",
 					"body":  "this is another post body",
@@ -398,17 +398,17 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint on `title` fails.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id": "1",
 				}, testutils.NotNullViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the NOT NULL constraint on `title` fails.
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
 					"id": "1",
 				}, testutils.NotNullViolationErrorCode)
 			},
@@ -428,16 +428,27 @@ func TestSetCheckConstraint(t *testing.T) {
 									Pk:   ptr(true),
 								},
 								{
-									Name:   "title",
-									Type:   "text",
-									Unique: ptr(true),
+									Name: "title",
+									Type: "text",
 								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_add_check_constraint",
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Unique: &migrations.UniqueConstraint{Name: "unique_title"},
+							Up:     ptr("title"),
+							Down:   ptr("title"),
+						},
+					},
+				},
+				{
+					Name: "03_add_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "posts",
@@ -452,27 +463,30 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB) {
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "03_add_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				})
 
 				// Inserting a row with a duplicate `title` value fails
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "03_add_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
-			afterRollback: func(t *testing.T, db *sql.DB) {
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
-			afterComplete: func(t *testing.T, db *sql.DB) {
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has a unique constraint defined on it
+				UniqueConstraintMustExist(t, db, schema, "posts", "unique_title")
+
 				// Inserting a row with a duplicate `title` value fails
-				MustNotInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "03_add_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `title` value succeeds
-				MustInsert(t, db, "public", "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "03_add_check_constraint", "posts", map[string]string{
 					"title": "post by bob",
 				})
 			},

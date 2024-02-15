@@ -49,12 +49,15 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 				fmt.Errorf("unable to execute start operation: %w", err),
 				errRollback)
 		}
-
+		// refresh schema when the op is isolated and requires a refresh (for example raw sql)
+		// we don't want to refresh the schema if the operation is not isolated as it would
+		// override changes made by other operations
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
-			// refresh schema
-			newSchema, err = m.state.ReadSchema(ctx, m.schema)
-			if err != nil {
-				return fmt.Errorf("unable to refresh schema: %w", err)
+			if isolatedOp, ok := op.(migrations.IsolatedOperation); ok && isolatedOp.IsIsolated() {
+				newSchema, err = m.state.ReadSchema(ctx, m.schema)
+				if err != nil {
+					return fmt.Errorf("unable to refresh schema: %w", err)
+				}
 			}
 		}
 	}
@@ -64,20 +67,24 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		return nil
 	}
 
+	// create views for the new version
+	return m.ensureViews(ctx, newSchema, migration.Name)
+}
+
+func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
 	// create schema for the new version
-	versionSchema := VersionedSchemaName(m.schema, migration.Name)
+	versionSchema := VersionedSchemaName(m.schema, version)
 	if len(versionSchema) > migrations.MaxNameLength {
 		return fmt.Errorf("max length of `%s` is %d", versionSchema, migrations.MaxNameLength)
 	}
-
-	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
+	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {
 		return err
 	}
 
 	// create views in the new schema
-	for name, table := range newSchema.Tables {
-		err = m.createView(ctx, migration.Name, name, table)
+	for name, table := range schema.Tables {
+		err = m.ensureView(ctx, version, name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
 		}
@@ -116,10 +123,28 @@ func (m *Roll) Complete(ctx context.Context) error {
 	}
 
 	// execute operations
+	refreshViews := false
 	for _, op := range migration.Operations {
 		err := op.Complete(ctx, m.pgConn, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
+		}
+
+		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
+			refreshViews = true
+		}
+	}
+
+	// recreate views for the new version (if some operations require it, ie SQL)
+	if refreshViews && !m.disableVersionSchemas {
+		schema, err = m.state.ReadSchema(ctx, m.schema)
+		if err != nil {
+			return fmt.Errorf("unable to read schema: %w", err)
+		}
+
+		err = m.ensureViews(ctx, schema, migration.Name)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -166,7 +191,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 }
 
 // create view creates a view for the new version of the schema
-func (m *Roll) createView(ctx context.Context, version, name string, table schema.Table) error {
+func (m *Roll) ensureView(ctx context.Context, version, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
 		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
@@ -183,7 +208,9 @@ func (m *Roll) createView(ctx context.Context, version, name string, table schem
 	}
 
 	_, err := m.pgConn.ExecContext(ctx,
-		fmt.Sprintf("CREATE OR REPLACE VIEW %s.%s %s AS SELECT %s FROM %s",
+		fmt.Sprintf("BEGIN; DROP VIEW IF EXISTS %s.%s; CREATE VIEW %s.%s %s AS SELECT %s FROM %s; COMMIT",
+			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
+			pq.QuoteIdentifier(name),
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
 			withOptions,

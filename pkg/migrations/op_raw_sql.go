@@ -12,14 +12,18 @@ import (
 var _ Operation = (*OpRawSQL)(nil)
 
 func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
-	_, err := conn.ExecContext(ctx, o.Up)
-	if err != nil {
+	if !o.OnComplete {
+		_, err := conn.ExecContext(ctx, o.Up)
 		return err
 	}
 	return nil
 }
 
 func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+	if o.OnComplete {
+		_, err := conn.ExecContext(ctx, o.Up)
+		return err
+	}
 	return nil
 }
 
@@ -36,11 +40,15 @@ func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 		return EmptyMigrationError{}
 	}
 
+	if o.OnComplete && o.Down != "" {
+		return InvalidMigrationError{Reason: "down is not allowed with onComplete"}
+	}
+
 	return nil
 }
 
-// this operation is isolated, cannot be executed with other operations
-func (o *OpRawSQL) IsIsolated() {}
+func (o *OpRawSQL) IsIsolated() bool {
+	return !o.OnComplete
+}
 
-// this operation requires the resulting schema to be refreshed
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
