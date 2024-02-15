@@ -138,8 +138,8 @@ func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
 	if len(triggerName) > MaxNameLength {
 		return InvalidNameLengthError{
-			Identity: triggerName,
-			Max:      MaxNameLength,
+			Name: triggerName,
+			Max:  MaxNameLength,
 		}
 	}
 	column := s.GetTable(o.Table).GetColumn(o.Column)

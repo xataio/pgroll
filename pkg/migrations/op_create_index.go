@@ -42,8 +42,8 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 
 	if len(o.Name) > MaxNameLength {
 		return InvalidNameLengthError{
-			Identity: o.Name,
-			Max:      MaxNameLength,
+			Name: o.Name,
+			Max:  MaxNameLength,
 		}
 	}
 

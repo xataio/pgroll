@@ -177,9 +177,9 @@ func (e InvalidReplicaIdentityError) Error() string {
 
 type InvalidNameLengthError struct {
 	Name string
-	Max      int
+	Max  int
 }
 
 func (e InvalidNameLengthError) Error() string {
-	return fmt.Sprintf("max length of %q is %d", e.Identity, e.Max)
+	return fmt.Sprintf("max length of %q is %d", e.Name, e.Max)
 }

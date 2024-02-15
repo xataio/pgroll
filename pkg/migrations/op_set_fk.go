@@ -152,8 +152,8 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	name := TriggerName(o.Table, TemporaryName(o.Column))
 	if len(name) > MaxNameLength {
 		return InvalidNameLengthError{
-			Identity: name,
-			Max:      MaxNameLength,
+			Name: name,
+			Max:  MaxNameLength,
 		}
 	}
 	if err := o.References.Validate(s); err != nil {

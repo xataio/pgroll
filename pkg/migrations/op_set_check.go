@@ -152,8 +152,8 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	triggerName := TriggerName(o.Table, TemporaryName(o.Column))
 	if len(triggerName) > MaxNameLength {
 		return InvalidNameLengthError{
-			Identity: triggerName,
-			Max:      MaxNameLength,
+			Name: triggerName,
+			Max:  MaxNameLength,
 		}
 	}
 	if err := o.Check.Validate(); err != nil {

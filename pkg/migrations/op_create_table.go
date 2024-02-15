@@ -72,8 +72,8 @@ func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
 func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	if len(o.Name) > MaxNameLength-len(temporaryPrefix) {
 		return InvalidNameLengthError{
-			Identity: o.Name,
-			Max:      MaxNameLength - len(temporaryPrefix),
+			Name: o.Name,
+			Max:  MaxNameLength - len(temporaryPrefix),
 		}
 	}
 	table := s.GetTable(o.Name)
