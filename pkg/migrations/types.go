@@ -199,7 +199,7 @@ type OpSetReplicaIdentity struct {
 // PgRoll migration definition
 type PgRollMigration struct {
 	// Name of the migration
-	Name string `json:"name"`
+	Name *string `json:"name,omitempty"`
 
 	// Operations corresponds to the JSON schema field "operations".
 	Operations PgRollOperations `json:"operations"`
