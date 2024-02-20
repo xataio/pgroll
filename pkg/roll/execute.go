@@ -74,8 +74,8 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
 	// create schema for the new version
 	versionSchema := VersionedSchemaName(m.schema, version)
-	if len(versionSchema) > migrations.MaxNameLength {
-		return fmt.Errorf("%q exceeds max length of %d", versionSchema, migrations.MaxNameLength)
+	if err := migrations.ValidateName(versionSchema); err != nil {
+		return err
 	}
 	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {

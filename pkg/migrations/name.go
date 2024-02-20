@@ -9,3 +9,7 @@ func validateName(name string) error {
 	}
 	return nil
 }
+
+func ValidateName(name string) error {
+	return validateName(name)
+}
