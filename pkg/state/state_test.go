@@ -114,6 +114,24 @@ func TestInferredMigration(t *testing.T) {
 	})
 }
 
+func TestPgRollInitializationInANonDefaultSchema(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithStateInSchemaAndConnectionToContainer(t, "pgroll_foo", func(state *state.State, _ *sql.DB) {
+		ctx := context.Background()
+
+		// Ensure that pgroll state has been correctly initialized in the
+		// non-default schema `pgroll_foo` by performing a basic operation on the
+		// state
+		migrationActive, err := state.IsActiveMigrationPeriod(ctx, "public")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.False(t, migrationActive)
+	})
+}
+
 func TestReadSchema(t *testing.T) {
 	t.Parallel()
 

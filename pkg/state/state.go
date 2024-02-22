@@ -73,18 +73,18 @@ STABLE;
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
   WITH RECURSIVE find_ancestor AS (
-    SELECT schema, name, parent, migration_type FROM pgroll.migrations 
+    SELECT schema, name, parent, migration_type FROM %[1]s.migrations
       WHERE name = (SELECT %[1]s.latest_version(schemaname)) AND schema = schemaname
 
     UNION ALL
 
-    SELECT m.schema, m.name, m.parent, m.migration_type FROM pgroll.migrations m
+    SELECT m.schema, m.name, m.parent, m.migration_type FROM %[1]s.migrations m
       INNER JOIN find_ancestor fa ON fa.parent = m.name AND fa.schema = m.schema
       WHERE m.migration_type = 'inferred'
   )
   SELECT a.parent
   FROM find_ancestor AS a
-  JOIN pgroll.migrations AS b ON a.parent = b.name AND a.schema = b.schema
+  JOIN %[1]s.migrations AS b ON a.parent = b.name AND a.schema = b.schema
   WHERE b.migration_type = 'pgroll';
 $$
 LANGUAGE SQL

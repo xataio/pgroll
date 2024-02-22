@@ -85,7 +85,7 @@ func TestSchema() string {
 	return "public"
 }
 
-func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.DB)) {
+func WithStateInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(*state.State, *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -115,7 +115,7 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 	u.Path = "/" + dbName
 	connStr := u.String()
 
-	st, err := state.New(ctx, connStr, "pgroll")
+	st, err := state.New(ctx, connStr, schema)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,6 +137,10 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 	}
 
 	fn(st, db)
+}
+
+func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.DB)) {
+	WithStateInSchemaAndConnectionToContainer(t, "pgroll", fn)
 }
 
 func WithMigratorInSchemaAndConnectionToContainerWithOptions(t *testing.T, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
