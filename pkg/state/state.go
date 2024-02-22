@@ -354,11 +354,26 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 }
 
 func (s *State) Init(ctx context.Context) error {
-	// ensure pgroll internal tables exist
-	// TODO: eventually use migrations for this instead of hardcoding
-	_, err := s.pgConn.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
+	tx, err := s.pgConn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	return err
+	// Try to obtain an advisory lock
+	const key int64 = 0x2c03057fb9525b
+	_, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", key)
+	if err != nil {
+		return err
+	}
+
+	// Perform pgroll state initialization
+	_, err = tx.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *State) Close() error {
