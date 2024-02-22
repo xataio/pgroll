@@ -89,49 +89,13 @@ func WithStateInSchemaAndConnectionToContainer(t *testing.T, schema string, fn f
 	t.Helper()
 	ctx := context.Background()
 
-	tDB, err := sql.Open("postgres", tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := tDB.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	dbName := randomDBName()
-
-	_, err = tDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pq.QuoteIdentifier(dbName)))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u, err := url.Parse(tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u.Path = "/" + dbName
-	connStr := u.String()
+	db, connStr, _ := setupTestDatabase(t)
 
 	st, err := state.New(ctx, connStr, schema)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	// init the state
 	if err := st.Init(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -147,31 +111,7 @@ func WithUninitializedState(t *testing.T, fn func(*state.State)) {
 	t.Helper()
 	ctx := context.Background()
 
-	tDB, err := sql.Open("postgres", tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := tDB.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	dbName := randomDBName()
-
-	_, err = tDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pq.QuoteIdentifier(dbName)))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u, err := url.Parse(tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u.Path = "/" + dbName
-	connStr := u.String()
+	_, connStr, _ := setupTestDatabase(t)
 
 	st, err := state.New(ctx, connStr, "pgroll")
 	if err != nil {
@@ -185,42 +125,7 @@ func WithMigratorInSchemaAndConnectionToContainerWithOptions(t *testing.T, schem
 	t.Helper()
 	ctx := context.Background()
 
-	tDB, err := sql.Open("postgres", tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := tDB.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
-
-	dbName := randomDBName()
-
-	_, err = tDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pq.QuoteIdentifier(dbName)))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u, err := url.Parse(tConnStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u.Path = "/" + dbName
-	connStr := u.String()
-
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("Failed to close database connection: %v", err)
-		}
-	})
+	db, connStr, dbName := setupTestDatabase(t)
 
 	st, err := state.New(ctx, connStr, "pgroll")
 	if err != nil {
@@ -267,4 +172,52 @@ func WithMigratorInSchemaAndConnectionToContainer(t *testing.T, schema string, f
 
 func WithMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, db *sql.DB)) {
 	WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(500)}, fn)
+}
+
+// setupTestDatabase creates a new database in the test container and returns:
+// - a connection to the new database
+// - the connection string to the new database
+// - the name of the new database
+func setupTestDatabase(t *testing.T) (*sql.DB, string, string) {
+	t.Helper()
+	ctx := context.Background()
+
+	tDB, err := sql.Open("postgres", tConnStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := tDB.Close(); err != nil {
+			t.Fatalf("Failed to close database connection: %v", err)
+		}
+	})
+
+	dbName := randomDBName()
+
+	_, err = tDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pq.QuoteIdentifier(dbName)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	u, err := url.Parse(tConnStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	u.Path = "/" + dbName
+	connStr := u.String()
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Fatalf("Failed to close database connection: %v", err)
+		}
+	})
+
+	return db, connStr, dbName
 }
