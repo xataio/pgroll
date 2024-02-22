@@ -143,6 +143,44 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 	WithStateInSchemaAndConnectionToContainer(t, "pgroll", fn)
 }
 
+func WithUninitializedState(t *testing.T, fn func(*state.State)) {
+	t.Helper()
+	ctx := context.Background()
+
+	tDB, err := sql.Open("postgres", tConnStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := tDB.Close(); err != nil {
+			t.Fatalf("Failed to close database connection: %v", err)
+		}
+	})
+
+	dbName := randomDBName()
+
+	_, err = tDB.ExecContext(ctx, fmt.Sprintf("CREATE DATABASE %s", pq.QuoteIdentifier(dbName)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	u, err := url.Parse(tConnStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	u.Path = "/" + dbName
+	connStr := u.String()
+
+	st, err := state.New(ctx, connStr, "pgroll")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fn(st)
+}
+
 func WithMigratorInSchemaAndConnectionToContainerWithOptions(t *testing.T, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
