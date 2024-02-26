@@ -25,6 +25,9 @@ type Roll struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
+	// a map of setting/value pairs to be set for the duration of migration start
+	settingsOnMigrationStart map[string]string
+
 	state     *state.State
 	pgVersion PGVersion
 }
@@ -77,11 +80,12 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	}
 
 	return &Roll{
-		pgConn:                conn,
-		schema:                schema,
-		state:                 state,
-		pgVersion:             PGVersion(pgMajorVersion),
-		disableVersionSchemas: options.disableVersionSchemas,
+		pgConn:                   conn,
+		schema:                   schema,
+		state:                    state,
+		pgVersion:                PGVersion(pgMajorVersion),
+		disableVersionSchemas:    options.disableVersionSchemas,
+		settingsOnMigrationStart: options.settingsOnMigrationStart,
 	}, nil
 }
 

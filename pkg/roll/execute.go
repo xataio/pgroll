@@ -39,6 +39,13 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		return fmt.Errorf("migration is invalid: %w", err)
 	}
 
+	// Set any Postgres settings that should be set for the duration of the start operation
+	err = m.SetPostgresSettingsOnStart(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to set postgres settings: %w", err)
+	}
+	defer m.RestorePostgresSettingsAfterStart(ctx)
+
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
@@ -228,6 +235,36 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 		return err
 	}
 	return nil
+}
+
+func (m *Roll) SetPostgresSettingsOnStart(ctx context.Context) error {
+	var errs error
+
+	for key := range m.settingsOnMigrationStart {
+		setting := key
+		value := m.settingsOnMigrationStart[setting]
+
+		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("SET %s TO %s", pq.QuoteIdentifier(setting), value))
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to set %q setting: %w", setting, err))
+		}
+	}
+
+	return errs
+}
+
+func (m *Roll) RestorePostgresSettingsAfterStart(ctx context.Context) error {
+	var errs error
+
+	for key := range m.settingsOnMigrationStart {
+		setting := key
+		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("RESET %s", pq.QuoteIdentifier(setting)))
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to reset %q setting: %w", setting, err))
+		}
+	}
+
+	return errs
 }
 
 func VersionedSchemaName(schema string, version string) string {

@@ -11,6 +11,9 @@ type options struct {
 
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
+
+	// a map of setting/value pairs to be set for the duration of migration start
+	settingsOnMigrationStart map[string]string
 }
 
 type Option func(*options)
@@ -34,5 +37,14 @@ func WithRole(role string) Option {
 func WithDisableViewsManagement() Option {
 	return func(o *options) {
 		o.disableVersionSchemas = true
+	}
+}
+
+// WithSettingsOnMigrationStart defines a map of Postgres setting/value pairs
+// to be set for the duration of the DDL phase of migration start. Settings
+// will be restored to their previous values once the DDL phase is complete.
+func WithSettingsOnMigrationStart(settings map[string]string) Option {
+	return func(o *options) {
+		o.settingsOnMigrationStart = settings
 	}
 }
