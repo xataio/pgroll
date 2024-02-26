@@ -694,7 +694,7 @@ func TestAddColumnValidation(t *testing.T) {
 						&migrations.OpAddColumn{
 							Table: "orders",
 							Column: migrations.Column{
-								Default: ptr("foo"),
+								Default: ptr("'foo'"),
 								Name:    "description",
 								Type:    "text",
 							},
