@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -129,6 +130,29 @@ func TestPgRollInitializationInANonDefaultSchema(t *testing.T) {
 		}
 
 		assert.False(t, migrationActive)
+	})
+}
+
+func TestConcurrentInitialization(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithUninitializedState(t, func(state *state.State) {
+		ctx := context.Background()
+		numGoroutines := 10
+
+		wg := sync.WaitGroup{}
+		wg.Add(numGoroutines)
+		for i := 0; i < numGoroutines; i++ {
+			go func() {
+				defer wg.Done()
+
+				if err := state.Init(ctx); err != nil {
+					t.Error(err)
+				}
+			}()
+		}
+
+		wg.Wait()
 	})
 }
 
