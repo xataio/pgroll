@@ -15,19 +15,31 @@ import (
 
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) error {
-	// check if there is an active migration, create one otherwise
-	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
+	tablesToBackfill, err := m.StartDDLOperations(ctx, migration, cbs...)
 	if err != nil {
 		return err
 	}
+
+	// perform backfills for the tables that require it
+	return m.performBackfills(ctx, tablesToBackfill)
+}
+
+// StartDDLOperations performs the DDL operations for the migration. This does
+// not include running backfills for any modified tables.
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) ([]*schema.Table, error) {
+	// check if there is an active migration, create one otherwise
+	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
+	if err != nil {
+		return nil, err
+	}
 	if active {
-		return fmt.Errorf("a migration for schema %q is already in progress", m.schema)
+		return nil, fmt.Errorf("a migration for schema %q is already in progress", m.schema)
 	}
 
 	// create a new active migration (guaranteed to be unique by constraints)
 	newSchema, err := m.state.Start(ctx, m.schema, migration)
 	if err != nil {
-		return fmt.Errorf("unable to start migration: %w", err)
+		return nil, fmt.Errorf("unable to start migration: %w", err)
 	}
 
 	// validate migration
@@ -36,13 +48,13 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		if err := m.state.Rollback(ctx, m.schema, migration.Name); err != nil {
 			fmt.Printf("failed to rollback migration: %s\n", err)
 		}
-		return fmt.Errorf("migration is invalid: %w", err)
+		return nil, fmt.Errorf("migration is invalid: %w", err)
 	}
 
 	// Set any Postgres settings that should be set for the duration of the start operation
 	err = m.SetPostgresSettingsOnStart(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to set postgres settings: %w", err)
+		return nil, fmt.Errorf("unable to set postgres settings: %w", err)
 	}
 	defer m.RestorePostgresSettingsAfterStart(ctx)
 
@@ -53,7 +65,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 
-			return errors.Join(
+			return nil, errors.Join(
 				fmt.Errorf("unable to execute start operation: %w", err),
 				errRollback)
 		}
@@ -64,7 +76,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 			if isolatedOp, ok := op.(migrations.IsolatedOperation); ok && isolatedOp.IsIsolated() {
 				newSchema, err = m.state.ReadSchema(ctx, m.schema)
 				if err != nil {
-					return fmt.Errorf("unable to refresh schema: %w", err)
+					return nil, fmt.Errorf("unable to refresh schema: %w", err)
 				}
 			}
 		}
@@ -73,20 +85,17 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		}
 	}
 
-	// perform backfill operations for those tables that require it
-	for _, table := range tablesToBackfill {
-		if err := migrations.Backfill(ctx, m.pgConn, table, cbs...); err != nil {
-			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
-		}
-	}
-
 	if m.disableVersionSchemas {
 		// skip creating version schemas
-		return nil
+		return tablesToBackfill, nil
 	}
 
 	// create views for the new version
-	return m.ensureViews(ctx, newSchema, migration.Name)
+	if err := m.ensureViews(ctx, newSchema, migration.Name); err != nil {
+		return nil, err
+	}
+
+	return tablesToBackfill, nil
 }
 
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
@@ -234,6 +243,16 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) error {
+	for _, table := range tables {
+		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
+			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
+		}
+	}
+
 	return nil
 }
 
