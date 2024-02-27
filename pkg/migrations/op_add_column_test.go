@@ -589,70 +589,136 @@ func TestAddColumnWithUpSql(t *testing.T) {
 func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 	t.Parallel()
 
-	ExecuteTests(t, TestCases{{
-		name: "add not null column with no default",
-		migrations: []migrations.Migration{
-			{
-				Name: "01_add_table",
-				Operations: migrations.Operations{
-					&migrations.OpCreateTable{
-						Name: "products",
-						Columns: []migrations.Column{
-							{
-								Name: "id",
-								Type: "serial",
-								Pk:   ptr(true),
+	ExecuteTests(t, TestCases{
+		{
+			name: "add not null column with no default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "products",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
 							},
-							{
-								Name:   "name",
-								Type:   "varchar(255)",
-								Unique: ptr(true),
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "products",
+							Up:    ptr("UPPER(name)"),
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "varchar(255)",
+								Nullable: ptr(false),
 							},
 						},
 					},
 				},
 			},
-			{
-				Name: "02_add_column",
-				Operations: migrations.Operations{
-					&migrations.OpAddColumn{
-						Table: "products",
-						Up:    ptr("UPPER(name)"),
-						Column: migrations.Column{
-							Name:     "description",
-							Type:     "varchar(255)",
-							Nullable: ptr(false),
-						},
-					},
-				},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a null description through the old view works (due to `up` sql populating the column).
+				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
+					"name": "apple",
+				})
+				// Inserting a null description through the new view fails.
+				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
+					"name": "banana",
+				}, testutils.CheckViolationErrorCode)
 			},
-		},
-		afterStart: func(t *testing.T, db *sql.DB, schema string) {
-			// Inserting a null description through the old view works (due to `up` sql populating the column).
-			MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
-				"name": "apple",
-			})
-			// Inserting a null description through the new view fails.
-			MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
-				"name": "banana",
-			}, testutils.CheckViolationErrorCode)
-		},
-		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			// the check constraint has been dropped.
-			constraintName := migrations.NotNullConstraintName("description")
-			CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
-		},
-		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-			// the check constraint has been dropped.
-			constraintName := migrations.NotNullConstraintName("description")
-			CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// the check constraint has been dropped.
+				constraintName := migrations.NotNullConstraintName("description")
+				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// the check constraint has been dropped.
+				constraintName := migrations.NotNullConstraintName("description")
+				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
 
-			// can't insert a null description into the new view; the column now has a NOT NULL constraint.
-			MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
-				"name": "orange",
-			}, testutils.NotNullViolationErrorCode)
+				// can't insert a null description into the new view; the column now has a NOT NULL constraint.
+				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
+					"name": "orange",
+				}, testutils.NotNullViolationErrorCode)
+			},
 		},
-	}})
+		{
+			name: "add not null column with no default and no pk",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "products",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Unique:   ptr(true),
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "products",
+							Up:    ptr("UPPER(name)"),
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "varchar(255)",
+								Nullable: ptr(false),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a null description through the old view works (due to `up` sql populating the column).
+				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
+					"name": "apple",
+				})
+				// Inserting a null description through the new view fails.
+				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
+					"name": "banana",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// the check constraint has been dropped.
+				constraintName := migrations.NotNullConstraintName("description")
+				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// the check constraint has been dropped.
+				constraintName := migrations.NotNullConstraintName("description")
+				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
+
+				// can't insert a null description into the new view; the column now has a NOT NULL constraint.
+				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
+					"name": "orange",
+				}, testutils.NotNullViolationErrorCode)
+			},
+		},
+	})
 }
 
 func TestAddColumnValidation(t *testing.T) {
