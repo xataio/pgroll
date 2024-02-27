@@ -654,70 +654,6 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 				}, testutils.NotNullViolationErrorCode)
 			},
 		},
-		{
-			name: "add not null column with no default and no pk",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_add_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "products",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-								},
-								{
-									Name:     "name",
-									Type:     "varchar(255)",
-									Unique:   ptr(true),
-									Nullable: ptr(false),
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "02_add_column",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "products",
-							Up:    ptr("UPPER(name)"),
-							Column: migrations.Column{
-								Name:     "description",
-								Type:     "varchar(255)",
-								Nullable: ptr(false),
-							},
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Inserting a null description through the old view works (due to `up` sql populating the column).
-				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
-					"name": "apple",
-				})
-				// Inserting a null description through the new view fails.
-				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
-					"name": "banana",
-				}, testutils.CheckViolationErrorCode)
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// the check constraint has been dropped.
-				constraintName := migrations.NotNullConstraintName("description")
-				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// the check constraint has been dropped.
-				constraintName := migrations.NotNullConstraintName("description")
-				CheckConstraintMustNotExist(t, db, schema, "products", constraintName)
-
-				// can't insert a null description into the new view; the column now has a NOT NULL constraint.
-				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
-					"name": "orange",
-				}, testutils.NotNullViolationErrorCode)
-			},
-		},
 	})
 }
 
@@ -739,6 +675,48 @@ func TestAddColumnValidation(t *testing.T) {
 						Name:   "name",
 						Type:   "varchar(255)",
 						Unique: ptr(true),
+					},
+				},
+			},
+		},
+	}
+
+	addTableMigrationNoPKNullable := migrations.Migration{
+		Name: "01_add_table",
+		Operations: migrations.Operations{
+			&migrations.OpCreateTable{
+				Name: "users",
+				Columns: []migrations.Column{
+					{
+						Name: "id",
+						Type: "serial",
+					},
+					{
+						Name:     "name",
+						Type:     "varchar(255)",
+						Unique:   ptr(true),
+						Nullable: ptr(true),
+					},
+				},
+			},
+		},
+	}
+
+	addTableMigrationNoPKNotNull := migrations.Migration{
+		Name: "01_add_table",
+		Operations: migrations.Operations{
+			&migrations.OpCreateTable{
+				Name: "users",
+				Columns: []migrations.Column{
+					{
+						Name: "id",
+						Type: "serial",
+					},
+					{
+						Name:     "name",
+						Type:     "varchar(255)",
+						Unique:   ptr(true),
+						Nullable: ptr(false),
 					},
 				},
 			},
@@ -851,6 +829,46 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "orders",
+							Column: migrations.Column{
+								Default: ptr("'foo'"),
+								Name:    "description",
+								Type:    "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
+		},
+		{
+			name: "table must have a primary key on exactly one column or a unique not null if up is defined",
+			migrations: []migrations.Migration{
+				addTableMigrationNoPKNullable,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Default: ptr("'foo'"),
+								Name:    "description",
+								Type:    "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
+		},
+		{
+			name: "table must have a primary key on exactly one column or a unique not null if up is defined",
+			migrations: []migrations.Migration{
+				addTableMigrationNoPKNotNull,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
