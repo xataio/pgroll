@@ -157,13 +157,12 @@ func (e MultipleAlterColumnChangesError) Error() string {
 	return fmt.Sprintf("alter column operations require exactly one change, found %d", e.Changes)
 }
 
-type InvalidPrimaryKeyError struct {
-	Table  string
-	Fields int
+type BackfillNotPossible struct {
+	Table string
 }
 
-func (e InvalidPrimaryKeyError) Error() string {
-	return fmt.Sprintf("primary key on table %q must be defined on exactly one column, found %d", e.Table, e.Fields)
+func (e BackfillNotPossible) Error() string {
+	return fmt.Sprintf("backfills is required but table %q doesn't have a suitable column for backfill, single column primary key or unique not null colum is required", e.Table)
 }
 
 type InvalidReplicaIdentityError struct {

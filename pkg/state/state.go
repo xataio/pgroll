@@ -131,7 +131,7 @@ BEGIN
 								SELECT 1
 								FROM pg_constraint
 								WHERE conrelid = attr.attrelid
-								AND conkey::int[] @> ARRAY[attr.attnum::int]
+								AND ARRAY[attr.attnum::int] @> conkey::int[]
 								AND contype = 'u'
 							) OR EXISTS (
 								SELECT 1
@@ -139,7 +139,7 @@ BEGIN
 								JOIN pg_class ON pg_class.oid = pg_index.indexrelid
 								WHERE indrelid = attr.attrelid
 								AND indisunique
-								AND pg_index.indkey::int[] @> ARRAY[attr.attnum::int]
+								AND ARRAY[attr.attnum::int] @> pg_index.indkey::int[]
 							)) AS unique
 						FROM
 							pg_attribute AS attr

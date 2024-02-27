@@ -674,7 +674,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.InvalidPrimaryKeyError{Table: "orders", Fields: 2},
+			wantStartErr: migrations.BackfillNotPossible{Table: "orders"},
 		},
 	})
 }

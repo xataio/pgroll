@@ -407,6 +407,53 @@ func TestReadSchema(t *testing.T) {
 				},
 			},
 			{
+				name:       "multicolumn unique constraint",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_id_unique UNIQUE(id, name));",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+									Unique:   false,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
+								},
+								"name_id_unique": {
+									Name:    "name_id_unique",
+									Unique:  true,
+									Columns: []string{"id", "name"},
+								},
+							},
+							ForeignKeys:      map[string]schema.ForeignKey{},
+							CheckConstraints: map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{
+								"name_id_unique": {
+									Name:    "name_id_unique",
+									Columns: []string{"id", "name"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				name:       "multi-column index",
 				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
 				wantSchema: &schema.Schema{

@@ -19,19 +19,18 @@ import (
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
 func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...CallbackFn) error {
-	// Get the primary key column for the table
-	pks := table.GetPrimaryKey()
-	if len(pks) != 1 {
-		return errors.New("table must have a single primary key column")
+	// get the backfill column
+	pk := getBackfillColumn(table)
+	if pk == nil {
+		return BackfillNotPossible{Table: table.Name}
 	}
-	pk := pks[0]
 
 	// Create a batcher for the table.
 	b := batcher{
-		table:     table,
-		pkColumn:  pk,
-		lastPK:    nil,
-		batchSize: 1000,
+		table:          table,
+		backfillColumn: pk,
+		lastValue:      nil,
+		batchSize:      1000,
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.
@@ -51,11 +50,38 @@ func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...Cal
 	return nil
 }
 
+// checkBackfill will return an error if the backfill operation is not supported.
+func checkBackfill(table *schema.Table) error {
+	col := getBackfillColumn(table)
+	if col == nil {
+		return BackfillNotPossible{Table: table.Name}
+	}
+
+	return nil
+}
+
+func getBackfillColumn(table *schema.Table) *schema.Column {
+	pks := table.GetPrimaryKey()
+	if len(pks) == 1 {
+		return pks[0]
+	}
+
+	// If there is no primary key, look for a unique not null column
+	for _, col := range table.Columns {
+		if col.Unique && !col.Nullable {
+			return &col
+		}
+	}
+
+	// no suitable column found
+	return nil
+}
+
 type batcher struct {
-	table     *schema.Table
-	pkColumn  *schema.Column
-	lastPK    *string
-	batchSize int
+	table          *schema.Table
+	backfillColumn *schema.Column
+	lastValue      *string
+	batchSize      int
 }
 
 // updateBatch updates the next batch of rows in the table.
@@ -72,7 +98,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn *sql.DB) error {
 
 	// Execute the query to update the next batch of rows and update the last PK
 	// value for the next batch
-	err = tx.QueryRowContext(ctx, query).Scan(&b.lastPK)
+	err = tx.QueryRowContext(ctx, query).Scan(&b.lastValue)
 	if err != nil {
 		return err
 	}
@@ -84,8 +110,8 @@ func (b *batcher) updateBatch(ctx context.Context, conn *sql.DB) error {
 // buildQuery builds the query used to update the next batch of rows.
 func (b *batcher) buildQuery() string {
 	whereClause := ""
-	if b.lastPK != nil {
-		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.pkColumn.Name), pq.QuoteLiteral(*b.lastPK))
+	if b.lastValue != nil {
+		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.backfillColumn.Name), pq.QuoteLiteral(*b.lastValue))
 	}
 
 	return fmt.Sprintf(`
@@ -96,7 +122,7 @@ func (b *batcher) buildQuery() string {
     )
     SELECT LAST_VALUE(%[1]s) OVER() FROM update
     `,
-		pq.QuoteIdentifier(b.pkColumn.Name),
+		pq.QuoteIdentifier(b.backfillColumn.Name),
 		pq.QuoteIdentifier(b.table.Name),
 		b.batchSize,
 		whereClause)
