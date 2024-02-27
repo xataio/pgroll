@@ -164,11 +164,11 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Ensure backfill is possible
 	if o.Up != nil {
-		// needs backfill, ensure that the table has a primary key defined on exactly one column.
-		pk := table.GetPrimaryKey()
-		if len(pk) != 1 {
-			return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+		err := checkBackfill(table)
+		if err != nil {
+			return err
 		}
 	}
 

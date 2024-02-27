@@ -45,9 +45,9 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	// Ensure that the column has a primary key defined on exactly one column.
-	pk := table.GetPrimaryKey()
-	if len(pk) != 1 {
-		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+	err := checkBackfill(table)
+	if err != nil {
+		return err
 	}
 
 	// Apply any special validation rules for the inner operation
