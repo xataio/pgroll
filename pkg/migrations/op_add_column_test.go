@@ -849,6 +849,7 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
+							Up:    ptr("UPPER(name)"),
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
@@ -861,7 +862,7 @@ func TestAddColumnValidation(t *testing.T) {
 			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
 		},
 		{
-			name: "table must have a primary key on exactly one column or a unique not null if up is defined",
+			name: "table with a unique not null column can be backfilled",
 			migrations: []migrations.Migration{
 				addTableMigrationNoPKNotNull,
 				{
@@ -869,6 +870,7 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
+							Up:    ptr("UPPER(name)"),
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
