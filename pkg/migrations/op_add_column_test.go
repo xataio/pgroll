@@ -491,6 +491,98 @@ func TestAddColumnWithUpSql(t *testing.T) {
 				TriggerMustNotExist(t, db, schema, "products", triggerName)
 			},
 		},
+		{
+			name: "add column with up sql and no pk",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "products",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "text",
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Unique:   ptr(true),
+									Nullable: ptr(false),
+								},
+							},
+						},
+						// insert some data into the table to test backfill in the next migration
+						&migrations.OpRawSQL{
+							Up:         "INSERT INTO products (id, name) VALUES ('c', 'cherries')",
+							OnComplete: true,
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "products",
+							Up:    ptr("UPPER(name)"),
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "varchar(255)",
+								Nullable: ptr(true),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_add_table", "products", map[string]string{
+					"id":   "a",
+					"name": "apple",
+				})
+				MustInsert(t, db, schema, "02_add_column", "products", map[string]string{
+					"id":          "b",
+					"name":        "banana",
+					"description": "a yellow banana",
+				})
+
+				res := MustSelect(t, db, schema, "02_add_column", "products")
+				assert.Equal(t, []map[string]any{
+					// the description column has been populated by the backfill process
+					{"id": "c", "name": "cherries", "description": "CHERRIES"},
+					// the description column has been populated for the product inserted into the old view.
+					{"id": "a", "name": "apple", "description": "APPLE"},
+					// the description column for the product inserted into the new view is as inserted.
+					{"id": "b", "name": "banana", "description": "a yellow banana"},
+				}, res)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The trigger function has been dropped.
+				triggerFnName := migrations.TriggerFunctionName("products", "description")
+				FunctionMustNotExist(t, db, schema, triggerFnName)
+
+				// The trigger has been dropped.
+				triggerName := migrations.TriggerName("products", "description")
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// after rollback + restart + complete, all 'description' values are the backfilled ones.
+				res := MustSelect(t, db, schema, "02_add_column", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": "a", "name": "apple", "description": "APPLE"},
+					{"id": "b", "name": "banana", "description": "BANANA"},
+					{"id": "c", "name": "cherries", "description": "CHERRIES"},
+				}, res)
+
+				// The trigger function has been dropped.
+				triggerFnName := migrations.TriggerFunctionName("products", "description")
+				FunctionMustNotExist(t, db, schema, triggerFnName)
+
+				// The trigger has been dropped.
+				triggerName := migrations.TriggerName("products", "description")
+				TriggerMustNotExist(t, db, schema, "products", triggerName)
+			},
+		},
 	})
 }
 
