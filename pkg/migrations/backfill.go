@@ -20,15 +20,15 @@ import (
 // 4. Repeat steps 2 and 3 until no more rows are returned.
 func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...CallbackFn) error {
 	// get the backfill column
-	pk := getBackfillColumn(table)
-	if pk == nil {
+	backFillColumn := getBackfillColumn(table)
+	if backFillColumn == nil {
 		return BackfillNotPossible{Table: table.Name}
 	}
 
 	// Create a batcher for the table.
 	b := batcher{
 		table:          table,
-		backfillColumn: pk,
+		backfillColumn: backFillColumn,
 		lastValue:      nil,
 		batchSize:      1000,
 	}
