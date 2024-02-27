@@ -177,7 +177,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossible{Table: "orders"},
+			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
 		},
 	})
 }

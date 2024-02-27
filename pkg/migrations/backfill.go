@@ -20,15 +20,15 @@ import (
 // 4. Repeat steps 2 and 3 until no more rows are returned.
 func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...CallbackFn) error {
 	// get the backfill column
-	backFillColumn := getBackfillColumn(table)
-	if backFillColumn == nil {
-		return BackfillNotPossible{Table: table.Name}
+	identityColumn := getIdentityColumn(table)
+	if identityColumn == nil {
+		return BackfillNotPossibleError{Table: table.Name}
 	}
 
 	// Create a batcher for the table.
 	b := batcher{
 		table:          table,
-		backfillColumn: backFillColumn,
+		identityColumn: identityColumn,
 		lastValue:      nil,
 		batchSize:      1000,
 	}
@@ -52,15 +52,16 @@ func backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...Cal
 
 // checkBackfill will return an error if the backfill operation is not supported.
 func checkBackfill(table *schema.Table) error {
-	col := getBackfillColumn(table)
+	col := getIdentityColumn(table)
 	if col == nil {
-		return BackfillNotPossible{Table: table.Name}
+		return BackfillNotPossibleError{Table: table.Name}
 	}
 
 	return nil
 }
 
-func getBackfillColumn(table *schema.Table) *schema.Column {
+// getIdentityColumn will return a column suitable for use in a backfill operation.
+func getIdentityColumn(table *schema.Table) *schema.Column {
 	pks := table.GetPrimaryKey()
 	if len(pks) == 1 {
 		return pks[0]
@@ -79,7 +80,7 @@ func getBackfillColumn(table *schema.Table) *schema.Column {
 
 type batcher struct {
 	table          *schema.Table
-	backfillColumn *schema.Column
+	identityColumn *schema.Column
 	lastValue      *string
 	batchSize      int
 }
@@ -111,7 +112,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn *sql.DB) error {
 func (b *batcher) buildQuery() string {
 	whereClause := ""
 	if b.lastValue != nil {
-		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.backfillColumn.Name), pq.QuoteLiteral(*b.lastValue))
+		whereClause = fmt.Sprintf("WHERE %s > %v", pq.QuoteIdentifier(b.identityColumn.Name), pq.QuoteLiteral(*b.lastValue))
 	}
 
 	return fmt.Sprintf(`
@@ -122,7 +123,7 @@ func (b *batcher) buildQuery() string {
     )
     SELECT LAST_VALUE(%[1]s) OVER() FROM update
     `,
-		pq.QuoteIdentifier(b.backfillColumn.Name),
+		pq.QuoteIdentifier(b.identityColumn.Name),
 		pq.QuoteIdentifier(b.table.Name),
 		b.batchSize,
 		whereClause)

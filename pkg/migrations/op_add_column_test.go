@@ -766,7 +766,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossible{Table: "orders"},
+			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
 		},
 		{
 			name: "table has no restrictions on primary keys if up is not defined",
