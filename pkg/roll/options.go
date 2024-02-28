@@ -14,6 +14,10 @@ type options struct {
 
 	// a map of setting/value pairs to be set for the duration of migration start
 	settingsOnMigrationStart map[string]string
+
+	// whether to make a no-op schema change in between completing the DDL
+	// operations for migration start and performing backfills
+	kickstartReplication bool
 }
 
 type Option func(*options)
@@ -46,5 +50,15 @@ func WithDisableViewsManagement() Option {
 func WithSettingsOnMigrationStart(settings map[string]string) Option {
 	return func(o *options) {
 		o.settingsOnMigrationStart = settings
+	}
+}
+
+// WithKickstartReplication defines an option that when set will make a no-op
+// schema change in between completing the DDL operations for migration start
+// and performing backfills. This can be used to ensure that schema replication
+// is up-to-date before starting backfills.
+func WithKickstartReplication() Option {
+	return func(o *options) {
+		o.kickstartReplication = true
 	}
 }

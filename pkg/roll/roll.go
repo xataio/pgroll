@@ -28,6 +28,10 @@ type Roll struct {
 	// a map of setting/value pairs to be set for the duration of migration start
 	settingsOnMigrationStart map[string]string
 
+	// whether to make a no-op schema change in between completing the DDL
+	// operations for migration start and performing backfills
+	kickstartReplication bool
+
 	state     *state.State
 	pgVersion PGVersion
 }
@@ -86,6 +90,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		pgVersion:                PGVersion(pgMajorVersion),
 		disableVersionSchemas:    options.disableVersionSchemas,
 		settingsOnMigrationStart: options.settingsOnMigrationStart,
+		kickstartReplication:     options.kickstartReplication,
 	}, nil
 }
 

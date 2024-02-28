@@ -20,6 +20,12 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		return err
 	}
 
+	if m.kickstartReplication {
+		if err := m.noOpSchemaChange(ctx); err != nil {
+			return err
+		}
+	}
+
 	// perform backfills for the tables that require it
 	return m.performBackfills(ctx, tablesToBackfill)
 }
@@ -251,6 +257,22 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) err
 		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
 			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
 		}
+	}
+
+	return nil
+}
+
+// noOpSchemaChange creates and drops a dummy table. This is intended to act as
+// a no-op schema change to trigger replication.
+func (m *Roll) noOpSchemaChange(ctx context.Context) error {
+	_, err := m.pgConn.ExecContext(ctx, "CREATE TABLE __pgroll_noop (id int)")
+	if err != nil {
+		return fmt.Errorf("unable to perform no-op schema change: %w", err)
+	}
+
+	_, err = m.pgConn.ExecContext(ctx, "DROP TABLE __pgroll_noop")
+	if err != nil {
+		return fmt.Errorf("unable to perform no-op schema change: %w", err)
 	}
 
 	return nil
