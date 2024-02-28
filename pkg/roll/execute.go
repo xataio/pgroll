@@ -40,8 +40,9 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 	}
 
 	// execute operations
+	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema, cbs...)
+		table, err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 
@@ -59,6 +60,16 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 					return fmt.Errorf("unable to refresh schema: %w", err)
 				}
 			}
+		}
+		if table != nil {
+			tablesToBackfill = append(tablesToBackfill, table)
+		}
+	}
+
+	// perform backfill operations for those tables that require it
+	for _, table := range tablesToBackfill {
+		if err := migrations.Backfill(ctx, m.pgConn, table, cbs...); err != nil {
+			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
 		}
 	}
 
