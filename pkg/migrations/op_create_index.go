@@ -14,13 +14,13 @@ import (
 
 var _ Operation = (*OpCreateIndex)(nil)
 
-func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// create index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
 		strings.Join(quoteColumnNames(o.Columns), ", ")))
-	return err
+	return nil, err
 }
 
 func (o *OpCreateIndex) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

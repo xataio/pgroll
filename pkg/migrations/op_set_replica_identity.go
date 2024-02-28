@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type
 	identitySQL := strings.ToUpper(o.Identity.Type)
 	if identitySQL == "INDEX" {
@@ -26,7 +26,7 @@ func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSch
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY %s",
 		pq.QuoteIdentifier(o.Table),
 		identitySQL))
-	return err
+	return nil, err
 }
 
 func (o *OpSetReplicaIdentity) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

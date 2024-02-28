@@ -21,14 +21,14 @@ type OpChangeType struct {
 
 var _ Operation = (*OpChangeType)(nil)
 
-func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
 	// Create a copy of the column on the underlying table.
 	d := NewColumnDuplicator(conn, table, column).WithType(o.Type)
 	if err := d.Duplicate(ctx); err != nil {
-		return fmt.Errorf("failed to duplicate column: %w", err)
+		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
@@ -43,12 +43,7 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		SQL:            o.Up,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create up trigger: %w", err)
-	}
-
-	// Backfill the new column with values from the old column.
-	if err := backfill(ctx, conn, table, cbs...); err != nil {
-		return fmt.Errorf("failed to backfill column: %w", err)
+		return nil, fmt.Errorf("failed to create up trigger: %w", err)
 	}
 
 	// Add the new column to the internal schema representation. This is done
@@ -70,10 +65,10 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		SQL:            o.Down,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create down trigger: %w", err)
+		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}
 
-	return nil
+	return table, nil
 }
 
 func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
