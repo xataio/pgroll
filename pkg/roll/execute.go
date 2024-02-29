@@ -20,9 +20,9 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		return err
 	}
 
-	if m.kickstartReplication {
-		if err := m.noOpSchemaChange(ctx); err != nil {
-			return err
+	if m.migrationHooks.BeforeBackfill != nil {
+		if err := m.migrationHooks.BeforeBackfill(m); err != nil {
+			return fmt.Errorf("failed to execute BeforeBackfill hook: %w", err)
 		}
 	}
 
@@ -57,12 +57,17 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		return nil, fmt.Errorf("migration is invalid: %w", err)
 	}
 
-	// Set any Postgres settings that should be set for the duration of the start operation
-	err = m.SetPostgresSettingsOnStart(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to set postgres settings: %w", err)
+	// run any BeforeStartDDL hooks
+	if m.migrationHooks.BeforeStartDDL != nil {
+		if err := m.migrationHooks.BeforeStartDDL(m); err != nil {
+			return nil, fmt.Errorf("failed to execute BeforeStartDDL hook: %w", err)
+		}
 	}
-	defer m.RestorePostgresSettingsAfterStart(ctx)
+
+	// defer execution of any AfterStartDDL hooks
+	if m.migrationHooks.AfterStartDDL != nil {
+		defer m.migrationHooks.AfterStartDDL(m)
+	}
 
 	// execute operations
 	var tablesToBackfill []*schema.Table
@@ -260,52 +265,6 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) err
 	}
 
 	return nil
-}
-
-// noOpSchemaChange creates and drops a dummy table. This is intended to act as
-// a no-op schema change to trigger replication.
-func (m *Roll) noOpSchemaChange(ctx context.Context) error {
-	_, err := m.pgConn.ExecContext(ctx, "CREATE TABLE __pgroll_noop (id int)")
-	if err != nil {
-		return fmt.Errorf("unable to perform no-op schema change: %w", err)
-	}
-
-	_, err = m.pgConn.ExecContext(ctx, "DROP TABLE __pgroll_noop")
-	if err != nil {
-		return fmt.Errorf("unable to perform no-op schema change: %w", err)
-	}
-
-	return nil
-}
-
-func (m *Roll) SetPostgresSettingsOnStart(ctx context.Context) error {
-	var errs error
-
-	for key := range m.settingsOnMigrationStart {
-		setting := key
-		value := m.settingsOnMigrationStart[setting]
-
-		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("SET %s TO %s", pq.QuoteIdentifier(setting), value))
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("failed to set %q setting: %w", setting, err))
-		}
-	}
-
-	return errs
-}
-
-func (m *Roll) RestorePostgresSettingsAfterStart(ctx context.Context) error {
-	var errs error
-
-	for key := range m.settingsOnMigrationStart {
-		setting := key
-		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("RESET %s", pq.QuoteIdentifier(setting)))
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("failed to reset %q setting: %w", setting, err))
-		}
-	}
-
-	return errs
 }
 
 func VersionedSchemaName(schema string, version string) string {
