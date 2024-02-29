@@ -473,83 +473,65 @@ func TestRoleIsRespected(t *testing.T) {
 	})
 }
 
-func TestWithSettingsOnMigrationStartIsRespected(t *testing.T) {
+func TestMigrationHooksAreInvoked(t *testing.T) {
 	t.Parallel()
 
-	options := []roll.Option{roll.WithSettingsOnMigrationStart(map[string]string{
-		"datestyle": "SQL, DMY",
+	options := []roll.Option{roll.WithMigrationHooks(roll.MigrationHooks{
+		BeforeStartDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_start_ddl (id integer)")
+			return err
+		},
+		AfterStartDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS after_start_ddl (id integer)")
+			return err
+		},
+		BeforeBackfill: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_backfill (id integer)")
+			return err
+		},
 	})}
 
 	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
-		// Create a `settings` table and write the value of the `datestyle` setting
-		// to a row in the `settings` table
-		err := mig.Start(ctx, &migrations.Migration{
-			Name: "01_create_table",
-			Operations: migrations.Operations{
-				&migrations.OpRawSQL{
-					Up: `create table settings (id text primary key, k text, v text); 
-               insert into settings (id, k, v) values ('start', 'datestyle', current_setting('datestyle'))`,
-				},
-			},
-		})
-		assert.NoError(t, err)
-
-		// Complete the migration
-		err = mig.Complete(ctx)
-		assert.NoError(t, err)
-
-		// Check the value of the datestyle setting as it was during migration start
-		var dateStyle string
-		err = db.QueryRowContext(ctx, "SELECT v FROM public.settings where id = 'start'").Scan(&dateStyle)
-		assert.NoError(t, err)
-		assert.Equal(t, "SQL, DMY", dateStyle)
-
-		// Start a second migration that writes the value of the `datestyle`
-		// setting to the `settings` table. The migration SQL executes on completion so
-		// the `datestyle` setting should have been restored to its previous value.
-		err = mig.Start(ctx, &migrations.Migration{
-			Name: "02_write_setting",
-			Operations: migrations.Operations{
-				&migrations.OpRawSQL{
-					Up:         `insert into settings (id, k, v) values ('complete', 'datestyle', current_setting('datestyle'))`,
-					OnComplete: true,
-				},
-			},
-		})
-		assert.NoError(t, err)
-
-		// Complete the migration
-		err = mig.Complete(ctx)
-		assert.NoError(t, err)
-
-		// Check that the `datestyle` setting written during the complete phase was
-		// the default value for the setting
-		err = db.QueryRowContext(ctx, "SELECT v FROM public.settings where id = 'complete'").Scan(&dateStyle)
-		assert.NoError(t, err)
-		assert.Equal(t, "ISO, MDY", dateStyle)
-	})
-}
-
-func TestWithKickstartReplicationCleansUp(t *testing.T) {
-	t.Parallel()
-
-	options := []roll.Option{roll.WithKickstartReplication()}
-
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-
 		// Start a create table migration
-		if err := mig.Start(ctx, &migrations.Migration{Name: "01_create_table", Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("table1")},
+		})
+		assert.NoError(t, err)
 
-		// Ensure that there is only one table in the schema - the no-op table
-		// created by the WithKickstartReplication option has been removed
-		if count := tableCount(t, db, "public"); count != 1 {
-			t.Errorf("Expected 1 table in schema %q, got %d", "public", count)
-		}
+		// Ensure that both the before_start_ddl and after_start_ddl tables were created
+		assert.True(t, tableExists(t, db, "public", "before_start_ddl"))
+		assert.True(t, tableExists(t, db, "public", "after_start_ddl"))
+
+		// Complete the migration
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Insert some data into the table created by the migration
+		_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice')")
+		assert.NoError(t, err)
+
+		// Start a migration that requires a backfill
+		err = mig.Start(ctx, &migrations.Migration{
+			Name: "02_add_column",
+			Operations: migrations.Operations{
+				&migrations.OpAddColumn{
+					Table: "table1",
+					Column: migrations.Column{
+						Name:     "description",
+						Type:     "text",
+						Nullable: ptr(false),
+					},
+					Up: ptr("'this is a description'"),
+				},
+			},
+		})
+		assert.NoError(t, err)
+
+		// ensure that the before_backfill table was created
+		assert.True(t, tableExists(t, db, "public", "before_backfill"))
 	})
 }
 
@@ -640,21 +622,23 @@ func schemaExists(t *testing.T, db *sql.DB, schema string) bool {
 	return exists
 }
 
-func tableCount(t *testing.T, db *sql.DB, schema string) int {
+func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	t.Helper()
 
-	var count int
+	var exists bool
 	err := db.QueryRow(`
-		SELECT COUNT(*)
+		SELECT EXISTS(
+      SELECT 1
 			FROM pg_catalog.pg_tables
 			WHERE schemaname = $1
-    `,
-		schema).Scan(&count)
+      AND tablename = $2
+    )`,
+		schema, table).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return count
+	return exists
 }
 
 func ptr[T any](v T) *T {
