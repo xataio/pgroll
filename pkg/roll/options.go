@@ -11,6 +11,18 @@ type options struct {
 
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
+	migrationHooks        MigrationHooks
+}
+
+// MigrationHooks defines hooks that can be set to be called at various points
+// during the migration process
+type MigrationHooks struct {
+	// BeforeStartDDL is called before the DDL phase of migration start
+	BeforeStartDDL func(*Roll) error
+	// AfterStartDDL is called after the DDL phase of migration start is complete
+	AfterStartDDL func(*Roll) error
+	// BeforeBackfill is called before the backfill phase of migration start
+	BeforeBackfill func(*Roll) error
 }
 
 type Option func(*options)
@@ -34,5 +46,14 @@ func WithRole(role string) Option {
 func WithDisableViewsManagement() Option {
 	return func(o *options) {
 		o.disableVersionSchemas = true
+	}
+}
+
+// WithMigrationHooks sets the migration hooks for the Roll instance
+// Migration hooks are called at various points during the migration process
+// to allow for custom behavior to be injected
+func WithMigrationHooks(hooks MigrationHooks) Option {
+	return func(o *options) {
+		o.migrationHooks = hooks
 	}
 }
