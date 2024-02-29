@@ -80,6 +80,12 @@
         "table": {
           "description": "Name of the referenced table",
           "type": "string"
+        },
+        "on_delete": {
+          "description": "On delete behavior of the foreign key constraint",
+          "type": "string",
+          "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
+          "default": "NO ACTION"
         }
       },
       "required": ["column", "name", "table"],

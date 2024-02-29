@@ -50,9 +50,20 @@ type ForeignKeyReference struct {
 	// Name of the foreign key constraint
 	Name string `json:"name"`
 
+	// On delete behavior of the foreign key constraint
+	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+
 	// Name of the referenced table
 	Table string `json:"table"`
 }
+
+type ForeignKeyReferenceOnDelete string
+
+const ForeignKeyReferenceOnDeleteCASCADE ForeignKeyReferenceOnDelete = "CASCADE"
+const ForeignKeyReferenceOnDeleteNOACTION ForeignKeyReferenceOnDelete = "NO ACTION"
+const ForeignKeyReferenceOnDeleteRESTRICT ForeignKeyReferenceOnDelete = "RESTRICT"
+const ForeignKeyReferenceOnDeleteSETDEFAULT ForeignKeyReferenceOnDelete = "SET DEFAULT"
+const ForeignKeyReferenceOnDeleteSETNULL ForeignKeyReferenceOnDelete = "SET NULL"
 
 // Add column operation
 type OpAddColumn struct {
