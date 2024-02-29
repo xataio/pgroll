@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -158,6 +159,18 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 
 	if o.Down == "" {
 		return FieldRequiredError{Name: "down"}
+	}
+
+	switch strings.ToUpper(string(o.References.OnDelete)) {
+	case string(ForeignKeyReferenceOnDeleteNOACTION):
+	case string(ForeignKeyReferenceOnDeleteRESTRICT):
+	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
+	case string(ForeignKeyReferenceOnDeleteSETNULL):
+	case string(ForeignKeyReferenceOnDeleteCASCADE):
+	case "":
+		break
+	default:
+		return InvalidOnDeleteSettingError{Table: o.Table, Column: o.Column, Setting: string(o.References.OnDelete)}
 	}
 
 	return nil
