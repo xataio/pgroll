@@ -13,29 +13,31 @@ import (
 func TestRenameColumn(t *testing.T) {
 	t.Parallel()
 
-	ExecuteTests(t, TestCases{{
-		name: "rename column",
-		migrations: []migrations.Migration{
-			{
-				Name: "01_add_table",
-				Operations: migrations.Operations{
-					&migrations.OpCreateTable{
-						Name: "users",
-						Columns: []migrations.Column{
-							{
-								Name: "id",
-								Type: "serial",
-								Pk:   ptr(true),
-							},
-							{
-								Name:     "username",
-								Type:     "varchar(255)",
-								Nullable: ptr(false),
-							},
-						},
+	addTableMigration := migrations.Migration{
+		Name: "01_add_table",
+		Operations: migrations.Operations{
+			&migrations.OpCreateTable{
+				Name: "users",
+				Columns: []migrations.Column{
+					{
+						Name: "id",
+						Type: "serial",
+						Pk:   ptr(true),
+					},
+					{
+						Name:     "username",
+						Type:     "varchar(255)",
+						Nullable: ptr(false),
 					},
 				},
 			},
+		},
+	}
+
+	ExecuteTests(t, TestCases{{
+		name: "rename column",
+		migrations: []migrations.Migration{
+			addTableMigration,
 			{
 				Name: "02_rename_column",
 				Operations: migrations.Operations{
@@ -78,5 +80,21 @@ func TestRenameColumn(t *testing.T) {
 				{"id": 2, "name": "bob"},
 			}, rows)
 		},
+	}, {
+		name: "column must not exist",
+		migrations: []migrations.Migration{
+			addTableMigration,
+			{
+				Name: "02_rename_column",
+				Operations: migrations.Operations{
+					&migrations.OpAlterColumn{
+						Table:  "users",
+						Column: "username",
+						Name:   ptr("id"),
+					},
+				},
+			},
+		},
+		wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
 	}})
 }
