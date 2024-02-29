@@ -43,7 +43,7 @@ func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	if table.GetColumn(o.To) != nil {
-		return ColumnAlreadyExistsError{Table: o.Table, Name: o.From}
+		return ColumnAlreadyExistsError{Table: o.Table, Name: o.To}
 	}
 
 	return nil
