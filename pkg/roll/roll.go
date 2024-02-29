@@ -25,15 +25,9 @@ type Roll struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
-	// a map of setting/value pairs to be set for the duration of migration start
-	settingsOnMigrationStart map[string]string
-
-	// whether to make a no-op schema change in between completing the DDL
-	// operations for migration start and performing backfills
-	kickstartReplication bool
-
-	state     *state.State
-	pgVersion PGVersion
+	migrationHooks MigrationHooks
+	state          *state.State
+	pgVersion      PGVersion
 }
 
 func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...Option) (*Roll, error) {
@@ -84,13 +78,12 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	}
 
 	return &Roll{
-		pgConn:                   conn,
-		schema:                   schema,
-		state:                    state,
-		pgVersion:                PGVersion(pgMajorVersion),
-		disableVersionSchemas:    options.disableVersionSchemas,
-		settingsOnMigrationStart: options.settingsOnMigrationStart,
-		kickstartReplication:     options.kickstartReplication,
+		pgConn:                conn,
+		schema:                schema,
+		state:                 state,
+		pgVersion:             PGVersion(pgMajorVersion),
+		disableVersionSchemas: options.disableVersionSchemas,
+		migrationHooks:        options.migrationHooks,
 	}, nil
 }
 
@@ -100,6 +93,10 @@ func (m *Roll) Init(ctx context.Context) error {
 
 func (m *Roll) PGVersion() PGVersion {
 	return m.pgVersion
+}
+
+func (m *Roll) PgConn() *sql.DB {
+	return m.pgConn
 }
 
 func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {

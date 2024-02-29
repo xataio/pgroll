@@ -11,13 +11,18 @@ type options struct {
 
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
+	migrationHooks        MigrationHooks
+}
 
-	// a map of setting/value pairs to be set for the duration of migration start
-	settingsOnMigrationStart map[string]string
-
-	// whether to make a no-op schema change in between completing the DDL
-	// operations for migration start and performing backfills
-	kickstartReplication bool
+// MigrationHooks defines hooks that can be set to be called at various points
+// during the migration process
+type MigrationHooks struct {
+	// BeforeStartDDL is called before the DDL phase of migration start
+	BeforeStartDDL func(*Roll) error
+	// AfterStartDDL is called after the DDL phase of migration start is complete
+	AfterStartDDL func(*Roll) error
+	// BeforeBackfill is called before the backfill phase of migration start
+	BeforeBackfill func(*Roll) error
 }
 
 type Option func(*options)
@@ -44,21 +49,11 @@ func WithDisableViewsManagement() Option {
 	}
 }
 
-// WithSettingsOnMigrationStart defines a map of Postgres setting/value pairs
-// to be set for the duration of the DDL phase of migration start. Settings
-// will be restored to their previous values once the DDL phase is complete.
-func WithSettingsOnMigrationStart(settings map[string]string) Option {
+// WithMigrationHooks sets the migration hooks for the Roll instance
+// Migration hooks are called at various points during the migration process
+// to allow for custom behavior to be injected
+func WithMigrationHooks(hooks MigrationHooks) Option {
 	return func(o *options) {
-		o.settingsOnMigrationStart = settings
-	}
-}
-
-// WithKickstartReplication defines an option that when set will make a no-op
-// schema change in between completing the DDL operations for migration start
-// and performing backfills. This can be used to ensure that schema replication
-// is up-to-date before starting backfills.
-func WithKickstartReplication() Option {
-	return func(o *options) {
-		o.kickstartReplication = true
+		o.migrationHooks = hooks
 	}
 }
