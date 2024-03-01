@@ -11,14 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpChangeType struct {
-	Table  string `json:"table"`
-	Column string `json:"column"`
-	Type   string `json:"type"`
-	Up     string `json:"up"`
-	Down   string `json:"down"`
-}
-
 var _ Operation = (*OpChangeType)(nil)
 
 func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {

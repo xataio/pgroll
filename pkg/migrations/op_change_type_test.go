@@ -50,12 +50,12 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   ptr("integer"),
-							Up:     ptr("CAST (rating AS integer)"),
-							Down:   ptr("CAST (rating AS text)"),
+							Type:   "integer",
+							Up:     "CAST (rating AS integer)",
+							Down:   "CAST (rating AS text)",
 						},
 					},
 				},
@@ -202,12 +202,12 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "03_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "employees",
 							Column: "department_id",
-							Type:   ptr("bigint"),
-							Up:     ptr("department_id"),
-							Down:   ptr("department_id"),
+							Type:   "bigint",
+							Up:     "department_id",
+							Down:   "department_id",
 						},
 					},
 				},
@@ -250,12 +250,12 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "users",
 							Column: "username",
-							Type:   ptr("varchar(255)"),
-							Up:     ptr("username"),
-							Down:   ptr("username"),
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -318,12 +318,12 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "users",
 							Column: "username",
-							Type:   ptr("varchar(255)"),
-							Up:     ptr("username"),
-							Down:   ptr("username"),
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -371,12 +371,12 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "users",
 							Column: "username",
-							Type:   ptr("varchar(255)"),
-							Up:     ptr("username"),
-							Down:   ptr("username"),
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -421,24 +421,24 @@ func TestChangeColumnType(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "users",
 							Column: "username",
-							Unique: &migrations.UniqueConstraint{Name: "unique_username"},
-							Up:     ptr("username"),
-							Down:   ptr("username"),
+							Name:   "unique_username",
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
 				{
 					Name: "03_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "users",
 							Column: "username",
-							Type:   ptr("varchar(255)"),
-							Up:     ptr("username"),
-							Down:   ptr("username"),
+							Type:   "varchar(255)",
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -513,11 +513,11 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   ptr("integer"),
-							Down:   ptr("CAST (rating AS text)"),
+							Type:   "integer",
+							Down:   "CAST (rating AS text)",
 						},
 					},
 				},
@@ -531,11 +531,11 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 				{
 					Name: "02_change_type",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpChangeType{
 							Table:  "reviews",
 							Column: "rating",
-							Type:   ptr("integer"),
-							Up:     ptr("CAST (rating AS integer)"),
+							Type:   "integer",
+							Up:     "CAST (rating AS integer)",
 						},
 					},
 				},

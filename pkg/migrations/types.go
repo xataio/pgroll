@@ -100,6 +100,24 @@ type OpAlterColumn struct {
 	Up *string `json:"up,omitempty"`
 }
 
+// Change type operation
+type OpChangeType struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New type of the column
+	Type string `json:"type"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Create index operation
 type OpCreateIndex struct {
 	// Names of columns on which to define the index

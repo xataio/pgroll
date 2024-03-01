@@ -494,6 +494,34 @@
       "required": ["table", "column", "check", "up", "down"],
       "type": "object"
     },
+    "OpChangeType": {
+      "additionalProperties": false,
+      "description": "Change type operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "type": {
+          "description": "New type of the column",
+          "type": "string"
+        },
+        "up": {
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "description": "SQL expression for down migration",
+          "type": "string"
+        }
+      },
+      "required": ["table", "column", "type", "up", "down"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",
