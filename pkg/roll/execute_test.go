@@ -82,21 +82,6 @@ func TestDisabledSchemaManagement(t *testing.T) {
 	})
 }
 
-func schemaExists(t *testing.T, db *sql.DB, schema string) bool {
-	t.Helper()
-	var exists bool
-	err := db.QueryRow(`
-	SELECT EXISTS(
-		SELECT 1
-		FROM pg_catalog.pg_namespace
-		WHERE nspname = $1
-	)`, schema).Scan(&exists)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return exists
-}
-
 func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	t.Parallel()
 
@@ -488,6 +473,68 @@ func TestRoleIsRespected(t *testing.T) {
 	})
 }
 
+func TestMigrationHooksAreInvoked(t *testing.T) {
+	t.Parallel()
+
+	options := []roll.Option{roll.WithMigrationHooks(roll.MigrationHooks{
+		BeforeStartDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_start_ddl (id integer)")
+			return err
+		},
+		AfterStartDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS after_start_ddl (id integer)")
+			return err
+		},
+		BeforeBackfill: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_backfill (id integer)")
+			return err
+		},
+	})}
+
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Start a create table migration
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("table1")},
+		})
+		assert.NoError(t, err)
+
+		// Ensure that both the before_start_ddl and after_start_ddl tables were created
+		assert.True(t, tableExists(t, db, "public", "before_start_ddl"))
+		assert.True(t, tableExists(t, db, "public", "after_start_ddl"))
+
+		// Complete the migration
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Insert some data into the table created by the migration
+		_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice')")
+		assert.NoError(t, err)
+
+		// Start a migration that requires a backfill
+		err = mig.Start(ctx, &migrations.Migration{
+			Name: "02_add_column",
+			Operations: migrations.Operations{
+				&migrations.OpAddColumn{
+					Table: "table1",
+					Column: migrations.Column{
+						Name:     "description",
+						Type:     "text",
+						Nullable: ptr(false),
+					},
+					Up: ptr("'this is a description'"),
+				},
+			},
+		})
+		assert.NoError(t, err)
+
+		// ensure that the before_backfill table was created
+		assert.True(t, tableExists(t, db, "public", "before_backfill"))
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,
@@ -558,6 +605,40 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	}
 
 	return res
+}
+
+func schemaExists(t *testing.T, db *sql.DB, schema string) bool {
+	t.Helper()
+	var exists bool
+	err := db.QueryRow(`
+	SELECT EXISTS(
+		SELECT 1
+		FROM pg_catalog.pg_namespace
+		WHERE nspname = $1
+	)`, schema).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return exists
+}
+
+func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+		SELECT EXISTS(
+      SELECT 1
+			FROM pg_catalog.pg_tables
+			WHERE schemaname = $1
+      AND tablename = $2
+    )`,
+		schema, table).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
 }
 
 func ptr[T any](v T) *T {

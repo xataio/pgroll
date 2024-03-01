@@ -25,8 +25,9 @@ type Roll struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
-	state     *state.State
-	pgVersion PGVersion
+	migrationHooks MigrationHooks
+	state          *state.State
+	pgVersion      PGVersion
 }
 
 func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...Option) (*Roll, error) {
@@ -82,6 +83,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		state:                 state,
 		pgVersion:             PGVersion(pgMajorVersion),
 		disableVersionSchemas: options.disableVersionSchemas,
+		migrationHooks:        options.migrationHooks,
 	}, nil
 }
 
@@ -91,6 +93,10 @@ func (m *Roll) Init(ctx context.Context) error {
 
 func (m *Roll) PGVersion() PGVersion {
 	return m.pgVersion
+}
+
+func (m *Roll) PgConn() *sql.DB {
+	return m.pgConn
 }
 
 func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {
