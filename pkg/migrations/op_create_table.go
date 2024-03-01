@@ -134,6 +134,10 @@ func ColumnToSQL(col Column) string {
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
 			pq.QuoteIdentifier(col.References.Column))
+
+		if col.References.OnDelete != nil {
+			sql += fmt.Sprintf(" ON DELETE %s", *col.References.OnDelete)
+		}
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

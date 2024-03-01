@@ -80,6 +80,17 @@
         "table": {
           "description": "Name of the referenced table",
           "type": "string"
+        },
+        "onDelete": {
+          "description": "Action to perform when the referenced row is deleted",
+          "type": "string",
+          "enum": [
+            "NO ACTION",
+            "RESTRICT",
+            "CASCADE",
+            "SET NULL",
+            "SET DEFAULT"
+          ]
         }
       },
       "required": ["column", "name", "table"],
@@ -155,11 +166,11 @@
         {
           "required": ["up", "down"],
           "oneOf": [
-            {"required": ["check"]},
-            {"required": ["type"]},
-            {"required": ["nullable"]},
-            {"required": ["unique"]},
-            {"required": ["references"]}
+            { "required": ["check"] },
+            { "required": ["type"] },
+            { "required": ["nullable"] },
+            { "required": ["unique"] },
+            { "required": ["references"] }
           ],
           "not": {
             "required": ["name"]
@@ -169,13 +180,13 @@
           "required": ["name"],
           "not": {
             "anyOf": [
-              { "required": [ "up" ] },
-              { "required": [ "down" ] },
-              { "required": [ "check" ] },
-              { "required": [ "type" ] },
-              { "required": [ "nullable" ] },
-              { "required": [ "unique" ] },
-              { "required": [ "references" ] }
+              { "required": ["up"] },
+              { "required": ["down"] },
+              { "required": ["check"] },
+              { "required": ["type"] },
+              { "required": ["nullable"] },
+              { "required": ["unique"] },
+              { "required": ["references"] }
             ]
           }
         }

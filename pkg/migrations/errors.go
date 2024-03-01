@@ -173,3 +173,12 @@ type InvalidReplicaIdentityError struct {
 func (e InvalidReplicaIdentityError) Error() string {
 	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
 }
+
+type InvalidEnumValueError struct {
+	Property string
+	Value    string
+}
+
+func (e InvalidEnumValueError) Error() string {
+	return fmt.Sprintf("invalid value for %q: %q", e.Property, e.Value)
+}

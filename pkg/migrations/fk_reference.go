@@ -19,5 +19,11 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: f.Table, Name: f.Column}
 	}
 
+	if f.OnDelete != nil {
+		if *f.OnDelete != ForeignKeyReferenceOnDeleteNOACTION && *f.OnDelete != ForeignKeyReferenceOnDeleteRESTRICT && *f.OnDelete != ForeignKeyReferenceOnDeleteCASCADE && *f.OnDelete != ForeignKeyReferenceOnDeleteSETNULL && *f.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT {
+			return InvalidEnumValueError{Property: "onDelete", Value: string(*f.OnDelete)}
+		}
+	}
+
 	return nil
 }

@@ -173,6 +173,219 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
+			name: "create table with foreign key and on delete cascade",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_table_with_fk",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "user_id",
+									Type: "integer",
+									References: &migrations.ForeignKeyReference{
+										Name:     "fk_users_id",
+										Table:    "users",
+										Column:   "id",
+										OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
+									},
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint exists on the new table.
+				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Deleting the referenced row cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"id": "1",
+				})
+
+				// Select from the referencing table returns no rows.
+				res := MustSelect(t, db, schema, "02_create_table_with_fk", "orders")
+				assert.Empty(t, res)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Deleting the referenced row cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"id": "2",
+				})
+
+				// Select from the referencing table returns no rows.
+				res := MustSelect(t, db, schema, "02_create_table_with_fk", "orders")
+				assert.Empty(t, res)
+			},
+		},
+		{
+			name: "create table with foreign key and on delete set null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_table_with_fk",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+									References: &migrations.ForeignKeyReference{
+										Name:     "fk_users_id",
+										Table:    "users",
+										Column:   "id",
+										OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteSETNULL),
+									},
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint exists on the new table.
+				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Deleting the referenced row sets the referencing row to null.
+				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"id": "1",
+				})
+
+				// Select from the referencing table returns a row with a null value.
+				res := MustSelect(t, db, schema, "02_create_table_with_fk", "orders")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "user_id": nil, "quantity": 100},
+				}, res)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Deleting the referenced row sets the referencing row to null.
+				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"id": "2",
+				})
+
+				// Select from the referencing table returns a row with a null value.
+				res := MustSelect(t, db, schema, "02_create_table_with_fk", "orders")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "user_id": nil, "quantity": 200},
+				}, res)
+			},
+		},
+		{
 			name: "create table with a check constraint",
 			migrations: []migrations.Migration{
 				{
