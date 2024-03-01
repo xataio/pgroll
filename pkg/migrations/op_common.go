@@ -28,6 +28,7 @@ const (
 	OpNameRenameColumn       OpName = "rename_column"
 	OpNameSetUnique          OpName = "set_unique"
 	OpNameSetNotNull         OpName = "set_not_null"
+	OpNameDropNotNull        OpName = "drop_not_null"
 	OpNameSetForeignKey      OpName = "set_foreign_key"
 	OpNameSetCheckConstraint OpName = "set_check_constraint"
 	OpNameChangeType         OpName = "change_type"
@@ -121,6 +122,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameSetNotNull:
 			item = &OpSetNotNull{}
+
+		case OpNameDropNotNull:
+			item = &OpDropNotNull{}
 
 		case OpNameSetForeignKey:
 			item = &OpSetForeignKey{}
@@ -216,6 +220,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpSetNotNull:
 		return OpNameSetNotNull
+
+	case *OpDropNotNull:
+		return OpNameDropNotNull
 
 	case *OpSetForeignKey:
 		return OpNameSetForeignKey

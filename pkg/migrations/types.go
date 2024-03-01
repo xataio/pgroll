@@ -160,6 +160,21 @@ type OpDropIndex struct {
 	Name string `json:"name"`
 }
 
+// Drop not null operation
+type OpDropNotNull struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Drop table operation
 type OpDropTable struct {
 	// Name of the table

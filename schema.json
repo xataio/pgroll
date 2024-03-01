@@ -414,6 +414,30 @@
       "required": ["table", "column", "up", "down"],
       "type": "object"
     },
+    "OpDropNotNull": {
+      "additionalProperties": false,
+      "description": "Drop not null operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "up": {
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "description": "SQL expression for down migration",
+          "type": "string"
+        }
+      },
+      "required": ["table", "column", "up", "down"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",

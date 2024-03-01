@@ -51,11 +51,10 @@ func TestDropNotNull(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(true),
-							Down:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+						&migrations.OpDropNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Down:   "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
 				},
@@ -187,12 +186,11 @@ func TestDropNotNull(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(true),
-							Down:     ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
-							Up:       ptr("review || ' (from the old column)'"),
+						&migrations.OpDropNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Down:   "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Up:     "review || ' (from the old column)'",
 						},
 					},
 				},
@@ -271,14 +269,13 @@ func TestDropNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "03_set_not_null",
+					Name: "03_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "employees",
-							Column:   "department_id",
-							Nullable: ptr(true),
-							Down:     ptr("(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)"),
-							Up:       ptr("department_id"),
+						&migrations.OpDropNotNull{
+							Table:  "employees",
+							Column: "department_id",
+							Down:   "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
+							Up:     "department_id",
 						},
 					},
 				},
@@ -319,26 +316,25 @@ func TestDropNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(true),
-							Up:       ptr("name"),
-							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpDropNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "name",
+							Down:   "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "users", map[string]string{
 					"id": "1",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_nullable", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 				}, rows)
@@ -347,12 +343,12 @@ func TestDropNotNull(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// A row can be inserted into the new version of the table.
-				MustInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "02_set_nullable", "users", map[string]string{
 					"id": "2",
 				})
 
 				// The newly inserted row respects the default value of the column.
-				rows := MustSelect(t, db, schema, "02_set_not_null", "users")
+				rows := MustSelect(t, db, schema, "02_set_nullable", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "anonymous"},
 					{"id": 2, "name": "anonymous"},
@@ -387,21 +383,20 @@ func TestDropNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_not_null",
+					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(true),
-							Up:       ptr("name"),
-							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpDropNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "name",
+							Down:   "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_nullable", "users", map[string]string{
 					"id":   "1",
 					"name": "a",
 				}, testutils.CheckViolationErrorCode)
@@ -410,7 +405,7 @@ func TestDropNotNull(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the check constraint should fail.
-				MustNotInsert(t, db, schema, "02_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "02_set_nullable", "users", map[string]string{
 					"id":   "2",
 					"name": "b",
 				}, testutils.CheckViolationErrorCode)
@@ -442,36 +437,35 @@ func TestDropNotNull(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "users",
 							Column: "name",
-							Unique: &migrations.UniqueConstraint{Name: "unique_name"},
-							Up:     ptr("name"),
-							Down:   ptr("name"),
+							Name:   "unique_name",
+							Up:     "name",
+							Down:   "name",
 						},
 					},
 				},
 				{
-					Name: "03_set_not_null",
+					Name: "03_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(true),
-							Up:       ptr("name"),
-							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpDropNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "name",
+							Down:   "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting an initial row succeeds
-				MustInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "03_set_nullable", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_set_nullable", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 			},
@@ -482,12 +476,12 @@ func TestDropNotNull(t *testing.T) {
 				UniqueConstraintMustExist(t, db, schema, "users", "unique_name")
 
 				// Inserting a row with a duplicate `name` value fails
-				MustNotInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
+				MustNotInsert(t, db, schema, "03_set_nullable", "users", map[string]string{
 					"name": "alice",
 				}, testutils.UniqueViolationErrorCode)
 
 				// Inserting a row with a different `name` value succeeds
-				MustInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
+				MustInsert(t, db, schema, "03_set_nullable", "users", map[string]string{
 					"name": "bob",
 				})
 			},
@@ -525,11 +519,10 @@ func TestDropNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(true),
-							Up:       ptr("name"),
+						&migrations.OpDropNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "name",
 						},
 					},
 				},
@@ -562,12 +555,11 @@ func TestDropNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(true),
-							Up:       ptr("name"),
-							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)"),
+						&migrations.OpDropNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "name",
+							Down:   "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
 						},
 					},
 				},
