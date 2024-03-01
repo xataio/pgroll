@@ -214,6 +214,24 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// Set check constraint operation
+type OpSetCheckConstraint struct {
+	// Check constraint
+	Check CheckConstraint `json:"check"`
+
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Set foreign key operation
 type OpSetForeignKey struct {
 	// Name of the column

@@ -40,15 +40,15 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
-							Down: ptr("title"),
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -173,15 +173,15 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
-							Down: ptr("title"),
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -270,15 +270,15 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "03_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "employees",
 							Column: "department_id",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_valid_department_id",
 								Constraint: "department_id > 1",
 							},
-							Up:   ptr("(SELECT CASE WHEN department_id <= 1 THEN 2 ELSE department_id END)"),
-							Down: ptr("department_id"),
+							Up:   "(SELECT CASE WHEN department_id <= 1 THEN 2 ELSE department_id END)",
+							Down: "department_id",
 						},
 					},
 				},
@@ -327,15 +327,15 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "body",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_body_length",
 								Constraint: "length(body) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(body) <= 3 THEN LPAD(body, 4, '-') ELSE body END)"),
-							Down: ptr("body"),
+							Up:   "(SELECT CASE WHEN length(body) <= 3 THEN LPAD(body, 4, '-') ELSE body END)",
+							Down: "body",
 						},
 					},
 				},
@@ -385,15 +385,15 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
-							Down: ptr("title"),
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -438,27 +438,27 @@ func TestSetCheckConstraint(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "posts",
 							Column: "title",
-							Unique: &migrations.UniqueConstraint{Name: "unique_title"},
-							Up:     ptr("title"),
-							Down:   ptr("title"),
+							Name:   "unique_title",
+							Up:     "title",
+							Down:   "title",
 						},
 					},
 				},
 				{
 					Name: "03_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
-							Down: ptr("title"),
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -525,14 +525,14 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Constraint: "length(title) > 3",
 							},
-							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
-							Down: ptr("title"),
+							Up:   "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+							Down: "title",
 						},
 					},
 				},
@@ -546,14 +546,14 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Down: ptr("title"),
+							Down: "title",
 						},
 					},
 				},
@@ -567,14 +567,14 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 				{
 					Name: "02_add_check_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetCheckConstraint{
 							Table:  "posts",
 							Column: "title",
-							Check: &migrations.CheckConstraint{
+							Check: migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
 							},
-							Up: ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
+							Up: "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
 						},
 					},
 				},

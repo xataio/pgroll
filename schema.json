@@ -466,6 +466,34 @@
       "required": ["table", "column", "references", "up", "down"],
       "type": "object"
     },
+    "OpSetCheckConstraint": {
+      "additionalProperties": false,
+      "description": "Set check constraint operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "check": {
+          "$ref": "#/$defs/CheckConstraint",
+          "description": "Check constraint"
+        },
+        "up": {
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "description": "SQL expression for down migration",
+          "type": "string"
+        }
+      },
+      "required": ["table", "column", "check", "up", "down"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",
