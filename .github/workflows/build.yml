@@ -142,6 +142,10 @@ jobs:
       with:
         go-version-file: 'go.mod'
 
+    - name: Validate examples against JSON schema
+      run: |
+        npx -y ajv-cli --spec=draft2020 validate -s schema.json -d "./examples/*.json"
+
     - name: Run example migrations
       run: |
         if [ "$PGROLL_SCHEMA" != "public" ]; then
