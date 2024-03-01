@@ -1174,5 +1174,81 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
 			},
 		},
+		{
+			name: "on_delete must be a valid value",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "invalid",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidOnDeleteSettingError{
+				Table:   "posts",
+				Column:  "user_id",
+				Setting: "invalid",
+			},
+		},
+		{
+			name: "on_delete can be specified as lowercase",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "no action",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
+		},
+		{
+			name: "on_delete can be specified as uppercase",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "SET NULL",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
+		},
 	})
 }
