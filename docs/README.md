@@ -31,6 +31,7 @@
     * [Drop table](#drop-table)
     * [Raw SQL](#raw-sql)
     * [Rename table](#rename-table)
+    * [Rename constraint](#rename-constraint)
     * [Set replica identity](#set-replica-identity)
 
 ## Concepts
@@ -686,6 +687,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Drop table](#drop-table)
 * [Raw SQL](#raw-sql)
 * [Rename table](#rename-table)
+* [Rename constraint](#rename-constraint)
 * [Set replica identity](#set-replica-identity)
 
 ### Add column
@@ -1110,6 +1112,28 @@ A rename table operation renames a table.
 Example **rename table** migrations:
 
 * [04_rename_table.json](../examples/04_rename_table.json)
+
+
+### Rename constraint
+
+A rename constraint operation renames a constraint.
+
+**rename constraint** operations have this structure:
+
+```json
+{
+  "rename_constraint": {
+    "table": "table name",
+    "from": "old constraint name",
+    "to": "new constraint name"
+  }
+}
+```
+
+Example **rename constraint** migrations:
+
+* [33_rename_constraint.json](../examples/33_rename_constraint.json)
+
 
 ### Set replica identity
 
