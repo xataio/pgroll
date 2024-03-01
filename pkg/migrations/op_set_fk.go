@@ -144,7 +144,6 @@ func (o *OpSetForeignKey) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error {
-
 	if err := validateName(o.Column); err != nil {
 		return err
 	}

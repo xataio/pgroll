@@ -165,7 +165,7 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	if err := validateName(o.Column); err != nil {
 		return err
 	}
-	
+
 	column := s.GetTable(o.Table).GetColumn(o.Column)
 
 	if !column.Nullable {

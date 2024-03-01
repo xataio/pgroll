@@ -43,7 +43,7 @@ func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	if err := validateName(o.To); err != nil {
 		return err
 	}
-	
+
 	table := s.GetTable(o.Table)
 
 	if table.GetColumn(o.To) != nil {

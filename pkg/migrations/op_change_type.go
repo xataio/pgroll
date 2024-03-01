@@ -138,10 +138,10 @@ func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Down == "" {
 		return FieldRequiredError{Name: "down"}
 	}
-	
+
 	if err := validateName(o.Column); err != nil {
 		return err
 	}
-	
+
 	return nil
 }

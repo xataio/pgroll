@@ -32,7 +32,7 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 	if err := validateName(o.To); err != nil {
 		return err
 	}
-	
+
 	if s.GetTable(o.From) == nil {
 		return TableDoesNotExistError{Name: o.From}
 	}
