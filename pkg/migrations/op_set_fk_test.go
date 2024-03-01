@@ -59,16 +59,16 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -224,16 +224,16 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -317,32 +317,32 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id_1",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
 				{
 					Name: "03_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id_2",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -405,16 +405,16 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -488,16 +488,16 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -562,28 +562,28 @@ func TestSetForeignKey(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "posts",
 							Column: "user_id",
-							Unique: &migrations.UniqueConstraint{Name: "unique_user_id"},
-							Up:     ptr("user_id"),
-							Down:   ptr("user_id"),
+							Name:   "unique_user_id",
+							Up:     "user_id",
+							Down:   "user_id",
 						},
 					},
 				},
 				{
 					Name: "03_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -684,15 +684,15 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Table:  "users",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -710,16 +710,16 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_doesntexist_id",
 								Table:  "doesntexist",
 								Column: "id",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},
@@ -737,16 +737,16 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				{
 					Name: "02_add_fk_constraint",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetForeignKey{
 							Table:  "posts",
 							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
+							References: migrations.ForeignKeyReference{
 								Name:   "fk_users_doesntexist",
 								Table:  "users",
 								Column: "doesntexist",
 							},
-							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
-							Down: ptr("user_id"),
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
 						},
 					},
 				},

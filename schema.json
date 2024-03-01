@@ -438,6 +438,34 @@
       "required": ["table", "column", "up", "down"],
       "type": "object"
     },
+    "OpSetForeignKey": {
+      "additionalProperties": false,
+      "description": "Set foreign key operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "references": {
+          "$ref": "#/$defs/ForeignKeyReference",
+          "description": "Foreign key reference"
+        },
+        "up": {
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "description": "SQL expression for down migration",
+          "type": "string"
+        }
+      },
+      "required": ["table", "column", "references", "up", "down"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",

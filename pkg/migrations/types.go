@@ -214,6 +214,24 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// Set foreign key operation
+type OpSetForeignKey struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Foreign key reference
+	References ForeignKeyReference `json:"references"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Set not null operation
 type OpSetNotNull struct {
 	// Name of the column

@@ -11,14 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpSetForeignKey struct {
-	Table      string              `json:"table"`
-	Column     string              `json:"column"`
-	References ForeignKeyReference `json:"references"`
-	Up         string              `json:"up"`
-	Down       string              `json:"down"`
-}
-
 var _ Operation = (*OpSetForeignKey)(nil)
 
 func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
