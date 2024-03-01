@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package migrations
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
