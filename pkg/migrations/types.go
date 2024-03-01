@@ -178,6 +178,18 @@ type OpRawSQL struct {
 	Up string `json:"up"`
 }
 
+// Rename column operation
+type OpRenameColumn struct {
+	// Name of the column
+	From string `json:"from"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New name of the column
+	To string `json:"to"`
+}
+
 // Rename table operation
 type OpRenameTable struct {
 	// Old name of the table

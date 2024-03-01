@@ -41,10 +41,10 @@ func TestRenameColumn(t *testing.T) {
 			{
 				Name: "02_rename_column",
 				Operations: migrations.Operations{
-					&migrations.OpAlterColumn{
-						Table:  "users",
-						Column: "username",
-						Name:   ptr("name"),
+					&migrations.OpRenameColumn{
+						Table: "users",
+						From:  "username",
+						To:    "name",
 					},
 				},
 			},
@@ -81,20 +81,38 @@ func TestRenameColumn(t *testing.T) {
 			}, rows)
 		},
 	}, {
-		name: "column must not exist",
+		name: "to column must not exist",
 		migrations: []migrations.Migration{
 			addTableMigration,
 			{
 				Name: "02_rename_column",
 				Operations: migrations.Operations{
-					&migrations.OpAlterColumn{
-						Table:  "users",
-						Column: "username",
-						Name:   ptr("id"),
+					&migrations.OpRenameColumn{
+						Table: "users",
+						From:  "username",
+						To:    "id",
 					},
 				},
 			},
 		},
 		wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
-	}})
+	},
+		{
+			name: "from column must exist",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_rename_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "users",
+							From:  "name",
+							To:    "new_name",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnDoesNotExistError{Table: "users", Name: "name"},
+		},
+	})
 }

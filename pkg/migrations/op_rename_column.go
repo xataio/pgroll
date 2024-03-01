@@ -11,12 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpRenameColumn struct {
-	Table string `json:"table"`
-	From  string `json:"from"`
-	To    string `json:"to"`
-}
-
 var _ Operation = (*OpRenameColumn)(nil)
 
 func (o *OpRenameColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
@@ -41,6 +35,10 @@ func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB) error {
 
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+
+	if table.GetColumn(o.From) == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.From}
+	}
 
 	if table.GetColumn(o.To) != nil {
 		return ColumnAlreadyExistsError{Table: o.Table, Name: o.To}

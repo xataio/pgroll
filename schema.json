@@ -342,6 +342,26 @@
       ],
       "type": "object"
     },
+    "OpRenameColumn": {
+      "additionalProperties": false,
+      "description": "Rename column operation",
+      "properties": {
+        "from": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "to": {
+          "description": "New name of the column",
+          "type": "string"
+        },
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        }
+      },
+      "required": ["from", "to", "table"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",
