@@ -34,69 +34,71 @@ func TestRenameColumn(t *testing.T) {
 		},
 	}
 
-	ExecuteTests(t, TestCases{{
-		name: "rename column",
-		migrations: []migrations.Migration{
-			addTableMigration,
-			{
-				Name: "02_rename_column",
-				Operations: migrations.Operations{
-					&migrations.OpRenameColumn{
-						Table: "users",
-						From:  "username",
-						To:    "name",
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename column",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_rename_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "users",
+							From:  "username",
+							To:    "name",
+						},
 					},
 				},
 			},
-		},
-		afterStart: func(t *testing.T, db *sql.DB, schema string) {
-			// The column in the underlying table has not been renamed.
-			ColumnMustExist(t, db, schema, "users", "username")
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The column in the underlying table has not been renamed.
+				ColumnMustExist(t, db, schema, "users", "username")
 
-			// Insertions to the new column name in the new version schema should work.
-			MustInsert(t, db, schema, "02_rename_column", "users", map[string]string{"name": "alice"})
+				// Insertions to the new column name in the new version schema should work.
+				MustInsert(t, db, schema, "02_rename_column", "users", map[string]string{"name": "alice"})
 
-			// Insertions to the old column name in the old version schema should work.
-			MustInsert(t, db, schema, "01_add_table", "users", map[string]string{"username": "bob"})
+				// Insertions to the old column name in the old version schema should work.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{"username": "bob"})
 
-			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, schema, "02_rename_column", "users")
-			assert.Equal(t, []map[string]any{
-				{"id": 1, "name": "alice"},
-				{"id": 2, "name": "bob"},
-			}, rows)
-		},
-		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			// no-op
-		},
-		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-			// The column in the underlying table has been renamed.
-			ColumnMustExist(t, db, schema, "users", "name")
+				// Data can be read from the view in the new version schema.
+				rows := MustSelect(t, db, schema, "02_rename_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// no-op
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The column in the underlying table has been renamed.
+				ColumnMustExist(t, db, schema, "users", "name")
 
-			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, schema, "02_rename_column", "users")
-			assert.Equal(t, []map[string]any{
-				{"id": 1, "name": "alice"},
-				{"id": 2, "name": "bob"},
-			}, rows)
+				// Data can be read from the view in the new version schema.
+				rows := MustSelect(t, db, schema, "02_rename_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+				}, rows)
+			},
 		},
-	}, {
-		name: "to column must not exist",
-		migrations: []migrations.Migration{
-			addTableMigration,
-			{
-				Name: "02_rename_column",
-				Operations: migrations.Operations{
-					&migrations.OpRenameColumn{
-						Table: "users",
-						From:  "username",
-						To:    "id",
+		{
+			name: "to column must not exist",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_rename_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "users",
+							From:  "username",
+							To:    "id",
+						},
 					},
 				},
 			},
+			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
 		},
-		wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
-	},
 		{
 			name: "from column must exist",
 			migrations: []migrations.Migration{
