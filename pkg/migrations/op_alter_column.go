@@ -11,7 +11,7 @@ import (
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	op := o.innerOperation()
 
 	return op.Start(ctx, conn, stateSchema, s, cbs...)
@@ -45,9 +45,9 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	// Ensure that the column has a primary key defined on exactly one column.
-	pk := table.GetPrimaryKey()
-	if len(pk) != 1 {
-		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+	err := checkBackfill(table)
+	if err != nil {
+		return err
 	}
 
 	// Apply any special validation rules for the inner operation

@@ -13,9 +13,9 @@ import (
 
 var _ Operation = (*OpDropTable)(nil)
 
-func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	s.RemoveTable(o.Name)
-	return nil
+	return nil, nil
 }
 
 func (o *OpDropTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

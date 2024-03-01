@@ -22,19 +22,19 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
 	// Create a copy of the column on the underlying table.
 	d := NewColumnDuplicator(conn, table, column)
 	if err := d.Duplicate(ctx); err != nil {
-		return fmt.Errorf("failed to duplicate column: %w", err)
+		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
 	// Add the check constraint to the new column as NOT VALID.
 	if err := o.addCheckConstraint(ctx, conn); err != nil {
-		return fmt.Errorf("failed to add check constraint: %w", err)
+		return nil, fmt.Errorf("failed to add check constraint: %w", err)
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
@@ -49,12 +49,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 		SQL:            o.Up,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create up trigger: %w", err)
-	}
-
-	// Backfill the new column with values from the old column.
-	if err := backfill(ctx, conn, table, cbs...); err != nil {
-		return fmt.Errorf("failed to backfill column: %w", err)
+		return nil, fmt.Errorf("failed to create up trigger: %w", err)
 	}
 
 	// Add the new column to the internal schema representation. This is done
@@ -76,9 +71,9 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 		SQL:            o.Down,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create down trigger: %w", err)
+		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}
-	return nil
+	return table, nil
 }
 
 func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

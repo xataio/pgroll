@@ -73,18 +73,18 @@ STABLE;
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
   WITH RECURSIVE find_ancestor AS (
-    SELECT schema, name, parent, migration_type FROM pgroll.migrations 
+    SELECT schema, name, parent, migration_type FROM %[1]s.migrations
       WHERE name = (SELECT %[1]s.latest_version(schemaname)) AND schema = schemaname
 
     UNION ALL
 
-    SELECT m.schema, m.name, m.parent, m.migration_type FROM pgroll.migrations m
+    SELECT m.schema, m.name, m.parent, m.migration_type FROM %[1]s.migrations m
       INNER JOIN find_ancestor fa ON fa.parent = m.name AND fa.schema = m.schema
       WHERE m.migration_type = 'inferred'
   )
   SELECT a.parent
   FROM find_ancestor AS a
-  JOIN pgroll.migrations AS b ON a.parent = b.name AND a.schema = b.schema
+  JOIN %[1]s.migrations AS b ON a.parent = b.name AND a.schema = b.schema
   WHERE b.migration_type = 'pgroll';
 $$
 LANGUAGE SQL
@@ -131,7 +131,7 @@ BEGIN
 								SELECT 1
 								FROM pg_constraint
 								WHERE conrelid = attr.attrelid
-								AND conkey::int[] @> ARRAY[attr.attnum::int]
+								AND ARRAY[attr.attnum::int] @> conkey::int[]
 								AND contype = 'u'
 							) OR EXISTS (
 								SELECT 1
@@ -139,7 +139,7 @@ BEGIN
 								JOIN pg_class ON pg_class.oid = pg_index.indexrelid
 								WHERE indrelid = attr.attrelid
 								AND indisunique
-								AND pg_index.indkey::int[] @> ARRAY[attr.attnum::int]
+								AND ARRAY[attr.attnum::int] @> pg_index.indkey::int[]
 							)) AS unique
 						FROM
 							pg_attribute AS attr
@@ -354,11 +354,28 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 }
 
 func (s *State) Init(ctx context.Context) error {
-	// ensure pgroll internal tables exist
-	// TODO: eventually use migrations for this instead of hardcoding
-	_, err := s.pgConn.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
+	tx, err := s.pgConn.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
-	return err
+	// Try to obtain an advisory lock.
+	// The key is an arbitrary number, used to distinguish the lock from other locks.
+	// The lock is automatically released when the transaction is committed or rolled back.
+	const key int64 = 0x2c03057fb9525b
+	_, err = tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock($1)", key)
+	if err != nil {
+		return err
+	}
+
+	// Perform pgroll state initialization
+	_, err = tx.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *State) Close() error {

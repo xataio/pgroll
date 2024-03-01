@@ -15,31 +15,32 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table); err != nil {
-		return fmt.Errorf("failed to start add column operation: %w", err)
+		return nil, fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
 	if o.Column.Comment != nil {
 		if err := addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column.Name), *o.Column.Comment); err != nil {
-			return fmt.Errorf("failed to add comment to column: %w", err)
+			return nil, fmt.Errorf("failed to add comment to column: %w", err)
 		}
 	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil {
 		if err := addNotNullConstraint(ctx, conn, o.Table, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
-			return fmt.Errorf("failed to add not null constraint: %w", err)
+			return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 		}
 	}
 
 	if o.Column.Check != nil {
 		if err := o.addCheckConstraint(ctx, conn); err != nil {
-			return fmt.Errorf("failed to add check constraint: %w", err)
+			return nil, fmt.Errorf("failed to add check constraint: %w", err)
 		}
 	}
 
+	var tableToBackfill *schema.Table
 	if o.Up != nil {
 		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
@@ -52,18 +53,16 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 			SQL:            *o.Up,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to create trigger: %w", err)
+			return nil, fmt.Errorf("failed to create trigger: %w", err)
 		}
-		if err := backfill(ctx, conn, table, cbs...); err != nil {
-			return fmt.Errorf("failed to backfill column: %w", err)
-		}
+		tableToBackfill = table
 	}
 
 	table.AddColumn(o.Column.Name, schema.Column{
 		Name: TemporaryName(o.Column.Name),
 	})
 
-	return nil
+	return tableToBackfill, nil
 }
 
 func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
@@ -168,10 +167,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	// Ensure that the column has a primary key defined on exactly one column.
-	pk := table.GetPrimaryKey()
-	if len(pk) != 1 {
-		return InvalidPrimaryKeyError{Table: o.Table, Fields: len(pk)}
+	// Ensure backfill is possible
+	if o.Up != nil {
+		err := checkBackfill(table)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == nil {

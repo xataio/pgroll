@@ -12,9 +12,9 @@ import (
 
 var _ Operation = (*OpDropIndex)(nil)
 
-func (o *OpDropIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpDropIndex) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// no-op
-	return nil
+	return nil, nil
 }
 
 func (o *OpDropIndex) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

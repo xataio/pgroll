@@ -11,12 +11,12 @@ import (
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if !o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
-		return err
+		return nil, err
 	}
-	return nil
+	return nil, nil
 }
 
 func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

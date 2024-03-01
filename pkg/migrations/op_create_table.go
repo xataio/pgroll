@@ -13,20 +13,20 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) error {
+func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(tempName),
 		columnsToSQL(o.Columns)))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Add comments to any columns that have them
 	for _, col := range o.Columns {
 		if col.Comment != nil {
 			if err := addCommentToColumn(ctx, conn, tempName, col.Name, *col.Comment); err != nil {
-				return fmt.Errorf("failed to add comment to column: %w", err)
+				return nil, fmt.Errorf("failed to add comment to column: %w", err)
 			}
 		}
 	}
@@ -34,7 +34,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	// Add comment to the table itself
 	if o.Comment != nil {
 		if err := addCommentToTable(ctx, conn, tempName, *o.Comment); err != nil {
-			return fmt.Errorf("failed to add comment to table: %w", err)
+			return nil, fmt.Errorf("failed to add comment to table: %w", err)
 		}
 	}
 
@@ -50,7 +50,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 		Columns: columns,
 	})
 
-	return nil
+	return nil, nil
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {

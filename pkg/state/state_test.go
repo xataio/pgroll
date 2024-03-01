@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -111,6 +112,47 @@ func TestInferredMigration(t *testing.T) {
 				}
 			})
 		}
+	})
+}
+
+func TestPgRollInitializationInANonDefaultSchema(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithStateInSchemaAndConnectionToContainer(t, "pgroll_foo", func(state *state.State, _ *sql.DB) {
+		ctx := context.Background()
+
+		// Ensure that pgroll state has been correctly initialized in the
+		// non-default schema `pgroll_foo` by performing a basic operation on the
+		// state
+		migrationActive, err := state.IsActiveMigrationPeriod(ctx, "public")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.False(t, migrationActive)
+	})
+}
+
+func TestConcurrentInitialization(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithUninitializedState(t, func(state *state.State) {
+		ctx := context.Background()
+		numGoroutines := 10
+
+		wg := sync.WaitGroup{}
+		wg.Add(numGoroutines)
+		for i := 0; i < numGoroutines; i++ {
+			go func() {
+				defer wg.Done()
+
+				if err := state.Init(ctx); err != nil {
+					t.Error(err)
+				}
+			}()
+		}
+
+		wg.Wait()
 	})
 }
 
@@ -382,6 +424,53 @@ func TestReadSchema(t *testing.T) {
 								"name_unique": {
 									Name:    "name_unique",
 									Columns: []string{"name"},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				name:       "multicolumn unique constraint",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_id_unique UNIQUE(id, name));",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+									Unique:   false,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
+								},
+								"name_id_unique": {
+									Name:    "name_id_unique",
+									Unique:  true,
+									Columns: []string{"id", "name"},
+								},
+							},
+							ForeignKeys:      map[string]schema.ForeignKey{},
+							CheckConstraints: map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{
+								"name_id_unique": {
+									Name:    "name_id_unique",
+									Columns: []string{"id", "name"},
 								},
 							},
 						},
