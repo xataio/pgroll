@@ -137,6 +137,15 @@ func (e ConstraintDoesNotExistError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q does not exist", e.Constraint, e.Table)
 }
 
+type ConstraintAlreadyExistsError struct {
+	Table      string
+	Constraint string
+}
+
+func (e ConstraintAlreadyExistsError) Error() string {
+	return fmt.Sprintf("constraint %q on table %q already exists", e.Constraint, e.Table)
+}
+
 type NoUpSQLAllowedError struct{}
 
 func (e NoUpSQLAllowedError) Error() string {
@@ -174,6 +183,7 @@ func (e InvalidReplicaIdentityError) Error() string {
 	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
 }
 
+
 type InvalidNameLengthError struct {
 	Name string
 	Max  int
@@ -181,4 +191,23 @@ type InvalidNameLengthError struct {
 
 func (e InvalidNameLengthError) Error() string {
 	return fmt.Sprintf("max length of %q is %d", e.Name, e.Max)
+}
+
+type InvalidOnDeleteSettingError struct {
+	Table   string
+	Column  string
+	Setting string
+}
+
+func (e InvalidOnDeleteSettingError) Error() string {
+	return fmt.Sprintf("foreign key on_delete setting on column %q, table %q must be one of: %q, %q, %q, %q or %q, not %q",
+		e.Column,
+		e.Table,
+		ForeignKeyReferenceOnDeleteNOACTION,
+		ForeignKeyReferenceOnDeleteRESTRICT,
+		ForeignKeyReferenceOnDeleteSETDEFAULT,
+		ForeignKeyReferenceOnDeleteSETNULL,
+		ForeignKeyReferenceOnDeleteCASCADE,
+		e.Setting,
+	)
 }

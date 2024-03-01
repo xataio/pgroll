@@ -181,6 +181,423 @@ func TestSetForeignKey(t *testing.T) {
 			},
 		},
 		{
+			name: "on delete NO ACTION is the default behavior when removing referenced rows",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting some data into the `users` table works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice",
+					"user_id": "1",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table fails.
+				MustNotDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table fails.
+				MustNotDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				}, testutils.FKViolationErrorCode)
+			},
+		},
+		{
+			name: "on delete CASCADE allows referenced rows to be removed",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_id",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting some data into the `users` table works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice",
+					"user_id": "1",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// The row in the `posts` table that referenced the deleted row in the
+				// `users` table has been removed.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Empty(t, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by bob",
+					"user_id": "2",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// The row in the `posts` table that referenced the deleted row in the
+				// `users` table has been removed.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Empty(t, rows)
+			},
+		},
+		{
+			name: "on delete SET NULL allows referenced rows to be removed",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_id",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: migrations.ForeignKeyReferenceOnDeleteSETNULL,
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting some data into the `users` table works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice",
+					"user_id": "1",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// The user_id of the deleted row in the `posts` table is set to NULL.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "title": "post by alice", "user_id": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by bob",
+					"user_id": "2",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// The user_id of the deleted row in the `posts` table is set to NULL.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "title": "post by alice", "user_id": nil},
+					{"id": 2, "title": "post by bob", "user_id": nil},
+				}, rows)
+			},
+		},
+		{
+			name: "on delete SET DEFAULT allows referenced rows to be removed",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+									Default:  ptr("3"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_id",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting some data into the `users` table works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "carl",
+				})
+
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by alice",
+					"user_id": "1",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// The user_id of the deleted row in the `posts` table is set to its default value.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "title": "post by alice", "user_id": 3},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting data into the new `posts` view with a valid user reference works.
+				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+					"title":   "post by bob",
+					"user_id": "2",
+				})
+
+				// Attempting to delete a row from the `users` table that is referenced
+				// by a row in the `posts` table succeeds.
+				MustDelete(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// The user_id of the deleted row in the `posts` table is set to its default value.
+				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "title": "post by alice", "user_id": 3},
+					{"id": 2, "title": "post by bob", "user_id": 3},
+				}, rows)
+			},
+		},
+		{
 			name: "column defaults are preserved when adding a foreign key constraint",
 			migrations: []migrations.Migration{
 				{
@@ -756,6 +1173,82 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				Column: "user_id",
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
 			},
+		},
+		{
+			name: "on_delete must be a valid value",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "invalid",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidOnDeleteSettingError{
+				Table:   "posts",
+				Column:  "user_id",
+				Setting: "invalid",
+			},
+		},
+		{
+			name: "on_delete can be specified as lowercase",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "no action",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
+		},
+		{
+			name: "on_delete can be specified as uppercase",
+			migrations: []migrations.Migration{
+				createTablesMigration,
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:     "fk_users_doesntexist",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: "SET NULL",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
 		},
 	})
 }

@@ -565,6 +565,24 @@ func MustDelete(t *testing.T, db *sql.DB, schema, version, table string, record 
 	}
 }
 
+func MustNotDelete(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string, errorCode string) {
+	t.Helper()
+
+	err := delete(t, db, schema, version, table, record)
+	if err == nil {
+		t.Fatal("Expected DELETE to fail")
+	}
+
+	var pqErr *pq.Error
+	if ok := errors.As(err, &pqErr); ok {
+		if pqErr.Code.Name() != errorCode {
+			t.Fatalf("Expected DELETE to fail with %q, got %q", errorCode, pqErr.Code.Name())
+		}
+	} else {
+		t.Fatalf("DELETE failed with unknown error: %v", err)
+	}
+}
+
 func delete(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string) error {
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)

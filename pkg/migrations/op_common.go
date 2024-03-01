@@ -20,6 +20,7 @@ const (
 	OpNameAlterColumn        OpName = "alter_column"
 	OpNameCreateIndex        OpName = "create_index"
 	OpNameDropIndex          OpName = "drop_index"
+	OpNameRenameConstraint   OpName = "rename_constraint"
 	OpNameDropConstraint     OpName = "drop_constraint"
 	OpNameSetReplicaIdentity OpName = "set_replica_identity"
 	OpRawSQLName             OpName = "sql"
@@ -94,6 +95,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
+
+		case OpNameRenameConstraint:
+			item = &OpRenameConstraint{}
 
 		case OpNameDropConstraint:
 			item = &OpDropConstraint{}
@@ -174,6 +178,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpDropColumn:
 		return OpNameDropColumn
+
+	case *OpRenameConstraint:
+		return OpNameRenameConstraint
 
 	case *OpDropConstraint:
 		return OpNameDropConstraint
