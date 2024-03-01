@@ -199,6 +199,21 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// Set not null operation
+type OpSetNotNull struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Set replica identity operation
 type OpSetReplicaIdentity struct {
 	// Replica identity to set

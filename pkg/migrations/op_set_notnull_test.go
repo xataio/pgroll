@@ -51,11 +51,10 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
 						},
 					},
 				},
@@ -193,12 +192,11 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
-							Down:     ptr("review || ' (from new column)'"),
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:   "review || ' (from new column)'",
 						},
 					},
 				},
@@ -279,12 +277,11 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "03_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "employees",
-							Column:   "department_id",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)"),
-							Down:     ptr("department_id"),
+						&migrations.OpSetNotNull{
+							Table:  "employees",
+							Column: "department_id",
+							Up:     "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
+							Down:   "department_id",
 						},
 					},
 				},
@@ -327,11 +324,10 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpSetNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -394,11 +390,10 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpSetNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -446,23 +441,22 @@ func TestSetNotNull(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "users",
 							Column: "name",
-							Unique: &migrations.UniqueConstraint{Name: "unique_name"},
-							Up:     ptr("name"),
-							Down:   ptr("name"),
+							Name:   "unique_name",
+							Up:     "name",
+							Down:   "name",
 						},
 					},
 				},
 				{
 					Name: "03_set_not_null",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "users",
-							Column:   "name",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						&migrations.OpSetNotNull{
+							Table:  "users",
+							Column: "name",
+							Up:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
 						},
 					},
 				},
@@ -540,11 +534,10 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Down:     ptr("review"),
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Down:   "review",
 						},
 					},
 				},
@@ -587,12 +580,11 @@ func TestSetNotNullValidation(t *testing.T) {
 				{
 					Name: "02_set_nullable",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:    "reviews",
-							Column:   "review",
-							Nullable: ptr(false),
-							Up:       ptr("(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)"),
-							Down:     ptr("review"),
+						&migrations.OpSetNotNull{
+							Table:  "reviews",
+							Column: "review",
+							Up:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:   "review",
 						},
 					},
 				},
