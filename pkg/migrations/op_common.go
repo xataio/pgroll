@@ -110,11 +110,26 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpNameDropIndex:
 			item = &OpDropIndex{}
 
+		case OpRawSQLName:
+			item = &OpRawSQL{}
+
+		case OpNameRenameColumn:
+			item = &OpRenameColumn{}
+
 		case OpNameSetUnique:
 			item = &OpSetUnique{}
 
-		case OpRawSQLName:
-			item = &OpRawSQL{}
+		case OpNameSetNotNull:
+			item = &OpSetNotNull{}
+
+		case OpNameSetForeignKey:
+			item = &OpSetForeignKey{}
+
+		case OpNameSetCheckConstraint:
+			item = &OpSetCheckConstraint{}
+
+		case OpNameChangeType:
+			item = &OpChangeType{}
 
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
@@ -190,11 +205,26 @@ func OperationName(op Operation) OpName {
 	case *OpDropIndex:
 		return OpNameDropIndex
 
+	case *OpRawSQL:
+		return OpRawSQLName
+
+	case *OpRenameColumn:
+		return OpNameRenameColumn
+
 	case *OpSetUnique:
 		return OpNameSetUnique
 
-	case *OpRawSQL:
-		return OpRawSQLName
+	case *OpSetNotNull:
+		return OpNameSetNotNull
+
+	case *OpSetForeignKey:
+		return OpNameSetForeignKey
+
+	case *OpSetCheckConstraint:
+		return OpNameSetCheckConstraint
+
+	case *OpChangeType:
+		return OpNameChangeType
 
 	}
 
