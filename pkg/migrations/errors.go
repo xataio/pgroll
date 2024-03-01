@@ -137,6 +137,15 @@ func (e ConstraintDoesNotExistError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q does not exist", e.Constraint, e.Table)
 }
 
+type ConstraintAlreadyExistsError struct {
+	Table      string
+	Constraint string
+}
+
+func (e ConstraintAlreadyExistsError) Error() string {
+	return fmt.Sprintf("constraint %q on table %q already exists", e.Constraint, e.Table)
+}
+
 type NoUpSQLAllowedError struct{}
 
 func (e NoUpSQLAllowedError) Error() string {
