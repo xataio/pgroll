@@ -173,3 +173,22 @@ type InvalidReplicaIdentityError struct {
 func (e InvalidReplicaIdentityError) Error() string {
 	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
 }
+
+type InvalidOnDeleteSettingError struct {
+	Table   string
+	Column  string
+	Setting string
+}
+
+func (e InvalidOnDeleteSettingError) Error() string {
+	return fmt.Sprintf("foreign key on_delete setting on column %q, table %q must be one of: %q, %q, %q, %q or %q, not %q",
+		e.Column,
+		e.Table,
+		ForeignKeyReferenceOnDeleteNOACTION,
+		ForeignKeyReferenceOnDeleteRESTRICT,
+		ForeignKeyReferenceOnDeleteSETDEFAULT,
+		ForeignKeyReferenceOnDeleteSETNULL,
+		ForeignKeyReferenceOnDeleteCASCADE,
+		e.Setting,
+	)
+}

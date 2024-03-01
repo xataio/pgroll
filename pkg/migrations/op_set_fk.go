@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -160,19 +161,38 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 		return FieldRequiredError{Name: "down"}
 	}
 
+	switch strings.ToUpper(string(o.References.OnDelete)) {
+	case string(ForeignKeyReferenceOnDeleteNOACTION):
+	case string(ForeignKeyReferenceOnDeleteRESTRICT):
+	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
+	case string(ForeignKeyReferenceOnDeleteSETNULL):
+	case string(ForeignKeyReferenceOnDeleteCASCADE):
+	case "":
+		break
+	default:
+		return InvalidOnDeleteSettingError{Table: o.Table, Column: o.Column, Setting: string(o.References.OnDelete)}
+	}
+
 	return nil
 }
 
 func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn *sql.DB) error {
 	tempColumnName := TemporaryName(o.Column)
 
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.References.Name),
-		pq.QuoteIdentifier(tempColumnName),
-		pq.QuoteIdentifier(o.References.Table),
-		pq.QuoteIdentifier(o.References.Column),
-	))
+	onDelete := "NO ACTION"
+	if o.References.OnDelete != "" {
+		onDelete = strings.ToUpper(string(o.References.OnDelete))
+	}
+
+	_, err := conn.ExecContext(ctx,
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.References.Name),
+			pq.QuoteIdentifier(tempColumnName),
+			pq.QuoteIdentifier(o.References.Table),
+			pq.QuoteIdentifier(o.References.Column),
+			onDelete,
+		))
 
 	return err
 }
