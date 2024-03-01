@@ -342,6 +342,26 @@
       ],
       "type": "object"
     },
+    "OpRenameConstraint": {
+      "additionalProperties": false,
+      "description": "Rename constraint operation",
+      "properties": {
+        "from": {
+          "description": "Name of the constraint",
+          "type": "string"
+        },
+        "to": {
+          "description": "New name of the constraint",
+          "type": "string"
+        },
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        }
+      },
+      "required": ["from", "to", "table"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",
