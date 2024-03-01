@@ -424,7 +424,7 @@ func TestChangeColumnType(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "users",
 							Column: "username",
-							Name:   "unique_username",
+							Unique: migrations.UniqueConstraint{Name: "unique_username"},
 							Up:     "username",
 							Down:   "username",
 						},

@@ -441,7 +441,7 @@ func TestSetCheckConstraint(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "posts",
 							Column: "title",
-							Name:   "unique_title",
+							Unique: migrations.UniqueConstraint{Name: "unique_title"},
 							Up:     "title",
 							Down:   "title",
 						},

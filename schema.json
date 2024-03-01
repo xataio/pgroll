@@ -366,9 +366,9 @@
       "additionalProperties": false,
       "description": "Set unique operation",
       "properties": {
-        "name": {
-          "description": "Name of the unique constraint",
-          "type": "string"
+        "unique": {
+          "$ref": "#/$defs/UniqueConstraint",
+          "description": "Unique constraint to set"
         },
         "table": {
           "description": "Name of the table",
@@ -387,7 +387,7 @@
           "type": "string"
         }
       },
-      "required": ["name", "table", "column", "up", "down"],
+      "required": ["unique", "table", "column", "up", "down"],
       "type": "object"
     },
     "OpSetNotNull": {

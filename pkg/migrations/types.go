@@ -300,11 +300,11 @@ type OpSetUnique struct {
 	// SQL expression for down migration
 	Down string `json:"down"`
 
-	// Name of the unique constraint
-	Name string `json:"name"`
-
 	// Name of the table
 	Table string `json:"table"`
+
+	// Unique constraint to set
+	Unique UniqueConstraint `json:"unique"`
 
 	// SQL expression for up migration
 	Up string `json:"up"`

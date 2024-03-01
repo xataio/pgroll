@@ -565,7 +565,7 @@ func TestSetForeignKey(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "posts",
 							Column: "user_id",
-							Name:   "unique_user_id",
+							Unique: migrations.UniqueConstraint{Name: "unique_user_id"},
 							Up:     "user_id",
 							Down:   "user_id",
 						},

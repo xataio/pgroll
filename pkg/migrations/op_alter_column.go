@@ -121,7 +121,7 @@ func (o *OpAlterColumn) innerOperation() Operation {
 		return &OpSetUnique{
 			Table:  o.Table,
 			Column: o.Column,
-			Name:   o.Unique.Name,
+			Unique: *o.Unique,
 			Up:     ptrToStr(o.Up),
 			Down:   ptrToStr(o.Down),
 		}

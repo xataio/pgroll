@@ -54,7 +54,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "review",
-							Name:   "reviews_review_unique",
+							Unique: migrations.UniqueConstraint{Name: "reviews_review_unique"},
 							Up:     "review || '-' || (random()*1000000)::integer",
 						},
 					},
@@ -153,7 +153,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "review",
-							Name:   "reviews_review_unique",
+							Unique: migrations.UniqueConstraint{Name: "reviews_review_unique"},
 							Up:     "review || '-' || (random()*1000000)::integer",
 							Down:   "review || '!'",
 						},
@@ -213,7 +213,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Name:   "reviews_username_unique",
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
 							Up:     "username",
 							Down:   "username",
 						},
@@ -313,7 +313,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "employees",
 							Column: "department_id",
-							Name:   "employees_department_id_unique",
+							Unique: migrations.UniqueConstraint{Name: "employees_department_id_unique"},
 							Up:     "department_id",
 							Down:   "department_id",
 						},
@@ -367,7 +367,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Name:   "reviews_username_unique",
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
 							Up:     "username",
 							Down:   "username",
 						},
@@ -428,7 +428,7 @@ func TestSetColumnUnique(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Name:   "reviews_username_unique",
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
 							Up:     "username",
 							Down:   "username",
 						},

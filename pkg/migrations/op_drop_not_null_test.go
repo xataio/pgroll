@@ -440,7 +440,7 @@ func TestDropNotNull(t *testing.T) {
 						&migrations.OpSetUnique{
 							Table:  "users",
 							Column: "name",
-							Name:   "unique_name",
+							Unique: migrations.UniqueConstraint{Name: "unique_name"},
 							Up:     "name",
 							Down:   "name",
 						},
