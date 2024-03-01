@@ -208,6 +208,24 @@ type OpSetReplicaIdentity struct {
 	Table string `json:"table"`
 }
 
+// Set unique operation
+type OpSetUnique struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the unique constraint
+	Name string `json:"name"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // PgRoll migration definition
 type PgRollMigration struct {
 	// Name of the migration

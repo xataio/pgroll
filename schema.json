@@ -362,6 +362,34 @@
       "required": ["from", "to", "table"],
       "type": "object"
     },
+    "OpSetUnique": {
+      "additionalProperties": false,
+      "description": "Set unique operation",
+      "properties": {
+        "name": {
+          "description": "Name of the unique constraint",
+          "type": "string"
+        },
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
+        "up": {
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "description": "SQL expression for down migration",
+          "type": "string"
+        }
+      },
+      "required": ["name", "table", "column", "up", "down"],
+      "type": "object"
+    },
     "OpRenameTable": {
       "additionalProperties": false,
       "description": "Rename table operation",
