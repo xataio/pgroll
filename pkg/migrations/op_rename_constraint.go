@@ -14,8 +14,7 @@ import (
 var _ Operation = (*OpRenameConstraint)(nil)
 
 func (o *OpRenameConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
-	table := s.GetTable(o.Table)
-	table.RenameConstraint(o.From, o.To)
+	// no-op
 	return nil, nil
 }
 

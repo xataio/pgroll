@@ -201,21 +201,6 @@ func (t *Table) RenameColumn(from, to string) {
 	delete(t.Columns, from)
 }
 
-func (t *Table) RenameConstraint(from string, to string) {
-	if _, ok := t.CheckConstraints[from]; ok {
-		t.CheckConstraints[to] = t.CheckConstraints[from]
-		delete(t.CheckConstraints, from)
-	}
-	if _, ok := t.UniqueConstraints[from]; ok {
-		t.UniqueConstraints[to] = t.UniqueConstraints[from]
-		delete(t.UniqueConstraints, from)
-	}
-	if _, ok := t.ForeignKeys[from]; ok {
-		t.ForeignKeys[to] = t.ForeignKeys[from]
-		delete(t.ForeignKeys, from)
-	}
-}
-
 // Make the Schema struct implement the driver.Valuer interface. This method
 // simply returns the JSON-encoded representation of the struct.
 func (s Schema) Value() (driver.Value, error) {
