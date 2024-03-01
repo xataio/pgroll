@@ -2,22 +2,10 @@
   "name": "33_rename_check_constraint",
   "operations": [
     {
-      "alter_column": {
-        "table": "posts",
-        "column": "title",
-        "check": {
-          "name": "title_length",
-          "constraint": "length(title) > 3"
-        },
-        "up": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
-        "down": "title"
-      }
-    },
-    {
       "rename_constraint": {
-        "table": "posts",
-        "from": "title_length",
-        "to": "title_length_check"
+        "table": "people",
+        "from": "name_length",
+        "to": "name_length_check"
       }
     }
   ]
