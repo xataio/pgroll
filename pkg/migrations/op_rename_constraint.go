@@ -35,6 +35,10 @@ func (o *OpRenameConstraint) Rollback(ctx context.Context, conn *sql.DB) error {
 func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
+
 	if !table.ConstraintExists(o.From) {
 		return ConstraintDoesNotExistError{Table: o.Table, Constraint: o.From}
 	}
