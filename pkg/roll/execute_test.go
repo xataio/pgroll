@@ -535,6 +535,22 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 	})
 }
 
+func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when the schema is public", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "public", func(mig *roll.Roll, _ *sql.DB) {
+			assert.Equal(t, "public", mig.Schema())
+		})
+	})
+
+	t.Run("when the schema is non-public", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
+			assert.Equal(t, "apples", mig.Schema())
+		})
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,

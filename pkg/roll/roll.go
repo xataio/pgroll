@@ -99,6 +99,10 @@ func (m *Roll) PgConn() *sql.DB {
 	return m.pgConn
 }
 
+func (m *Roll) Schema() string {
+	return m.schema
+}
+
 func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {
 	return m.state.Status(ctx, schema)
 }
