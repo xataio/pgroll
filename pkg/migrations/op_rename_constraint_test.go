@@ -100,3 +100,85 @@ func TestRenameConstraint(t *testing.T) {
 		},
 	}})
 }
+
+func TestRenameConstraintValidation(t *testing.T) {
+	t.Parallel()
+
+	createTableMigration := migrations.Migration{
+		Name: "01_create_table",
+		Operations: migrations.Operations{
+			&migrations.OpCreateTable{
+				Name: "users",
+				Columns: []migrations.Column{
+					{
+						Name: "id",
+						Type: "serial",
+						Pk:   ptr(true),
+					},
+					{
+						Name: "name",
+						Type: "text",
+						Check: &migrations.CheckConstraint{
+							Constraint: `LENGTH("name") <= 2048`,
+							Name:       "users_text_length_username",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "the table must exist",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpRenameConstraint{
+							Table: "doesntexist",
+							From:  "users_text_length_username",
+							To:    "users_text_length_name",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+		},
+		{
+			name: "the from constraint must exist",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpRenameConstraint{
+							Table: "users",
+							From:  "doesntexist",
+							To:    "users_text_length_name",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ConstraintDoesNotExistError{Table: "users", Constraint: "doesntexist"},
+		},
+		{
+			name: "the to constraint must not exist",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpRenameConstraint{
+							Table: "users",
+							From:  "users_text_length_username",
+							To:    "users_text_length_username",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ConstraintAlreadyExistsError{Table: "users", Constraint: "users_text_length_username"},
+		},
+	})
+}
