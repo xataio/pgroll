@@ -268,7 +268,7 @@ BEGIN
 		RETURN;
 	END IF;
 
-	IF tg_event = 'sql_drop' THEN
+	IF tg_event = 'sql_drop' and tg_tag != 'ALTER TABLE' THEN
 		-- Guess the schema from drop commands
 		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
 
@@ -324,7 +324,6 @@ CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
 CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
 	EXECUTE FUNCTION %[1]s.raw_migration();
-
 `
 
 type State struct {
