@@ -115,6 +115,25 @@ func TestInferredMigration(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "drop constraint",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))",
+					"ALTER TABLE table1 DROP CONSTRAINT unique_b",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP CONSTRAINT unique_b"},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
