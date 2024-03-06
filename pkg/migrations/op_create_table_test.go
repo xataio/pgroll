@@ -76,7 +76,7 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with foreign key",
+			name: "create table with foreign key with default ON DELETE NO ACTION",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -113,9 +113,9 @@ func TestCreateTable(t *testing.T) {
 									Name: "user_id",
 									Type: "integer",
 									References: &migrations.ForeignKeyReference{
+										Column: "id",
 										Name:   "fk_users_id",
 										Table:  "users",
-										Column: "id",
 									},
 								},
 								{
@@ -147,6 +147,11 @@ func TestCreateTable(t *testing.T) {
 					"user_id":  "2",
 					"quantity": "200",
 				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table fails as a referencing row exists.
+				MustNotDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"name": "alice",
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The table has been dropped, so the foreign key constraint is gone.
@@ -169,6 +174,11 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table fails as a referencing row exists.
+				MustNotDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
+					"name": "bob",
 				}, testutils.FKViolationErrorCode)
 			},
 		},
