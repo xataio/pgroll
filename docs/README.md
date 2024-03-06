@@ -717,6 +717,7 @@ An add column operation creates a new column on an existing table.
         "name": "name of foreign key constraint",
         "table": "name of referenced table",
         "column": "name of referenced column"
+        "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
       } 
     }
   }
@@ -954,6 +955,7 @@ where each `column` is defined as:
     "name": "name of foreign key constraint"
     "table": "name of referenced table"
     "column": "name of referenced column"
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
   }
 },
 ```
