@@ -78,7 +78,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop table",
+				name: "create/drop table",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int)",
 					"DROP TABLE table1",
@@ -97,7 +97,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop column",
+				name: "create/drop column",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, b text)",
 					"ALTER TABLE table1 DROP COLUMN b",
@@ -116,7 +116,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop check constraint",
+				name: "create/drop check constraint",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, age integer, CONSTRAINT check_age CHECK (age > 0))",
 					"ALTER TABLE table1 DROP CONSTRAINT check_age",
@@ -135,7 +135,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop unique constraint",
+				name: "create/drop unique constraint",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))",
 					"ALTER TABLE table1 DROP CONSTRAINT unique_b",
@@ -154,7 +154,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop index",
+				name: "create/drop index",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, b text)",
 					"CREATE INDEX idx_b ON table1(b)",
@@ -179,7 +179,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop function",
+				name: "create/drop function",
 				sqlStmts: []string{
 					"CREATE FUNCTION foo() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql",
 					"DROP FUNCTION foo",
