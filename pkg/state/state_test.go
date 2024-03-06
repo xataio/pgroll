@@ -159,6 +159,25 @@ func TestInferredMigration(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "drop function",
+				sqlStmts: []string{
+					"CREATE FUNCTION foo() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql",
+					"DROP FUNCTION foo",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE FUNCTION foo() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP FUNCTION foo"},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
