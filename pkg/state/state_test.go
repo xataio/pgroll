@@ -116,7 +116,7 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
-				name: "drop constraint",
+				name: "drop unique constraint",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))",
 					"ALTER TABLE table1 DROP CONSTRAINT unique_b",
@@ -130,6 +130,31 @@ func TestInferredMigration(t *testing.T) {
 					{
 						Operations: migrations.Operations{
 							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP CONSTRAINT unique_b"},
+						},
+					},
+				},
+			},
+			{
+				name: "drop index",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, b text)",
+					"CREATE INDEX idx_b ON table1(b)",
+					"DROP INDEX idx_b",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, b text)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE INDEX idx_b ON table1(b)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP INDEX idx_b"},
 						},
 					},
 				},
