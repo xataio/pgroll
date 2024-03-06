@@ -361,6 +361,237 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				}, testutils.FKViolationErrorCode)
 			},
 		},
+		{
+			name: "add foreign key column with default ON DELETE NO ACTION",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "orders",
+							Column: migrations.Column{
+								Name:     "user_id",
+								Type:     "integer",
+								Nullable: ptr(true),
+								References: &migrations.ForeignKeyReference{
+									Name:   "fk_users_id",
+									Table:  "users",
+									Column: "id",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint exists on the new table.
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table fails as a referencing row exists.
+				MustNotDelete(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "alice",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint still exists on the new table
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "3",
+					"quantity": "300",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table fails as a referencing row exists.
+				MustNotDelete(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "bob",
+				}, testutils.FKViolationErrorCode)
+			},
+		},
+		{
+			name: "add foreign key column with ON DELETE CASCADE",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "quantity",
+									Type: "integer",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "orders",
+							Column: migrations.Column{
+								Name:     "user_id",
+								Type:     "integer",
+								Nullable: ptr(true),
+								References: &migrations.ForeignKeyReference{
+									Name:     "fk_users_id",
+									Table:    "users",
+									Column:   "id",
+									OnDelete: "CASCADE",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint exists on the new table.
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "1",
+					"quantity": "100",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table succeeds due to the ON DELETE CASCADE.
+				MustDelete(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// The row in the referencing table has been deleted by the ON DELETE CASCADE.
+				rows := MustSelect(t, db, schema, "02_add_column", "orders")
+				assert.Empty(t, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped, so the foreign key constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The foreign key constraint still exists on the new table
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+
+				// Inserting a row into the referenced table succeeds.
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "2",
+					"quantity": "200",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
+					"user_id":  "3",
+					"quantity": "300",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting a row in the referenced table succeeds due to the ON DELETE CASCADE.
+				MustDelete(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "bob",
+				})
+
+				// The row in the referencing table has been deleted by the ON DELETE CASCADE.
+				rows := MustSelect(t, db, schema, "02_add_column", "orders")
+				assert.Empty(t, rows)
+			},
+		},
 	})
 }
 
