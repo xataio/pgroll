@@ -184,15 +184,13 @@ func (e InvalidReplicaIdentityError) Error() string {
 }
 
 type InvalidOnDeleteSettingError struct {
-	Table   string
-	Column  string
+	Name    string
 	Setting string
 }
 
 func (e InvalidOnDeleteSettingError) Error() string {
-	return fmt.Sprintf("foreign key on_delete setting on column %q, table %q must be one of: %q, %q, %q, %q or %q, not %q",
-		e.Column,
-		e.Table,
+	return fmt.Sprintf("foreign key %q on_delete setting must be one of: %q, %q, %q, %q or %q, not %q",
+		e.Name,
 		ForeignKeyReferenceOnDeleteNOACTION,
 		ForeignKeyReferenceOnDeleteRESTRICT,
 		ForeignKeyReferenceOnDeleteSETDEFAULT,

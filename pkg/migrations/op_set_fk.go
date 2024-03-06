@@ -161,18 +161,6 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 		return FieldRequiredError{Name: "down"}
 	}
 
-	switch strings.ToUpper(string(o.References.OnDelete)) {
-	case string(ForeignKeyReferenceOnDeleteNOACTION):
-	case string(ForeignKeyReferenceOnDeleteRESTRICT):
-	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
-	case string(ForeignKeyReferenceOnDeleteSETNULL):
-	case string(ForeignKeyReferenceOnDeleteCASCADE):
-	case "":
-		break
-	default:
-		return InvalidOnDeleteSettingError{Table: o.Table, Column: o.Column, Setting: string(o.References.OnDelete)}
-	}
-
 	return nil
 }
 

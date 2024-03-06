@@ -1197,8 +1197,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.InvalidOnDeleteSettingError{
-				Table:   "posts",
-				Column:  "user_id",
+				Name:    "fk_users_doesntexist",
 				Setting: "invalid",
 			},
 		},
