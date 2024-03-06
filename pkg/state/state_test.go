@@ -116,6 +116,25 @@ func TestInferredMigration(t *testing.T) {
 				},
 			},
 			{
+				name: "drop check constraint",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, age integer, CONSTRAINT check_age CHECK (age > 0))",
+					"ALTER TABLE table1 DROP CONSTRAINT check_age",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, age integer, CONSTRAINT check_age CHECK (age > 0))"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP CONSTRAINT check_age"},
+						},
+					},
+				},
+			},
+			{
 				name: "drop unique constraint",
 				sqlStmts: []string{
 					"CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))",
