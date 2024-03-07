@@ -95,6 +95,9 @@ type ForeignKey struct {
 
 	// The columns in the referenced table that the foreign key references
 	ReferencedColumns []string `json:"referencedColumns"`
+
+	// The ON DELETE behavior of the foreign key
+	OnDelete string `json:"onDelete"`
 }
 
 type CheckConstraint struct {
