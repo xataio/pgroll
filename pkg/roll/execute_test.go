@@ -478,15 +478,11 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 
 	options := []roll.Option{roll.WithMigrationHooks(roll.MigrationHooks{
 		BeforeStartDDL: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_start_ddl (id integer)")
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE before_start_ddl (id integer)")
 			return err
 		},
 		AfterStartDDL: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS after_start_ddl (id integer)")
-			return err
-		},
-		BeforeBackfill: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_backfill (id integer)")
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE after_start_ddl (id integer)")
 			return err
 		},
 	})}
@@ -508,30 +504,6 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 		// Complete the migration
 		err = mig.Complete(ctx)
 		assert.NoError(t, err)
-
-		// Insert some data into the table created by the migration
-		_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice')")
-		assert.NoError(t, err)
-
-		// Start a migration that requires a backfill
-		err = mig.Start(ctx, &migrations.Migration{
-			Name: "02_add_column",
-			Operations: migrations.Operations{
-				&migrations.OpAddColumn{
-					Table: "table1",
-					Column: migrations.Column{
-						Name:     "description",
-						Type:     "text",
-						Nullable: ptr(false),
-					},
-					Up: ptr("'this is a description'"),
-				},
-			},
-		})
-		assert.NoError(t, err)
-
-		// ensure that the before_backfill table was created
-		assert.True(t, tableExists(t, db, "public", "before_backfill"))
 	})
 }
 
