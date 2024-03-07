@@ -237,7 +237,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id", withOnDeleteCascade())
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -269,7 +269,7 @@ func TestCreateTable(t *testing.T) {
 				// The table has been dropped, so the foreign key constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
