@@ -55,7 +55,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
 		cSetDefaultSQL         = `ALTER COLUMN %s SET DEFAULT %s`
-		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)`
+		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
 		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
 		cCreateUniqueIndexSQL  = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
 	)
@@ -91,7 +91,9 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 				pq.QuoteIdentifier(DuplicationName(fk.Name)),
 				strings.Join(quoteColumnNames(copyAndReplace(fk.Columns, d.column.Name, d.asName)), ", "),
 				pq.QuoteIdentifier(fk.ReferencedTable),
-				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "))
+				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "),
+				fk.OnDelete,
+			)
 		}
 	}
 

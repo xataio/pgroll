@@ -204,16 +204,16 @@ func UniqueConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constrai
 	}
 }
 
-func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string, opts ...foreignKeyOnDeleteOpt) {
 	t.Helper()
-	if !foreignKeyExists(t, db, schema, table, constraint, true) {
+	if !foreignKeyExists(t, db, schema, table, constraint, true, opts...) {
 		t.Fatalf("Expected validated foreign key %q to exist", constraint)
 	}
 }
 
-func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string, opts ...foreignKeyOnDeleteOpt) {
 	t.Helper()
-	if !foreignKeyExists(t, db, schema, table, constraint, false) {
+	if !foreignKeyExists(t, db, schema, table, constraint, false, opts...) {
 		t.Fatalf("Expected not validated foreign key %q to exist", constraint)
 	}
 }
@@ -313,8 +313,23 @@ func uniqueConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint 
 	return exists
 }
 
-func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, validated bool) bool {
+type foreignKeyOnDeleteOpt func() string
+
+func withOnDeleteCascade() foreignKeyOnDeleteOpt {
+	return func() string { return "c" }
+}
+
+func withOnDeleteSetNull() foreignKeyOnDeleteOpt {
+	return func() string { return "n" }
+}
+
+func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, validated bool, opts ...foreignKeyOnDeleteOpt) bool {
 	t.Helper()
+
+	confDelType := "a"
+	for _, opt := range opts {
+		confDelType = opt()
+	}
 
 	var exists bool
 	err := db.QueryRow(`
@@ -325,8 +340,9 @@ func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string
       AND conname = $2
       AND contype = 'f'
       AND convalidated = $3
+      AND confdeltype = $4 
     )`,
-		fmt.Sprintf("%s.%s", schema, table), constraint, validated).Scan(&exists)
+		fmt.Sprintf("%s.%s", schema, table), constraint, validated, confDelType).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}

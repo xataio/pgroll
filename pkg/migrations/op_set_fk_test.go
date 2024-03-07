@@ -738,9 +738,10 @@ func TestSetForeignKey(t *testing.T) {
 							Table:  "posts",
 							Column: "user_id",
 							References: &migrations.ForeignKeyReference{
-								Name:   "fk_users_id_1",
-								Table:  "users",
-								Column: "id",
+								Name:     "fk_users_id_1",
+								Table:    "users",
+								Column:   "id",
+								OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 							},
 							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
 							Down: ptr("user_id"),
@@ -766,13 +767,13 @@ func TestSetForeignKey(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "posts", migrations.DuplicationName("fk_users_id_1"))
+				ValidatedForeignKeyMustExist(t, db, schema, "posts", migrations.DuplicationName("fk_users_id_1"), withOnDeleteCascade())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id_1")
+				ValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id_1", withOnDeleteCascade())
 			},
 		},
 		{

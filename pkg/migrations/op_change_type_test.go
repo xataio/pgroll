@@ -190,9 +190,10 @@ func TestChangeColumnType(t *testing.T) {
 									Name: "department_id",
 									Type: "integer",
 									References: &migrations.ForeignKeyReference{
-										Name:   "fk_employee_department",
-										Table:  "departments",
-										Column: "id",
+										Name:     "fk_employee_department",
+										Table:    "departments",
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},
@@ -214,13 +215,13 @@ func TestChangeColumnType(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"), withOnDeleteCascade())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department", withOnDeleteCascade())
 			},
 		},
 		{
