@@ -471,6 +471,7 @@ func TestReadSchema(t *testing.T) {
 									Columns:           []string{"fk"},
 									ReferencedTable:   "table1",
 									ReferencedColumns: []string{"id"},
+									OnDelete:          "NO ACTION",
 								},
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
