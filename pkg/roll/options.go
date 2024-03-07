@@ -21,8 +21,6 @@ type MigrationHooks struct {
 	BeforeStartDDL func(*Roll) error
 	// AfterStartDDL is called after the DDL phase of migration start is complete
 	AfterStartDDL func(*Roll) error
-	// BeforeBackfill is called before the backfill phase of migration start
-	BeforeBackfill func(*Roll) error
 }
 
 type Option func(*options)

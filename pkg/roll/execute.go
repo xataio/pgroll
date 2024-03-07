@@ -20,12 +20,6 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 		return err
 	}
 
-	if m.migrationHooks.BeforeBackfill != nil {
-		if err := m.migrationHooks.BeforeBackfill(m); err != nil {
-			return fmt.Errorf("failed to execute BeforeBackfill hook: %w", err)
-		}
-	}
-
 	// perform backfills for the tables that require it
 	return m.performBackfills(ctx, tablesToBackfill)
 }
