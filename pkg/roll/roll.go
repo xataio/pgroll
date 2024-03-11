@@ -17,7 +17,9 @@ type PGVersion int
 const PGVersion15 PGVersion = 15
 
 type Roll struct {
-	pgConn *sql.DB // TODO abstract sql connection
+	pgConn *sql.DB
+
+	pgRawSQLConn *sql.DB
 
 	// schema we are acting on
 	schema string
@@ -36,6 +38,37 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		o(options)
 	}
 
+	conn, err := setupConn(ctx, pgURL, schema, *options)
+	if err != nil {
+		return nil, err
+	}
+
+	var rawSQLConn *sql.DB
+	if options.rawSQLURL != "" {
+		rawSQLConn, err = setupConn(ctx, options.rawSQLURL, schema, *options)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var pgMajorVersion PGVersion
+	err = conn.QueryRowContext(ctx, "SELECT split_part(split_part(version(), ' ', 2), '.', 1)").Scan(&pgMajorVersion)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
+	}
+
+	return &Roll{
+		pgConn:                conn,
+		pgRawSQLConn:          rawSQLConn,
+		schema:                schema,
+		state:                 state,
+		pgVersion:             PGVersion(pgMajorVersion),
+		disableVersionSchemas: options.disableVersionSchemas,
+		migrationHooks:        options.migrationHooks,
+	}, nil
+}
+
+func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql.DB, error) {
 	dsn, err := pq.ParseURL(pgURL)
 	if err != nil {
 		dsn = pgURL
@@ -71,20 +104,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		}
 	}
 
-	var pgMajorVersion PGVersion
-	err = conn.QueryRowContext(ctx, "SELECT split_part(split_part(version(), ' ', 2), '.', 1)").Scan(&pgMajorVersion)
-	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
-	}
-
-	return &Roll{
-		pgConn:                conn,
-		schema:                schema,
-		state:                 state,
-		pgVersion:             PGVersion(pgMajorVersion),
-		disableVersionSchemas: options.disableVersionSchemas,
-		migrationHooks:        options.migrationHooks,
-	}, nil
+	return conn, nil
 }
 
 func (m *Roll) Init(ctx context.Context) error {
@@ -111,6 +131,13 @@ func (m *Roll) Close() error {
 	err := m.state.Close()
 	if err != nil {
 		return err
+	}
+
+	if m.pgRawSQLConn != nil {
+		err = m.pgRawSQLConn.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	return m.pgConn.Close()

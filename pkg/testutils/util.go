@@ -85,6 +85,13 @@ func TestSchema() string {
 	return "public"
 }
 
+func WithConnectionString(t *testing.T, fn func(connStr string)) {
+	t.Helper()
+	_, connStr, _ := setupTestDatabase(t)
+
+	fn(connStr)
+}
+
 func WithStateInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(*state.State, *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
