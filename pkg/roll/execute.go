@@ -254,7 +254,11 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) error {
 	for _, table := range tables {
 		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
-			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
+			errRollback := m.Rollback(ctx)
+
+			return errors.Join(
+				fmt.Errorf("unable to backfill table %q: %w", table.Name, err),
+				errRollback)
 		}
 	}
 
