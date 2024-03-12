@@ -221,7 +221,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 }
 
 // connForOp returns the connection to use for the given operation
-// if the operation is a raw SQL operation, it will use the rawSQLConn (if set)
+// If the operation is a raw SQL operation, it will use the rawSQLConn (if set)
 // otherwise it will use the regular pgConn
 func (m *Roll) connForOp(op migrations.Operation) *sql.DB {
 	if m.pgRawSQLConn != nil {
