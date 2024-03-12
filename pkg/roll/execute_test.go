@@ -178,6 +178,85 @@ func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	})
 }
 
+func TestRollbackOnMigrationStartFailure(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when the DDL phase fails", func(t *testing.T) {
+		t.Parallel()
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// start a migration that will fail during the DDL phase
+			err := mig.Start(ctx, &migrations.Migration{
+				Name: "01_create_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "table1",
+						Columns: []migrations.Column{
+							{
+								Name: "id",
+								Type: "invalid",
+							},
+						},
+					},
+				},
+			})
+			assert.Error(t, err)
+
+			// ensure that there is no active migration
+			status, err := mig.Status(ctx, "public")
+			assert.NoError(t, err)
+			assert.Equal(t, state.NoneMigrationStatus, status.Status)
+		})
+	})
+
+	t.Run("when the backfill phase fails", func(t *testing.T) {
+		t.Parallel()
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// run an initial migration to create the table
+			err := mig.Start(ctx, &migrations.Migration{
+				Name:       "01_create_table",
+				Operations: migrations.Operations{createTableOp("table1")},
+			})
+			assert.NoError(t, err)
+
+			// complete the migration
+			err = mig.Complete(ctx)
+			assert.NoError(t, err)
+
+			// insert some data into the table
+			_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice'), (2, 'bob')")
+			assert.NoError(t, err)
+
+			// Start a migration that will fail during the backfill phase
+			// Change the type of the `name` column but provide invalid up and down SQL
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAlterColumn{
+						Table:  "table1",
+						Column: "name",
+						Type:   ptr("text"),
+						Up:     ptr("invalid"),
+						Down:   ptr("invalid"),
+					},
+				},
+			})
+			assert.Error(t, err)
+
+			// Ensure that there is no active migration
+			status, err := mig.Status(ctx, "public")
+			assert.NoError(t, err)
+			assert.Equal(t, "01_create_table", status.Version)
+			assert.Equal(t, state.CompleteMigrationStatus, status.Status)
+		})
+	})
+}
+
 func TestSchemaOptionIsRespected(t *testing.T) {
 	t.Parallel()
 
