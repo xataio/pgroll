@@ -511,23 +511,8 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 func TestRawSQLURLOption(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithConnectionString(t, func(connStr string) {
+	testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
 		ctx := context.Background()
-
-		st, err := state.New(ctx, connStr, schema)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if err := st.Init(ctx); err != nil {
-			t.Fatal(err)
-		}
-
-		t.Cleanup(func() {
-			if err := st.Close(); err != nil {
-				t.Fatal(err)
-			}
-		})
 
 		db, err := sql.Open("postgres", connStr)
 		if err != nil {
