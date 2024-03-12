@@ -33,19 +33,19 @@ type Roll struct {
 }
 
 func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...Option) (*Roll, error) {
-	options := &options{}
+	rollOpts := &options{}
 	for _, o := range opts {
-		o(options)
+		o(rollOpts)
 	}
 
-	conn, err := setupConn(ctx, pgURL, schema, *options)
+	conn, err := setupConn(ctx, pgURL, schema, *rollOpts)
 	if err != nil {
 		return nil, err
 	}
 
 	var rawSQLConn *sql.DB
-	if options.rawSQLURL != "" {
-		rawSQLConn, err = setupConn(ctx, options.rawSQLURL, schema, *options)
+	if rollOpts.rawSQLURL != "" {
+		rawSQLConn, err = setupConn(ctx, rollOpts.rawSQLURL, schema, options{})
 		if err != nil {
 			return nil, err
 		}
@@ -63,8 +63,8 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		schema:                schema,
 		state:                 state,
 		pgVersion:             PGVersion(pgMajorVersion),
-		disableVersionSchemas: options.disableVersionSchemas,
-		migrationHooks:        options.migrationHooks,
+		disableVersionSchemas: rollOpts.disableVersionSchemas,
+		migrationHooks:        rollOpts.migrationHooks,
 	}, nil
 }
 
