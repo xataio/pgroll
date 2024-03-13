@@ -85,6 +85,29 @@ func TestSchema() string {
 	return "public"
 }
 
+func WithConnectionString(t *testing.T, schema string, fn func(st *state.State, connStr string)) {
+	t.Helper()
+	_, connStr, _ := setupTestDatabase(t)
+
+	ctx := context.Background()
+	st, err := state.New(ctx, connStr, schema)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := st.Init(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() {
+		if err := st.Close(); err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	fn(st, connStr)
+}
+
 func WithStateInSchemaAndConnectionToContainer(t *testing.T, schema string, fn func(*state.State, *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()

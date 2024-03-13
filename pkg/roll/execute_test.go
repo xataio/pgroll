@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/lib/pq"
@@ -586,6 +587,63 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 	})
 }
 
+func TestRawSQLURLOption(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
+		ctx := context.Background()
+
+		db, err := sql.Open("postgres", connStr)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// create a user for rawSQLURL
+		_, err = db.Exec(`
+			CREATE USER rawsql WITH PASSWORD 'rawsql';
+			GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql;
+		`)
+		assert.NoError(t, err)
+
+		// init pgroll with a rawSQLURL
+		rawSQL, err := url.Parse(connStr)
+		assert.NoError(t, err)
+		rawSQL.User = url.UserPassword("rawsql", "rawsql")
+
+		mig, err := roll.New(ctx, connStr, schema, st, roll.WithRawSQLURL(rawSQL.String()))
+		assert.NoError(t, err)
+
+		t.Cleanup(func() {
+			if err := mig.Close(); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		// Start a migration with raw and regular SQL operations
+		err = mig.Start(ctx, &migrations.Migration{
+			Name: "01_create_table",
+			Operations: migrations.Operations{
+				createTableOp("table1"),
+				&migrations.OpRawSQL{
+					Up:         "CREATE TABLE raw_sql_table (id integer)",
+					OnComplete: true,
+				},
+			},
+		})
+		assert.NoError(t, err)
+
+		// Complete the migration
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Ensure both tables were created
+		assert.True(t, tableExists(t, db, "public", "table1"))
+		assert.True(t, tableExists(t, db, "public", "raw_sql_table"))
+		assert.Equal(t, "rawsql", tableOwner(t, db, "public", "raw_sql_table"))
+		assert.Equal(t, "postgres", tableOwner(t, db, "public", "table1"))
+	})
+}
+
 func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 	t.Parallel()
 
@@ -706,6 +764,23 @@ func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	}
 
 	return exists
+}
+
+func tableOwner(t *testing.T, db *sql.DB, schema, table string) string {
+	t.Helper()
+
+	var owner string
+	err := db.QueryRow(`
+		SELECT tableowner
+		FROM pg_catalog.pg_tables
+		WHERE schemaname = $1
+			AND tablename = $2`,
+		schema, table).Scan(&owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return owner
 }
 
 func ptr[T any](v T) *T {
