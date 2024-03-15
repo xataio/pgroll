@@ -590,57 +590,61 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 func TestRawSQLURLOption(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
-		ctx := context.Background()
+	t.Run("for raw SQL operations", func(t *testing.T) {
+		t.Parallel()
 
-		db, err := sql.Open("postgres", connStr)
-		if err != nil {
-			t.Fatal(err)
-		}
+		testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
+			ctx := context.Background()
 
-		// create a user for rawSQLURL
-		_, err = db.Exec(`
-			CREATE USER rawsql WITH PASSWORD 'rawsql';
-			GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql;
-		`)
-		assert.NoError(t, err)
-
-		// init pgroll with a rawSQLURL
-		rawSQL, err := url.Parse(connStr)
-		assert.NoError(t, err)
-		rawSQL.User = url.UserPassword("rawsql", "rawsql")
-
-		mig, err := roll.New(ctx, connStr, schema, st, roll.WithRawSQLURL(rawSQL.String()))
-		assert.NoError(t, err)
-
-		t.Cleanup(func() {
-			if err := mig.Close(); err != nil {
+			db, err := sql.Open("postgres", connStr)
+			if err != nil {
 				t.Fatal(err)
 			}
-		})
 
-		// Start a migration with raw and regular SQL operations
-		err = mig.Start(ctx, &migrations.Migration{
-			Name: "01_create_table",
-			Operations: migrations.Operations{
-				createTableOp("table1"),
-				&migrations.OpRawSQL{
-					Up:         "CREATE TABLE raw_sql_table (id integer)",
-					OnComplete: true,
+			// create a user for rawSQLURL
+			_, err = db.Exec(`
+      CREATE USER rawsql WITH PASSWORD 'rawsql';
+      GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql;
+      `)
+			assert.NoError(t, err)
+
+			// init pgroll with a rawSQLURL
+			rawSQL, err := url.Parse(connStr)
+			assert.NoError(t, err)
+			rawSQL.User = url.UserPassword("rawsql", "rawsql")
+
+			mig, err := roll.New(ctx, connStr, schema, st, roll.WithRawSQLURL(rawSQL.String()))
+			assert.NoError(t, err)
+
+			t.Cleanup(func() {
+				if err := mig.Close(); err != nil {
+					t.Fatal(err)
+				}
+			})
+
+			// Start a migration with raw and regular SQL operations
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "01_create_table",
+				Operations: migrations.Operations{
+					createTableOp("table1"),
+					&migrations.OpRawSQL{
+						Up:         "CREATE TABLE raw_sql_table (id integer)",
+						OnComplete: true,
+					},
 				},
-			},
+			})
+			assert.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			assert.NoError(t, err)
+
+			// Ensure both tables were created
+			assert.True(t, tableExists(t, db, "public", "table1"))
+			assert.True(t, tableExists(t, db, "public", "raw_sql_table"))
+			assert.Equal(t, "rawsql", tableOwner(t, db, "public", "raw_sql_table"))
+			assert.Equal(t, "postgres", tableOwner(t, db, "public", "table1"))
 		})
-		assert.NoError(t, err)
-
-		// Complete the migration
-		err = mig.Complete(ctx)
-		assert.NoError(t, err)
-
-		// Ensure both tables were created
-		assert.True(t, tableExists(t, db, "public", "table1"))
-		assert.True(t, tableExists(t, db, "public", "raw_sql_table"))
-		assert.Equal(t, "rawsql", tableOwner(t, db, "public", "raw_sql_table"))
-		assert.Equal(t, "postgres", tableOwner(t, db, "public", "table1"))
 	})
 }
 
