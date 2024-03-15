@@ -66,6 +66,12 @@ func SharedTestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	// create a user for rawSQLURL
+	_, err = db.Exec(`CREATE USER rawsql WITH PASSWORD 'rawsql';`)
+	if err != nil {
+		os.Exit(1)
+	}
+
 	exitCode := m.Run()
 
 	if err := ctr.Terminate(ctx); err != nil {

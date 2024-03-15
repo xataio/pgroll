@@ -601,11 +601,8 @@ func TestRawSQLURLOption(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// create a user for rawSQLURL
-			_, err = db.Exec(`
-      CREATE USER rawsql WITH PASSWORD 'rawsql';
-      GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql;
-      `)
+			// Grant privileges to the rawsql user
+			_, err = db.Exec(`GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql`)
 			assert.NoError(t, err)
 
 			// init pgroll with a rawSQLURL
