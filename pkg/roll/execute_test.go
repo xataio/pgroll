@@ -12,6 +12,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
@@ -641,6 +642,79 @@ func TestRawSQLURLOption(t *testing.T) {
 			assert.True(t, tableExists(t, db, "public", "raw_sql_table"))
 			assert.Equal(t, "rawsql", tableOwner(t, db, "public", "raw_sql_table"))
 			assert.Equal(t, "postgres", tableOwner(t, db, "public", "table1"))
+		})
+	})
+
+	t.Run("for backfills", func(t *testing.T) {
+		t.Parallel()
+
+		testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
+			ctx := context.Background()
+
+			db, err := sql.Open("postgres", connStr)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Grant privileges to the rawsql user
+			_, err = db.Exec(`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO rawsql`)
+			require.NoError(t, err)
+
+			// init pgroll with a rawSQLURL
+			rawSQL, err := url.Parse(connStr)
+			require.NoError(t, err)
+			rawSQL.User = url.UserPassword("rawsql", "rawsql")
+
+			mig, err := roll.New(ctx, connStr, schema, st, roll.WithRawSQLURL(rawSQL.String()))
+			require.NoError(t, err)
+
+			t.Cleanup(func() {
+				if err := mig.Close(); err != nil {
+					t.Fatal(err)
+				}
+			})
+
+			// Start a create table migration
+			err = mig.Start(ctx, &migrations.Migration{
+				Name:       "01_create_table",
+				Operations: migrations.Operations{createTableOp("users")},
+			})
+			require.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Insert some data into the table
+			_, err = db.ExecContext(ctx, "INSERT INTO users (id, name) VALUES (1, 'alice')")
+			require.NoError(t, err)
+
+			// Start a migration that performs a backfill
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "users",
+						Column: migrations.Column{
+							Name:     "role",
+							Type:     "text",
+							Nullable: ptr(false),
+						},
+						Up: ptr("(SELECT current_user)"),
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Ensure that the backfill was performed as the expected `rawsql` user
+			rows := MustSelect(t, db, "public", "02_add_column", "users")
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "alice", "role": "rawsql"},
+			}, rows)
 		})
 	})
 }
