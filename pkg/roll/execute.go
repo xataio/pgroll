@@ -232,6 +232,16 @@ func (m *Roll) connForOp(op migrations.Operation) *sql.DB {
 	return m.pgConn
 }
 
+// connForBackfills returns the connection to use for backfills. If a
+// rawSQLConn is set it will use that, otherwise it will use the regular
+// pgConn.
+func (m *Roll) connForBackfills() *sql.DB {
+	if m.pgRawSQLConn != nil {
+		return m.pgRawSQLConn
+	}
+	return m.pgConn
+}
+
 // create view creates a view for the new version of the schema
 func (m *Roll) ensureView(ctx context.Context, version, name string, table schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
@@ -266,7 +276,7 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 
 func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) error {
 	for _, table := range tables {
-		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
+		if err := migrations.Backfill(ctx, m.connForBackfills(), table); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(
