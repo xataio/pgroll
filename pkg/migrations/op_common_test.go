@@ -484,7 +484,7 @@ func columnHasType(t *testing.T, db *sql.DB, schema, table, column, expectedType
 func columnHasComment(t *testing.T, db *sql.DB, schema, table, column, expectedComment string) bool {
 	t.Helper()
 
-	var actualComment string
+	var actualComment *string
 	err := db.QueryRow(fmt.Sprintf(`
     SELECT col_description(
       %[1]s::regclass,
@@ -497,7 +497,7 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column, expectedC
 		t.Fatal(err)
 	}
 
-	return expectedComment == actualComment
+	return actualComment != nil && *actualComment == expectedComment
 }
 
 func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) bool {

@@ -58,6 +58,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
 		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
 		cCreateUniqueIndexSQL  = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
+		cCommentOnColumnSQL    = `COMMENT ON COLUMN %s.%s IS %s`
 	)
 
 	// Generate SQL to duplicate the column's name and type
@@ -114,6 +115,20 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	_, err := d.conn.ExecContext(ctx, sql)
 	if err != nil {
 		return err
+	}
+
+	// Generate SQL to duplicate the column's comment
+	if d.column.Comment != "" {
+		sql = fmt.Sprintf(cCommentOnColumnSQL,
+			pq.QuoteIdentifier(d.table.Name),
+			pq.QuoteIdentifier(d.asName),
+			pq.QuoteLiteral(d.column.Comment),
+		)
+
+		_, err = d.conn.ExecContext(ctx, sql)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Generate SQL to duplicate any unique constraints on the column
