@@ -492,6 +492,54 @@ func TestDropNotNull(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "dropping not null retains any comments defined on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: ptr(false),
+									Comment:  ptr("the name of the user"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(true),
+							Up:       ptr("name"),
+							Down:     ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("name"), "the name of the user")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", "name", "the name of the user")
+			},
+		},
 	})
 }
 

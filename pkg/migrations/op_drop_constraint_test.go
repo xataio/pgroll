@@ -815,6 +815,55 @@ func TestDropConstraint(t *testing.T) {
 				}, testutils.NotNullViolationErrorCode)
 			},
 		},
+		{
+			name: "dropping a unique constraint preserves any comment on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "title",
+									Type:     "text",
+									Unique:   ptr(true),
+									Nullable: ptr(false),
+									Comment:  ptr("the title of the post"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table:  "posts",
+							Column: "title",
+							Name:   "_pgroll_new_posts_title_key",
+							Up:     "title",
+							Down:   "title",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", migrations.TemporaryName("title"), "the title of the post")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", "title", "the title of the post")
+			},
+		},
 	})
 }
 

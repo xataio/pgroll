@@ -472,6 +472,53 @@ func TestChangeColumnType(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "changing column type preserves any comments on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "username",
+									Type:    "text",
+									Comment: ptr("the name of the user"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("username"), "the name of the user")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", "username", "the name of the user")
+			},
+		},
 	})
 }
 

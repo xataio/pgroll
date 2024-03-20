@@ -1050,6 +1050,75 @@ func TestSetForeignKey(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "comments are preserved when adding a foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:    "user_id",
+									Type:    "integer",
+									Comment: ptr("the id of the author"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   ptr("(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)"),
+							Down: ptr("user_id"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", migrations.TemporaryName("user_id"), "the id of the author")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", "user_id", "the id of the author")
+			},
+		},
 	})
 }
 

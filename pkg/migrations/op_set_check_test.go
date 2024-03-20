@@ -492,6 +492,56 @@ func TestSetCheckConstraint(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "comments are preserved when adding a check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "title",
+									Type:    "text",
+									Comment: ptr("the title of the post"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
+							Down: ptr("title"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", migrations.TemporaryName("title"), "the title of the post")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", "title", "the title of the post")
+			},
+		},
 	})
 }
 
