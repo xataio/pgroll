@@ -38,7 +38,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := createTrigger(ctx, conn, triggerConfig{
+	err := createTrigger(ctx, o, conn, triggerConfig{
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
@@ -60,7 +60,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	err = createTrigger(ctx, conn, triggerConfig{
+	err = createTrigger(ctx, o, conn, triggerConfig{
 		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,

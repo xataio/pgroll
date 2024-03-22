@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"text/template"
 
 	"github.com/lib/pq"
@@ -33,7 +34,19 @@ type triggerConfig struct {
 	SQL            string
 }
 
-func createTrigger(ctx context.Context, conn *sql.DB, cfg triggerConfig) error {
+func createTrigger(ctx context.Context, op Operation, conn *sql.DB, cfg triggerConfig) error {
+	if cfg.Direction == TriggerDirectionDown {
+		if _, ok := op.(Downer); !ok {
+			return errors.New("down triggers can only be created by operations implementing Downer")
+		}
+	}
+
+	if cfg.Direction == TriggerDirectionUp {
+		if _, ok := op.(Upper); !ok {
+			return errors.New("up triggers can only be created by operations implementing Upper")
+		}
+	}
+
 	funcSQL, err := buildFunction(cfg)
 	if err != nil {
 		return err
