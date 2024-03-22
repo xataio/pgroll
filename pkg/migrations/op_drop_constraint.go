@@ -32,7 +32,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema 
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
-		SQL:            o.upSQL(),
+		SQL:            o.upSQLOrDefault(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -152,7 +152,7 @@ func (o *OpDropConstraint) SetUpSQL(up string)     { o.Up = up }
 func (o *OpDropConstraint) DownSQL() string        { return o.Down }
 func (o *OpDropConstraint) SetDownSQL(down string) { o.Down = down }
 
-func (o *OpDropConstraint) upSQL() string {
+func (o *OpDropConstraint) upSQLOrDefault() string {
 	if o.Up != "" {
 		return o.Up
 	}

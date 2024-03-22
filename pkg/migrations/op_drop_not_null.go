@@ -39,7 +39,7 @@ func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema str
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
 		StateSchema:    stateSchema,
-		SQL:            o.upSQL(),
+		SQL:            o.upSQLOrDefault(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -149,7 +149,7 @@ func (o *OpDropNotNull) SetDownSQL(down string) { o.Down = down }
 
 // When removing `NOT NULL` from a column, up SQL is either user-specified or
 // defaults to copying the value from the old column to the new.
-func (o *OpDropNotNull) upSQL() string {
+func (o *OpDropNotNull) upSQLOrDefault() string {
 	if o.Up == "" {
 		return pq.QuoteIdentifier(o.Column)
 	}

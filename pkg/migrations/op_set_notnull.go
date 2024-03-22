@@ -66,7 +66,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
 		StateSchema:    stateSchema,
-		SQL:            o.downSQL(),
+		SQL:            o.downSQLOrDefault(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
@@ -181,7 +181,7 @@ func (o *OpSetNotNull) DownSQL() string        { return o.Down }
 func (o *OpSetNotNull) SetDownSQL(down string) { o.Down = down }
 
 // Down SQL is either user-specified or defaults to copying the value from the new column to the old.
-func (o *OpSetNotNull) downSQL() string {
+func (o *OpSetNotNull) downSQLOrDefault() string {
 	if o.Down == "" {
 		return fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(TemporaryName(o.Column)))
 	}
