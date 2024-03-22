@@ -46,6 +46,22 @@ type RequiresSchemaRefreshOperation interface {
 	RequiresSchemaRefresh()
 }
 
+// Upper is implemented by operations that define `up` SQL
+// Implementations should return the user-defined `up` SQL for the operation,
+// and not any default `up` SQL that may apply to the operation.
+type Upper interface {
+	UpSQL() string
+	SetUpSQL(string)
+}
+
+// Downer is implemented by operations that define `down` SQL
+// Implementations should return the user-defined `down` SQL for the operation,
+// and not any default `down` SQL that may apply to the operation.
+type Downer interface {
+	DownSQL() string
+	SetDownSQL(string)
+}
+
 type (
 	Operations []Operation
 	Migration  struct {
