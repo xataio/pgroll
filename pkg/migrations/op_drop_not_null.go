@@ -142,6 +142,11 @@ func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpDropNotNull) UpSQL() string          { return o.Up }
+func (o *OpDropNotNull) SetUpSQL(up string)     { o.Up = up }
+func (o *OpDropNotNull) DownSQL() string        { return o.Down }
+func (o *OpDropNotNull) SetDownSQL(down string) { o.Down = down }
+
 // When removing `NOT NULL` from a column, up SQL is either user-specified or
 // defaults to copying the value from the old column to the new.
 func (o *OpDropNotNull) upSQL() string {

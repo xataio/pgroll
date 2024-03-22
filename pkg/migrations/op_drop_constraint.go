@@ -147,6 +147,11 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 	return nil
 }
 
+func (o *OpDropConstraint) UpSQL() string          { return o.Up }
+func (o *OpDropConstraint) SetUpSQL(up string)     { o.Up = up }
+func (o *OpDropConstraint) DownSQL() string        { return o.Down }
+func (o *OpDropConstraint) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpDropConstraint) upSQL() string {
 	if o.Up != "" {
 		return o.Up

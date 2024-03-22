@@ -164,6 +164,11 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	return nil
 }
 
+func (o *OpSetForeignKey) UpSQL() string          { return o.Up }
+func (o *OpSetForeignKey) SetUpSQL(up string)     { o.Up = up }
+func (o *OpSetForeignKey) DownSQL() string        { return o.Down }
+func (o *OpSetForeignKey) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn *sql.DB) error {
 	tempColumnName := TemporaryName(o.Column)
 

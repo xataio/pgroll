@@ -163,6 +163,11 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpSetUnique) UpSQL() string          { return o.Up }
+func (o *OpSetUnique) SetUpSQL(up string)     { o.Up = up }
+func (o *OpSetUnique) DownSQL() string        { return o.Down }
+func (o *OpSetUnique) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn *sql.DB) error {
 	// create unique index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",

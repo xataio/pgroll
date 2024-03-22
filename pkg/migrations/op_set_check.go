@@ -163,6 +163,11 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	return nil
 }
 
+func (o *OpSetCheckConstraint) UpSQL() string          { return o.Up }
+func (o *OpSetCheckConstraint) SetUpSQL(up string)     { o.Up = up }
+func (o *OpSetCheckConstraint) DownSQL() string        { return o.Down }
+func (o *OpSetCheckConstraint) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),

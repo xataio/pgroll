@@ -130,6 +130,11 @@ func (o *OpChangeType) Rollback(ctx context.Context, conn *sql.DB) error {
 	return err
 }
 
+func (o *OpChangeType) UpSQL() string          { return o.Up }
+func (o *OpChangeType) SetUpSQL(up string)     { o.Up = up }
+func (o *OpChangeType) DownSQL() string        { return o.Down }
+func (o *OpChangeType) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Up == "" {
 		return FieldRequiredError{Name: "up"}

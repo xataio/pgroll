@@ -65,6 +65,11 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return op.Validate(ctx, s)
 }
 
+func (o *OpAlterColumn) UpSQL() string          { return o.Up }
+func (o *OpAlterColumn) SetUpSQL(up string)     { o.Up = up }
+func (o *OpAlterColumn) DownSQL() string        { return o.Down }
+func (o *OpAlterColumn) SetDownSQL(down string) { o.Down = down }
+
 func (o *OpAlterColumn) innerOperation() Operation {
 	switch {
 	case o.Name != nil:

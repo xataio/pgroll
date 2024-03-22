@@ -182,6 +182,9 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpAddColumn) UpSQL() string      { return o.Up }
+func (o *OpAddColumn) SetUpSQL(up string) { o.Up = up }
+
 func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:

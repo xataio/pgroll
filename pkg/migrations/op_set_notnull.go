@@ -175,6 +175,11 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpSetNotNull) UpSQL() string          { return o.Up }
+func (o *OpSetNotNull) SetUpSQL(up string)     { o.Up = up }
+func (o *OpSetNotNull) DownSQL() string        { return o.Down }
+func (o *OpSetNotNull) SetDownSQL(down string) { o.Down = down }
+
 // Down SQL is either user-specified or defaults to copying the value from the new column to the old.
 func (o *OpSetNotNull) downSQL() string {
 	if o.Down == "" {
