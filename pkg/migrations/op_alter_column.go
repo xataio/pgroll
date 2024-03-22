@@ -155,10 +155,3 @@ func (o *OpAlterColumn) numChanges() int {
 
 	return fieldsSet
 }
-
-func ptrToStr(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
