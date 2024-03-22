@@ -41,7 +41,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	}
 
 	var tableToBackfill *schema.Table
-	if o.Up != nil {
+	if o.Up != "" {
 		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
@@ -50,7 +50,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column.Name),
 			StateSchema:    stateSchema,
-			SQL:            *o.Up,
+			SQL:            o.Up,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create trigger: %w", err)
@@ -164,14 +164,14 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	// Ensure backfill is possible
-	if o.Up != nil {
+	if o.Up != "" {
 		err := checkBackfill(table)
 		if err != nil {
 			return err
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == nil {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" {
 		return FieldRequiredError{Name: "up"}
 	}
 

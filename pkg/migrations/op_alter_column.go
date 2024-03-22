@@ -53,10 +53,10 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Apply any special validation rules for the inner operation
 	op := o.innerOperation()
 	if _, ok := op.(*OpRenameColumn); ok {
-		if o.Up != nil {
+		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
-		if o.Down != nil {
+		if o.Down != "" {
 			return NoDownSQLAllowedError{}
 		}
 	}
@@ -79,8 +79,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Type:   *o.Type,
-			Up:     ptrToStr(o.Up),
-			Down:   ptrToStr(o.Down),
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 
 	case o.Check != nil:
@@ -88,8 +88,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Check:  *o.Check,
-			Up:     ptrToStr(o.Up),
-			Down:   ptrToStr(o.Down),
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 
 	case o.References != nil:
@@ -97,24 +97,24 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:      o.Table,
 			Column:     o.Column,
 			References: *o.References,
-			Up:         ptrToStr(o.Up),
-			Down:       ptrToStr(o.Down),
+			Up:         o.Up,
+			Down:       o.Down,
 		}
 
 	case o.Nullable != nil && !*o.Nullable:
 		return &OpSetNotNull{
 			Table:  o.Table,
 			Column: o.Column,
-			Up:     ptrToStr(o.Up),
-			Down:   ptrToStr(o.Down),
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 
 	case o.Nullable != nil && *o.Nullable:
 		return &OpDropNotNull{
 			Table:  o.Table,
 			Column: o.Column,
-			Up:     ptrToStr(o.Up),
-			Down:   ptrToStr(o.Down),
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 
 	case o.Unique != nil:
@@ -122,8 +122,8 @@ func (o *OpAlterColumn) innerOperation() Operation {
 			Table:  o.Table,
 			Column: o.Column,
 			Name:   o.Unique.Name,
-			Up:     ptrToStr(o.Up),
-			Down:   ptrToStr(o.Down),
+			Up:     o.Up,
+			Down:   o.Down,
 		}
 	}
 	return nil

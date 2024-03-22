@@ -49,7 +49,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 						&migrations.OpDropColumn{
 							Table:  "users",
 							Column: "name",
-							Down:   ptr("UPPER(email)"),
+							Down:   "UPPER(email)",
 						},
 					},
 				},
@@ -133,7 +133,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 						&migrations.OpDropColumn{
 							Table:  "users",
 							Column: "array",
-							Down:   ptr("UPPER(email)"),
+							Down:   "UPPER(email)",
 						},
 					},
 				},
@@ -175,7 +175,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 						&migrations.OpDropColumn{
 							Table:  "array",
 							Column: "name",
-							Down:   ptr("UPPER(email)"),
+							Down:   "UPPER(email)",
 						},
 					},
 				},
