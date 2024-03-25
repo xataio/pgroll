@@ -31,6 +31,7 @@
     * [Drop table](#drop-table)
     * [Raw SQL](#raw-sql)
     * [Rename table](#rename-table)
+    * [Rename constraint](#rename-constraint)
     * [Set replica identity](#set-replica-identity)
 
 ## Concepts
@@ -686,6 +687,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Drop table](#drop-table)
 * [Raw SQL](#raw-sql)
 * [Rename table](#rename-table)
+* [Rename constraint](#rename-constraint)
 * [Set replica identity](#set-replica-identity)
 
 ### Add column
@@ -715,6 +717,7 @@ An add column operation creates a new column on an existing table.
         "name": "name of foreign key constraint",
         "table": "name of referenced table",
         "column": "name of referenced column"
+        "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
       } 
     }
   }
@@ -816,7 +819,8 @@ Add foreign key operations add a foreign key constraint to a column.
     "references": {
       "name": "name of foreign key reference",
       "table": "name of referenced table",
-      "column": "name of referenced column"
+      "column": "name of referenced column",
+      "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
     },
     "up": "SQL expression",
     "down": "SQL expression"
@@ -951,6 +955,7 @@ where each `column` is defined as:
     "name": "name of foreign key constraint"
     "table": "name of referenced table"
     "column": "name of referenced column"
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
   }
 },
 ```
@@ -1110,6 +1115,28 @@ A rename table operation renames a table.
 Example **rename table** migrations:
 
 * [04_rename_table.json](../examples/04_rename_table.json)
+
+
+### Rename constraint
+
+A rename constraint operation renames a constraint.
+
+**rename constraint** operations have this structure:
+
+```json
+{
+  "rename_constraint": {
+    "table": "table name",
+    "from": "old constraint name",
+    "to": "new constraint name"
+  }
+}
+```
+
+Example **rename constraint** migrations:
+
+* [33_rename_constraint.json](../examples/33_rename_constraint.json)
+
 
 ### Set replica identity
 

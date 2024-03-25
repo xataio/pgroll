@@ -258,9 +258,10 @@ func TestSetCheckConstraint(t *testing.T) {
 									Type:     "integer",
 									Nullable: ptr(true),
 									References: &migrations.ForeignKeyReference{
-										Name:   "fk_employee_department",
-										Table:  "departments",
-										Column: "id",
+										Name:     "fk_employee_department",
+										Table:    "departments",
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},
@@ -285,13 +286,13 @@ func TestSetCheckConstraint(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"), withOnDeleteCascade())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department", withOnDeleteCascade())
 			},
 		},
 		{
@@ -489,6 +490,56 @@ func TestSetCheckConstraint(t *testing.T) {
 				MustInsert(t, db, schema, "03_add_check_constraint", "posts", map[string]string{
 					"title": "post by bob",
 				})
+			},
+		},
+		{
+			name: "comments are preserved when adding a check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "title",
+									Type:    "text",
+									Comment: ptr("the title of the post"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_check_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "title",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_title_length",
+								Constraint: "length(title) > 3",
+							},
+							Up:   ptr("(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"),
+							Down: ptr("title"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", migrations.TemporaryName("title"), "the title of the post")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "posts", "title", "the title of the post")
 			},
 		},
 	})

@@ -1,0 +1,18 @@
+This is a valid 'rename constraint' migration.
+
+-- rename_constraint.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "rename_constraint": {
+        "table": "people",
+        "from": "name_length",
+        "to": "name_length_check"
+      }
+    }
+  ]
+}
+
+-- valid --
+true

@@ -298,9 +298,10 @@ func TestSetColumnUnique(t *testing.T) {
 									Type:     "integer",
 									Nullable: ptr(true),
 									References: &migrations.ForeignKeyReference{
-										Name:   "fk_employee_department",
-										Table:  "departments",
-										Column: "id",
+										Name:     "fk_employee_department",
+										Table:    "departments",
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteSETNULL,
 									},
 								},
 							},
@@ -322,13 +323,13 @@ func TestSetColumnUnique(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"), withOnDeleteSetNull())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department", withOnDeleteSetNull())
 			},
 		},
 		{
@@ -448,6 +449,64 @@ func TestSetColumnUnique(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_set_unique", "reviews", map[string]string{
 					"product": "apple", "review": "awesome",
 				}, testutils.NotNullViolationErrorCode)
+			},
+		},
+		{
+			name: "comments are preserved when adding a unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reviews",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: ptr(false),
+									Comment:  ptr("the name of the user"),
+								},
+								{
+									Name: "product",
+									Type: "text",
+								},
+								{
+									Name: "review",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "reviews",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{
+								Name: "reviews_username_unique",
+							},
+							Up:   ptr("username"),
+							Down: ptr("username"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "reviews", migrations.TemporaryName("username"), "the name of the user")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "reviews", "username", "the name of the user")
 			},
 		},
 		// It should be possible to add multiple unique constraints to a column

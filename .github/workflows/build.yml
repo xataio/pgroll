@@ -114,6 +114,16 @@ jobs:
           curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash
           ./bin/license-header-checker -a -r .github/license-header.txt . go && [[ -z `git status -s` ]]
 
+  examples-schema-validation:
+    name: validate examples JSON
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate example migrations against JSON schema
+        run: |
+          npx -y ajv-cli --spec=draft2020 validate -s schema.json -d "./examples/*.json"
+
   examples:
     name: 'examples (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-latest
@@ -162,7 +172,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [test, lint, examples, license-check, type-generation, dead-code-check]
+    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check]
     if: startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"

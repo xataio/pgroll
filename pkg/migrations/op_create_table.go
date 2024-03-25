@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -130,10 +131,16 @@ func ColumnToSQL(col Column) string {
 		sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
 	}
 	if col.References != nil {
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s)",
+		onDelete := "NO ACTION"
+		if col.References.OnDelete != "" {
+			onDelete = strings.ToUpper(string(col.References.OnDelete))
+		}
+
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(col.References.Column))
+			pq.QuoteIdentifier(col.References.Column),
+			onDelete)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

@@ -1,5 +1,9 @@
 .PHONY: generate
 generate:
+	# Format JSON schema
+	docker run --rm -v $$PWD/schema.json:/mnt/schema.json node:alpine npx prettier /mnt/schema.json --parser json --tab-width 2 --single-quote --trailing-comma all --no-semi --arrow-parens always --print-width 120 > schema.json.tmp
+	mv schema.json.tmp schema.json
+
 	# Generate the types from the JSON schema
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json omissis/go-jsonschema:0.14.1 --only-models -p migrations --tags json /mnt/schema.json > pkg/migrations/types.go
 	

@@ -265,9 +265,10 @@ func TestSetNotNull(t *testing.T) {
 									Type:     "integer",
 									Nullable: ptr(true),
 									References: &migrations.ForeignKeyReference{
-										Name:   "fk_employee_department",
-										Table:  "departments",
-										Column: "id",
+										Name:     "fk_employee_department",
+										Table:    "departments",
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},
@@ -288,13 +289,13 @@ func TestSetNotNull(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"), withOnDeleteCascade())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department", withOnDeleteCascade())
 			},
 		},
 		{
@@ -487,6 +488,53 @@ func TestSetNotNull(t *testing.T) {
 				MustInsert(t, db, schema, "03_set_not_null", "users", map[string]string{
 					"name": "bob",
 				})
+			},
+		},
+		{
+			name: "setting a column to not null retains any comment defined on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "text",
+									Nullable: ptr(true),
+									Comment:  ptr("the name of the user"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_not_null",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(false),
+							Up:       ptr("(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("name"), "the name of the user")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", "name", "the name of the user")
 			},
 		},
 	})

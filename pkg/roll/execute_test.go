@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/lib/pq"
@@ -175,6 +176,85 @@ func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 		if schemaExists(t, db, roll.VersionedSchemaName(schema, version)) {
 			t.Errorf("Expected schema %q to not exist", version)
 		}
+	})
+}
+
+func TestRollbackOnMigrationStartFailure(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when the DDL phase fails", func(t *testing.T) {
+		t.Parallel()
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// start a migration that will fail during the DDL phase
+			err := mig.Start(ctx, &migrations.Migration{
+				Name: "01_create_table",
+				Operations: migrations.Operations{
+					&migrations.OpCreateTable{
+						Name: "table1",
+						Columns: []migrations.Column{
+							{
+								Name: "id",
+								Type: "invalid",
+							},
+						},
+					},
+				},
+			})
+			assert.Error(t, err)
+
+			// ensure that there is no active migration
+			status, err := mig.Status(ctx, "public")
+			assert.NoError(t, err)
+			assert.Equal(t, state.NoneMigrationStatus, status.Status)
+		})
+	})
+
+	t.Run("when the backfill phase fails", func(t *testing.T) {
+		t.Parallel()
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// run an initial migration to create the table
+			err := mig.Start(ctx, &migrations.Migration{
+				Name:       "01_create_table",
+				Operations: migrations.Operations{createTableOp("table1")},
+			})
+			assert.NoError(t, err)
+
+			// complete the migration
+			err = mig.Complete(ctx)
+			assert.NoError(t, err)
+
+			// insert some data into the table
+			_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice'), (2, 'bob')")
+			assert.NoError(t, err)
+
+			// Start a migration that will fail during the backfill phase
+			// Change the type of the `name` column but provide invalid up and down SQL
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAlterColumn{
+						Table:  "table1",
+						Column: "name",
+						Type:   ptr("text"),
+						Up:     ptr("invalid"),
+						Down:   ptr("invalid"),
+					},
+				},
+			})
+			assert.Error(t, err)
+
+			// Ensure that there is no active migration
+			status, err := mig.Status(ctx, "public")
+			assert.NoError(t, err)
+			assert.Equal(t, "01_create_table", status.Version)
+			assert.Equal(t, state.CompleteMigrationStatus, status.Status)
+		})
 	})
 }
 
@@ -478,15 +558,11 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 
 	options := []roll.Option{roll.WithMigrationHooks(roll.MigrationHooks{
 		BeforeStartDDL: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_start_ddl (id integer)")
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE before_start_ddl (id integer)")
 			return err
 		},
 		AfterStartDDL: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS after_start_ddl (id integer)")
-			return err
-		},
-		BeforeBackfill: func(m *roll.Roll) error {
-			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE IF NOT EXISTS before_backfill (id integer)")
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE after_start_ddl (id integer)")
 			return err
 		},
 	})}
@@ -508,30 +584,79 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 		// Complete the migration
 		err = mig.Complete(ctx)
 		assert.NoError(t, err)
+	})
+}
 
-		// Insert some data into the table created by the migration
-		_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice')")
+func TestRawSQLURLOption(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionString(t, schema, func(st *state.State, connStr string) {
+		ctx := context.Background()
+
+		db, err := sql.Open("postgres", connStr)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// create a user for rawSQLURL
+		_, err = db.Exec(`
+			CREATE USER rawsql WITH PASSWORD 'rawsql';
+			GRANT ALL PRIVILEGES ON SCHEMA public TO rawsql;
+		`)
 		assert.NoError(t, err)
 
-		// Start a migration that requires a backfill
+		// init pgroll with a rawSQLURL
+		rawSQL, err := url.Parse(connStr)
+		assert.NoError(t, err)
+		rawSQL.User = url.UserPassword("rawsql", "rawsql")
+
+		mig, err := roll.New(ctx, connStr, schema, st, roll.WithRawSQLURL(rawSQL.String()))
+		assert.NoError(t, err)
+
+		t.Cleanup(func() {
+			if err := mig.Close(); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		// Start a migration with raw and regular SQL operations
 		err = mig.Start(ctx, &migrations.Migration{
-			Name: "02_add_column",
+			Name: "01_create_table",
 			Operations: migrations.Operations{
-				&migrations.OpAddColumn{
-					Table: "table1",
-					Column: migrations.Column{
-						Name:     "description",
-						Type:     "text",
-						Nullable: ptr(false),
-					},
-					Up: ptr("'this is a description'"),
+				createTableOp("table1"),
+				&migrations.OpRawSQL{
+					Up:         "CREATE TABLE raw_sql_table (id integer)",
+					OnComplete: true,
 				},
 			},
 		})
 		assert.NoError(t, err)
 
-		// ensure that the before_backfill table was created
-		assert.True(t, tableExists(t, db, "public", "before_backfill"))
+		// Complete the migration
+		err = mig.Complete(ctx)
+		assert.NoError(t, err)
+
+		// Ensure both tables were created
+		assert.True(t, tableExists(t, db, "public", "table1"))
+		assert.True(t, tableExists(t, db, "public", "raw_sql_table"))
+		assert.Equal(t, "rawsql", tableOwner(t, db, "public", "raw_sql_table"))
+		assert.Equal(t, "postgres", tableOwner(t, db, "public", "table1"))
+	})
+}
+
+func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when the schema is public", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "public", func(mig *roll.Roll, _ *sql.DB) {
+			assert.Equal(t, "public", mig.Schema())
+		})
+	})
+
+	t.Run("when the schema is non-public", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
+			assert.Equal(t, "apples", mig.Schema())
+		})
 	})
 }
 
@@ -639,6 +764,23 @@ func tableExists(t *testing.T, db *sql.DB, schema, table string) bool {
 	}
 
 	return exists
+}
+
+func tableOwner(t *testing.T, db *sql.DB, schema, table string) string {
+	t.Helper()
+
+	var owner string
+	err := db.QueryRow(`
+		SELECT tableowner
+		FROM pg_catalog.pg_tables
+		WHERE schemaname = $1
+			AND tablename = $2`,
+		schema, table).Scan(&owner)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return owner
 }
 
 func ptr[T any](v T) *T {

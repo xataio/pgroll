@@ -2,7 +2,11 @@
 
 package migrations
 
-import "github.com/xataio/pgroll/pkg/schema"
+import (
+	"strings"
+
+	"github.com/xataio/pgroll/pkg/schema"
+)
 
 func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 	if f.Name == "" {
@@ -17,6 +21,18 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 	column := table.GetColumn(f.Column)
 	if column == nil {
 		return ColumnDoesNotExistError{Table: f.Table, Name: f.Column}
+	}
+
+	switch strings.ToUpper(string(f.OnDelete)) {
+	case string(ForeignKeyReferenceOnDeleteNOACTION):
+	case string(ForeignKeyReferenceOnDeleteRESTRICT):
+	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
+	case string(ForeignKeyReferenceOnDeleteSETNULL):
+	case string(ForeignKeyReferenceOnDeleteCASCADE):
+	case "":
+		break
+	default:
+		return InvalidOnDeleteSettingError{Name: f.Name, Setting: string(f.OnDelete)}
 	}
 
 	return nil

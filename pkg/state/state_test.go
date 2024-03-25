@@ -13,7 +13,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -63,17 +62,137 @@ func TestInferredMigration(t *testing.T) {
 		ctx := context.Background()
 
 		tests := []struct {
-			name          string
-			sqlStmt       string
-			wantMigration migrations.Migration
+			name           string
+			sqlStmts       []string
+			wantMigrations []migrations.Migration
 		}{
 			{
-				name:    "create table",
-				sqlStmt: "CREATE TABLE public.table1 (id int)",
-				wantMigration: migrations.Migration{
-					Operations: migrations.Operations{
-						&migrations.OpRawSQL{
-							Up: "CREATE TABLE public.table1 (id int)",
+				name:     "create table",
+				sqlStmts: []string{"CREATE TABLE public.table1 (id int)"},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE public.table1 (id int)"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop table",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int)",
+					"DROP TABLE table1",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP TABLE table1"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop column",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, b text)",
+					"ALTER TABLE table1 DROP COLUMN b",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, b text)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP COLUMN b"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop check constraint",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, age integer, CONSTRAINT check_age CHECK (age > 0))",
+					"ALTER TABLE table1 DROP CONSTRAINT check_age",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, age integer, CONSTRAINT check_age CHECK (age > 0))"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP CONSTRAINT check_age"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop unique constraint",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))",
+					"ALTER TABLE table1 DROP CONSTRAINT unique_b",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, b text, CONSTRAINT unique_b UNIQUE(b))"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "ALTER TABLE table1 DROP CONSTRAINT unique_b"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop index",
+				sqlStmts: []string{
+					"CREATE TABLE table1 (id int, b text)",
+					"CREATE INDEX idx_b ON table1(b)",
+					"DROP INDEX idx_b",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE TABLE table1 (id int, b text)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE INDEX idx_b ON table1(b)"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP INDEX idx_b"},
+						},
+					},
+				},
+			},
+			{
+				name: "create/drop function",
+				sqlStmts: []string{
+					"CREATE FUNCTION foo() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql",
+					"DROP FUNCTION foo",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE FUNCTION foo() RETURNS void AS $$ BEGIN END; $$ LANGUAGE plpgsql"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP FUNCTION foo"},
 						},
 					},
 				},
@@ -86,29 +205,48 @@ func TestInferredMigration(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if _, err := db.ExecContext(ctx, tt.sqlStmt); err != nil {
+				if _, err := db.ExecContext(ctx, fmt.Sprintf("TRUNCATE %s.migrations", state.Schema())); err != nil {
 					t.Fatal(err)
 				}
 
-				var migrationStr []byte
-				err := db.QueryRowContext(ctx,
-					fmt.Sprintf("SELECT migration FROM %s.migrations WHERE schema=$1", pq.QuoteIdentifier(state.Schema())), "public").
-					Scan(&migrationStr)
+				for _, stmt := range tt.sqlStmts {
+					if _, err := db.ExecContext(ctx, stmt); err != nil {
+						t.Fatal(err)
+					}
+				}
+
+				rows, err := db.QueryContext(ctx,
+					fmt.Sprintf("SELECT migration FROM %s.migrations ORDER BY created_at ASC", state.Schema()))
 				if err != nil {
 					t.Fatal(err)
 				}
+				defer rows.Close()
 
-				var gotMigration migrations.Migration
-				if err := json.Unmarshal(migrationStr, &gotMigration); err != nil {
-					t.Fatal(err)
+				var gotMigrations []migrations.Migration
+				for rows.Next() {
+					var migrationStr []byte
+					if err := rows.Scan(&migrationStr); err != nil {
+						t.Fatal(err)
+					}
+					var gotMigration migrations.Migration
+					if err := json.Unmarshal(migrationStr, &gotMigration); err != nil {
+						t.Fatal(err)
+					}
+					gotMigrations = append(gotMigrations, gotMigration)
 				}
 
-				// test there is a name for the migration, then remove it for the comparison
-				assert.True(t, strings.HasPrefix(gotMigration.Name, "sql_") && len(gotMigration.Name) > 10)
-				gotMigration.Name = ""
+				assert.Equal(t, len(tt.wantMigrations), len(gotMigrations), "unexpected number of migrations")
 
-				if diff := cmp.Diff(tt.wantMigration, gotMigration); diff != "" {
-					t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
+				for i, wantMigration := range tt.wantMigrations {
+					gotMigration := gotMigrations[i]
+
+					// test there is a name for the migration, then remove it for the comparison
+					assert.True(t, strings.HasPrefix(gotMigration.Name, "sql_") && len(gotMigration.Name) > 10)
+					gotMigration.Name = ""
+
+					if diff := cmp.Diff(wantMigration, gotMigration); diff != "" {
+						t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
+					}
 				}
 			})
 		}
@@ -333,6 +471,61 @@ func TestReadSchema(t *testing.T) {
 									Columns:           []string{"fk"},
 									ReferencedTable:   "table1",
 									ReferencedColumns: []string{"id"},
+									OnDelete:          "NO ACTION",
+								},
+							},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name:       "foreign key with ON DELETE CASCADE",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) ON DELETE CASCADE)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"id": {
+									Name:     "id",
+									Type:     "integer",
+									Nullable: false,
+									Unique:   true,
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]schema.Index{
+								"table1_pkey": {
+									Name:    "table1_pkey",
+									Unique:  true,
+									Columns: []string{"id"},
+								},
+							},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							ForeignKeys:       map[string]schema.ForeignKey{},
+						},
+						"table2": {
+							Name: "table2",
+							Columns: map[string]schema.Column{
+								"fk": {
+									Name:     "fk",
+									Type:     "integer",
+									Nullable: false,
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]schema.Index{},
+							ForeignKeys: map[string]schema.ForeignKey{
+								"fk_fkey": {
+									Name:              "fk_fkey",
+									Columns:           []string{"fk"},
+									ReferencedTable:   "table1",
+									ReferencedColumns: []string{"id"},
+									OnDelete:          "CASCADE",
 								},
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},

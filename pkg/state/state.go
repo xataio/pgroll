@@ -223,21 +223,29 @@ BEGIN
 						'name', fk_details.conname,
 						'columns', fk_details.columns,
 						'referencedTable', fk_details.referencedTable,
-						'referencedColumns', fk_details.referencedColumns
+						'referencedColumns', fk_details.referencedColumns,
+						'onDelete', fk_details.onDelete
 					)), '{}'::json)
 					FROM (
 						SELECT
 							fk_constraint.conname,
 							array_agg(fk_attr.attname ORDER BY fk_constraint.conkey::int[]) AS columns,
 							fk_cl.relname AS referencedTable,
-							array_agg(ref_attr.attname ORDER BY fk_constraint.confkey::int[]) AS referencedColumns
+							array_agg(ref_attr.attname ORDER BY fk_constraint.confkey::int[]) AS referencedColumns,
+							CASE
+							  WHEN fk_constraint.confdeltype = 'a' THEN 'NO ACTION'
+							  WHEN fk_constraint.confdeltype = 'r' THEN 'RESTRICT'
+							  WHEN fk_constraint.confdeltype = 'c' THEN 'CASCADE'
+							  WHEN fk_constraint.confdeltype = 'd' THEN 'SET DEFAULT'
+							  WHEN fk_constraint.confdeltype = 'n' THEN 'SET NULL'
+							END as onDelete
 						FROM pg_constraint AS fk_constraint
 						INNER JOIN pg_class fk_cl ON fk_constraint.confrelid = fk_cl.oid
 						INNER JOIN pg_attribute fk_attr ON fk_attr.attrelid = fk_constraint.conrelid AND fk_attr.attnum = ANY(fk_constraint.conkey)
 						INNER JOIN pg_attribute ref_attr ON ref_attr.attrelid = fk_constraint.confrelid AND ref_attr.attnum = ANY(fk_constraint.confkey)
 						WHERE fk_constraint.conrelid = t.oid
 						AND fk_constraint.contype = 'f'
-						GROUP BY fk_constraint.conname, fk_cl.relname
+						GROUP BY fk_constraint.conname, fk_cl.relname, fk_constraint.confdeltype
 					) AS fk_details
 				)
 			)), '{}'::json) FROM pg_class AS t
@@ -268,7 +276,7 @@ BEGIN
 		RETURN;
 	END IF;
 
-	IF tg_event = 'sql_drop' THEN
+	IF tg_event = 'sql_drop' and tg_tag != 'ALTER TABLE' THEN
 		-- Guess the schema from drop commands
 		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
 
@@ -324,7 +332,6 @@ CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
 CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
 	EXECUTE FUNCTION %[1]s.raw_migration();
-
 `
 
 type State struct {

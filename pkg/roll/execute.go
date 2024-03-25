@@ -4,6 +4,7 @@ package roll
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,12 +19,6 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration, cbs...)
 	if err != nil {
 		return err
-	}
-
-	if m.migrationHooks.BeforeBackfill != nil {
-		if err := m.migrationHooks.BeforeBackfill(m); err != nil {
-			return fmt.Errorf("failed to execute BeforeBackfill hook: %w", err)
-		}
 	}
 
 	// perform backfills for the tables that require it
@@ -72,7 +67,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.pgConn, m.state.Schema(), newSchema, cbs...)
+		table, err := op.Start(ctx, m.connForOp(op), m.state.Schema(), newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 
@@ -160,7 +155,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.pgConn, schema)
+		err := op.Complete(ctx, m.connForOp(op), schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
@@ -210,7 +205,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.pgConn)
+		err := op.Rollback(ctx, m.connForOp(op))
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
@@ -223,6 +218,18 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// connForOp returns the connection to use for the given operation.
+// If the operation is a raw SQL operation, it will use the rawSQLConn (if set)
+// otherwise it will use the regular pgConn
+func (m *Roll) connForOp(op migrations.Operation) *sql.DB {
+	if m.pgRawSQLConn != nil {
+		if _, ok := op.(*migrations.OpRawSQL); ok {
+			return m.pgRawSQLConn
+		}
+	}
+	return m.pgConn
 }
 
 // create view creates a view for the new version of the schema
@@ -260,7 +267,11 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) error {
 	for _, table := range tables {
 		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
-			return fmt.Errorf("unable to backfill table %q: %w", table.Name, err)
+			errRollback := m.Rollback(ctx)
+
+			return errors.Join(
+				fmt.Errorf("unable to backfill table %q: %w", table.Name, err),
+				errRollback)
 		}
 	}
 

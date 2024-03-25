@@ -190,9 +190,10 @@ func TestChangeColumnType(t *testing.T) {
 									Name: "department_id",
 									Type: "integer",
 									References: &migrations.ForeignKeyReference{
-										Name:   "fk_employee_department",
-										Table:  "departments",
-										Column: "id",
+										Name:     "fk_employee_department",
+										Table:    "departments",
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},
@@ -214,13 +215,13 @@ func TestChangeColumnType(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// A temporary FK constraint has been created on the temporary column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"))
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", migrations.DuplicationName("fk_employee_department"), withOnDeleteCascade())
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the column
-				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department")
+				ValidatedForeignKeyMustExist(t, db, schema, "employees", "fk_employee_department", withOnDeleteCascade())
 			},
 		},
 		{
@@ -469,6 +470,53 @@ func TestChangeColumnType(t *testing.T) {
 				MustInsert(t, db, schema, "03_change_type", "users", map[string]string{
 					"username": "bob",
 				})
+			},
+		},
+		{
+			name: "changing column type preserves any comments on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "username",
+									Type:    "text",
+									Comment: ptr("the name of the user"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "username",
+							Type:   ptr("varchar(255)"),
+							Up:     ptr("username"),
+							Down:   ptr("username"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The duplicated column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("username"), "the name of the user")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The final column has a comment defined on it
+				ColumnMustHaveComment(t, db, schema, "users", "username", "the name of the user")
 			},
 		},
 	})
