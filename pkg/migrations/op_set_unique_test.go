@@ -51,13 +51,11 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "review",
-							Unique: &migrations.UniqueConstraint{
-								Name: "reviews_review_unique",
-							},
-							Up: ptr("review || '-' || (random()*1000000)::integer"),
+							Unique: migrations.UniqueConstraint{Name: "reviews_review_unique"},
+							Up:     "review || '-' || (random()*1000000)::integer",
 						},
 					},
 				},
@@ -152,14 +150,12 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "review",
-							Unique: &migrations.UniqueConstraint{
-								Name: "reviews_review_unique",
-							},
-							Up:   ptr("review || '-' || (random()*1000000)::integer"),
-							Down: ptr("review || '!'"),
+							Unique: migrations.UniqueConstraint{Name: "reviews_review_unique"},
+							Up:     "review || '-' || (random()*1000000)::integer",
+							Down:   "review || '!'",
 						},
 					},
 				},
@@ -214,14 +210,12 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Unique: &migrations.UniqueConstraint{
-								Name: "reviews_username_unique",
-							},
-							Up:   ptr("username"),
-							Down: ptr("username"),
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -317,14 +311,12 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "03_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "employees",
 							Column: "department_id",
-							Unique: &migrations.UniqueConstraint{
-								Name: "employees_department_id_unique",
-							},
-							Up:   ptr("department_id"),
-							Down: ptr("department_id"),
+							Unique: migrations.UniqueConstraint{Name: "employees_department_id_unique"},
+							Up:     "department_id",
+							Down:   "department_id",
 						},
 					},
 				},
@@ -373,14 +365,12 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Unique: &migrations.UniqueConstraint{
-								Name: "reviews_username_unique",
-							},
-							Up:   ptr("username"),
-							Down: ptr("username"),
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},
@@ -436,14 +426,12 @@ func TestSetColumnUnique(t *testing.T) {
 				{
 					Name: "02_set_unique",
 					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
+						&migrations.OpSetUnique{
 							Table:  "reviews",
 							Column: "username",
-							Unique: &migrations.UniqueConstraint{
-								Name: "reviews_username_unique",
-							},
-							Up:   ptr("username"),
-							Down: ptr("username"),
+							Unique: migrations.UniqueConstraint{Name: "reviews_username_unique"},
+							Up:     "username",
+							Down:   "username",
 						},
 					},
 				},

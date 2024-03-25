@@ -11,13 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpDropNotNull struct {
-	Table  string `json:"table"`
-	Column string `json:"column"`
-	Up     string `json:"up"`
-	Down   string `json:"down"`
-}
-
 var _ Operation = (*OpDropNotNull)(nil)
 
 func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {

@@ -11,14 +11,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type OpSetUnique struct {
-	Name   string `json:"name"`
-	Table  string `json:"table"`
-	Column string `json:"column"`
-	Up     string `json:"up"`
-	Down   string `json:"down"`
-}
-
 var _ Operation = (*OpSetUnique)(nil)
 
 func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
@@ -80,8 +72,8 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 	// Create a unique constraint using the unique index
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Name)))
+		pq.QuoteIdentifier(o.Unique.Name),
+		pq.QuoteIdentifier(o.Unique.Name)))
 	if err != nil {
 		return err
 	}
@@ -147,7 +139,7 @@ func (o *OpSetUnique) Rollback(ctx context.Context, conn *sql.DB) error {
 }
 
 func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
-	if o.Name == "" {
+	if o.Unique.Name == "" {
 		return FieldRequiredError{Name: "name"}
 	}
 
@@ -166,7 +158,7 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn *sql.DB) error {
 	// create unique index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		pq.QuoteIdentifier(o.Name),
+		pq.QuoteIdentifier(o.Unique.Name),
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(TemporaryName(o.Column))))
 

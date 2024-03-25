@@ -111,6 +111,24 @@ type OpAlterColumn struct {
 	Up *string `json:"up,omitempty"`
 }
 
+// Change type operation
+type OpChangeType struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New type of the column
+	Type string `json:"type"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Create index operation
 type OpCreateIndex struct {
 	// Names of columns on which to define the index
@@ -171,6 +189,21 @@ type OpDropIndex struct {
 	Name string `json:"name"`
 }
 
+// Drop not null operation
+type OpDropNotNull struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Drop table operation
 type OpDropTable struct {
 	// Name of the table
@@ -187,6 +220,18 @@ type OpRawSQL struct {
 
 	// SQL expression for up migration
 	Up string `json:"up"`
+}
+
+// Rename column operation
+type OpRenameColumn struct {
+	// Name of the column
+	From string `json:"from"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New name of the column
+	To string `json:"to"`
 }
 
 // Rename constraint operation
@@ -210,6 +255,57 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// Set check constraint operation
+type OpSetCheckConstraint struct {
+	// Check constraint
+	Check CheckConstraint `json:"check"`
+
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
+// Set foreign key operation
+type OpSetForeignKey struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Foreign key reference
+	References ForeignKeyReference `json:"references"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
+// Set not null operation
+type OpSetNotNull struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Set replica identity operation
 type OpSetReplicaIdentity struct {
 	// Replica identity to set
@@ -217,6 +313,24 @@ type OpSetReplicaIdentity struct {
 
 	// Name of the table
 	Table string `json:"table"`
+}
+
+// Set unique operation
+type OpSetUnique struct {
+	// Name of the column
+	Column string `json:"column"`
+
+	// SQL expression for down migration
+	Down string `json:"down"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// Unique constraint to set
+	Unique UniqueConstraint `json:"unique"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
 }
 
 // PgRoll migration definition
