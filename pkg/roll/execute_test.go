@@ -12,6 +12,7 @@ import (
 
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
@@ -656,6 +657,114 @@ func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 	t.Run("when the schema is non-public", func(t *testing.T) {
 		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
 			assert.Equal(t, "apples", mig.Schema())
+		})
+	})
+}
+
+func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("when the SQL transformer is used to rewrite SQL", func(t *testing.T) {
+		var transformer migrations.SQLTransformer = migrations.SQLTransformerFunc(
+			func(sql string) (string, error) {
+				return "'rewritten'", nil
+			},
+		)
+		opts := []roll.Option{roll.WithSQLTransformer(transformer)}
+
+		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// Start a create table migration
+			err := mig.Start(ctx, &migrations.Migration{
+				Name:       "01_create_table",
+				Operations: migrations.Operations{createTableOp("table1")},
+			})
+			require.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Insert some data
+			_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice'), (2, 'bob')")
+			require.NoError(t, err)
+
+			// Start an add column migration that requires a backfill
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "table1",
+						Up:    "apples",
+						Column: migrations.Column{
+							Name:     "description",
+							Type:     "text",
+							Nullable: ptr(false),
+						},
+					},
+				},
+			})
+			require.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Ensure that the backfill used the SQL rewritten by the transformer
+			rows := MustSelect(t, db, "public", "02_add_column", "table1")
+			assert.Equal(t, []map[string]any{
+				{"id": 1, "name": "alice", "description": "rewritten"},
+				{"id": 2, "name": "bob", "description": "rewritten"},
+			}, rows)
+		})
+	})
+
+	t.Run("when the SQL transformer returns an error", func(t *testing.T) {
+		transformerError := errors.New("oops")
+
+		var transformer migrations.SQLTransformer = migrations.SQLTransformerFunc(
+			func(sql string) (string, error) {
+				return "", transformerError
+			},
+		)
+		opts := []roll.Option{roll.WithSQLTransformer(transformer)}
+
+		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// Start a create table migration
+			err := mig.Start(ctx, &migrations.Migration{
+				Name:       "01_create_table",
+				Operations: migrations.Operations{createTableOp("table1")},
+			})
+			require.NoError(t, err)
+
+			// Complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Insert some data
+			_, err = db.ExecContext(ctx, "INSERT INTO table1 (id, name) VALUES (1, 'alice'), (2, 'bob')")
+			require.NoError(t, err)
+
+			// Start an add column migration that requires a backfill
+			err = mig.Start(ctx, &migrations.Migration{
+				Name: "02_add_column",
+				Operations: migrations.Operations{
+					&migrations.OpAddColumn{
+						Table: "table1",
+						Up:    "apples",
+						Column: migrations.Column{
+							Name:     "description",
+							Type:     "text",
+							Nullable: ptr(false),
+						},
+					},
+				},
+			})
+			// Ensure that the start phase has failed with a SQL transformer error
+			require.ErrorIs(t, err, transformerError)
 		})
 	})
 }
