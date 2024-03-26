@@ -12,27 +12,45 @@ import (
 var _ Operation = (*OpRawSQL)(nil)
 
 func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
-	if !o.OnComplete {
-		_, err := conn.ExecContext(ctx, o.Up)
+	if o.OnComplete {
+		return nil, nil
+	}
+
+	up, err := tr.TransformSQL(o.Up)
+	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	_, err = conn.ExecContext(ctx, up)
+	return nil, err
 }
 
 func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
-	if o.OnComplete {
-		_, err := conn.ExecContext(ctx, o.Up)
+	if !o.OnComplete {
+		return nil
+	}
+
+	up, err := tr.TransformSQL(o.Up)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	_, err = conn.ExecContext(ctx, up)
+	return err
 }
 
 func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
-	if o.Down != "" {
-		_, err := conn.ExecContext(ctx, o.Down)
+	if o.Down == "" {
+		return nil
+	}
+
+	down, err := tr.TransformSQL(o.Down)
+	if err != nil {
 		return err
 	}
-	return nil
+
+	_, err = conn.ExecContext(ctx, down)
+	return err
 }
 
 func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
