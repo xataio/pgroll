@@ -2,6 +2,10 @@
 
 package roll
 
+import (
+	"github.com/xataio/pgroll/pkg/migrations"
+)
+
 type options struct {
 	// lock timeout in milliseconds for pgroll DDL operations
 	lockTimeoutMs int
@@ -11,6 +15,9 @@ type options struct {
 
 	// optional rawSQLURL to use for raw SQL operations
 	rawSQLURL string
+
+	// optional SQL transformer to apply to all user-defined SQL statements
+	sqlTransformer migrations.SQLTransformer
 
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
@@ -66,5 +73,15 @@ func WithMigrationHooks(hooks MigrationHooks) Option {
 func WithRawSQLURL(rawSQLURL string) Option {
 	return func(o *options) {
 		o.rawSQLURL = rawSQLURL
+	}
+}
+
+// WithSQLTransformer sets the SQL transformer to apply to all user-defined SQL
+// statements before they are executed.
+// This is useful to sanitize or modify user defined SQL statements before they
+// are executed.
+func WithSQLTransformer(transformer migrations.SQLTransformer) Option {
+	return func(o *options) {
+		o.sqlTransformer = transformer
 	}
 }

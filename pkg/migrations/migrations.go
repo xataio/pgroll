@@ -46,6 +46,16 @@ type RequiresSchemaRefreshOperation interface {
 	RequiresSchemaRefresh()
 }
 
+type SQLTransformer interface {
+	TransformSQL(sql string) (string, error)
+}
+
+type SQLTransformerFunc func(string) (string, error)
+
+func (fn SQLTransformerFunc) TransformSQL(sql string) (string, error) {
+	return fn(sql)
+}
+
 type (
 	Operations []Operation
 	Migration  struct {
