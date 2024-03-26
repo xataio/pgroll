@@ -25,7 +25,7 @@ func (o *OpRenameColumn) Start(ctx context.Context, conn *sql.DB, stateSchema st
 	return nil, nil
 }
 
-func (o *OpRenameColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpRenameColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// rename the column in the underlying table
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s",
 		pq.QuoteIdentifier(o.Table),

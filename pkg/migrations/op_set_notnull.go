@@ -75,7 +75,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return table, nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Validate the NOT NULL constraint on the old column.
 	// The constraint must be valid because:
 	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.

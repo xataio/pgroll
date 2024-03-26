@@ -19,7 +19,7 @@ func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, 
 	return nil, nil
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	if o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return err

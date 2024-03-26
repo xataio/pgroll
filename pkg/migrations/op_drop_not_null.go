@@ -70,7 +70,7 @@ func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return table, nil
 }
 
-func (o *OpDropNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpDropNotNull) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Drop the old column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),

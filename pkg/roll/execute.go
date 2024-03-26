@@ -155,7 +155,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.connForOp(op), schema)
+		err := op.Complete(ctx, m.connForOp(op), m.sqlTransformer, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}

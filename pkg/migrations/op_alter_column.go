@@ -17,10 +17,10 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return op.Start(ctx, conn, stateSchema, tr, s, cbs...)
 }
 
-func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	op := o.innerOperation()
 
-	return op.Complete(ctx, conn, s)
+	return op.Complete(ctx, conn, tr, s)
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {

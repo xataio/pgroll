@@ -23,7 +23,7 @@ type Operation interface {
 	// Complete will update the database schema to match the current version
 	// after calling Start.
 	// This method should be called once the previous version is no longer used
-	Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error
+	Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.

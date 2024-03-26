@@ -29,7 +29,7 @@ func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn *sql.DB, stateSch
 	return nil, err
 }
 
-func (o *OpSetReplicaIdentity) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpSetReplicaIdentity) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// No-op
 	return nil
 }

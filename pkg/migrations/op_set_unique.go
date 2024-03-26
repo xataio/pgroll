@@ -76,7 +76,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	return table, nil
 }
 
-func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Create a unique constraint using the unique index
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
 		pq.QuoteIdentifier(o.Table),

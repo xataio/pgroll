@@ -34,7 +34,7 @@ func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return nil, nil
 }
 
-func (o *OpDropColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpDropColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Column)))

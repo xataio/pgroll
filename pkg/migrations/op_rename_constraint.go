@@ -18,7 +18,7 @@ func (o *OpRenameConstraint) Start(ctx context.Context, conn *sql.DB, stateSchem
 	return nil, nil
 }
 
-func (o *OpRenameConstraint) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpRenameConstraint) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// rename the constraint in the underlying table
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME CONSTRAINT %s TO %s",
 		pq.QuoteIdentifier(o.Table),

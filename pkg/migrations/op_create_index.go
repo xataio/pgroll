@@ -23,7 +23,7 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return nil, err
 }
 
-func (o *OpCreateIndex) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpCreateIndex) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// No-op
 	return nil
 }
