@@ -197,6 +197,10 @@ func WithMigratorAndConnectionToContainer(t *testing.T, fn func(mig *roll.Roll, 
 	WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(500)}, fn)
 }
 
+func WithMigratorAndConnectionToContainerWithOptions(t *testing.T, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
+	WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", opts, fn)
+}
+
 // setupTestDatabase creates a new database in the test container and returns:
 // - a connection to the new database
 // - the connection string to the new database
