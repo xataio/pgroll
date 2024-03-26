@@ -67,7 +67,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.connForOp(op), m.state.Schema(), newSchema, cbs...)
+		table, err := op.Start(ctx, m.connForOp(op), m.state.Schema(), m.sqlTransformer, newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 

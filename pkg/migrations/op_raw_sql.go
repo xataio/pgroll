@@ -11,7 +11,7 @@ import (
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if !o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return nil, err

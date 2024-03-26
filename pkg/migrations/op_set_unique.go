@@ -21,7 +21,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
