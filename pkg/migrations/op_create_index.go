@@ -28,7 +28,7 @@ func (o *OpCreateIndex) Complete(ctx context.Context, conn *sql.DB, s *schema.Sc
 	return nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpCreateIndex) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s", o.Name))
 

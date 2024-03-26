@@ -62,7 +62,7 @@ func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Sc
 	return err
 }
 
-func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	tempName := TemporaryName(o.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",

@@ -24,7 +24,7 @@ func (o *OpRenameTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Sc
 	return err
 }
 
-func (o *OpRenameTable) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpRenameTable) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	return nil
 }
 

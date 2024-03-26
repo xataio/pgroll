@@ -34,7 +34,7 @@ func (o *OpRenameColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.S
 	return err
 }
 
-func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpRenameColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// no-op
 	return nil
 }

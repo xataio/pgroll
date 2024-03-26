@@ -27,7 +27,7 @@ func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema)
 	return nil
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	if o.Down != "" {
 		_, err := conn.ExecContext(ctx, o.Down)
 		return err

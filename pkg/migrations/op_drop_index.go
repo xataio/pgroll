@@ -24,7 +24,7 @@ func (o *OpDropIndex) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 	return err
 }
 
-func (o *OpDropIndex) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpDropIndex) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// no-op
 	return nil
 }

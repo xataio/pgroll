@@ -118,7 +118,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 	return err
 }
 
-func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",

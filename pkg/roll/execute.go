@@ -205,7 +205,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.connForOp(op))
+		err := op.Rollback(ctx, m.connForOp(op), m.sqlTransformer)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}

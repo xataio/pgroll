@@ -23,10 +23,10 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, s *schema.Sc
 	return op.Complete(ctx, conn, s)
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	op := o.innerOperation()
 
-	return op.Rollback(ctx, conn)
+	return op.Rollback(ctx, conn, tr)
 }
 
 func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {

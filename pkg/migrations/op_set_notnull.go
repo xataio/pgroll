@@ -135,7 +135,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, s *schema.Sch
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),

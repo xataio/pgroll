@@ -120,7 +120,7 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, s *schema.Sche
 	return err
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetUnique) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// Drop the new column, taking the unique index on the column with it
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
