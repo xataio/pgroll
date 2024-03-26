@@ -242,8 +242,8 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 						Table:  "table1",
 						Column: "name",
 						Type:   ptr("text"),
-						Up:     ptr("invalid"),
-						Down:   ptr("invalid"),
+						Up:     "invalid",
+						Down:   "invalid",
 					},
 				},
 			})

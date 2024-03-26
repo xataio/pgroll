@@ -74,7 +74,7 @@ type OpAddColumn struct {
 	Table string `json:"table"`
 
 	// SQL expression for up migration
-	Up *string `json:"up,omitempty"`
+	Up string `json:"up,omitempty"`
 }
 
 // Alter column operation
@@ -86,7 +86,7 @@ type OpAlterColumn struct {
 	Column string `json:"column"`
 
 	// SQL expression for down migration
-	Down *string `json:"down,omitempty"`
+	Down string `json:"down,omitempty"`
 
 	// New name of the column (for rename column operation)
 	Name *string `json:"name,omitempty"`
@@ -108,7 +108,7 @@ type OpAlterColumn struct {
 	Unique *UniqueConstraint `json:"unique,omitempty"`
 
 	// SQL expression for up migration
-	Up *string `json:"up,omitempty"`
+	Up string `json:"up,omitempty"`
 }
 
 // Create index operation
@@ -141,7 +141,7 @@ type OpDropColumn struct {
 	Column string `json:"column"`
 
 	// SQL expression for down migration
-	Down *string `json:"down,omitempty"`
+	Down string `json:"down,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`

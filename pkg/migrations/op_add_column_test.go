@@ -142,7 +142,7 @@ func TestAddColumn(t *testing.T) {
 								Nullable: ptr(false),
 								Unique:   ptr(true),
 							},
-							Up: ptr("'this is a description'"),
+							Up: "'this is a description'",
 						},
 					},
 				},
@@ -310,7 +310,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								},
 								Nullable: ptr(false),
 							},
-							Up: ptr("1"),
+							Up: "1",
 						},
 					},
 				},
@@ -627,7 +627,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "products",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
@@ -709,7 +709,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "products",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
@@ -798,7 +798,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "products",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
@@ -892,7 +892,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "products",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
@@ -1075,7 +1075,7 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "orders",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Name: "description",
 								Type: "text",
@@ -1123,7 +1123,7 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
@@ -1144,7 +1144,7 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
-							Up:    ptr("UPPER(name)"),
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
