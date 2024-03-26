@@ -42,7 +42,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
-		err := createTrigger(ctx, conn, triggerConfig{
+		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
 			Columns:        s.GetTable(o.Table).Columns,
