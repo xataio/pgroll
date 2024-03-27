@@ -18,7 +18,7 @@ var _ Operation = (*OpAddColumn)(nil)
 func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
-	if err := addColumn(ctx, conn, *o, table); err != nil {
+	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
 		return nil, fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
@@ -182,7 +182,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table) error {
+func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:
 	// - adding the column as nullable
@@ -203,10 +203,16 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 	o.Column.Check = nil
 
 	o.Column.Name = TemporaryName(o.Column.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
+	colSQL, err := ColumnToSQL(o.Column, tr)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
-		ColumnToSQL(o.Column),
+		colSQL,
 	))
+
 	return err
 }
 

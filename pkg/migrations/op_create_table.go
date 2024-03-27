@@ -15,10 +15,17 @@ import (
 var _ Operation = (*OpCreateTable)(nil)
 
 func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+	// Generate SQL for the columns in the table
+	columnsSQL, err := columnsToSQL(o.Columns, tr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
+	}
+
+	// Create the table under a temporary name
 	tempName := TemporaryName(o.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(tempName),
-		columnsToSQL(o.Columns)))
+		columnsSQL))
 	if err != nil {
 		return nil, err
 	}
@@ -104,18 +111,22 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func columnsToSQL(cols []Column) string {
+func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 	var sql string
 	for i, col := range cols {
 		if i > 0 {
 			sql += ", "
 		}
-		sql += ColumnToSQL(col)
+		colSQL, err := ColumnToSQL(col, tr)
+		if err != nil {
+			return "", err
+		}
+		sql += colSQL
 	}
-	return sql
+	return sql, nil
 }
 
-func ColumnToSQL(col Column) string {
+func ColumnToSQL(col Column, tr SQLTransformer) (string, error) {
 	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
 
 	if col.IsPrimaryKey() {
@@ -128,7 +139,11 @@ func ColumnToSQL(col Column) string {
 		sql += " NOT NULL"
 	}
 	if col.Default != nil {
-		sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
+		d, err := tr.TransformSQL(*col.Default)
+		if err != nil {
+			return "", err
+		}
+		sql += fmt.Sprintf(" DEFAULT %s", d)
 	}
 	if col.References != nil {
 		onDelete := "NO ACTION"
@@ -147,5 +162,5 @@ func ColumnToSQL(col Column) string {
 			pq.QuoteIdentifier(col.Check.Name),
 			col.Check.Constraint)
 	}
-	return sql
+	return sql, nil
 }
