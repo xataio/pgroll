@@ -4,9 +4,11 @@ package migrations_test
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func TestRawSQL(t *testing.T) {
@@ -183,4 +185,76 @@ func TestRawSQL(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestRawSQLTransformation(t *testing.T) {
+	t.Parallel()
+
+	t.Run("for normal raw SQL operations with up and down SQL", func(t *testing.T) {
+		ExecuteTests(t, TestCases{
+			{
+				name: "SQL transformer rewrites up and down SQL",
+				migrations: []migrations.Migration{
+					{
+						Name: "01_create_table",
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{
+								Up:   "CREATE TABLE apples(id int)",
+								Down: "CREATE TABLE bananas(id int)",
+							},
+						},
+					},
+				},
+				afterStart: func(t *testing.T, db *sql.DB, schema string) {
+					// The transformed `up` SQL was used in place of the original SQL
+					TableMustExist(t, db, schema, "table_1")
+					TableMustNotExist(t, db, schema, "apples")
+				},
+				afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+					// The transformed `down` SQL was used in place of the original SQL
+					TableMustExist(t, db, schema, "table_2")
+					TableMustNotExist(t, db, schema, "bananas")
+				},
+				afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				},
+			},
+		}, roll.WithSQLTransformer(&simpleSQLTransformer{}))
+	})
+
+	t.Run("for raw SQL operations that run on complete", func(t *testing.T) {
+		ExecuteTests(t, TestCases{
+			{
+				name: "SQL transformer rewrites up SQL when up is run on completion",
+				migrations: []migrations.Migration{
+					{
+						Name: "01_create_table",
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{
+								Up:         "CREATE TABLE apples(id int)",
+								OnComplete: true,
+							},
+						},
+					},
+				},
+				afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				},
+				afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				},
+				afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+					// The transformed `up` SQL was used in place of the original SQL
+					TableMustExist(t, db, schema, "table_1")
+					TableMustNotExist(t, db, schema, "apples")
+				},
+			},
+		}, roll.WithSQLTransformer(&simpleSQLTransformer{}))
+	})
+}
+
+type simpleSQLTransformer struct {
+	counter int
+}
+
+func (s *simpleSQLTransformer) TransformSQL(sql string) (string, error) {
+	s.counter++
+	return fmt.Sprintf("CREATE TABLE table_%d(id int)", s.counter), nil
 }
