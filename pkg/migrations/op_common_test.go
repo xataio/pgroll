@@ -32,12 +32,12 @@ func TestMain(m *testing.M) {
 	testutils.SharedTestMain(m)
 }
 
-func ExecuteTests(t *testing.T, tests TestCases) {
+func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 	testSchema := testutils.TestSchema()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.WithMigratorInSchemaAndConnectionToContainer(t, testSchema, func(mig *roll.Roll, db *sql.DB) {
+			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
 
 				// run all migrations except the last one
