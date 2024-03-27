@@ -665,12 +665,12 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 	t.Parallel()
 
 	t.Run("when the SQL transformer is used to rewrite SQL", func(t *testing.T) {
-		var transformer migrations.SQLTransformer = migrations.SQLTransformerFunc(
-			func(sql string) (string, error) {
-				return "'rewritten'", nil
-			},
-		)
-		opts := []roll.Option{roll.WithSQLTransformer(transformer)}
+		t.Parallel()
+
+		sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+			"'apples'": "'rewritten'",
+		})
+		opts := []roll.Option{roll.WithSQLTransformer(sqlTransformer)}
 
 		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
@@ -696,7 +696,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 				Operations: migrations.Operations{
 					&migrations.OpAddColumn{
 						Table: "table1",
-						Up:    "apples",
+						Up:    "'apples'",
 						Column: migrations.Column{
 							Name:     "description",
 							Type:     "text",
@@ -721,14 +721,12 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 	})
 
 	t.Run("when the SQL transformer returns an error", func(t *testing.T) {
-		transformerError := errors.New("oops")
+		t.Parallel()
 
-		var transformer migrations.SQLTransformer = migrations.SQLTransformerFunc(
-			func(sql string) (string, error) {
-				return "", transformerError
-			},
-		)
-		opts := []roll.Option{roll.WithSQLTransformer(transformer)}
+		sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+			"'apples'": testutils.MockSQLTransformerError,
+		})
+		opts := []roll.Option{roll.WithSQLTransformer(sqlTransformer)}
 
 		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
@@ -754,7 +752,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 				Operations: migrations.Operations{
 					&migrations.OpAddColumn{
 						Table: "table1",
-						Up:    "apples",
+						Up:    "'apples'",
 						Column: migrations.Column{
 							Name:     "description",
 							Type:     "text",
@@ -764,7 +762,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 				},
 			})
 			// Ensure that the start phase has failed with a SQL transformer error
-			require.ErrorIs(t, err, transformerError)
+			require.ErrorIs(t, err, testutils.ErrMockSQLTransformer)
 		})
 	})
 }

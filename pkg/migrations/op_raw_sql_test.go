@@ -4,11 +4,11 @@ package migrations_test
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
+	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestRawSQL(t *testing.T) {
@@ -190,71 +190,102 @@ func TestRawSQL(t *testing.T) {
 func TestRawSQLTransformation(t *testing.T) {
 	t.Parallel()
 
-	t.Run("for normal raw SQL operations with up and down SQL", func(t *testing.T) {
-		ExecuteTests(t, TestCases{
-			{
-				name: "SQL transformer rewrites up and down SQL",
-				migrations: []migrations.Migration{
-					{
-						Name: "01_create_table",
-						Operations: migrations.Operations{
-							&migrations.OpRawSQL{
-								Up:   "CREATE TABLE apples(id int)",
-								Down: "CREATE TABLE bananas(id int)",
-							},
+	sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+		"CREATE TABLE people(id int)":     "CREATE TABLE users(id int)",
+		"DROP TABLE people":               "DROP TABLE users",
+		"CREATE TABLE restricted(id int)": testutils.MockSQLTransformerError,
+	})
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "SQL transformer rewrites up and down SQL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE people(id int)",
+							Down: "DROP TABLE people",
 						},
 					},
 				},
-				afterStart: func(t *testing.T, db *sql.DB, schema string) {
-					// The transformed `up` SQL was used in place of the original SQL
-					TableMustExist(t, db, schema, "table_1")
-					TableMustNotExist(t, db, schema, "apples")
-				},
-				afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-					// The transformed `down` SQL was used in place of the original SQL
-					TableMustExist(t, db, schema, "table_2")
-					TableMustNotExist(t, db, schema, "bananas")
-				},
-				afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				},
 			},
-		}, roll.WithSQLTransformer(&simpleSQLTransformer{}))
-	})
-
-	t.Run("for raw SQL operations that run on complete", func(t *testing.T) {
-		ExecuteTests(t, TestCases{
-			{
-				name: "SQL transformer rewrites up SQL when up is run on completion",
-				migrations: []migrations.Migration{
-					{
-						Name: "01_create_table",
-						Operations: migrations.Operations{
-							&migrations.OpRawSQL{
-								Up:         "CREATE TABLE apples(id int)",
-								OnComplete: true,
-							},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The transformed `up` SQL was used in place of the original SQL
+				TableMustExist(t, db, schema, "users")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The transformed `down` SQL was used in place of the original SQL
+				TableMustNotExist(t, db, schema, "users")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+			},
+		},
+		{
+			name: "SQL transformer rewrites up SQL when up is run on completion",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:         "CREATE TABLE people(id int)",
+							OnComplete: true,
 						},
 					},
 				},
-				afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				},
-				afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				},
-				afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-					// The transformed `up` SQL was used in place of the original SQL
-					TableMustExist(t, db, schema, "table_1")
-					TableMustNotExist(t, db, schema, "apples")
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The transformed `up` SQL was used in place of the original SQL
+				TableMustExist(t, db, schema, "users")
+			},
+		},
+		{
+			name: "raw SQL operation fails when SQL transformer returns an error on up SQL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: "CREATE TABLE restricted(id int)",
+						},
+					},
 				},
 			},
-		}, roll.WithSQLTransformer(&simpleSQLTransformer{}))
-	})
-}
-
-type simpleSQLTransformer struct {
-	counter int
-}
-
-func (s *simpleSQLTransformer) TransformSQL(sql string) (string, error) {
-	s.counter++
-	return fmt.Sprintf("CREATE TABLE table_%d(id int)", s.counter), nil
+			wantStartErr: testutils.ErrMockSQLTransformer,
+		},
+		{
+			name: "raw SQL operation fails when SQL transformer returns an error on down SQL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE products(id int)",
+							Down: "CREATE TABLE restricted(id int)",
+						},
+					},
+				},
+			},
+			wantRollbackErr: testutils.ErrMockSQLTransformer,
+		},
+		{
+			name: "raw SQL onComplete operation fails when SQL transformer returns an error on up SQL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:         "CREATE TABLE restricted(id int)",
+							OnComplete: true,
+						},
+					},
+				},
+			},
+			wantCompleteErr: testutils.ErrMockSQLTransformer,
+		},
+	}, roll.WithSQLTransformer(sqlTransformer))
 }
