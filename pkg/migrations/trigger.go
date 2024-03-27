@@ -33,7 +33,13 @@ type triggerConfig struct {
 	SQL            string
 }
 
-func createTrigger(ctx context.Context, conn *sql.DB, cfg triggerConfig) error {
+func createTrigger(ctx context.Context, conn *sql.DB, tr SQLTransformer, cfg triggerConfig) error {
+	sql, err := tr.TransformSQL(cfg.SQL)
+	if err != nil {
+		return err
+	}
+	cfg.SQL = sql
+
 	funcSQL, err := buildFunction(cfg)
 	if err != nil {
 		return err

@@ -21,7 +21,7 @@ type OpChangeType struct {
 
 var _ Operation = (*OpChangeType)(nil)
 
-func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
@@ -32,7 +32,7 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := createTrigger(ctx, conn, triggerConfig{
+	err := createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
@@ -54,7 +54,7 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	err = createTrigger(ctx, conn, triggerConfig{
+	err = createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,
@@ -71,7 +71,7 @@ func (o *OpChangeType) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return table, nil
 }
 
-func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Remove the up function and trigger
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
@@ -104,7 +104,7 @@ func (o *OpChangeType) Complete(ctx context.Context, conn *sql.DB, s *schema.Sch
 	return nil
 }
 
-func (o *OpChangeType) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpChangeType) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),

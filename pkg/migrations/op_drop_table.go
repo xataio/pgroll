@@ -13,18 +13,18 @@ import (
 
 var _ Operation = (*OpDropTable)(nil)
 
-func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	s.RemoveTable(o.Name)
 	return nil, nil
 }
 
-func (o *OpDropTable) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpDropTable) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", pq.QuoteIdentifier(o.Name)))
 
 	return err
 }
 
-func (o *OpDropTable) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpDropTable) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	return nil
 }
 

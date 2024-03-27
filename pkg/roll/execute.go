@@ -67,7 +67,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.connForOp(op), m.state.Schema(), newSchema, cbs...)
+		table, err := op.Start(ctx, m.connForOp(op), m.state.Schema(), m.sqlTransformer, newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 
@@ -155,7 +155,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.connForOp(op), schema)
+		err := op.Complete(ctx, m.connForOp(op), m.sqlTransformer, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
@@ -205,7 +205,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.connForOp(op))
+		err := op.Rollback(ctx, m.connForOp(op), m.sqlTransformer)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}

@@ -18,16 +18,16 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
+	Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
 	// This method should be called once the previous version is no longer used
-	Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error
+	Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.
-	Rollback(ctx context.Context, conn *sql.DB) error
+	Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error
 
 	// Validate returns a descriptive error if the operation cannot be applied to the given schema
 	Validate(ctx context.Context, s *schema.Schema) error
@@ -44,6 +44,16 @@ type IsolatedOperation interface {
 type RequiresSchemaRefreshOperation interface {
 	// this operation requires the resulting schema to be refreshed when executed on start
 	RequiresSchemaRefresh()
+}
+
+type SQLTransformer interface {
+	TransformSQL(sql string) (string, error)
+}
+
+type SQLTransformerFunc func(string) (string, error)
+
+func (fn SQLTransformerFunc) TransformSQL(sql string) (string, error) {
+	return fn(sql)
 }
 
 type (

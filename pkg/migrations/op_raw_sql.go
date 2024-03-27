@@ -11,7 +11,7 @@ import (
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if !o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return nil, err
@@ -19,7 +19,7 @@ func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, 
 	return nil, nil
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema) error {
+func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
 	if o.OnComplete {
 		_, err := conn.ExecContext(ctx, o.Up)
 		return err
@@ -27,7 +27,7 @@ func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, s *schema.Schema)
 	return nil
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB) error {
+func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
 	if o.Down != "" {
 		_, err := conn.ExecContext(ctx, o.Down)
 		return err
