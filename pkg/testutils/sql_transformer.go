@@ -25,8 +25,8 @@ func NewMockSQLTransformer(ts map[string]string) *MockSQLTransformer {
 // provided to the MockSQLTransformer. If the input SQL is not in the transformations
 // map, the input SQL is returned unchanged.
 func (s *MockSQLTransformer) TransformSQL(sql string) (string, error) {
-	out, ok := s.transformations[sql]
-	if !ok {
+	out, found := s.transformations[sql]
+	if !found {
 		return sql, nil
 	}
 
