@@ -18,12 +18,13 @@ import (
 )
 
 type TestCase struct {
-	name          string
-	migrations    []migrations.Migration
-	wantStartErr  error
-	afterStart    func(t *testing.T, db *sql.DB, schema string)
-	afterComplete func(t *testing.T, db *sql.DB, schema string)
-	afterRollback func(t *testing.T, db *sql.DB, schema string)
+	name            string
+	migrations      []migrations.Migration
+	wantStartErr    error
+	wantRollbackErr error
+	afterStart      func(t *testing.T, db *sql.DB, schema string)
+	afterComplete   func(t *testing.T, db *sql.DB, schema string)
+	afterRollback   func(t *testing.T, db *sql.DB, schema string)
 }
 
 type TestCases []TestCase
@@ -69,7 +70,14 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				}
 
 				// roll back the migration
-				if err := mig.Rollback(ctx); err != nil {
+				err = mig.Rollback(ctx)
+				if tt.wantRollbackErr != nil {
+					if !errors.Is(err, tt.wantRollbackErr) {
+						t.Fatalf("Expected error %q, got %q", tt.wantRollbackErr, err)
+					}
+					return
+				}
+				if err != nil {
 					t.Fatalf("Failed to roll back migration: %v", err)
 				}
 
