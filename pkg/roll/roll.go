@@ -18,9 +18,7 @@ type PGVersion int
 const PGVersion15 PGVersion = 15
 
 type Roll struct {
-	pgConn *sql.DB
-
-	pgRawSQLConn *sql.DB
+	pgConn *sql.DB // TODO abstract sql connection
 
 	// schema we are acting on
 	schema string
@@ -45,14 +43,6 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		return nil, err
 	}
 
-	var rawSQLConn *sql.DB
-	if rollOpts.rawSQLURL != "" {
-		rawSQLConn, err = setupConn(ctx, rollOpts.rawSQLURL, schema, options{})
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var pgMajorVersion PGVersion
 	err = conn.QueryRowContext(ctx, "SELECT split_part(split_part(version(), ' ', 2), '.', 1)").Scan(&pgMajorVersion)
 	if err != nil {
@@ -68,7 +58,6 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 
 	return &Roll{
 		pgConn:                conn,
-		pgRawSQLConn:          rawSQLConn,
 		schema:                schema,
 		state:                 state,
 		pgVersion:             PGVersion(pgMajorVersion),
@@ -141,13 +130,6 @@ func (m *Roll) Close() error {
 	err := m.state.Close()
 	if err != nil {
 		return err
-	}
-
-	if m.pgRawSQLConn != nil {
-		err = m.pgRawSQLConn.Close()
-		if err != nil {
-			return err
-		}
 	}
 
 	return m.pgConn.Close()
