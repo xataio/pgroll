@@ -13,9 +13,6 @@ type options struct {
 	// optional role to set before executing migrations
 	role string
 
-	// optional rawSQLURL to use for raw SQL operations
-	rawSQLURL string
-
 	// optional SQL transformer to apply to all user-defined SQL statements
 	sqlTransformer migrations.SQLTransformer
 
@@ -63,16 +60,6 @@ func WithDisableViewsManagement() Option {
 func WithMigrationHooks(hooks MigrationHooks) Option {
 	return func(o *options) {
 		o.migrationHooks = hooks
-	}
-}
-
-// WithRawSQLURL sets the postgres URL to use for raw SQL operations
-// This is useful when the raw SQL operations need to be executed against
-// a different endpoint than the main migration operations (ie with a different user or
-// more security checks)
-func WithRawSQLURL(rawSQLURL string) Option {
-	return func(o *options) {
-		o.rawSQLURL = rawSQLURL
 	}
 }
 
