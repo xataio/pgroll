@@ -46,9 +46,11 @@ func ReadMigration(r io.Reader) (*Migration, error) {
 		return nil, err
 	}
 
+	dec := json.NewDecoder(bytes.NewReader(byteValue))
+	dec.DisallowUnknownFields()
+
 	mig := Migration{}
-	err = json.Unmarshal(byteValue, &mig)
-	if err != nil {
+	if err = dec.Decode(&mig); err != nil {
 		return nil, err
 	}
 
