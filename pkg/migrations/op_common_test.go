@@ -22,6 +22,7 @@ type TestCase struct {
 	migrations      []migrations.Migration
 	wantStartErr    error
 	wantRollbackErr error
+	wantCompleteErr error
 	afterStart      func(t *testing.T, db *sql.DB, schema string)
 	afterComplete   func(t *testing.T, db *sql.DB, schema string)
 	afterRollback   func(t *testing.T, db *sql.DB, schema string)
@@ -92,7 +93,14 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				}
 
 				// complete the last migration
-				if err := mig.Complete(ctx); err != nil {
+				err = mig.Complete(ctx)
+				if tt.wantCompleteErr != nil {
+					if !errors.Is(err, tt.wantCompleteErr) {
+						t.Fatalf("Expected error %q, got %q", tt.wantCompleteErr, err)
+					}
+					return
+				}
+				if err != nil {
 					t.Fatalf("Failed to complete migration: %v", err)
 				}
 
