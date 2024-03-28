@@ -124,7 +124,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
 
-		if err := json.Unmarshal(logBody, item); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(logBody))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(item); err != nil {
 			return fmt.Errorf("decode migration [%v]: %w", opName, err)
 		}
 
