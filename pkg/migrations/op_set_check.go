@@ -144,6 +144,10 @@ func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn *sql.DB, tr SQ
 }
 
 func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) error {
+	if err := validateName(o.Column); err != nil {
+		return err
+	}
+
 	if err := o.Check.Validate(); err != nil {
 		return CheckConstraintError{
 			Table:  o.Table,

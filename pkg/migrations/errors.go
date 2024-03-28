@@ -183,6 +183,15 @@ func (e InvalidReplicaIdentityError) Error() string {
 	return fmt.Sprintf("replica identity on table %q must be one of 'NOTHING', 'DEFAULT', 'INDEX' or 'FULL', found %q", e.Table, e.Identity)
 }
 
+type InvalidNameLengthError struct {
+	Name string
+	Max  int
+}
+
+func (e InvalidNameLengthError) Error() string {
+	return fmt.Sprintf("max length of %q is %d", e.Name, e.Max)
+}
+
 type InvalidOnDeleteSettingError struct {
 	Name    string
 	Setting string

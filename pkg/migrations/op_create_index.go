@@ -40,6 +40,10 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if err := validateName(o.Name); err != nil {
+		return err
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

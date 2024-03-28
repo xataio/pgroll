@@ -134,6 +134,10 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransfor
 }
 
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	if err := validateName(o.Column.Name); err != nil {
+		return err
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

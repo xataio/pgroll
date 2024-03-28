@@ -122,6 +122,10 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn *sql.DB, tr SQLTra
 }
 
 func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error {
+	if err := validateName(o.Column); err != nil {
+		return err
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

@@ -150,6 +150,9 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
 	}
+	if err := validateName(o.Column); err != nil {
+		return err
+	}
 
 	table := s.GetTable(o.Table)
 	if table == nil {

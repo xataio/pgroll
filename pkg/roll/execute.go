@@ -106,6 +106,9 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
 	// create schema for the new version
 	versionSchema := VersionedSchemaName(m.schema, version)
+	if err := migrations.ValidateName(versionSchema); err != nil {
+		return err
+	}
 	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {
 		return err
