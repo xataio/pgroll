@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/testutils"
 )
 
@@ -1288,4 +1289,104 @@ func TestAddColumnWithComment(t *testing.T) {
 			ColumnMustHaveComment(t, db, schema, "users", "age", "the age of the user")
 		},
 	}})
+}
+
+func TestAddColumnDefaultTransformation(t *testing.T) {
+	t.Parallel()
+
+	sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+		"'default value 1'": "'rewritten'",
+		"'default value 2'": testutils.MockSQLTransformerError,
+	})
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "column default is rewritten by the SQL transformer",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:    "name",
+								Type:    "text",
+								Default: ptr("'default value 1'"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Insert some data into the table
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id": "1",
+				})
+
+				// Ensure the row has the rewritten default value.
+				rows := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "rewritten"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Ensure the row has the rewritten default value.
+				rows := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "rewritten"},
+				}, rows)
+			},
+		},
+		{
+			name: "operation fails when the SQL transformer returns an error",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:    "name",
+								Type:    "text",
+								Default: ptr("'default value 2'"),
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: testutils.ErrMockSQLTransformer,
+		},
+	}, roll.WithSQLTransformer(sqlTransformer))
 }
