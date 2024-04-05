@@ -28,6 +28,10 @@ type MigrationHooks struct {
 	BeforeStartDDL func(*Roll) error
 	// AfterStartDDL is called after the DDL phase of migration start is complete
 	AfterStartDDL func(*Roll) error
+	// BeforeCompleteDDL is called before the DDL phase of migration complete
+	BeforeCompleteDDL func(*Roll) error
+	// AfterCompleteDDL is called after the DDL phase of migration complete is complete
+	AfterCompleteDDL func(*Roll) error
 }
 
 type Option func(*options)
