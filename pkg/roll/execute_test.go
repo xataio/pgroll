@@ -565,6 +565,14 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE after_start_ddl (id integer)")
 			return err
 		},
+		BeforeCompleteDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE before_complete_ddl (id integer)")
+			return err
+		},
+		AfterCompleteDDL: func(m *roll.Roll) error {
+			_, err := m.PgConn().ExecContext(context.Background(), "CREATE TABLE after_complete_ddl (id integer)")
+			return err
+		},
 	})}
 
 	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
@@ -584,6 +592,10 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 		// Complete the migration
 		err = mig.Complete(ctx)
 		assert.NoError(t, err)
+
+		// Ensure that both the before_complete_ddl and after_complete_ddl tables were created
+		assert.True(t, tableExists(t, db, "public", "before_complete_ddl"))
+		assert.True(t, tableExists(t, db, "public", "after_complete_ddl"))
 	})
 }
 
