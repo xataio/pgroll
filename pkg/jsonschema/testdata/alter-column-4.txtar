@@ -1,5 +1,5 @@
 This is an invalid 'alter_column' migration.
-It sets `name` but also sets `up`.
+It sets only `name` but also sets `up`.
 
 -- alter_column.json --
 {
