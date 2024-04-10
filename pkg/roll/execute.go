@@ -151,6 +151,18 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to read schema: %w", err)
 	}
 
+	// run any BeforeCompleteDDL hooks
+	if m.migrationHooks.BeforeCompleteDDL != nil {
+		if err := m.migrationHooks.BeforeCompleteDDL(m); err != nil {
+			return fmt.Errorf("failed to execute BeforeCompleteDDL hook: %w", err)
+		}
+	}
+
+	// defer execution of any AfterCompleteDDL hooks
+	if m.migrationHooks.AfterCompleteDDL != nil {
+		defer m.migrationHooks.AfterCompleteDDL(m)
+	}
+
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
