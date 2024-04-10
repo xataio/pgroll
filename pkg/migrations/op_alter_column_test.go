@@ -134,25 +134,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.MultipleAlterColumnChangesError{Changes: 0},
-		},
-		{
-			name: "only one change at at time",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "01_alter_column",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "title",
-							Name:   ptr("renamed_title"),
-							Type:   ptr("varchar(255)"),
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.MultipleAlterColumnChangesError{Changes: 2},
+			wantStartErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
 		},
 		{
 			name: "table must have a primary key on exactly one column",
