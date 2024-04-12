@@ -705,6 +705,30 @@ func TestReadSchema(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:       "column whose type is a UDT in another schema should have the type prefixed with the schema",
+				createStmt: "CREATE DOMAIN email_type AS varchar(255); CREATE TABLE public.table1 (a email_type);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"a": {
+									Name:     "a",
+									Type:     "public.email_type",
+									Nullable: true,
+								},
+							},
+							PrimaryKey:        []string{},
+							Indexes:           map[string]schema.Index{},
+							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
