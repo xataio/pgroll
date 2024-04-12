@@ -85,6 +85,9 @@ type OpAlterColumn struct {
 	// Name of the column
 	Column string `json:"column"`
 
+	// New comment on the column
+	Comment *string `json:"comment,omitempty"`
+
 	// Default value of the column
 	Default *string `json:"default,omitempty"`
 
