@@ -507,13 +507,38 @@ func TestAlterColumnValidation(t *testing.T) {
 			wantStartErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
 		},
 		{
-			name: "table must have a primary key on exactly one column",
+			name: "if a backfill is required, the table must have a primary key on exactly one column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
 					Operations: migrations.Operations{
 						&migrations.OpRawSQL{
 							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer, primary key (id, order_id))",
+							Down: "DROP TABLE orders",
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "orders",
+							Column:   "quantity",
+							Nullable: ptr(false),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
+		},
+		{
+			name: "rename-only operations don't have primary key requirements",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer)",
 							Down: "DROP TABLE orders",
 						},
 					},
@@ -529,7 +554,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
+			wantStartErr: nil,
 		},
 	})
 }
