@@ -85,6 +85,9 @@ type OpAlterColumn struct {
 	// Name of the column
 	Column string `json:"column"`
 
+	// Default value of the column
+	Default *string `json:"default,omitempty"`
+
 	// SQL expression for down migration
 	Down string `json:"down,omitempty"`
 
