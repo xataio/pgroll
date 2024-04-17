@@ -13,7 +13,8 @@
           {
             "name": "name",
             "type": "varchar(255)",
-            "nullable": true
+            "nullable": true,
+            "default": "'<placeholder>'"
           }
         ]
       }
