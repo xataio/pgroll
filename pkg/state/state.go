@@ -340,7 +340,14 @@ type State struct {
 }
 
 func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
-	conn, err := sql.Open("postgres", pgURL)
+	dsn, err := pq.ParseURL(pgURL)
+	if err != nil {
+		dsn = pgURL
+	}
+
+	dsn += " search_path=" + stateSchema
+
+	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
