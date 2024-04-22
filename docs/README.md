@@ -738,6 +738,8 @@ Example **add column** migrations:
 
 An alter column operation alters the properties of a column. The operation supports several sub-operations, described below.
 
+An alter column operation may contain multiple sub-operations. For example, a single alter column operation may rename a column, change its type, and add a check constraint.
+
 #### Rename column
 
 A rename column operation renames a column.

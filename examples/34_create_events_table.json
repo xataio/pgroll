@@ -1,0 +1,22 @@
+{
+  "name": "34_create_events_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "events",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "nullable": true
+          }
+        ]
+      }
+    }
+  ]
+}

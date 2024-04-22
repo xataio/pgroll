@@ -1,4 +1,4 @@
-This is an invalid 'alter_column' migration.
+This is a valid 'alter_column' migration.
 It sets both `name` and `nullable`.
 
 -- alter_column.json --
@@ -19,4 +19,4 @@ It sets both `name` and `nullable`.
 }
 
 -- valid --
-false
+true

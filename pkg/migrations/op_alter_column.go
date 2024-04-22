@@ -16,27 +16,27 @@ var _ Operation = (*OpAlterColumn)(nil)
 func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
+	ops := o.subOperations()
 
-	op := o.innerOperation()
-
-	if _, ok := op.(*OpRenameColumn); !ok {
-		// Duplicate the column on the underlying table.
-		d := duplicatorForOperation(o.innerOperation(), conn, table, column)
+	// Duplicate the column on the underlying table.
+	if !o.isRenameOnly() {
+		d := duplicatorForOperations(ops, conn, table, column)
 		if err := d.Duplicate(ctx); err != nil {
 			return nil, fmt.Errorf("failed to duplicate column: %w", err)
 		}
 	}
 
 	// perform any operation specific start steps
-	tbl, err := op.Start(ctx, conn, stateSchema, tr, s, cbs...)
-	if err != nil {
-		return nil, err
+	for _, op := range ops {
+		if _, err := op.Start(ctx, conn, stateSchema, tr, s, cbs...); err != nil {
+			return nil, err
+		}
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	// Rename column operations do not require this trigger.
-	if _, ok := op.(*OpRenameColumn); !ok {
-		err = createTrigger(ctx, conn, tr, triggerConfig{
+	if !o.isRenameOnly() {
+		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
 			Direction:      TriggerDirectionUp,
 			Columns:        table.Columns,
@@ -44,7 +44,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema str
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column),
 			StateSchema:    stateSchema,
-			SQL:            o.upSQLForOperation(op),
+			SQL:            o.upSQLForOperations(ops),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -66,25 +66,35 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema str
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
 			StateSchema:    stateSchema,
-			SQL:            o.downSQLForOperation(op),
+			SQL:            o.downSQLForOperations(ops),
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create down trigger: %w", err)
 		}
 	}
 
-	return tbl, nil
+	// rename the column in the virtual schema if required
+	if o.Name != nil {
+		table.RenameColumn(o.Column, *o.Name)
+	}
+
+	if o.isRenameOnly() {
+		return nil, nil
+	}
+	return table, nil
 }
 
 func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
-	op := o.innerOperation()
+	ops := o.subOperations()
 
 	// Perform any operation specific completion steps
-	if err := op.Complete(ctx, conn, tr, s); err != nil {
-		return err
+	for _, op := range ops {
+		if err := op.Complete(ctx, conn, tr, s); err != nil {
+			return err
+		}
 	}
 
-	if _, ok := op.(*OpRenameColumn); !ok {
+	if !o.isRenameOnly() {
 		// Drop the old column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),
@@ -115,18 +125,31 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransf
 		}
 	}
 
+	// rename the column in the underlying table if required
+	if o.Name != nil {
+		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Column),
+			pq.QuoteIdentifier(*o.Name)))
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
-	op := o.innerOperation()
+	ops := o.subOperations()
 
 	// Perform any operation specific rollback steps
-	if err := op.Rollback(ctx, conn, tr); err != nil {
-		return err
+	for _, ops := range ops {
+		if err := ops.Rollback(ctx, conn, tr); err != nil {
+			return err
+		}
 	}
 
-	if _, ok := op.(*OpRenameColumn); !ok {
+	if !o.isRenameOnly() {
 		// Drop the new column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),
@@ -157,11 +180,6 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransf
 }
 
 func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
-	// Ensure that the operation describes only one change to the column
-	if cnt := o.numChanges(); cnt != 1 {
-		return MultipleAlterColumnChangesError{Changes: cnt}
-	}
-
 	// Validate that the table and column exist
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -177,9 +195,23 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return err
 	}
 
-	// Apply any special validation rules for the inner operation
-	op := o.innerOperation()
-	if _, ok := op.(*OpRenameColumn); ok {
+	// If the column is being renamed, ensure that the target column name does
+	// not already exist.
+	if o.Name != nil {
+		if table.GetColumn(*o.Name) != nil {
+			return ColumnAlreadyExistsError{Table: o.Table, Name: *o.Name}
+		}
+	}
+
+	ops := o.subOperations()
+
+	// Ensure that at least one sub-operation or rename is present
+	if len(ops) == 0 && o.Name == nil {
+		return AlterColumnNoChangesError{Table: o.Table, Column: o.Column}
+	}
+
+	// Rename-only operations are not allowed to have `up` or `down` SQL
+	if o.isRenameOnly() {
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
@@ -188,139 +220,124 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	// Validate the inner operation in isolation
-	return op.Validate(ctx, s)
+	// Validate the sub-operations in isolation
+	for _, op := range ops {
+		if err := op.Validate(ctx, s); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func (o *OpAlterColumn) innerOperation() Operation {
-	switch {
-	case o.Name != nil:
-		return &OpRenameColumn{
-			Table: o.Table,
-			From:  o.Column,
-			To:    *o.Name,
-		}
+func (o *OpAlterColumn) subOperations() []Operation {
+	var ops []Operation
 
-	case o.Type != nil:
-		return &OpChangeType{
+	if o.Type != nil {
+		ops = append(ops, &OpChangeType{
 			Table:  o.Table,
 			Column: o.Column,
 			Type:   *o.Type,
 			Up:     o.Up,
 			Down:   o.Down,
-		}
-
-	case o.Check != nil:
-		return &OpSetCheckConstraint{
+		})
+	}
+	if o.Check != nil {
+		ops = append(ops, &OpSetCheckConstraint{
 			Table:  o.Table,
 			Column: o.Column,
 			Check:  *o.Check,
 			Up:     o.Up,
 			Down:   o.Down,
-		}
-
-	case o.References != nil:
-		return &OpSetForeignKey{
+		})
+	}
+	if o.References != nil {
+		ops = append(ops, &OpSetForeignKey{
 			Table:      o.Table,
 			Column:     o.Column,
 			References: *o.References,
 			Up:         o.Up,
 			Down:       o.Down,
-		}
-
-	case o.Nullable != nil && !*o.Nullable:
-		return &OpSetNotNull{
+		})
+	}
+	if o.Nullable != nil && !*o.Nullable {
+		ops = append(ops, &OpSetNotNull{
 			Table:  o.Table,
 			Column: o.Column,
 			Up:     o.Up,
 			Down:   o.Down,
-		}
-
-	case o.Nullable != nil && *o.Nullable:
-		return &OpDropNotNull{
+		})
+	}
+	if o.Nullable != nil && *o.Nullable {
+		ops = append(ops, &OpDropNotNull{
 			Table:  o.Table,
 			Column: o.Column,
 			Up:     o.Up,
 			Down:   o.Down,
-		}
-
-	case o.Unique != nil:
-		return &OpSetUnique{
+		})
+	}
+	if o.Unique != nil {
+		ops = append(ops, &OpSetUnique{
 			Table:  o.Table,
 			Column: o.Column,
 			Name:   o.Unique.Name,
 			Up:     o.Up,
 			Down:   o.Down,
-		}
+		})
 	}
-	return nil
+
+	return ops
 }
 
-// numChanges returns the number of kinds of change that one 'alter column'
-// operation represents.
-func (o *OpAlterColumn) numChanges() int {
-	fieldsSet := 0
-
-	if o.Name != nil {
-		fieldsSet++
-	}
-	if o.Type != nil {
-		fieldsSet++
-	}
-	if o.Check != nil {
-		fieldsSet++
-	}
-	if o.References != nil {
-		fieldsSet++
-	}
-	if o.Nullable != nil {
-		fieldsSet++
-	}
-	if o.Unique != nil {
-		fieldsSet++
-	}
-
-	return fieldsSet
-}
-
-// duplicatorForOperation returns a Duplicator for the given operation.
-func duplicatorForOperation(op Operation, conn *sql.DB, table *schema.Table, column *schema.Column) *Duplicator {
+// duplicatorForOperations returns a Duplicator for the given operations
+func duplicatorForOperations(ops []Operation, conn *sql.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	d := NewColumnDuplicator(conn, table, column)
 
-	switch op := (op).(type) {
-	case *OpDropNotNull:
-		d = d.WithoutNotNull()
-	case *OpChangeType:
-		d = d.WithType(op.Type)
+	for _, op := range ops {
+		switch op := (op).(type) {
+		case *OpDropNotNull:
+			d = d.WithoutNotNull()
+		case *OpChangeType:
+			d = d.WithType(op.Type)
+		}
 	}
 	return d
 }
 
-// downSQLForOperation returns the down SQL for the given operation, applying
-// an appropriate default if none is provided.
-func (o *OpAlterColumn) downSQLForOperation(op Operation) string {
+// downSQLForOperations returns the `down` SQL for the given operations, applying
+// an appropriate default if no `down` SQL is provided.
+func (o *OpAlterColumn) downSQLForOperations(ops []Operation) string {
 	if o.Down != "" {
 		return o.Down
 	}
 
-	switch (op).(type) {
-	case *OpSetUnique, *OpSetNotNull:
-		return pq.QuoteIdentifier(o.Column)
+	for _, op := range ops {
+		switch (op).(type) {
+		case *OpSetUnique, *OpSetNotNull:
+			return pq.QuoteIdentifier(o.Column)
+		}
 	}
 
 	return ""
 }
 
-// upSQLForOperation returns the up SQL for the given operation, applying
-// an appropriate default if none is provided.
-func (o *OpAlterColumn) upSQLForOperation(op Operation) string {
+// upSQLForOperations returns the `up` SQL for the given operations, applying
+// an appropriate default if no `up` SQL is provided.
+func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 	if o.Up != "" {
 		return o.Up
 	}
 
-	if _, ok := op.(*OpDropNotNull); ok {
-		return pq.QuoteIdentifier(o.Column)
+	for _, op := range ops {
+		if _, ok := op.(*OpDropNotNull); ok {
+			return pq.QuoteIdentifier(o.Column)
+		}
 	}
 
 	return ""
+}
+
+// isRenameOnly returns true if the operation is a rename column operation only.
+func (o *OpAlterColumn) isRenameOnly() bool {
+	return len(o.subOperations()) == 0 && o.Name != nil
 }

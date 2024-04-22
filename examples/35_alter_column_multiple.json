@@ -1,0 +1,23 @@
+{
+  "name": "35_alter_column_multiple",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "events",
+        "column": "name",
+        "name": "event_name",
+        "type": "text",
+        "nullable": false,
+        "unique": {
+          "name": "events_event_name_unique"
+        },
+        "check": {
+          "name": "event_name_length",
+          "constraint": "length(name) > 3"
+        },
+        "up": "(SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END)",
+        "down": "name"
+      }
+    }
+  ]
+}

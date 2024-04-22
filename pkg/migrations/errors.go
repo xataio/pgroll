@@ -158,14 +158,6 @@ func (e NoDownSQLAllowedError) Error() string {
 	return "down SQL is not allowed for this operation"
 }
 
-type MultipleAlterColumnChangesError struct {
-	Changes int
-}
-
-func (e MultipleAlterColumnChangesError) Error() string {
-	return fmt.Sprintf("alter column operations require exactly one change, found %d", e.Changes)
-}
-
 type BackfillNotPossibleError struct {
 	Table string
 }
@@ -198,4 +190,13 @@ func (e InvalidOnDeleteSettingError) Error() string {
 		ForeignKeyReferenceOnDeleteCASCADE,
 		e.Setting,
 	)
+}
+
+type AlterColumnNoChangesError struct {
+	Table  string
+	Column string
+}
+
+func (e AlterColumnNoChangesError) Error() string {
+	return fmt.Sprintf("alter column %q on table %q requires at least one change", e.Column, e.Table)
 }
