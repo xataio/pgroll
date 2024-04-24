@@ -578,7 +578,11 @@ func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[
 		if i > 0 {
 			recordStr += ", "
 		}
-		recordStr += fmt.Sprintf("'%s'", record[c])
+		if record[c] == "NULL" {
+			recordStr += record[c]
+		} else {
+			recordStr += fmt.Sprintf("'%s'", record[c])
+		}
 	}
 	recordStr += ")"
 
