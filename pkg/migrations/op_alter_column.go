@@ -189,10 +189,12 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	// Ensure that the column has a primary key defined on exactly one column.
-	err := checkBackfill(table)
-	if err != nil {
-		return err
+	// If the operation requires backfills (ie it isn't a rename-only operation),
+	// ensure that the column meets the requirements for backfilling.
+	if !o.isRenameOnly() {
+		if err := checkBackfill(table); err != nil {
+			return err
+		}
 	}
 
 	// If the column is being renamed, ensure that the target column name does
