@@ -18,6 +18,7 @@
     * [Alter column](#alter-column)
         * [Rename column](#rename-column)
         * [Change type](#change-type)
+        * [Change default](#change-default)
         * [Add check constraint](#add-check-constraint)
         * [Add foreign key](#add-foreign-key)
         * [Add not null constraint](#add-not-null-constraint)
@@ -674,6 +675,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Alter column](#alter-column)
     * [Rename column](#rename-column)
     * [Change type](#change-type)
+    * [Change default](#change-default)
     * [Add check constraint](#add-check-constraint)
     * [Add foreign key](#add-foreign-key)
     * [Add not null constraint](#add-not-null-constraint)
@@ -781,6 +783,28 @@ A change type operation changes the type of a column.
 Example **change type** migrations:
 
 * [18_change_column_type.json](../examples/18_change_column_type.json)
+
+#### Change default
+
+A change default operation changes the default value of a column.
+
+**change default** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "default": "new default value",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+Example **change default** migrations:
+
+* [35_alter_column_multiple.json](../examples/35_alter_column_multiple.json)
 
 #### Add check constraint
 
