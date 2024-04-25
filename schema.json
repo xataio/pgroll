@@ -133,6 +133,10 @@
           "description": "New name of the column (for rename column operation)",
           "type": "string"
         },
+        "default": {
+          "description": "Default value of the column",
+          "type": "string"
+        },
         "nullable": {
           "description": "Indicates if the column is nullable (for add/remove not null constraint operation)",
           "type": "boolean"

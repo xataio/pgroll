@@ -165,6 +165,123 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			},
 		},
 		{
+			name: "can alter a column: set not null, and add a default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "events",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "events",
+							Column:   "name",
+							Nullable: ptr(false),
+							Default:  ptr("'default'"),
+							Up:       "(SELECT CASE WHEN name IS NULL THEN 'rewritten by up SQL' ELSE name END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting with no `name` into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id": "1",
+				})
+
+				// Inserting a NULL explicitly into the new schema should fail
+				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id":   "100",
+					"name": "NULL",
+				}, testutils.CheckViolationErrorCode)
+
+				// Inserting with no `name` into the old schema should succeed
+				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+					"id": "2",
+				})
+
+				// The new schema has the expected rows:
+				// * The first row has a default value because it was inserted with no
+				//   value into the new schema which has a default
+				// * The second row was rewritten by the `up` SQL because it was
+				//   inserted with no value into the old schema which has no default
+				rows := MustSelect(t, db, schema, "02_alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "default"},
+					{"id": 2, "name": "rewritten by up SQL"},
+				}, rows)
+
+				// The old schema has the expected rows:
+				// * The first row has a default value because it was inserted with no
+				//   value into the new schema which has a default and then backfilled
+				//   to the old schema
+				// * The second row is NULL because it was inserted with no value into
+				//   the old schema which has no default
+				rows = MustSelect(t, db, schema, "01_create_table", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "default"},
+					{"id": 2, "name": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting with no `name` into the old schema should succeed
+				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+					"id": "3",
+				})
+
+				// The old schema has the expected rows
+				rows := MustSelect(t, db, schema, "01_create_table", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "default"},
+					{"id": 2, "name": nil},
+					{"id": 3, "name": nil},
+				}, rows)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting with no `name` into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id": "4",
+				})
+
+				// Inserting a NULL explicitly into the new schema should fail
+				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id":   "100",
+					"name": "NULL",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new schema has the expected rows:
+				// * The first and fourth rows have default values because they were
+				//   inserted with no value into the new schema which has a default
+				// * The second and third rows were rewritten by the `up` SQL because
+				//   they were inserted with no value into the old schema which has no
+				//   default
+				rows := MustSelect(t, db, schema, "02_alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "default"},
+					{"id": 2, "name": "rewritten by up SQL"},
+					{"id": 3, "name": "rewritten by up SQL"},
+					{"id": 4, "name": "default"},
+				}, rows)
+			},
+		},
+		{
 			name: "can alter a column: rename and add a unique constraint",
 			migrations: []migrations.Migration{
 				{
