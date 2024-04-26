@@ -229,5 +229,51 @@ func TestSetComment(t *testing.T) {
 				ColumnMustNotHaveComment(t, db, schema, "users", "name")
 			},
 		},
+		{
+			name: "leaving the comment unspecified does not change the comment",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Comment: ptr("apples"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_comment",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(true),
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment has not been changed on the temporary column.
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("name"), "apples")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment has not been changed on the new column.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
+			},
+		},
 	})
 }
