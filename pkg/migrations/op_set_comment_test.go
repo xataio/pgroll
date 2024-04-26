@@ -179,5 +179,55 @@ func TestSetComment(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "set column comment to NULL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Comment: ptr("apples"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_comment",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:   "users",
+							Column:  "name",
+							Comment: nullable.NewNullNullable[string](),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The old column should have the old comment.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
+
+				// The new column should have no comment.
+				ColumnMustNotHaveComment(t, db, schema, "users", migrations.TemporaryName("name"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The old column should have the old comment.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column should have no comment.
+				ColumnMustNotHaveComment(t, db, schema, "users", "name")
+			},
+		},
 	})
 }
