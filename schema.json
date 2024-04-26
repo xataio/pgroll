@@ -159,7 +159,12 @@
         },
         "comment": {
           "description": "New comment on the column",
-          "type": "string"
+          "type": ["string", "null"],
+          "goJSONSchema": {
+            "imports": ["github.com/oapi-codegen/nullable"],
+            "nillable": true,
+            "type": "nullable.Nullable[string]"
+          }
         },
         "up": {
           "default": "",
@@ -174,6 +179,8 @@
             { "required": ["check"] },
             { "required": ["type"] },
             { "required": ["nullable"] },
+            { "required": ["default"] },
+            { "required": ["comment"] },
             { "required": ["unique"] },
             { "required": ["references"] }
           ],
@@ -186,6 +193,8 @@
               { "required": ["check"] },
               { "required": ["type"] },
               { "required": ["nullable"] },
+              { "required": ["default"] },
+              { "required": ["comment"] },
               { "required": ["unique"] },
               { "required": ["references"] },
               { "required": ["up"] },

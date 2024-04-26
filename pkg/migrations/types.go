@@ -3,6 +3,8 @@
 
 package migrations
 
+import "github.com/oapi-codegen/nullable"
+
 // Check constraint definition
 type CheckConstraint struct {
 	// Constraint expression
@@ -86,7 +88,7 @@ type OpAlterColumn struct {
 	Column string `json:"column"`
 
 	// New comment on the column
-	Comment *string `json:"comment,omitempty"`
+	Comment nullable.Nullable[string] `json:"comment,omitempty"`
 
 	// Default value of the column
 	Default *string `json:"default,omitempty"`
