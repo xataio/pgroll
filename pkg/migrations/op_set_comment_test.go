@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/oapi-codegen/nullable"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -43,7 +44,7 @@ func TestSetComment(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:   "users",
 							Column:  "name",
-							Comment: ptr("name of the user"),
+							Comment: nullable.NewNullableWithValue("name of the user"),
 						},
 					},
 				},
@@ -124,7 +125,7 @@ func TestSetComment(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:   "users",
 							Column:  "name",
-							Comment: ptr("name of the user"),
+							Comment: nullable.NewNullableWithValue("name of the user"),
 							Up:      "'rewritten by up SQL'",
 							Down:    "'rewritten by down SQL'",
 						},
