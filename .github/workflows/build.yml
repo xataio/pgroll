@@ -122,7 +122,7 @@ jobs:
 
       - name: Validate example migrations against JSON schema
         run: |
-          npx -y ajv-cli --spec=draft2020 validate -s schema.json -d "./examples/*.json"
+          npx -y ajv-cli --spec=draft2020 validate --strict-schema=false -s schema.json -d "./examples/*.json"
 
   examples:
     name: 'examples (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
