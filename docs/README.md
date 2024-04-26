@@ -819,7 +819,7 @@ A change comment operation changes the comment on a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "comment": "new comment for column",
+    "comment": "new comment for column" or null,
     "up": "SQL expression",
     "down": "SQL expression"
   }
@@ -827,6 +827,7 @@ A change comment operation changes the comment on a column.
 ```
 
 * [35_alter_column_multiple.json](../examples/35_alter_column_multiple.json)
+* [36_set_comment_to_null.json](../examples/36_set_comment_to_null.json)
 
 #### Add check constraint
 
