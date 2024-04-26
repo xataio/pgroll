@@ -296,11 +296,16 @@ func (o *OpAlterColumn) subOperations() []Operation {
 			Down:    o.Down,
 		})
 	}
-	if o.Comment != nil {
+	if o.Comment.IsSpecified() {
+		var comment *string
+		if c, err := o.Comment.Get(); err == nil {
+			comment = &c
+		}
+
 		ops = append(ops, &OpSetComment{
 			Table:   o.Table,
 			Column:  o.Column,
-			Comment: *o.Comment,
+			Comment: comment,
 			Up:      o.Up,
 			Down:    o.Down,
 		})

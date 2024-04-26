@@ -10,11 +10,11 @@ import (
 )
 
 type OpSetComment struct {
-	Table   string `json:"table"`
-	Column  string `json:"column"`
-	Comment string `json:"comment"`
-	Up      string `json:"up"`
-	Down    string `json:"down"`
+	Table   string  `json:"table"`
+	Column  string  `json:"column"`
+	Comment *string `json:"comment"`
+	Up      string  `json:"up"`
+	Down    string  `json:"down"`
 }
 
 var _ Operation = (*OpSetComment)(nil)

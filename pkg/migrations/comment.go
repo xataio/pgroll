@@ -10,19 +10,27 @@ import (
 	"github.com/lib/pq"
 )
 
-func addCommentToColumn(ctx context.Context, conn *sql.DB, tableName, columnName, comment string) error {
+func addCommentToColumn(ctx context.Context, conn *sql.DB, tableName, columnName string, comment *string) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf(`COMMENT ON COLUMN %s.%s IS %s`,
 		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(columnName),
-		pq.QuoteLiteral(comment)))
+		commentToSQL(comment)))
 
 	return err
 }
 
-func addCommentToTable(ctx context.Context, conn *sql.DB, tableName, comment string) error {
+func addCommentToTable(ctx context.Context, conn *sql.DB, tableName string, comment *string) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf(`COMMENT ON TABLE %s IS %s`,
 		pq.QuoteIdentifier(tableName),
-		pq.QuoteLiteral(comment)))
+		commentToSQL(comment)))
 
 	return err
+}
+
+func commentToSQL(comment *string) string {
+	if comment == nil {
+		return "NULL"
+	}
+
+	return pq.QuoteLiteral(*comment)
 }
