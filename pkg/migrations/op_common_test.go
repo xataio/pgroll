@@ -166,8 +166,15 @@ func ColumnMustHaveType(t *testing.T, db *sql.DB, schema, table, column, expecte
 
 func ColumnMustHaveComment(t *testing.T, db *sql.DB, schema, table, column, expectedComment string) {
 	t.Helper()
-	if !columnHasComment(t, db, schema, table, column, expectedComment) {
+	if !columnHasComment(t, db, schema, table, column, &expectedComment) {
 		t.Fatalf("Expected column %q to have comment %q", column, expectedComment)
+	}
+}
+
+func ColumnMustNotHaveComment(t *testing.T, db *sql.DB, schema, table, column string) {
+	t.Helper()
+	if !columnHasComment(t, db, schema, table, column, nil) {
+		t.Fatalf("Expected column %q to have no comment", column)
 	}
 }
 
@@ -497,7 +504,7 @@ func columnHasType(t *testing.T, db *sql.DB, schema, table, column, expectedType
 	return expectedType == actualType
 }
 
-func columnHasComment(t *testing.T, db *sql.DB, schema, table, column, expectedComment string) bool {
+func columnHasComment(t *testing.T, db *sql.DB, schema, table, column string, expectedComment *string) bool {
 	t.Helper()
 
 	var actualComment *string
@@ -513,7 +520,10 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column, expectedC
 		t.Fatal(err)
 	}
 
-	return actualComment != nil && *actualComment == expectedComment
+	if expectedComment == nil {
+		return actualComment == nil
+	}
+	return actualComment != nil && *expectedComment == *actualComment
 }
 
 func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) bool {

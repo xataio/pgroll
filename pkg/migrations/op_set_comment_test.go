@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/oapi-codegen/nullable"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -43,7 +44,7 @@ func TestSetComment(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:   "users",
 							Column:  "name",
-							Comment: ptr("name of the user"),
+							Comment: nullable.NewNullableWithValue("name of the user"),
 						},
 					},
 				},
@@ -124,7 +125,7 @@ func TestSetComment(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:   "users",
 							Column:  "name",
-							Comment: ptr("name of the user"),
+							Comment: nullable.NewNullableWithValue("name of the user"),
 							Up:      "'rewritten by up SQL'",
 							Down:    "'rewritten by down SQL'",
 						},
@@ -176,6 +177,102 @@ func TestSetComment(t *testing.T) {
 					{"id": 1, "name": "rewritten by up SQL"},
 					{"id": 2, "name": "rewritten by up SQL"},
 				}, rows)
+			},
+		},
+		{
+			name: "set column comment to NULL",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Comment: ptr("apples"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_comment",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:   "users",
+							Column:  "name",
+							Comment: nullable.NewNullNullable[string](),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The old column should have the old comment.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
+
+				// The new column should have no comment.
+				ColumnMustNotHaveComment(t, db, schema, "users", migrations.TemporaryName("name"))
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The old column should have the old comment.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column should have no comment.
+				ColumnMustNotHaveComment(t, db, schema, "users", "name")
+			},
+		},
+		{
+			name: "leaving the comment unspecified does not change the comment",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Comment: ptr("apples"),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_comment",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "users",
+							Column:   "name",
+							Nullable: ptr(true),
+							Down:     "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment has not been changed on the temporary column.
+				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("name"), "apples")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment has not been changed on the new column.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "apples")
 			},
 		},
 	})

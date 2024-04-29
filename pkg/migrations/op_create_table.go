@@ -33,7 +33,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	// Add comments to any columns that have them
 	for _, col := range o.Columns {
 		if col.Comment != nil {
-			if err := addCommentToColumn(ctx, conn, tempName, col.Name, *col.Comment); err != nil {
+			if err := addCommentToColumn(ctx, conn, tempName, col.Name, col.Comment); err != nil {
 				return nil, fmt.Errorf("failed to add comment to column: %w", err)
 			}
 		}
@@ -41,7 +41,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 
 	// Add comment to the table itself
 	if o.Comment != nil {
-		if err := addCommentToTable(ctx, conn, tempName, *o.Comment); err != nil {
+		if err := addCommentToTable(ctx, conn, tempName, o.Comment); err != nil {
 			return nil, fmt.Errorf("failed to add comment to table: %w", err)
 		}
 	}

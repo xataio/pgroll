@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/oapi-codegen/nullable"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/testutils"
@@ -48,7 +49,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Down:     "name",
 							Name:     ptr("event_name"),
 							Type:     ptr("text"),
-							Comment:  ptr("the name of the event"),
+							Comment:  nullable.NewNullableWithValue("the name of the event"),
 							Nullable: ptr(false),
 							Check: &migrations.CheckConstraint{
 								Name:       "event_name_length",

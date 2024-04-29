@@ -23,7 +23,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	}
 
 	if o.Column.Comment != nil {
-		if err := addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column.Name), *o.Column.Comment); err != nil {
+		if err := addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column.Name), o.Column.Comment); err != nil {
 			return nil, fmt.Errorf("failed to add comment to column: %w", err)
 		}
 	}

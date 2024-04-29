@@ -5,7 +5,9 @@ generate:
 	mv schema.json.tmp schema.json
 
 	# Generate the types from the JSON schema
-	docker run --rm -v $$PWD/schema.json:/mnt/schema.json omissis/go-jsonschema:0.14.1 --only-models -p migrations --tags json /mnt/schema.json > pkg/migrations/types.go
+	# Temporarily use the `surjection/go-jsonschema` image because we need https://github.com/omissis/go-jsonschema/pull/220
+	# Use the official `omissis/gojsonschema` image once 0.17.0 is released.
+	docker run --rm -v $$PWD/schema.json:/mnt/schema.json surjection/go-jsonschema:0.16.1 --only-models -p migrations --tags json /mnt/schema.json > pkg/migrations/types.go
 	
 	# Add the license header
 	echo "// SPDX-License-Identifier: Apache-2.0" | cat - pkg/migrations/types.go > pkg/migrations/types.go.tmp

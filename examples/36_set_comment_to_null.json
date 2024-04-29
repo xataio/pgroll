@@ -1,0 +1,14 @@
+{
+  "name": "36_set_comment_to_null",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "events",
+        "column": "event_name",
+        "comment": null,
+        "up": "event_name",
+        "down": "event_name"
+      }
+    }
+  ]
+}

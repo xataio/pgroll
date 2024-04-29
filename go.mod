@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/google/go-cmp v0.6.0
 	github.com/lib/pq v1.10.9
+	github.com/oapi-codegen/nullable v1.1.0
 	github.com/pterm/pterm v0.12.69
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.7.0
