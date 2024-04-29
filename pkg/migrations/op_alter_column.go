@@ -296,6 +296,15 @@ func (o *OpAlterColumn) subOperations() []Operation {
 			Down:    o.Down,
 		})
 	}
+	if o.Comment != nil {
+		ops = append(ops, &OpSetComment{
+			Table:   o.Table,
+			Column:  o.Column,
+			Comment: *o.Comment,
+			Up:      o.Up,
+			Down:    o.Down,
+		})
+	}
 
 	return ops
 }
@@ -324,7 +333,7 @@ func (o *OpAlterColumn) downSQLForOperations(ops []Operation) string {
 
 	for _, op := range ops {
 		switch (op).(type) {
-		case *OpSetUnique, *OpSetNotNull, *OpSetDefault:
+		case *OpSetUnique, *OpSetNotNull, *OpSetDefault, *OpSetComment:
 			return pq.QuoteIdentifier(o.Column)
 		}
 	}
@@ -341,7 +350,7 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 
 	for _, op := range ops {
 		switch (op).(type) {
-		case *OpDropNotNull, *OpSetDefault:
+		case *OpDropNotNull, *OpSetDefault, *OpSetComment:
 			return pq.QuoteIdentifier(o.Column)
 		}
 	}

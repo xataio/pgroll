@@ -14,7 +14,8 @@
             "name": "name",
             "type": "varchar(255)",
             "nullable": true,
-            "default": "'<placeholder>'"
+            "default": "'<placeholder>'",
+            "comment": "the name of the event"
           }
         ]
       }

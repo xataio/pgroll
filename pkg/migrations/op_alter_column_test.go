@@ -16,7 +16,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "can alter a column: set not null, change type, rename and add check constraint",
+			name: "can alter a column: set not null, change type, change comment, rename and add check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -48,6 +48,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Down:     "name",
 							Name:     ptr("event_name"),
 							Type:     ptr("text"),
+							Comment:  ptr("the name of the event"),
 							Nullable: ptr(false),
 							Check: &migrations.CheckConstraint{
 								Name:       "event_name_length",
@@ -130,6 +131,9 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 
 				// The type of the new column in the underlying table should be `text`
 				ColumnMustHaveType(t, db, schema, "events", migrations.TemporaryName("name"), "text")
+
+				// The new column should have the new comment.
+				ColumnMustHaveComment(t, db, schema, "events", migrations.TemporaryName("name"), "the name of the event")
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `name` column should not exist on the underlying table.
@@ -150,6 +154,9 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 
 				// The type of the new column in the underlying table should be `text`
 				ColumnMustHaveType(t, db, schema, "events", "event_name", "text")
+
+				// The new column should have the new comment.
+				ColumnMustHaveComment(t, db, schema, "events", "event_name", "the name of the event")
 
 				// The column in the underlying table should be `event_name`
 				ColumnMustExist(t, db, schema, "events", "event_name")

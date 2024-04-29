@@ -9,6 +9,7 @@
         "type": "text",
         "default": "'unknown event'",
         "nullable": false,
+        "comment": "the full name of the event",
         "unique": {
           "name": "events_event_name_unique"
         },

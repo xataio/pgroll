@@ -19,6 +19,7 @@
         * [Rename column](#rename-column)
         * [Change type](#change-type)
         * [Change default](#change-default)
+        * [Change comment](#change-comment)
         * [Add check constraint](#add-check-constraint)
         * [Add foreign key](#add-foreign-key)
         * [Add not null constraint](#add-not-null-constraint)
@@ -676,6 +677,7 @@ See the [examples](../examples) directory for examples of each kind of operation
     * [Rename column](#rename-column)
     * [Change type](#change-type)
     * [Change default](#change-default)
+    * [Change comment](#change-comment)
     * [Add check constraint](#add-check-constraint)
     * [Add foreign key](#add-foreign-key)
     * [Add not null constraint](#add-not-null-constraint)
@@ -803,6 +805,26 @@ A change default operation changes the default value of a column.
 ```
 
 Example **change default** migrations:
+
+* [35_alter_column_multiple.json](../examples/35_alter_column_multiple.json)
+
+#### Change comment
+
+A change comment operation changes the comment on a column.
+
+**change comment** operations have this structure:
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "comment": "new comment for column",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
 
 * [35_alter_column_multiple.json](../examples/35_alter_column_multiple.json)
 
