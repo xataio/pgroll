@@ -49,8 +49,8 @@ func (d *Duplicator) WithoutNotNull() *Duplicator {
 	return d
 }
 
-// Duplicate creates a new column with the same type and foreign key
-// constraints as the original column.
+// Duplicate duplicates a column in the table, including all constraints and
+// comments.
 func (d *Duplicator) Duplicate(ctx context.Context) error {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
