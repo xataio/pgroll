@@ -18,7 +18,7 @@
           "constraint": "length(name) > 3"
         },
         "up": "(SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END)",
-        "down": "name"
+        "down": "event_name"
       }
     }
   ]
