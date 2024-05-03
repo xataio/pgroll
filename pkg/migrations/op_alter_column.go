@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
@@ -57,11 +58,21 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 			Name: TemporaryName(o.Column),
 		})
 
+		// If the column has been renamed, temporarily update the column name in
+		// the internal schema representation to ensure that the variable name in
+		// the down trigger corresponds to the new name of column.
+		cols := table.Columns
+		if o.Name != nil {
+			cols = maps.Clone(table.Columns)
+			cols[*o.Name] = cols[o.Column]
+			delete(cols, o.Column)
+		}
+
 		// Add a trigger to copy values from the new column to the old.
 		err = createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 			Direction:      TriggerDirectionDown,
-			Columns:        table.Columns,
+			Columns:        cols,
 			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,

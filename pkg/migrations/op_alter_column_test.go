@@ -46,7 +46,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Table:    "events",
 							Column:   "name",
 							Up:       "(SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END)",
-							Down:     "name",
+							Down:     "event_name",
 							Name:     ptr("event_name"),
 							Type:     ptr("text"),
 							Comment:  nullable.NewNullableWithValue("the name of the event"),
@@ -319,7 +319,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Table:  "events",
 							Column: "name",
 							Up:     "name || '-' || random()*999::int",
-							Down:   "name",
+							Down:   "event_name",
 							Name:   ptr("event_name"),
 							Unique: &migrations.UniqueConstraint{
 								Name: "events_event_name_unique",
