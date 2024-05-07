@@ -225,7 +225,72 @@ func TestChangeColumnType(t *testing.T) {
 			},
 		},
 		{
-			name: "changing column type preserves any defaults on the column",
+			name: "changing column type removes any incompatible defaults on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "age",
+									Type:     "text",
+									Default:  ptr("'0'"),
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "age",
+							Type:   ptr("integer"),
+							Up:     "CAST(age AS integer)",
+							Down:   "CAST(age AS text)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+					"id": "1",
+				})
+
+				// The newly inserted row contains a NULL instead of the old default value.
+				rows := MustSelect(t, db, schema, "02_change_type", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "age": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// A row can be inserted into the new version of the table.
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+					"id": "2",
+				})
+
+				// The newly inserted row contains a NULL instead of the old default value.
+				rows := MustSelect(t, db, schema, "02_change_type", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "age": nil},
+					{"id": 2, "age": nil},
+				}, rows)
+			},
+		},
+		{
+			name: "changing column type preserves any compatible defaults on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
