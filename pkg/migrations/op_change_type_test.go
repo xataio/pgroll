@@ -355,7 +355,66 @@ func TestChangeColumnType(t *testing.T) {
 			},
 		},
 		{
-			name: "changing column type preserves any check constraints on the column",
+			name: "changing column type removes any incompatile check constraints on the column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "age",
+									Type:     "text",
+									Nullable: ptr(true),
+									Check: &migrations.CheckConstraint{
+										Name:       "age_length",
+										Constraint: "length(age) < 3",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "users",
+							Column: "age",
+							Type:   ptr("integer"),
+							Up:     "CAST(age AS integer)",
+							Down:   "(SELECT CASE WHEN age < 100 THEN age::text ELSE '0' END)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the new schema that violates the check
+				// constraint on the old schema should succeed.
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+					"id":  "1",
+					"age": "1111",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the new schema that violates the check
+				// constraint on the old schema should succeed.
+				MustInsert(t, db, schema, "02_change_type", "users", map[string]string{
+					"id":  "2",
+					"age": "2222",
+				})
+			},
+		},
+		{
+			name: "changing column type preserves any compatible check constraints on the column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
