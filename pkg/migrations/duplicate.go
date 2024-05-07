@@ -4,17 +4,17 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 type Duplicator struct {
-	conn              *sql.DB
+	conn              db.DB
 	table             *schema.Table
 	column            *schema.Column
 	asName            string
@@ -24,7 +24,7 @@ type Duplicator struct {
 }
 
 // NewColumnDuplicator creates a new Duplicator for a column.
-func NewColumnDuplicator(conn *sql.DB, table *schema.Table, column *schema.Column) *Duplicator {
+func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	return &Duplicator{
 		conn:     conn,
 		table:    table,
