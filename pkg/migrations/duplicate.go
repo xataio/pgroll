@@ -4,6 +4,7 @@ package migrations
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -22,6 +23,11 @@ type Duplicator struct {
 	withType          string
 	withoutConstraint string
 }
+
+const (
+	dataTypeMismatchErrorCode  pq.ErrorCode = "42804"
+	undefinedFunctionErrorCode pq.ErrorCode = "42883"
+)
 
 // NewColumnDuplicator creates a new Duplicator for a column.
 func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
@@ -53,12 +59,13 @@ func (d *Duplicator) WithoutNotNull() *Duplicator {
 // comments.
 func (d *Duplicator) Duplicate(ctx context.Context) error {
 	const (
-		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
-		cSetDefaultSQL         = `ALTER COLUMN %s SET DEFAULT %s`
-		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
-		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
-		cCreateUniqueIndexSQL  = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
-		cCommentOnColumnSQL    = `COMMENT ON COLUMN %s.%s IS %s`
+		cAlterTableSQL                   = `ALTER TABLE %s ADD COLUMN %s %s`
+		cAddForeignKeySQL                = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
+		cAddCheckConstraintSQL           = `ADD CONSTRAINT %s %s NOT VALID`
+		cCreateUniqueIndexSQL            = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
+		cSetDefaultSQL                   = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
+		cAlterTableAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
+		cCommentOnColumnSQL              = `COMMENT ON COLUMN %s.%s IS %s`
 	)
 
 	// Generate SQL to duplicate the column's name and type
@@ -66,11 +73,6 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(d.asName),
 		d.withType)
-
-	// Generate SQL to duplicate the column's default value
-	if d.column.Default != nil {
-		sql += fmt.Sprintf(", "+cSetDefaultSQL, d.asName, *d.column.Default)
-	}
 
 	// Generate SQL to add an unchecked NOT NULL constraint if the original column
 	// is NOT NULL. The constraint will be validated on migration completion.
@@ -98,23 +100,47 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		}
 	}
 
-	// Generate SQL to duplicate any check constraints on the column
+	_, err := d.conn.ExecContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+
+	// Generate SQL to duplicate any default value on the column. This may fail
+	// if the default value is not valid for the new column type, in which case
+	// the error is ignored.
+	if d.column.Default != nil {
+		sql := fmt.Sprintf(cSetDefaultSQL, pq.QuoteIdentifier(d.table.Name), d.asName, *d.column.Default)
+
+		_, err := d.conn.ExecContext(ctx, sql)
+
+		err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Generate SQL to duplicate any check constraints on the column. This may faile
+	// if the check constraint is not valid for the new column type, in which case
+	// the error is ignored.
 	for _, cc := range d.table.CheckConstraints {
 		if cc.Name == d.withoutConstraint {
 			continue
 		}
 
 		if slices.Contains(cc.Columns, d.column.Name) {
-			sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
+			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
+				pq.QuoteIdentifier(d.table.Name),
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
 				rewriteCheckExpression(cc.Definition, d.column.Name, d.asName),
 			)
-		}
-	}
 
-	_, err := d.conn.ExecContext(ctx, sql)
-	if err != nil {
-		return err
+			_, err := d.conn.ExecContext(ctx, sql)
+
+			err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Generate SQL to duplicate the column's comment
@@ -177,4 +203,15 @@ func copyAndReplace(xs []string, oldValue, newValue string) []string {
 		}
 	}
 	return ys
+}
+
+func errorIgnoringErrorCode(err error, code pq.ErrorCode) error {
+	pqErr := &pq.Error{}
+	if ok := errors.As(err, &pqErr); ok {
+		if pqErr.Code == code {
+			return nil
+		}
+	}
+
+	return err
 }
