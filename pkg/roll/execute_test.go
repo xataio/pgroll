@@ -5,11 +5,10 @@ package roll_test
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -313,57 +312,48 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 	})
 }
 
-func TestLockTimeoutIsEnforced(t *testing.T) {
+func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(100)}, func(mig *roll.Roll, db *sql.DB) {
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(50)}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
-		// Start a create table migration
-		err := mig.Start(ctx, &migrations.Migration{
-			Name:       "01_create_table",
-			Operations: migrations.Operations{createTableOp("table1")},
-		})
-		if err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
+		// Create a table
+		_, err := db.ExecContext(ctx, "CREATE TABLE table1 (id integer, name text)")
+		require.NoError(t, err)
 
-		// Complete the create table migration
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete migration: %v", err)
-		}
+		// Start a goroutine which takes an ACCESS_EXCLUSIVE lock on the table for
+		// two seconds
+		errCh := make(chan error)
+		go func() {
+			tx, err := db.Begin()
+			if err != nil {
+				errCh <- err
+			}
 
-		// Start a transaction and take an ACCESS_EXCLUSIVE lock on the table
-		// Don't commit the transaction so that the lock is held indefinitely
-		tx, err := db.Begin()
-		if err != nil {
-			t.Fatalf("Failed to start transaction: %v", err)
-		}
-		t.Cleanup(func() {
+			if _, err := tx.ExecContext(ctx, "LOCK TABLE table1 IN ACCESS EXCLUSIVE MODE"); err != nil {
+				errCh <- err
+			}
+			errCh <- nil
+
+			// Sleep for two seconds to hold the lock
+			time.Sleep(2 * time.Second)
+
+			// Commit the transaction
 			tx.Commit()
-		})
-		if _, err := tx.ExecContext(ctx, "LOCK TABLE table1 IN ACCESS EXCLUSIVE MODE"); err != nil {
-			t.Fatalf("Failed to take ACCESS_EXCLUSIVE lock on table: %v", err)
-		}
+		}()
 
-		// Attempt to run a second migration on the table while the lock is held
-		// The migration should fail due to a lock timeout error
+		// Wait for lock to be taken
+		err = <-errCh
+		require.NoError(t, err)
+
+		// Attempt to start a second migration on the table while the lock is held.
+		// The migration should eventually succeed after the lock is released
 		err = mig.Start(ctx, &migrations.Migration{
-			Name:       "02_create_table",
+			Name:       "01_add_column",
 			Operations: migrations.Operations{addColumnOp("table1")},
 		})
-		if err == nil {
-			t.Fatalf("Expected migration to fail due to lock timeout")
-		}
-		if err != nil {
-			pqErr := &pq.Error{}
-			if ok := errors.As(err, &pqErr); !ok {
-				t.Fatalf("Migration failed with unexpected error: %v", err)
-			}
-			if pqErr.Code != "55P03" { // Lock not available error code
-				t.Fatalf("Migration failed with unexpected error: %v", err)
-			}
-		}
+		require.NoError(t, err)
 	})
 }
 
