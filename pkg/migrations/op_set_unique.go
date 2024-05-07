@@ -4,10 +4,10 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -21,7 +21,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Add a unique index to the new column
@@ -32,7 +32,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	return table, nil
 }
 
-func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Create a unique constraint using the unique index
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
 		pq.QuoteIdentifier(o.Table),
@@ -45,7 +45,7 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn *sql.DB, tr SQLTransfor
 	return err
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpSetUnique) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn db.DB) error {
 	// create unique index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),

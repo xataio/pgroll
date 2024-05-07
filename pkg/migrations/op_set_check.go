@@ -4,11 +4,11 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -22,7 +22,7 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Add the check constraint to the new column as NOT VALID.
@@ -33,7 +33,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn *sql.DB, stateSch
 	return table, nil
 }
 
-func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -45,7 +45,7 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn *sql.DB, tr SQ
 	return nil
 }
 
-func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	return nil
 }
 
-func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Check.Name),

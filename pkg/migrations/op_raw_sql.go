@@ -4,14 +4,14 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if o.OnComplete {
 		return nil, nil
 	}
@@ -25,7 +25,7 @@ func (o *OpRawSQL) Start(ctx context.Context, conn *sql.DB, stateSchema string, 
 	return nil, err
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRawSQL) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	if !o.OnComplete {
 		return nil
 	}
@@ -39,7 +39,7 @@ func (o *OpRawSQL) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer
 	return err
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpRawSQL) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	if o.Down == "" {
 		return nil
 	}

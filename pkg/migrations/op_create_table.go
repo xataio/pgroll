@@ -4,17 +4,17 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns, tr)
 	if err != nil {
@@ -61,7 +61,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return nil, nil
 }
 
-func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	tempName := TemporaryName(o.Name)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(tempName),
@@ -69,7 +69,7 @@ func (o *OpCreateTable) Complete(ctx context.Context, conn *sql.DB, tr SQLTransf
 	return err
 }
 
-func (o *OpCreateTable) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	tempName := TemporaryName(o.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",

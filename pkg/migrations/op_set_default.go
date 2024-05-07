@@ -4,10 +4,10 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -21,7 +21,7 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	tbl := s.GetTable(o.Table)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
@@ -35,11 +35,11 @@ func (o *OpSetDefault) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return tbl, nil
 }
 
-func (o *OpSetDefault) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetDefault) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpSetDefault) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 
