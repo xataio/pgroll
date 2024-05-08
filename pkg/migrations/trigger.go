@@ -5,10 +5,10 @@ package migrations
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"text/template"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/migrations/templates"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -33,7 +33,7 @@ type triggerConfig struct {
 	SQL            string
 }
 
-func createTrigger(ctx context.Context, conn *sql.DB, tr SQLTransformer, cfg triggerConfig) error {
+func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg triggerConfig) error {
 	sql, err := tr.TransformSQL(cfg.SQL)
 	if err != nil {
 		return err

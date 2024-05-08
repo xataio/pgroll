@@ -9,6 +9,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/state"
 )
@@ -18,7 +19,7 @@ type PGVersion int
 const PGVersion15 PGVersion = 15
 
 type Roll struct {
-	pgConn *sql.DB // TODO abstract sql connection
+	pgConn db.DB
 
 	// schema we are acting on
 	schema string
@@ -57,7 +58,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	}
 
 	return &Roll{
-		pgConn:                conn,
+		pgConn:                &db.RDB{DB: conn},
 		schema:                schema,
 		state:                 state,
 		pgVersion:             PGVersion(pgMajorVersion),
@@ -114,7 +115,7 @@ func (m *Roll) PGVersion() PGVersion {
 	return m.pgVersion
 }
 
-func (m *Roll) PgConn() *sql.DB {
+func (m *Roll) PgConn() db.DB {
 	return m.pgConn
 }
 

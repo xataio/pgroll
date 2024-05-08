@@ -4,16 +4,16 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
@@ -62,7 +62,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn *sql.DB, stateSchema 
 	return table, nil
 }
 
-func (o *OpDropConstraint) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Remove the up function and trigger
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
@@ -95,7 +95,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn *sql.DB, tr SQLTra
 	return err
 }
 
-func (o *OpDropConstraint) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),

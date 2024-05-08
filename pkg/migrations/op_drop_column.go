@@ -4,16 +4,16 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if o.Down != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
@@ -34,7 +34,7 @@ func (o *OpDropColumn) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return nil, nil
 }
 
-func (o *OpDropColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Column)))
@@ -48,7 +48,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransfo
 	return err
 }
 
-func (o *OpDropColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
 

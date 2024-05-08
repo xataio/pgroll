@@ -4,16 +4,16 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 	ops := o.subOperations()
@@ -84,7 +84,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn *sql.DB, stateSchema str
 	return table, nil
 }
 
-func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	ops := o.subOperations()
 
 	// Perform any operation specific completion steps
@@ -139,7 +139,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransf
 	return nil
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	ops := o.subOperations()
 
 	// Perform any operation specific rollback steps
@@ -315,7 +315,7 @@ func (o *OpAlterColumn) subOperations() []Operation {
 }
 
 // duplicatorForOperations returns a Duplicator for the given operations
-func duplicatorForOperations(ops []Operation, conn *sql.DB, table *schema.Table, column *schema.Column) *Duplicator {
+func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	d := NewColumnDuplicator(conn, table, column)
 
 	for _, op := range ops {

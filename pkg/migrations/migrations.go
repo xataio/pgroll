@@ -4,10 +4,10 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	_ "github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -18,16 +18,16 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
+	Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
 	// This method should be called once the previous version is no longer used
-	Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error
+	Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.
-	Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error
+	Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error
 
 	// Validate returns a descriptive error if the operation cannot be applied to the given schema
 	Validate(ctx context.Context, s *schema.Schema) error

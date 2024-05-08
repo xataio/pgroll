@@ -4,8 +4,8 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -18,17 +18,17 @@ type OpDropNotNull struct {
 
 var _ Operation = (*OpDropNotNull)(nil)
 
-func (o *OpDropNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropNotNull) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	return table, nil
 }
 
-func (o *OpDropNotNull) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropNotNull) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpDropNotNull) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpDropNotNull) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 

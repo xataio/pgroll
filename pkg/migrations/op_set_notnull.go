@@ -4,10 +4,10 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -20,7 +20,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Add an unchecked NOT NULL constraint to the new column.
@@ -31,7 +31,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn *sql.DB, stateSchema stri
 	return table, nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetNotNull) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Validate the NOT NULL constraint on the old column.
 	// The constraint must be valid because:
 	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
@@ -62,7 +62,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn *sql.DB, tr SQLTransfo
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpSetNotNull) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 

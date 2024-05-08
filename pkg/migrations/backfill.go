@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -18,7 +19,7 @@ import (
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn *sql.DB, table *schema.Table, cbs ...CallbackFn) error {
+func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumn := getIdentityColumn(table)
 	if identityColumn == nil {
@@ -85,27 +86,20 @@ type batcher struct {
 	batchSize      int
 }
 
-// updateBatch updates the next batch of rows in the table.
-func (b *batcher) updateBatch(ctx context.Context, conn *sql.DB) error {
-	// Start the transaction for this batch
-	tx, err := conn.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
+	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		// Build the query to update the next batch of rows
+		query := b.buildQuery()
 
-	// Build the query to update the next batch of rows
-	query := b.buildQuery()
+		// Execute the query to update the next batch of rows and update the last PK
+		// value for the next batch
+		err := tx.QueryRowContext(ctx, query).Scan(&b.lastValue)
+		if err != nil {
+			return err
+		}
 
-	// Execute the query to update the next batch of rows and update the last PK
-	// value for the next batch
-	err = tx.QueryRowContext(ctx, query).Scan(&b.lastValue)
-	if err != nil {
-		return err
-	}
-
-	// Commit the transaction for this batch
-	return tx.Commit()
+		return nil
+	})
 }
 
 // buildQuery builds the query used to update the next batch of rows.

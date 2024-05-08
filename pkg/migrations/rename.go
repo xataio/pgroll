@@ -4,11 +4,11 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"slices"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -16,7 +16,7 @@ import (
 // * renames a duplicated column to its original name
 // * renames any foreign keys on the duplicated column to their original name.
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
-func RenameDuplicatedColumn(ctx context.Context, conn *sql.DB, table *schema.Table, column *schema.Column) error {
+func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
 	const (
 		cRenameColumnSQL           = `ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s`
 		cRenameConstraintSQL       = `ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s`

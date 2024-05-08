@@ -4,11 +4,11 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -22,7 +22,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.
@@ -33,7 +33,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn *sql.DB, stateSchema s
 	return table, nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -45,7 +45,7 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn *sql.DB, tr SQLTran
 	return nil
 }
 
-func (o *OpSetForeignKey) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	return nil
 }
 
-func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn *sql.DB) error {
+func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
 	tempColumnName := TemporaryName(o.Column)
 
 	onDelete := "NO ACTION"

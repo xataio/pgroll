@@ -1,0 +1,82 @@
+// SPDX-License-Identifier: Apache-2.0
+
+package db
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"time"
+
+	"github.com/cloudflare/backoff"
+	"github.com/lib/pq"
+)
+
+const (
+	lockNotAvailableErrorCode pq.ErrorCode = "55P03"
+	maxBackoffDuration                     = 1 * time.Minute
+	backoffInterval                        = 1 * time.Second
+)
+
+type DB interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error
+	Close() error
+}
+
+// RDB wraps a *sql.DB and retries queries using an exponential backoff (with
+// jitter) on lock_timeout errors.
+type RDB struct {
+	DB *sql.DB
+}
+
+// ExecContext wraps sql.DB.ExecContext, retrying queries on lock_timeout errors.
+func (db *RDB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	b := backoff.New(maxBackoffDuration, backoffInterval)
+
+	for {
+		res, err := db.DB.ExecContext(ctx, query, args...)
+		if err == nil {
+			return res, nil
+		}
+
+		pqErr := &pq.Error{}
+		if errors.As(err, &pqErr) && pqErr.Code == lockNotAvailableErrorCode {
+			<-time.After(b.Duration())
+		} else {
+			return nil, err
+		}
+	}
+}
+
+// WithRetryableTransaction runs `f` in a transaction, retrying on lock_timeout errors.
+func (db *RDB) WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error {
+	b := backoff.New(maxBackoffDuration, backoffInterval)
+
+	for {
+		tx, err := db.DB.BeginTx(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		err = f(ctx, tx)
+		if err == nil {
+			return tx.Commit()
+		}
+
+		if errRollback := tx.Rollback(); errRollback != nil {
+			return errRollback
+		}
+
+		pqErr := &pq.Error{}
+		if errors.As(err, &pqErr) && pqErr.Code == lockNotAvailableErrorCode {
+			<-time.After(b.Duration())
+		} else {
+			return err
+		}
+	}
+}
+
+func (db *RDB) Close() error {
+	return db.DB.Close()
+}

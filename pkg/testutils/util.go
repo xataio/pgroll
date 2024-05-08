@@ -103,6 +103,14 @@ func WithStateInSchemaAndConnectionToContainer(t *testing.T, schema string, fn f
 	fn(st, db)
 }
 
+func WithConnectionToContainer(t *testing.T, fn func(*sql.DB, string)) {
+	t.Helper()
+
+	db, connStr, _ := setupTestDatabase(t)
+
+	fn(db, connStr)
+}
+
 func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.DB)) {
 	WithStateInSchemaAndConnectionToContainer(t, "pgroll", fn)
 }

@@ -4,18 +4,18 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
@@ -65,7 +65,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn *sql.DB, stateSchema strin
 	return tableToBackfill, nil
 }
 
-func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
@@ -118,7 +118,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn *sql.DB, tr SQLTransfor
 	return err
 }
 
-func (o *OpAddColumn) Rollback(ctx context.Context, conn *sql.DB, tr SQLTransformer) error {
+func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
@@ -182,7 +182,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
+func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:
 	// - adding the column as nullable
@@ -216,7 +216,7 @@ func addColumn(ctx context.Context, conn *sql.DB, o OpAddColumn, t *schema.Table
 	return err
 }
 
-func addNotNullConstraint(ctx context.Context, conn *sql.DB, table, column, physicalColumn string) error {
+func addNotNullConstraint(ctx context.Context, conn db.DB, table, column, physicalColumn string) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s IS NOT NULL) NOT VALID",
 		pq.QuoteIdentifier(table),
 		pq.QuoteIdentifier(NotNullConstraintName(column)),
@@ -225,7 +225,7 @@ func addNotNullConstraint(ctx context.Context, conn *sql.DB, table, column, phys
 	return err
 }
 
-func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn *sql.DB) error {
+func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn db.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Column.Check.Name),
