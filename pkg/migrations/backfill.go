@@ -19,7 +19,7 @@ import (
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn *db.DB, table *schema.Table, cbs ...CallbackFn) error {
+func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumn := getIdentityColumn(table)
 	if identityColumn == nil {
@@ -87,7 +87,7 @@ type batcher struct {
 }
 
 // updateBatch updates the next batch of rows in the table.
-func (b *batcher) updateBatch(ctx context.Context, conn *db.DB) error {
+func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 	// Start the transaction for this batch
 	tx, err := conn.BeginTx(ctx, nil)
 	if err != nil {
