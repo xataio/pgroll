@@ -12,52 +12,100 @@ import (
 func TestCreateIndex(t *testing.T) {
 	t.Parallel()
 
-	ExecuteTests(t, TestCases{{
-		name: "create index",
-		migrations: []migrations.Migration{
-			{
-				Name: "01_add_table",
-				Operations: migrations.Operations{
-					&migrations.OpCreateTable{
-						Name: "users",
-						Columns: []migrations.Column{
-							{
-								Name: "id",
-								Type: "serial",
-								Pk:   ptr(true),
-							},
-							{
-								Name:     "name",
-								Type:     "varchar(255)",
-								Nullable: ptr(false),
+	ExecuteTests(t, TestCases{
+		{
+			name: "create index",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
 							},
 						},
 					},
 				},
-			},
-			{
-				Name: "02_create_index",
-				Operations: migrations.Operations{
-					&migrations.OpCreateIndex{
-						Name:    "idx_users_name",
-						Table:   "users",
-						Columns: []string{"name"},
+				{
+					Name: "02_create_index",
+					Operations: migrations.Operations{
+						&migrations.OpCreateIndex{
+							Name:    "idx_users_name",
+							Table:   "users",
+							Columns: []string{"name"},
+						},
 					},
 				},
 			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Complete is a no-op.
+			},
 		},
-		afterStart: func(t *testing.T, db *sql.DB, schema string) {
-			// The index has been created on the underlying table.
-			IndexMustExist(t, db, schema, "users", "idx_users_name")
+		{
+			name: "create index with a mixed case name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_index",
+					Operations: migrations.Operations{
+						&migrations.OpCreateIndex{
+							Name:    "idx_USERS_name",
+							Table:   "users",
+							Columns: []string{"name"},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_USERS_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_USERS_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Complete is a no-op.
+			},
 		},
-		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			// The index has been dropped from the the underlying table.
-			IndexMustNotExist(t, db, schema, "users", "idx_users_name")
-		},
-		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-			// Complete is a no-op.
-		},
-	}})
+	})
 }
 
 func TestCreateIndexOnMultipleColumns(t *testing.T) {

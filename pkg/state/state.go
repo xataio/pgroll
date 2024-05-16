@@ -174,7 +174,7 @@ BEGIN
 				  )), '{}'::json)
 				  FROM (
 				    SELECT 
-				      reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)) as name,
+				      replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') as name,
 				      pi.indisunique,
 				      array_agg(a.attname) AS columns
 				    FROM pg_index pi
