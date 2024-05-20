@@ -20,7 +20,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 	ops := o.subOperations()
 
 	// Duplicate the column on the underlying table.
-	if !o.isRenameOnly() {
+	if !o.IsRenameOnly() {
 		d := duplicatorForOperations(ops, conn, table, column)
 		if err := d.Duplicate(ctx); err != nil {
 			return nil, fmt.Errorf("failed to duplicate column: %w", err)
@@ -36,7 +36,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	// Rename column operations do not require this trigger.
-	if !o.isRenameOnly() {
+	if !o.IsRenameOnly() {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
 			Direction:      TriggerDirectionUp,
@@ -89,7 +89,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 		table.RenameColumn(o.Column, *o.Name)
 	}
 
-	if o.isRenameOnly() {
+	if o.IsRenameOnly() {
 		return nil, nil
 	}
 	return table, nil
@@ -105,7 +105,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 		}
 	}
 
-	if !o.isRenameOnly() {
+	if !o.IsRenameOnly() {
 		// Drop the old column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),
@@ -160,7 +160,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 		}
 	}
 
-	if !o.isRenameOnly() {
+	if !o.IsRenameOnly() {
 		// Drop the new column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),
@@ -202,7 +202,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	// If the operation requires backfills (ie it isn't a rename-only operation),
 	// ensure that the column meets the requirements for backfilling.
-	if !o.isRenameOnly() {
+	if !o.IsRenameOnly() {
 		if err := checkBackfill(table); err != nil {
 			return err
 		}
@@ -224,7 +224,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	// Rename-only operations are not allowed to have `up` or `down` SQL
-	if o.isRenameOnly() {
+	if o.IsRenameOnly() {
 		if o.Up != "" {
 			return NoUpSQLAllowedError{}
 		}
@@ -374,7 +374,7 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 	return ""
 }
 
-// isRenameOnly returns true if the operation is a rename column operation only.
-func (o *OpAlterColumn) isRenameOnly() bool {
+// IsRenameOnly returns true if the operation is a rename column operation only.
+func (o *OpAlterColumn) IsRenameOnly() bool {
 	return len(o.subOperations()) == 0 && o.Name != nil
 }
