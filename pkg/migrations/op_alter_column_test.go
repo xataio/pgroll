@@ -503,6 +503,51 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 	})
 }
 
+func TestIsRenameOnly(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		op       migrations.OpAlterColumn
+		expected bool
+	}{
+		{
+			name: "rename-only operation",
+			op: migrations.OpAlterColumn{
+				Table:  "events",
+				Column: "name",
+				Name:   ptr("event_name"),
+			},
+			expected: true,
+		},
+		{
+			name: "rename operation with other sub-operations",
+			op: migrations.OpAlterColumn{
+				Table:    "events",
+				Column:   "name",
+				Name:     ptr("event_name"),
+				Nullable: ptr(false),
+			},
+			expected: false,
+		},
+		{
+			name: "alter column with no rename",
+			op: migrations.OpAlterColumn{
+				Table:    "events",
+				Column:   "name",
+				Nullable: ptr(false),
+			},
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.op.IsRenameOnly())
+		})
+	}
+}
+
 func TestAlterColumnValidation(t *testing.T) {
 	t.Parallel()
 
