@@ -311,6 +311,7 @@ func TestReadSchema(t *testing.T) {
 				wantSchema: &schema.Schema{
 					Name:   "public",
 					Tables: map[string]schema.Table{},
+					Views:  map[string]schema.View{},
 				},
 			},
 			{
@@ -327,6 +328,27 @@ func TestReadSchema(t *testing.T) {
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 							ForeignKeys:       map[string]schema.ForeignKey{},
+						},
+					},
+					Views: map[string]schema.View{},
+				},
+			},
+			{
+				name:       "one view without columns",
+				createStmt: "CREATE VIEW public.view1 AS SELECT 1 AS foo",
+				wantSchema: &schema.Schema{
+					Name:   "public",
+					Tables: map[string]schema.Table{},
+					Views: map[string]schema.View{
+						"view1": {
+							Name:       "view1",
+							Definition: " SELECT 1 AS foo;",
+							Columns: map[string]schema.Column{
+								"foo": {
+									Name: "foo",
+									Type: "integer",
+								},
+							},
 						},
 					},
 				},
@@ -353,6 +375,7 @@ func TestReadSchema(t *testing.T) {
 							ForeignKeys:       map[string]schema.ForeignKey{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -389,6 +412,7 @@ func TestReadSchema(t *testing.T) {
 							ForeignKeys: map[string]schema.ForeignKey{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -424,6 +448,7 @@ func TestReadSchema(t *testing.T) {
 							ForeignKeys:       map[string]schema.ForeignKey{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -478,6 +503,7 @@ func TestReadSchema(t *testing.T) {
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -532,6 +558,7 @@ func TestReadSchema(t *testing.T) {
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -574,6 +601,7 @@ func TestReadSchema(t *testing.T) {
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -621,6 +649,7 @@ func TestReadSchema(t *testing.T) {
 							},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -668,6 +697,7 @@ func TestReadSchema(t *testing.T) {
 							},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -703,6 +733,7 @@ func TestReadSchema(t *testing.T) {
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 			{
@@ -727,6 +758,7 @@ func TestReadSchema(t *testing.T) {
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
 					},
+					Views: map[string]schema.View{},
 				},
 			},
 		}
@@ -745,7 +777,7 @@ func TestReadSchema(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if diff := cmp.Diff(tt.wantSchema, gotSchema, cmpopts.IgnoreFields(schema.Table{}, "OID")); diff != "" {
+				if diff := cmp.Diff(tt.wantSchema, gotSchema, cmpopts.IgnoreFields(schema.Table{}, "OID"), cmpopts.IgnoreFields(schema.View{}, "OID")); diff != "" {
 					t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
 				}
 			})
