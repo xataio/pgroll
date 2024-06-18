@@ -197,6 +197,25 @@ func TestInferredMigration(t *testing.T) {
 					},
 				},
 			},
+			{
+				name: "create/drop schema",
+				sqlStmts: []string{
+					"CREATE SCHEMA foo",
+					"DROP SCHEMA foo",
+				},
+				wantMigrations: []migrations.Migration{
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "CREATE SCHEMA foo"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP SCHEMA foo"},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
