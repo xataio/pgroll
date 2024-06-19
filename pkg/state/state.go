@@ -94,7 +94,7 @@ STABLE;
 CREATE OR REPLACE FUNCTION %[1]s.read_schema(schemaname text) RETURNS jsonb
 LANGUAGE plpgsql AS $$
 DECLARE
-	tables jsonb;
+	result jsonb;
 BEGIN
 	SELECT json_build_object(
 		'name', schemaname,
@@ -255,11 +255,43 @@ BEGIN
 			WHERE
 				ns.nspname = schemaname
 				AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
+			),
+		'views', (
+			SELECT COALESCE(json_object_agg(v.relname, jsonb_build_object(
+				'name', v.relname,
+				'oid', v.oid,
+				'comment', descr.description,
+				'definition', pg_get_viewdef(v.oid, true),
+				'columns', (
+					SELECT COALESCE(json_object_agg(name, c), '{}'::json) FROM (
+						SELECT
+							attr.attname AS name,
+							format_type(attr.atttypid, attr.atttypmod) AS type,
+							descr.description AS comment
+						FROM
+							pg_attribute AS attr
+							LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
+							AND attr.attnum = descr.objsubid
+						WHERE
+							attr.attnum > 0
+							AND NOT attr.attisdropped
+							AND attr.attrelid = v.oid
+						ORDER BY
+							attr.attnum
+					) c
+				)
+			)), '{}'::json) FROM pg_class AS v
+				INNER JOIN pg_namespace AS ns ON v.relnamespace = ns.oid
+				LEFT JOIN pg_description AS descr ON v.oid = descr.objoid
+				AND descr.objsubid = 0
+			WHERE
+				ns.nspname = schemaname
+				AND v.relkind = 'v' -- views only
 			)
 		)
-	INTO tables;
+	INTO result;
 
-	RETURN tables;
+	RETURN result;
 END;
 $$;
 
