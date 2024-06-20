@@ -26,8 +26,6 @@ type Schema struct {
 	Name string `json:"name"`
 	// Tables is a map of virtual table name -> table mapping
 	Tables map[string]Table `json:"tables"`
-	// Views is a map of virtual view name -> view mapping
-	Views map[string]View `json:"views"`
 }
 
 type Table struct {
@@ -57,23 +55,6 @@ type Table struct {
 
 	// UniqueConstraints is a map of all unique constraints defined on the table
 	UniqueConstraints map[string]UniqueConstraint `json:"uniqueConstraints"`
-}
-
-type View struct {
-	// OID for the view
-	OID string `json:"oid"`
-
-	// Name is the actual name in postgres
-	Name string `json:"name"`
-
-	// Optional comment for the view
-	Comment string `json:"comment"`
-
-	// Definition is the SQL definition of the view
-	Definition string `json:"definition"`
-
-	// Columns is a map of virtual column name -> column mapping
-	Columns map[string]Column `json:"columns"`
 }
 
 type Column struct {
