@@ -290,7 +290,7 @@ BEGIN
 			RETURN;
 		END IF;
 
-		IF tg_tag = 'CREATE SCHEMA' THEN
+		IF tg_tag = 'CREATE SCHEMA' OR tg_tag = 'ALTER SCHEMA' THEN
 			SELECT object_identity INTO schemaname FROM pg_event_trigger_ddl_commands();
 		ELSE
 			SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
