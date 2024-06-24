@@ -276,7 +276,11 @@ BEGIN
 		RETURN;
 	END IF;
 
-	IF tg_event = 'sql_drop' and tg_tag != 'ALTER TABLE' THEN
+  IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN
+    -- Take the schema name from the drop schema command
+    SELECT object_identity INTO schemaname FROM pg_event_trigger_dropped_objects();
+
+  ELSIF tg_event = 'sql_drop' and tg_tag != 'ALTER TABLE' THEN
 		-- Guess the schema from drop commands
 		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_dropped_objects() WHERE schema_name IS NOT NULL;
 
@@ -286,7 +290,11 @@ BEGIN
 			RETURN;
 		END IF;
 
-		SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+		IF tg_tag = 'CREATE SCHEMA' THEN
+			SELECT object_identity INTO schemaname FROM pg_event_trigger_ddl_commands();
+		ELSE
+			SELECT schema_name INTO schemaname FROM pg_catalog.pg_event_trigger_ddl_commands() WHERE schema_name IS NOT NULL;
+		END IF;
 	END IF;
 
 	IF schemaname IS NULL THEN
