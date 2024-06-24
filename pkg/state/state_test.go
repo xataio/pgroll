@@ -201,7 +201,8 @@ func TestInferredMigration(t *testing.T) {
 				name: "create/drop schema",
 				sqlStmts: []string{
 					"CREATE SCHEMA foo",
-					"DROP SCHEMA foo",
+					"ALTER SCHEMA foo RENAME TO bar",
+					"DROP SCHEMA bar",
 				},
 				wantMigrations: []migrations.Migration{
 					{
@@ -211,7 +212,12 @@ func TestInferredMigration(t *testing.T) {
 					},
 					{
 						Operations: migrations.Operations{
-							&migrations.OpRawSQL{Up: "DROP SCHEMA foo"},
+							&migrations.OpRawSQL{Up: "ALTER SCHEMA foo RENAME TO bar"},
+						},
+					},
+					{
+						Operations: migrations.Operations{
+							&migrations.OpRawSQL{Up: "DROP SCHEMA bar"},
 						},
 					},
 				},
