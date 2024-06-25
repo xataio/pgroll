@@ -10,10 +10,12 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 	"github.com/xataio/pgroll/pkg/state"
@@ -269,6 +271,55 @@ func TestInferredMigration(t *testing.T) {
 				}
 			})
 		}
+	})
+}
+
+func TestInferredMigrationsInTransactionHaveDifferentTimestamps(t *testing.T) {
+	ctx := context.Background()
+
+	testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+		// Start a transaction
+		tx, err := db.BeginTx(ctx, nil)
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		// Create two tables in the transaction
+		_, err = tx.ExecContext(ctx, "CREATE TABLE table1 (id int)")
+		require.NoError(t, err)
+
+		_, err = tx.ExecContext(ctx, "CREATE TABLE table2 (id int)")
+		require.NoError(t, err)
+
+		// Commit the transaction
+		tx.Commit()
+
+		// Read the migrations from the migrations table
+		rows, err := db.QueryContext(ctx,
+			fmt.Sprintf("SELECT name, created_at, updated_at FROM %s.migrations ORDER BY created_at ASC", state.Schema()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+
+		type m struct {
+			name      string
+			createdAt time.Time
+			updatedAt time.Time
+		}
+		var migrations []m
+
+		for rows.Next() {
+			var migration m
+			if err := rows.Scan(&migration.name, &migration.createdAt, &migration.updatedAt); err != nil {
+				t.Fatal(err)
+			}
+
+			migrations = append(migrations, migration)
+		}
+
+		// Ensure that the two inferred migrations have different timestamps
+		assert.Equal(t, 2, len(migrations), "unexpected number of migrations")
+		assert.NotEqual(t, migrations[0].createdAt, migrations[1].createdAt, "migrations have the same timestamp")
 	})
 }
 
