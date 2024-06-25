@@ -309,7 +309,7 @@ BEGIN
 	-- Someone did a schema change without pgroll, include it in the history
 	SELECT INTO migration_id pg_catalog.format('sql_%%s',pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15));
 
-	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent, migration_type)
+	INSERT INTO %[1]s.migrations (schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
 	VALUES (
 		schemaname,
 		migration_id,
@@ -328,7 +328,9 @@ BEGIN
 		%[1]s.read_schema(schemaname),
 		true,
 		%[1]s.latest_version(schemaname),
-		'inferred'
+		'inferred',
+		statement_timestamp(),
+		statement_timestamp()
 	);
 END;
 $$;
