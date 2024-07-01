@@ -85,3 +85,13 @@ func (m *Migration) Validate(ctx context.Context, s *schema.Schema) error {
 
 	return nil
 }
+
+// ContainsRawSQLOperation returns true if the migration contains a raw SQL operation
+func (m *Migration) ContainsRawSQLOperation() bool {
+	for _, op := range m.Operations {
+		if _, ok := op.(*OpRawSQL); ok {
+			return true
+		}
+	}
+	return false
+}
