@@ -27,6 +27,9 @@ type Roll struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
+	// disable creation of version schema for raw SQL migrations
+	noVersionSchemaForRawSQL bool
+
 	migrationHooks MigrationHooks
 	state          *state.State
 	pgVersion      PGVersion
@@ -58,13 +61,14 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	}
 
 	return &Roll{
-		pgConn:                &db.RDB{DB: conn},
-		schema:                schema,
-		state:                 state,
-		pgVersion:             PGVersion(pgMajorVersion),
-		disableVersionSchemas: rollOpts.disableVersionSchemas,
-		migrationHooks:        rollOpts.migrationHooks,
-		sqlTransformer:        sqlTransformer,
+		pgConn:                   &db.RDB{DB: conn},
+		schema:                   schema,
+		state:                    state,
+		pgVersion:                PGVersion(pgMajorVersion),
+		disableVersionSchemas:    rollOpts.disableVersionSchemas,
+		noVersionSchemaForRawSQL: rollOpts.noVersionSchemaForRawSQL,
+		migrationHooks:           rollOpts.migrationHooks,
+		sqlTransformer:           sqlTransformer,
 	}, nil
 }
 

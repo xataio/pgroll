@@ -18,7 +18,11 @@ type options struct {
 
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
-	migrationHooks        MigrationHooks
+
+	// disable creation of version schema for raw SQL migrations
+	noVersionSchemaForRawSQL bool
+
+	migrationHooks MigrationHooks
 }
 
 // MigrationHooks defines hooks that can be set to be called at various points
@@ -55,6 +59,12 @@ func WithRole(role string) Option {
 func WithDisableViewsManagement() Option {
 	return func(o *options) {
 		o.disableVersionSchemas = true
+	}
+}
+
+func WithNoVersionSchemaForRawSQL() Option {
+	return func(o *options) {
+		o.noVersionSchemaForRawSQL = true
 	}
 }
 
