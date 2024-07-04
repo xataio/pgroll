@@ -75,14 +75,14 @@ STABLE;
 CREATE OR REPLACE FUNCTION %[1]s.previous_version(schemaname NAME) RETURNS text
 AS $$
   WITH RECURSIVE ancestors AS (
-  SELECT name, parent, migration_type, 0 AS depth FROM %[1]s.migrations
-    WHERE name = %[1]s.latest_version(schemaname)
+  SELECT name, schema, parent, migration_type, 0 AS depth FROM %[1]s.migrations
+    WHERE name = %[1]s.latest_version(schemaname) AND schema = schemaname
 
   UNION ALL
 
-  SELECT m.name, m.parent, m.migration_type, a.depth + 1
+  SELECT m.name, m.schema, m.parent, m.migration_type, a.depth + 1
     FROM %[1]s.migrations m
-    JOIN ancestors a ON m.name = a.parent
+    JOIN ancestors a ON m.name = a.parent AND m.schema = a.schema
   )
   SELECT a.name FROM ancestors a
     JOIN information_schema.schemata s
