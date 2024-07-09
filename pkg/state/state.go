@@ -311,6 +311,15 @@ BEGIN
 		RETURN;
 	END IF;
 
+	-- Remove any duplicate inferred migrations with the same timestamp for this
+	-- schema. We assume such migrations are multi-statement batched migrations
+	-- and we are only interested in the last one in the batch.
+	DELETE FROM %[1]s.migrations
+	WHERE schema = schemaname
+	AND created_at = current_timestamp
+	AND migration_type = 'inferred'
+	AND migration->'operations'->0->'sql'->>'up' = current_query();
+
 	-- Someone did a schema change without pgroll, include it in the history
 	SELECT INTO migration_id pg_catalog.format('sql_%%s',pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15));
 
@@ -399,7 +408,7 @@ func (s *State) Init(ctx context.Context) error {
 	}
 
 	// Perform pgroll state initialization
-	_, err = tx.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema)))
+	_, err = tx.ExecContext(ctx, fmt.Sprintf(sqlInit, pq.QuoteIdentifier(s.schema), pq.QuoteLiteral(s.schema)))
 	if err != nil {
 		return err
 	}
