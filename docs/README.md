@@ -574,7 +574,7 @@ $ pgroll start sql/03_add_column.json
 
 This starts the migration defined in the `sql/03_add_column.json` file.
 
-After starting a migration there will be two schema versions in the database; one for the old schema before the migration (e.g. `public_02_create_table`) and one for the new version with the schema changes (e.g. `public_03_add_column`). At this point, the earlier version will be still available under the main schema name (e.g. `public`).
+After starting a migration there will be two schema versions in the database; one for the old schema before the migration (e.g. `public_02_create_table`) and one for the new version with the schema changes (e.g. `public_03_add_column`).  Each schema contains views on the tables in the `public` schema.
 
 #### Using `pgroll start` with the `--complete` flag
 
