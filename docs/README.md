@@ -539,7 +539,7 @@ The `pgroll` CLI offers the following subcommands:
 The `pgroll` CLI has the following top-level flags:
 * `--postgres-url`: The URL of the postgres instance against which migrations will be run.
 * `--schema`: The Postgres schema in which migrations will be run (default `"public"`).
-* `--pgroll-schema`: The Postgres schema in which `pgroll` will store its internal state (default: `"pgroll"`).
+* `--pgroll-schema`: The Postgres schema in which `pgroll` will store its internal state (default: `"pgroll"`). One `--pgroll-schema` may be used safely with multiple `--schema`s.
 * `--lock-timeout`: The Postgres `lock_timeout` value to use for all `pgroll` DDL operations, specified in milliseconds (default `500`).
 * `--role`: The Postgres role to use for all `pgroll` DDL operations (default: `""`, which doesn't set any role).
 
@@ -572,9 +572,11 @@ The tables and functions in this schema store `pgroll`'s internal state and are 
 $ pgroll start sql/03_add_column.json
 ```
 
-This starts the migration defined in the `sql/01_create_table.json` file.
+This starts the migration defined in the `sql/03_add_column.json` file.
 
-After starting a migration there will be two schema versions in the database; one for the old schema before the migration and one for the new version with the schema changes.
+After starting a migration there will be two schema versions in the database; one for the old schema before the migration (e.g. `public_02_create_table`) and one for the new version with the schema changes (e.g. `public_03_add_column`).  Each of these schemas merely contains views on the tables in the `public` schema.
+
+#### Using `pgroll start` with the `--complete` flag
 
 A migration can be started and completed with one command by specifying the `--complete` flag:
 
@@ -598,7 +600,7 @@ This completes the most recently started migration.
 
 Running `pgroll complete` when there is no migration in progress is a no-op.
 
-Completing a `pgroll` migration removes the previous schema version from the database, leaving only the latest version of the schema.
+Completing a `pgroll` migration removes the previous schema version from the database (e.g. `public_02_create_table`), leaving only the latest version of the schema (e.g. `public_03_add_column`). At this point, any temporary columns and triggers created on the affected tables in the `public` schema will also be cleaned up, leaving the table schema in its final state. Note that the real schema (e.g. `public`) should never be used directly by the client as that is not safe; instead, clients should use the schemas with versioned views (e.g. `public_03_add_column`).
 
 :warning: Before running `pgroll complete` ensure that all applications that depend on the old version of the database schema are no longer live. Prematurely running `pgroll complete` can cause downtime of old application instances that depend on the old schema.
 
