@@ -759,6 +759,42 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 	})
 }
 
+func TestWithSearchPathOptionIsRespected(t *testing.T) {
+	t.Parallel()
+
+	opts := []roll.Option{roll.WithSearchPath("public")}
+
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "foo", opts, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create a function in the public schema
+		_, err := db.ExecContext(ctx, `CREATE OR REPLACE FUNCTION say_hello()
+      RETURNS TEXT AS $$
+        SELECT 'hello world';
+      $$ LANGUAGE sql;
+    `)
+		require.NoError(t, err)
+
+		// Apply a migration in the foo schema that references the function in the public schema
+		err = mig.Start(ctx, &migrations.Migration{
+			Name: "01_raw_sql",
+			Operations: migrations.Operations{
+				&migrations.OpRawSQL{
+					Up: "SELECT say_hello()",
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		// Complete the migration
+		err = mig.Complete(ctx)
+		require.NoError(t, err)
+
+		// No assertions required as the migration would have failed if the
+		// function reference was not found
+	})
+}
+
 func createTableOp(tableName string) *migrations.OpCreateTable {
 	return &migrations.OpCreateTable{
 		Name: tableName,
