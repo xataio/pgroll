@@ -22,6 +22,9 @@ type options struct {
 	// disable creation of version schema for raw SQL migrations
 	noVersionSchemaForRawSQL bool
 
+	// additional entries to add to the search_path during migration execution
+	searchPath []string
+
 	migrationHooks MigrationHooks
 }
 
@@ -84,5 +87,14 @@ func WithMigrationHooks(hooks MigrationHooks) Option {
 func WithSQLTransformer(transformer migrations.SQLTransformer) Option {
 	return func(o *options) {
 		o.sqlTransformer = transformer
+	}
+}
+
+// WithSearchPath sets the search_path to use during migration execution. The
+// schema in which the migration is run is always included in the search path,
+// regardless of this setting.
+func WithSearchPath(schemas ...string) Option {
+	return func(o *options) {
+		o.searchPath = schemas
 	}
 }
