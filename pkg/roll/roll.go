@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
 
@@ -78,7 +79,8 @@ func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql
 		dsn = pgURL
 	}
 
-	dsn += " search_path=" + schema
+	searchPath := append([]string{schema}, options.searchPath...)
+	dsn += " search_path=" + strings.Join(searchPath, ",")
 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
