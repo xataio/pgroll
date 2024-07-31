@@ -42,8 +42,8 @@ func SharedTestMain(m *testing.M) {
 		pgVersion = defaultPostgresVersion
 	}
 
-	ctr, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:"+pgVersion),
+	ctr, err := postgres.Run(ctx,
+		"postgres:"+pgVersion,
 		testcontainers.WithWaitStrategy(waitForLogs),
 	)
 	if err != nil {
