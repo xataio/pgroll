@@ -32,7 +32,7 @@ func startCmd() *cobra.Command {
 			}
 			defer m.Close()
 
-			file, err := os.Open(args[0])
+			file, err := os.Open(fileName)
 			if err != nil {
 				return fmt.Errorf("opening migration file: %w", err)
 			}
@@ -61,7 +61,10 @@ func startCmd() *cobra.Command {
 				}
 			}
 
-			version := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
+			version := migration.Name
+			if version == "" {
+				version = strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
+			}
 			viewName := roll.VersionedSchemaName(flags.Schema(), version)
 			msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
 			sp.Success(msg)
