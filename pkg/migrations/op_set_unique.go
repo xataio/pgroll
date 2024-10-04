@@ -21,7 +21,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Add a unique index to the new column

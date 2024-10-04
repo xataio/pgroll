@@ -22,7 +22,7 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Add the check constraint to the new column as NOT VALID.

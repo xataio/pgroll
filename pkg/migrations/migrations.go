@@ -18,7 +18,7 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
+	Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.

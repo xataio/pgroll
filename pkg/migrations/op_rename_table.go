@@ -13,7 +13,7 @@ import (
 
 var _ Operation = (*OpRenameTable)(nil)
 
-func (o *OpRenameTable) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpRenameTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	return nil, s.RenameTable(o.From, o.To)
 }
 
