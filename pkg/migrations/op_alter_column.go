@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 	ops := o.subOperations()
@@ -29,7 +29,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 
 	// perform any operation specific start steps
 	for _, op := range ops {
-		if _, err := op.Start(ctx, conn, stateSchema, tr, s, cbs...); err != nil {
+		if _, err := op.Start(ctx, conn, tr, s, cbs...); err != nil {
 			return nil, err
 		}
 	}
@@ -44,7 +44,6 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column),
-			StateSchema:    stateSchema,
 			SQL:            o.upSQLForOperations(ops),
 		})
 		if err != nil {
@@ -76,7 +75,6 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, stateSchema strin
 			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
-			StateSchema:    stateSchema,
 			SQL:            o.downSQLForOperations(ops),
 		})
 		if err != nil {

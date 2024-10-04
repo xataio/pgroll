@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
@@ -49,7 +49,6 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, stateSchema string,
 			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column.Name),
-			StateSchema:    stateSchema,
 			SQL:            o.Up,
 		})
 		if err != nil {

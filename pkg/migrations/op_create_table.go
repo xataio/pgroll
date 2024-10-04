@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns, tr)
 	if err != nil {

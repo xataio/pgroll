@@ -13,7 +13,7 @@ import (
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if o.Down != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
@@ -22,7 +22,6 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, stateSchema string
 			SchemaName:     s.Name,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
-			StateSchema:    stateSchema,
 			SQL:            o.Down,
 		})
 		if err != nil {
