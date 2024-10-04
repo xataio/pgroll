@@ -47,6 +47,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 			Direction:      TriggerDirectionUp,
 			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     s.Name,
+			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(o.Column.Name),
 			SQL:            o.Up,

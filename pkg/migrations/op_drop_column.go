@@ -20,6 +20,7 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 			Direction:      TriggerDirectionDown,
 			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     s.Name,
+			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
 			SQL:            o.Down,
