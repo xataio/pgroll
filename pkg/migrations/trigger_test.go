@@ -27,8 +27,8 @@ func TestBuildFunction(t *testing.T) {
 					"review":   {Name: "review", Type: "text"},
 				},
 				SchemaName:     "public",
+				LatestSchema:   "public_01_migration_name",
 				TableName:      "reviews",
-				StateSchema:    "pgroll",
 				PhysicalColumn: "_pgroll_new_review",
 				SQL:            "product || 'is good'",
 			},
@@ -44,15 +44,11 @@ func TestBuildFunction(t *testing.T) {
       latest_schema text;
       search_path text;
     BEGIN
-      SELECT 'public' || '_' || latest_version
-        INTO latest_schema
-        FROM "pgroll".latest_version('public');
-
       SELECT current_setting
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path != latest_schema THEN
+      IF search_path != 'public_01_migration_name' THEN
         NEW."_pgroll_new_review" = product || 'is good';
       END IF;
 
@@ -72,8 +68,8 @@ func TestBuildFunction(t *testing.T) {
 					"review":   {Name: "review", Type: "text"},
 				},
 				SchemaName:     "public",
+				LatestSchema:   "public_01_migration_name",
 				TableName:      "reviews",
-				StateSchema:    "pgroll",
 				TestExpr:       `NEW."review" IS NULL`,
 				PhysicalColumn: "_pgroll_new_review",
 				ElseExpr:       `NEW."_pgroll_new_review" = NEW."review"`,
@@ -91,15 +87,11 @@ func TestBuildFunction(t *testing.T) {
       latest_schema text;
       search_path text;
     BEGIN
-      SELECT 'public' || '_' || latest_version
-        INTO latest_schema
-        FROM "pgroll".latest_version('public');
-
       SELECT current_setting
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path != latest_schema AND NEW."review" IS NULL THEN
+      IF search_path != 'public_01_migration_name' AND NEW."review" IS NULL THEN
         NEW."_pgroll_new_review" = product || 'is good';
       ELSE
         NEW."_pgroll_new_review" = NEW."review";
@@ -121,8 +113,8 @@ func TestBuildFunction(t *testing.T) {
 					"review":   {Name: "review", Type: "text"},
 				},
 				SchemaName:     "public",
+				LatestSchema:   "public_01_migration_name",
 				TableName:      "reviews",
-				StateSchema:    "pgroll",
 				PhysicalColumn: "review",
 				SQL:            `NEW."_pgroll_new_review"`,
 			},
@@ -138,15 +130,11 @@ func TestBuildFunction(t *testing.T) {
       latest_schema text;
       search_path text;
     BEGIN
-      SELECT 'public' || '_' || latest_version
-        INTO latest_schema
-        FROM "pgroll".latest_version('public');
-
       SELECT current_setting
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path = latest_schema THEN
+      IF search_path = 'public_01_migration_name' THEN
         NEW."review" = NEW."_pgroll_new_review";
       END IF;
 
@@ -167,8 +155,8 @@ func TestBuildFunction(t *testing.T) {
 					"rating":   {Name: "_pgroll_new_rating", Type: "integer"},
 				},
 				SchemaName:     "public",
+				LatestSchema:   "public_01_migration_name",
 				TableName:      "reviews",
-				StateSchema:    "pgroll",
 				PhysicalColumn: "rating",
 				SQL:            `CAST(rating as text)`,
 			},
@@ -185,15 +173,11 @@ func TestBuildFunction(t *testing.T) {
       latest_schema text;
       search_path text;
     BEGIN
-      SELECT 'public' || '_' || latest_version
-        INTO latest_schema
-        FROM "pgroll".latest_version('public');
-
       SELECT current_setting
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path = latest_schema THEN
+      IF search_path = 'public_01_migration_name' THEN
         NEW."rating" = CAST(rating as text);
       END IF;
 

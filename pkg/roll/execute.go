@@ -63,10 +63,19 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		defer m.migrationHooks.AfterStartDDL(m)
 	}
 
+	// Get the name of the latest version schema
+	// This is created after ops have started but ops need to know what it will
+	// be called in order to set up any up/down triggers
+	latestVersion, err := m.state.LatestVersion(ctx, m.schema)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get name of latest version: %w", err)
+	}
+	latestSchema := VersionedSchemaName(m.schema, *latestVersion)
+
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.pgConn, m.state.Schema(), m.sqlTransformer, newSchema, cbs...)
+		table, err := op.Start(ctx, m.pgConn, latestSchema, m.sqlTransformer, newSchema, cbs...)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 

@@ -13,7 +13,7 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
@@ -29,9 +29,9 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, stateSchema st
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
 		SchemaName:     s.Name,
+		LatestSchema:   latestSchema,
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(o.Column),
-		StateSchema:    stateSchema,
 		SQL:            o.upSQL(),
 	})
 	if err != nil {
@@ -51,9 +51,9 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, stateSchema st
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,
 		SchemaName:     s.Name,
+		LatestSchema:   latestSchema,
 		TableName:      o.Table,
 		PhysicalColumn: o.Column,
-		StateSchema:    stateSchema,
 		SQL:            o.Down,
 	})
 	if err != nil {

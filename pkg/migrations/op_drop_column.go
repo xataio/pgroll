@@ -13,16 +13,16 @@ import (
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, stateSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	if o.Down != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),
 			Direction:      TriggerDirectionDown,
 			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     s.Name,
+			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: o.Column,
-			StateSchema:    stateSchema,
 			SQL:            o.Down,
 		})
 		if err != nil {

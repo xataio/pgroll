@@ -15,15 +15,11 @@ const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
       latest_schema text;
       search_path text;
     BEGIN
-      SELECT {{ .SchemaName | ql }} || '_' || latest_version
-        INTO latest_schema
-        FROM {{ .StateSchema | qi }}.latest_version({{ .SchemaName | ql }});
-
       SELECT current_setting
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} latest_schema {{ if .TestExpr  -}} AND {{ .TestExpr }} {{ end -}} THEN
+      IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} {{ .LatestSchema | ql }} {{ if .TestExpr  -}} AND {{ .TestExpr }} {{ end -}} THEN
         NEW.{{ .PhysicalColumn | qi  }} = {{ .SQL }};
       {{- if .ElseExpr }}
       ELSE
