@@ -2,6 +2,7 @@
 
 package migrations
 
+// Validate validates the UniqueConstraint
 func (c *UniqueConstraint) Validate() error {
 	if c.Name == "" {
 		return FieldRequiredError{Name: "name"}

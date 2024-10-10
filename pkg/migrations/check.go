@@ -2,6 +2,7 @@
 
 package migrations
 
+// Validate checks that the CheckConstraint is valid
 func (c *CheckConstraint) Validate() error {
 	if c.Name == "" {
 		return FieldRequiredError{Name: "name"}

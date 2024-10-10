@@ -9,6 +9,7 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+// OpDropNotNull is an operation that drops the NOT NULL constraint from a column
 type OpDropNotNull struct {
 	Table  string `json:"table"`
 	Column string `json:"column"`

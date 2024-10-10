@@ -9,6 +9,7 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+// OpSetComment is a operation that sets a comment on a object.
 type OpSetComment struct {
 	Table   string  `json:"table"`
 	Column  string  `json:"column"`

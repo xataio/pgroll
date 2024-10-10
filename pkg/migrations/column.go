@@ -2,6 +2,7 @@
 
 package migrations
 
+// IsNullable returns true if the column is nullable
 func (c *Column) IsNullable() bool {
 	if c.Nullable != nil {
 		return *c.Nullable
@@ -9,6 +10,7 @@ func (c *Column) IsNullable() bool {
 	return false
 }
 
+// IsUnique returns true if the column values must be unique
 func (c *Column) IsUnique() bool {
 	if c.Unique != nil {
 		return *c.Unique
@@ -16,6 +18,7 @@ func (c *Column) IsUnique() bool {
 	return false
 }
 
+// IsPrimaryKey returns true if the column is part of the primary key
 func (c *Column) IsPrimaryKey() bool {
 	if c.Pk != nil {
 		return *c.Pk

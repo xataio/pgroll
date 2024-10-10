@@ -126,6 +126,7 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 	return sql, nil
 }
 
+// ColumnToSQL generates the SQL for a column definition.
 func ColumnToSQL(col Column, tr SQLTransformer) (string, error) {
 	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
 

@@ -71,10 +71,13 @@ func buildTrigger(cfg triggerConfig) (string, error) {
 	return executeTemplate("trigger", templates.Trigger, cfg)
 }
 
+// TriggerFunctionName returns the name of the trigger function
+// for a given table and column.
 func TriggerFunctionName(tableName, columnName string) string {
 	return "_pgroll_trigger_" + tableName + "_" + columnName
 }
 
+// TriggerName returns the name of the trigger for a given table and column.
 func TriggerName(tableName, columnName string) string {
 	return TriggerFunctionName(tableName, columnName)
 }

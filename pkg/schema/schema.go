@@ -21,6 +21,7 @@ func New() *Schema {
 	}
 }
 
+// Schema represents a database schema
 type Schema struct {
 	// Name is the name of the schema
 	Name string `json:"name"`
@@ -28,6 +29,7 @@ type Schema struct {
 	Tables map[string]Table `json:"tables"`
 }
 
+// Table represents a table in the schema
 type Table struct {
 	// OID for the table
 	OID string `json:"oid"`
@@ -57,6 +59,7 @@ type Table struct {
 	UniqueConstraints map[string]UniqueConstraint `json:"uniqueConstraints"`
 }
 
+// Column represents a column in a table
 type Column struct {
 	// Name is the actual name in postgres
 	Name string `json:"name"`
@@ -72,6 +75,7 @@ type Column struct {
 	Comment string `json:"comment"`
 }
 
+// Index represents an index on a table
 type Index struct {
 	// Name is the name of the index in postgres
 	Name string `json:"name"`
@@ -83,6 +87,7 @@ type Index struct {
 	Columns []string `json:"columns"`
 }
 
+// ForeignKey represents a foreign key on a table
 type ForeignKey struct {
 	// Name is the name of the foreign key in postgres
 	Name string `json:"name"`
@@ -100,6 +105,7 @@ type ForeignKey struct {
 	OnDelete string `json:"onDelete"`
 }
 
+// CheckConstraint represents a check constraint on a table
 type CheckConstraint struct {
 	// Name is the name of the check constraint in postgres
 	Name string `json:"name"`
@@ -111,6 +117,7 @@ type CheckConstraint struct {
 	Definition string `json:"definition"`
 }
 
+// UniqueConstraint represents a unique constraint on a table
 type UniqueConstraint struct {
 	// Name is the name of the unique constraint in postgres
 	Name string `json:"name"`
@@ -119,6 +126,7 @@ type UniqueConstraint struct {
 	Columns []string `json:"columns"`
 }
 
+// GetTable returns a table by name
 func (s *Schema) GetTable(name string) *Table {
 	if s.Tables == nil {
 		return nil
@@ -130,6 +138,7 @@ func (s *Schema) GetTable(name string) *Table {
 	return &t
 }
 
+// AddTable adds a table to the schema
 func (s *Schema) AddTable(name string, t Table) {
 	if s.Tables == nil {
 		s.Tables = make(map[string]Table)
@@ -138,6 +147,7 @@ func (s *Schema) AddTable(name string, t Table) {
 	s.Tables[name] = t
 }
 
+// RenameTable renames a table in the schema
 func (s *Schema) RenameTable(from, to string) error {
 	if s.GetTable(from) == nil {
 		return fmt.Errorf("table %q does not exist", from)
@@ -152,10 +162,12 @@ func (s *Schema) RenameTable(from, to string) error {
 	return nil
 }
 
+// RemoveTable removes a table from the schema
 func (s *Schema) RemoveTable(name string) {
 	delete(s.Tables, name)
 }
 
+// GetColumn returns a column by name
 func (t *Table) GetColumn(name string) *Column {
 	if t.Columns == nil {
 		return nil
@@ -167,6 +179,7 @@ func (t *Table) GetColumn(name string) *Column {
 	return &c
 }
 
+// ConstraintExists returns true if a constraint with the given name exists
 func (t *Table) ConstraintExists(name string) bool {
 	_, ok := t.CheckConstraints[name]
 	if ok {
@@ -180,6 +193,7 @@ func (t *Table) ConstraintExists(name string) bool {
 	return ok
 }
 
+// GetPrimaryKey returns the columns that make up the primary key
 func (t *Table) GetPrimaryKey() (columns []*Column) {
 	for _, name := range t.PrimaryKey {
 		columns = append(columns, t.GetColumn(name))
@@ -187,6 +201,7 @@ func (t *Table) GetPrimaryKey() (columns []*Column) {
 	return columns
 }
 
+// AddColumn adds a column to the table
 func (t *Table) AddColumn(name string, c Column) {
 	if t.Columns == nil {
 		t.Columns = make(map[string]Column)
@@ -195,10 +210,12 @@ func (t *Table) AddColumn(name string, c Column) {
 	t.Columns[name] = c
 }
 
+// RemoveColumn removes a column from the table
 func (t *Table) RemoveColumn(column string) {
 	delete(t.Columns, column)
 }
 
+// RenameColumn renames a column in the table
 func (t *Table) RenameColumn(from, to string) {
 	t.Columns[to] = t.Columns[from]
 	delete(t.Columns, from)

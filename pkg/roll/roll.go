@@ -37,6 +37,7 @@ type Roll struct {
 	sqlTransformer migrations.SQLTransformer
 }
 
+// New creates a new Roll instance
 func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...Option) (*Roll, error) {
 	rollOpts := &options{}
 	for _, o := range opts {
@@ -113,22 +114,27 @@ func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql
 	return conn, nil
 }
 
+// Init initializes the Roll instance
 func (m *Roll) Init(ctx context.Context) error {
 	return m.state.Init(ctx)
 }
 
+// PGVersion returns the postgres version
 func (m *Roll) PGVersion() PGVersion {
 	return m.pgVersion
 }
 
+// PgConn returns the underlying database connection
 func (m *Roll) PgConn() db.DB {
 	return m.pgConn
 }
 
+// Schema returns the schema the Roll instance is acting on
 func (m *Roll) Schema() string {
 	return m.schema
 }
 
+// Status returns the current migration status
 func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {
 	return m.state.Status(ctx, schema)
 }
