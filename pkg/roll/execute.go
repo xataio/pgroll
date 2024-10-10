@@ -200,6 +200,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	return nil
 }
 
+// Rollback will revert the changes made by the migration
 func (m *Roll) Rollback(ctx context.Context) error {
 	// get current ongoing migration
 	migration, err := m.state.GetActiveMigration(ctx, m.schema)

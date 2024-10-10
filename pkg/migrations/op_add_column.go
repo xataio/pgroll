@@ -234,10 +234,12 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn db.DB) error 
 	return err
 }
 
+// NotNullConstraintName returns the name of the NOT NULL constraint for the given column
 func NotNullConstraintName(columnName string) string {
 	return "_pgroll_check_not_null_" + columnName
 }
 
+// IsNotNullConstraintName returns true if the given name is a NOT NULL constraint name
 func IsNotNullConstraintName(name string) bool {
 	return strings.HasPrefix(name, "_pgroll_check_not_null_")
 }

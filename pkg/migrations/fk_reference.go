@@ -8,6 +8,7 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+// Validate checks that the ForeignKeyReference is valid
 func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 	if f.Name == "" {
 		return FieldRequiredError{Name: "name"}

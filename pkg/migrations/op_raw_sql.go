@@ -65,6 +65,7 @@ func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+// IsIsolated returns true if the operation is isolated and should be run with other operations.
 func (o *OpRawSQL) IsIsolated() bool {
 	return !o.OnComplete
 }

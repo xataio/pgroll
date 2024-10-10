@@ -14,6 +14,8 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+// Duplicator duplicates a column in a table, including all constraints and
+// comments.
 type Duplicator struct {
 	conn              db.DB
 	table             *schema.Table
@@ -40,16 +42,19 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column)
 	}
 }
 
+// WithType sets the type of the new column.
 func (d *Duplicator) WithType(t string) *Duplicator {
 	d.withType = t
 	return d
 }
 
+// WithoutConstraint excludes a constraint from being duplicated.
 func (d *Duplicator) WithoutConstraint(c string) *Duplicator {
 	d.withoutConstraint = c
 	return d
 }
 
+// WithoutNotNull excludes the NOT NULL constraint from being duplicated.
 func (d *Duplicator) WithoutNotNull() *Duplicator {
 	d.withoutNotNull = true
 	return d
@@ -182,14 +187,17 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	return nil
 }
 
+// DiplicationName returns the name of a duplicated column.
 func DuplicationName(name string) string {
 	return "_pgroll_dup_" + name
 }
 
+// IsDuplicatedName returns true if the name is a duplicated column name.
 func IsDuplicatedName(name string) bool {
 	return strings.HasPrefix(name, "_pgroll_dup_")
 }
 
+// StripDuplicationPrefix removes the duplication prefix from a column name.
 func StripDuplicationPrefix(name string) string {
 	return strings.TrimPrefix(name, "_pgroll_dup_")
 }

@@ -36,10 +36,12 @@ const (
 
 const temporaryPrefix = "_pgroll_new_"
 
+// TemporaryName returns a temporary name for a given name.
 func TemporaryName(name string) string {
 	return temporaryPrefix + name
 }
 
+// ReadMigration reads a migration from an io.Reader, like a file.
 func ReadMigration(r io.Reader) (*Migration, error) {
 	byteValue, err := io.ReadAll(r)
 	if err != nil {
@@ -166,6 +168,7 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// OperationName returns the name of the operation.
 func OperationName(op Operation) OpName {
 	switch op.(type) {
 	case *OpCreateTable:
