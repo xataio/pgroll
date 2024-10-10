@@ -21,7 +21,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 	}
 
 	// perform backfills for the tables that require it
-	return m.performBackfills(ctx, tablesToBackfill)
+	return m.performBackfills(ctx, tablesToBackfill, cbs...)
 }
 
 // StartDDLOperations performs the DDL operations for the migration. This does
@@ -265,9 +265,9 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 	return nil
 }
 
-func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table) error {
+func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs ...migrations.CallbackFn) error {
 	for _, table := range tables {
-		if err := migrations.Backfill(ctx, m.pgConn, table); err != nil {
+		if err := migrations.Backfill(ctx, m.pgConn, table, cbs...); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(

@@ -637,6 +637,45 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 	})
 }
 
+func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create a table
+		_, err := db.ExecContext(ctx, "CREATE TABLE users (id SERIAL PRIMARY KEY, name text)")
+		require.NoError(t, err)
+
+		// Insert some data
+		_, err = db.ExecContext(ctx,
+			"INSERT INTO users (id, name) VALUES (1, 'alice'), (2, 'bob')")
+		require.NoError(t, err)
+
+		// Define a mock callback
+		invoked := false
+		cb := func(n int64) { invoked = true }
+
+		// Start a migration that requires a backfill
+		err = mig.Start(ctx, &migrations.Migration{
+			Name: "02_change_type",
+			Operations: migrations.Operations{
+				&migrations.OpAlterColumn{
+					Table:  "users",
+					Column: "name",
+					Type:   ptr("varchar(255)"),
+					Up:     "name",
+					Down:   "name",
+				},
+			},
+		}, cb)
+		require.NoError(t, err)
+
+		// Ensure that the callback was invoked
+		assert.True(t, invoked)
+	})
+}
+
 func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 	t.Parallel()
 
