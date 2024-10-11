@@ -49,7 +49,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	}
 
 	var pgMajorVersion PGVersion
-	err = conn.QueryRowContext(ctx, "SELECT split_part(split_part(version(), ' ', 2), '.', 1)").Scan(&pgMajorVersion)
+	err = conn.QueryRowContext(ctx, "SELECT substring(split_part(version(), ' ', 2) from '^[0-9]+')").Scan(&pgMajorVersion)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
 	}
