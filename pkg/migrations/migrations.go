@@ -13,6 +13,7 @@ import (
 
 type CallbackFn func(int64)
 
+// Operation is an operation that can be applied to a schema
 type Operation interface {
 	// Start will apply the required changes to enable supporting the new schema
 	// version in the database (through a view)
@@ -22,31 +23,33 @@ type Operation interface {
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
-	// This method should be called once the previous version is no longer used
+	// This method should be called once the previous version is no longer used.
 	Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.
 	Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error
 
-	// Validate returns a descriptive error if the operation cannot be applied to the given schema
+	// Validate returns a descriptive error if the operation cannot be applied to the given schema.
 	Validate(ctx context.Context, s *schema.Schema) error
 }
 
 // IsolatedOperation is an operation that cannot be executed with other operations
-// in the same migration
+// in the same migration.
 type IsolatedOperation interface {
-	// this operation is isolated when executed on start, cannot be executed with other operations
+	// this operation is isolated when executed on start, cannot be executed with other operations.
 	IsIsolated() bool
 }
 
-// RequiresSchemaRefreshOperation is an operation that requires the resulting schema to be refreshed
+// RequiresSchemaRefreshOperation is an operation that requires the resulting schema to be refreshed.
 type RequiresSchemaRefreshOperation interface {
 	// this operation requires the resulting schema to be refreshed when executed on start
 	RequiresSchemaRefresh()
 }
 
+// SQLTransformer is an interface that can be used to transform SQL statements.
 type SQLTransformer interface {
+	// TransformSQL will transform the given SQL statement.
 	TransformSQL(sql string) (string, error)
 }
 

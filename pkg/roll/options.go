@@ -65,6 +65,7 @@ func WithDisableViewsManagement() Option {
 	}
 }
 
+// WithNoVersionSchemaForRawSQL disables the creation of version schema for raw SQL migrations
 func WithNoVersionSchemaForRawSQL() Option {
 	return func(o *options) {
 		o.noVersionSchemaForRawSQL = true
