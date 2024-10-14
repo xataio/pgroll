@@ -29,8 +29,6 @@ func TestJSONSchemaValidation(t *testing.T) {
 	assert.NoError(t, err)
 
 	for _, file := range files {
-		file := file
-
 		t.Run(file.Name(), func(t *testing.T) {
 			ac, err := txtar.ParseFile(filepath.Join(testDataDir, file.Name()))
 			assert.NoError(t, err)
