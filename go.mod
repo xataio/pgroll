@@ -4,7 +4,6 @@ go 1.21
 
 require (
 	github.com/cloudflare/backoff v0.0.0-20161212185259-647f3cdfc87a
-	github.com/google/go-cmp v0.6.0
 	github.com/lib/pq v1.10.9
 	github.com/oapi-codegen/nullable v1.1.0
 	github.com/pterm/pterm v0.12.69

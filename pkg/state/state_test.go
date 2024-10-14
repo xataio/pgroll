@@ -12,8 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -265,9 +263,7 @@ func TestInferredMigration(t *testing.T) {
 					assert.True(t, strings.HasPrefix(gotMigration.Name, "sql_") && len(gotMigration.Name) > 10)
 					gotMigration.Name = ""
 
-					if diff := cmp.Diff(wantMigration, gotMigration); diff != "" {
-						t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
-					}
+					assert.Equal(t, wantMigration, gotMigration)
 				}
 			})
 		}
@@ -815,10 +811,17 @@ func TestReadSchema(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if diff := cmp.Diff(tt.wantSchema, gotSchema, cmpopts.IgnoreFields(schema.Table{}, "OID")); diff != "" {
-					t.Errorf("expected schema mismatch (-want +got):\n%s", diff)
-				}
+				clearOIDS(gotSchema)
+				assert.Equal(t, tt.wantSchema, gotSchema)
 			})
 		}
 	})
+}
+
+func clearOIDS(s *schema.Schema) {
+	for k := range s.Tables {
+		c := s.Tables[k]
+		c.OID = ""
+		s.Tables[k] = c
+	}
 }
