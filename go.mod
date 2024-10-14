@@ -1,6 +1,6 @@
 module github.com/xataio/pgroll
 
-go 1.21
+go 1.23
 
 require (
 	github.com/cloudflare/backoff v0.0.0-20240920015135-e46b80a3a7d0
@@ -13,7 +13,6 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.33.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.33.0
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
 )
 

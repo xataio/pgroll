@@ -12,3 +12,6 @@ generate:
 	# Add the license header
 	echo "// SPDX-License-Identifier: Apache-2.0" | cat - pkg/migrations/types.go > pkg/migrations/types.go.tmp
 	mv pkg/migrations/types.go.tmp pkg/migrations/types.go
+
+lint:
+	golangci-lint --config=.golangci.yml run
