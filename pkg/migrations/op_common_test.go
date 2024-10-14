@@ -7,14 +7,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/testutils"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 type TestCase struct {
@@ -573,7 +573,7 @@ func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[
 
 	mustSetSearchPath(t, db, versionSchema)
 
-	cols := maps.Keys(record)
+	cols := slices.Collect(maps.Keys(record))
 	slices.Sort(cols)
 
 	recordStr := "("
@@ -633,7 +633,7 @@ func delete(t *testing.T, db *sql.DB, schema, version, table string, record map[
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
-	cols := maps.Keys(record)
+	cols := slices.Collect(maps.Keys(record))
 	slices.Sort(cols)
 
 	recordStr := ""
