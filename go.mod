@@ -3,7 +3,7 @@ module github.com/xataio/pgroll
 go 1.21
 
 require (
-	github.com/cloudflare/backoff v0.0.0-20161212185259-647f3cdfc87a
+	github.com/cloudflare/backoff v0.0.0-20240920015135-e46b80a3a7d0
 	github.com/lib/pq v1.10.9
 	github.com/oapi-codegen/nullable v1.1.0
 	github.com/pterm/pterm v0.12.69
