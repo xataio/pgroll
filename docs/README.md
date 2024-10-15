@@ -971,7 +971,7 @@ A create index operation creates a new btree index on a set of columns.
 Example **create index** migrations:
 
 * [10_create_index.json](../examples/10_create_index.json)
-* [37_create_partial_index.json](../examples/37_create_partal_index.json)
+* [37_create_partial_index.json](../examples/37_create_partial_index.json)
 
 ### Create table
 
