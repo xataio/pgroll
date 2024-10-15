@@ -18,12 +18,14 @@ lint:
 	golangci-lint --config=.golangci.yml run
 
 examples:
-	@go run . init
+	@go build
+	@./pgroll init
 	@for file in examples/*.json; do \
 	    if [ -f $$file ]; then \
-	        go run . start --complete $$file; \
+	        ./pgroll start --complete $$file; \
 	    fi \
 	done
+	@go clean
 
 test:
 	go test ./...
