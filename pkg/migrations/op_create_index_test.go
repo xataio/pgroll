@@ -134,7 +134,7 @@ func TestCreateIndex(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_create_index_for_new_users",
+					Name: "02_create_index_for_new_users_after_2019",
 					Operations: migrations.Operations{
 						&migrations.OpCreateIndex{
 							Name:      "idx_users_name_after_2019",

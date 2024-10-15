@@ -1,14 +1,14 @@
 {
-  "name": "10_create_index",
+  "name": "37_create_partial_index",
   "operations": [
     {
       "create_index": {
-        "name": "idx_fruits_count",
+        "name": "idx_fruits_id_gt_10",
         "table": "fruits",
         "columns": [
-          "name"
+          "id"
         ],
-        "predicate": "count > 0"
+        "predicate": "id > 10"
       }
     }
   ]
