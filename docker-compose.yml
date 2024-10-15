@@ -1,15 +1,11 @@
-version: '3.8'
 services:
   db:
-    image: postgres:14-alpine
+    image: 'postgres:17'
     restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     ports:
-      - '5432:5432'
+      - '6432:5432'
     volumes: 
-      - data:/var/lib/postgresql/data
-volumes:
-  data:
-    driver: local
+      - /var/lib/postgresql/data
