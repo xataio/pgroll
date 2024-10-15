@@ -1,0 +1,15 @@
+{
+  "name": "10_create_index",
+  "operations": [
+    {
+      "create_index": {
+        "name": "idx_fruits_count",
+        "table": "fruits",
+        "columns": [
+          "name"
+        ],
+        "predicate": "count > 0"
+      }
+    }
+  ]
+}

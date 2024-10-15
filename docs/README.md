@@ -963,6 +963,7 @@ A create index operation creates a new btree index on a set of columns.
     "table": "name of table on which to define the index",
     "name": "index name",
     "columns": [ "names of columns on which to define the index" ]
+    "predicate": "conditional expression for defining a partial index",
   }
 }
 ```
