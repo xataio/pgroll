@@ -127,12 +127,11 @@ type OpCreateIndex struct {
 	// Index name
 	Name string `json:"name"`
 
+	// conditional expression for defining a partial index
+	Predicate *string `json:"predicate,omitempty"`
+
 	// Name of table on which to define the index
 	Table string `json:"table"`
-
-	// Predicate for the partial index
-	// SQL condition after WHERE
-	Predicate *string `json:"predicate,omitempty"`
 }
 
 // Create table operation
