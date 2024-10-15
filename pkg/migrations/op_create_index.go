@@ -16,10 +16,16 @@ var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// create index concurrently
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
+	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
-		strings.Join(quoteColumnNames(o.Columns), ", ")))
+		strings.Join(quoteColumnNames(o.Columns), ", "))
+
+	if o.Predicate != nil {
+		stmt += fmt.Sprintf(" WHERE %s", *o.Predicate)
+	}
+
+	_, err := conn.ExecContext(ctx, stmt)
 	return nil, err
 }
 
