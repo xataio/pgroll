@@ -1,4 +1,5 @@
-.PHONY: generate
+.PHONY: generate lint examples test
+
 generate:
 	# Format JSON schema
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json node:alpine npx prettier /mnt/schema.json --parser json --tab-width 2 --single-quote --trailing-comma all --no-semi --arrow-parens always --print-width 120 > schema.json.tmp
@@ -15,3 +16,14 @@ generate:
 
 lint:
 	golangci-lint --config=.golangci.yml run
+
+examples:
+	@go run . init
+	@for file in examples/*.json; do \
+	    if [ -f $$file ]; then \
+	        go run . start --complete $$file; \
+	    fi \
+	done
+
+test:
+	go test ./...
