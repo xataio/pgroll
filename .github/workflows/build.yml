@@ -158,12 +158,7 @@ jobs:
           psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE SCHEMA $PGROLL_SCHEMA;"
         fi
 
-        go run . init
-        for file in ./examples/*.json; do
-          if [ -f "$file" ]; then
-            go run . start --complete $file;
-          fi
-        done
+        make examples
       env:
         POSTGRES_PORT: 5432
         POSTGRES_HOST: localhost
