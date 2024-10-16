@@ -25,6 +25,7 @@ func init() {
 	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
 	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")
 	rootCmd.PersistentFlags().Int("backfill-batch-size", roll.DefaultBackfillBatchSize, "Number of rows backfilled in each batch")
+	rootCmd.PersistentFlags().Duration("backfill-batch-delay", roll.DefaultBackfillDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	rootCmd.PersistentFlags().String("role", "", "Optional postgres role to set when executing migrations")
 
 	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
@@ -32,6 +33,7 @@ func init() {
 	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
 	viper.BindPFlag("LOCK_TIMEOUT", rootCmd.PersistentFlags().Lookup("lock-timeout"))
 	viper.BindPFlag("BACKFILL_BATCH_SIZE", rootCmd.PersistentFlags().Lookup("backfill-batch-size"))
+	viper.BindPFlag("BACKFILL_BATCH_DELAY", rootCmd.PersistentFlags().Lookup("backfill-batch-delay"))
 	viper.BindPFlag("ROLE", rootCmd.PersistentFlags().Lookup("role"))
 }
 
@@ -48,6 +50,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	lockTimeout := flags.LockTimeout()
 	role := flags.Role()
 	backfillBatchSize := flags.BackfillBatchSize()
+	backfillBatchDelay := flags.BackfillBatchDelay()
 
 	state, err := state.New(ctx, pgURL, stateSchema)
 	if err != nil {
@@ -58,6 +61,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 		roll.WithLockTimeoutMs(lockTimeout),
 		roll.WithRole(role),
 		roll.WithBackfillBatchSize(backfillBatchSize),
+		roll.WithBackfillBatchDelay(backfillBatchDelay),
 	)
 }
 
