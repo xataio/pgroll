@@ -17,10 +17,8 @@ import (
 
 type PGVersion int
 
-const (
-	PGVersion15              PGVersion = 15
-	DefaultBackfillBatchSize           = 1000
-)
+const PGVersion15 PGVersion = 15
+const DefaultBackfillBatchSize = 1000
 
 type Roll struct {
 	pgConn db.DB
