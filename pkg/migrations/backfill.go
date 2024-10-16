@@ -19,7 +19,7 @@ import (
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...CallbackFn) error {
+func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumn := getIdentityColumn(table)
 	if identityColumn == nil {
@@ -31,7 +31,7 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...Callb
 		table:          table,
 		identityColumn: identityColumn,
 		lastValue:      nil,
-		batchSize:      1000,
+		batchSize:      batchSize,
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.

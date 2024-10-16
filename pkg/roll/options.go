@@ -25,6 +25,9 @@ type options struct {
 	// additional entries to add to the search_path during migration execution
 	searchPath []string
 
+	// the number of rows to backfill in each batch
+	backfillBatchSize int
+
 	migrationHooks MigrationHooks
 }
 
@@ -97,5 +100,12 @@ func WithSQLTransformer(transformer migrations.SQLTransformer) Option {
 func WithSearchPath(schemas ...string) Option {
 	return func(o *options) {
 		o.searchPath = schemas
+	}
+}
+
+// WithBackfillBatchSize sets the number of rows backfilled in each batch.
+func WithBackfillBatchSize(batchSize int) Option {
+	return func(o *options) {
+		o.backfillBatchSize = batchSize
 	}
 }

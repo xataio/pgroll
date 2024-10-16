@@ -17,7 +17,10 @@ import (
 
 type PGVersion int
 
-const PGVersion15 PGVersion = 15
+const (
+	PGVersion15              PGVersion = 15
+	DefaultBackfillBatchSize int       = 1000
+)
 
 type Roll struct {
 	pgConn db.DB
@@ -31,10 +34,11 @@ type Roll struct {
 	// disable creation of version schema for raw SQL migrations
 	noVersionSchemaForRawSQL bool
 
-	migrationHooks MigrationHooks
-	state          *state.State
-	pgVersion      PGVersion
-	sqlTransformer migrations.SQLTransformer
+	migrationHooks    MigrationHooks
+	state             *state.State
+	pgVersion         PGVersion
+	sqlTransformer    migrations.SQLTransformer
+	backfillBatchSize int
 }
 
 // New creates a new Roll instance
@@ -42,6 +46,9 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	rollOpts := &options{}
 	for _, o := range opts {
 		o(rollOpts)
+	}
+	if rollOpts.backfillBatchSize <= 0 {
+		rollOpts.backfillBatchSize = DefaultBackfillBatchSize
 	}
 
 	conn, err := setupConn(ctx, pgURL, schema, *rollOpts)
@@ -71,6 +78,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		noVersionSchemaForRawSQL: rollOpts.noVersionSchemaForRawSQL,
 		migrationHooks:           rollOpts.migrationHooks,
 		sqlTransformer:           sqlTransformer,
+		backfillBatchSize:        rollOpts.backfillBatchSize,
 	}, nil
 }
 
