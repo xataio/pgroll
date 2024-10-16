@@ -175,13 +175,15 @@ BEGIN
 				  SELECT COALESCE(json_object_agg(ix_details.name, json_build_object(
 				    'name', ix_details.name,
 				    'unique', ix_details.indisunique,
-				    'columns', ix_details.columns
+				    'columns', ix_details.columns,
+				    'predicate', ix_details.predicate
 				  )), '{}'::json)
 				  FROM (
 				    SELECT 
 				      replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') as name,
 				      pi.indisunique,
-				      array_agg(a.attname) AS columns
+				      array_agg(a.attname) AS columns,
+				      pg_get_expr(pi.indpred, t.oid) AS predicate
 				    FROM pg_index pi
 				    JOIN pg_attribute a ON a.attrelid = pi.indrelid AND a.attnum = ANY(pi.indkey)
 				    WHERE indrelid = t.oid::regclass
