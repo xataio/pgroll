@@ -277,7 +277,7 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table schem
 
 func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs ...migrations.CallbackFn) error {
 	for _, table := range tables {
-		if err := migrations.Backfill(ctx, m.pgConn, table, m.backfillBatchSize, cbs...); err != nil {
+		if err := migrations.Backfill(ctx, m.pgConn, table, m.backfillBatchSize, m.backfillBatchDelay, cbs...); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(

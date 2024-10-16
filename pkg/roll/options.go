@@ -3,6 +3,8 @@
 package roll
 
 import (
+	"time"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -27,6 +29,9 @@ type options struct {
 
 	// the number of rows to backfill in each batch
 	backfillBatchSize int
+
+	// the duration to delay after each batch is run
+	backfillBatchDelay time.Duration
 
 	migrationHooks MigrationHooks
 }
@@ -107,5 +112,12 @@ func WithSearchPath(schemas ...string) Option {
 func WithBackfillBatchSize(batchSize int) Option {
 	return func(o *options) {
 		o.backfillBatchSize = batchSize
+	}
+}
+
+// WithBackfillBatchDelay sets the delay after each batch is run.
+func WithBackfillBatchDelay(delay time.Duration) Option {
+	return func(o *options) {
+		o.backfillBatchDelay = delay
 	}
 }
