@@ -22,6 +22,8 @@ func LockTimeout() int {
 	return viper.GetInt("LOCK_TIMEOUT")
 }
 
+func BackfillBatchSize() int { return viper.GetInt("BACKFILL_BATCH_SIZE") }
+
 func Role() string {
 	return viper.GetString("ROLE")
 }
