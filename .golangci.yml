@@ -10,7 +10,7 @@ linters:
   # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
   enable:
     - errorlint
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - goconst
     - gocritic
@@ -56,16 +56,13 @@ linters-settings:
       - commentFormatting
 
   gofumpt:
-    lang-version: *goVersion
     module-path: "pgroll"
     extra-rules: false
 
   staticcheck:
-    go: *goVersion
     checks: ["all"]
 
   stylecheck:
-    go: *goVersion
     checks: ["all", "-ST1000", "-ST1005"]
 
   unused:
