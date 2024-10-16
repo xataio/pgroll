@@ -88,7 +88,7 @@
           "default": "NO ACTION"
         }
       },
-      "required": ["column", "name", "table"],
+      "required": ["name", "table"],
       "type": "object"
     },
     "OpAddColumn": {

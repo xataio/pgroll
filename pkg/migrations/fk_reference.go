@@ -19,9 +19,17 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 		return TableDoesNotExistError{Name: f.Table}
 	}
 
-	column := table.GetColumn(f.Column)
-	if column == nil {
-		return ColumnDoesNotExistError{Table: f.Table, Name: f.Column}
+	if f.Column != nil {
+		// check if column exists in case of column reference
+		column := table.GetColumn(*f.Column)
+		if column == nil {
+			return ColumnDoesNotExistError{Table: f.Table, Name: *f.Column}
+		}
+	} else {
+		// check if primary key exists in case of table reference
+		if len(table.PrimaryKey) == 0 {
+			return PrimaryKeyDoesNotExistError{Table: f.Table}
+		}
 	}
 
 	switch strings.ToUpper(string(f.OnDelete)) {

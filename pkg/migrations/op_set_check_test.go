@@ -260,7 +260,7 @@ func TestSetCheckConstraint(t *testing.T) {
 									References: &migrations.ForeignKeyReference{
 										Name:     "fk_employee_department",
 										Table:    "departments",
-										Column:   "id",
+										Column:   ptr("id"),
 										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},

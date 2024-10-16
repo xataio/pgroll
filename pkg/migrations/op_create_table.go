@@ -152,10 +152,16 @@ func ColumnToSQL(col Column, tr SQLTransformer) (string, error) {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+		var references string
+		if col.References.Column != nil {
+			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), pq.QuoteIdentifier(*col.References.Column))
+		} else {
+			references = pq.QuoteIdentifier(col.References.Table)
+		}
+
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s ON DELETE %s",
 			pq.QuoteIdentifier(col.References.Name),
-			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(col.References.Column),
+			references,
 			onDelete)
 	}
 	if col.Check != nil {

@@ -114,7 +114,7 @@ func TestCreateTable(t *testing.T) {
 									Name: "user_id",
 									Type: "integer",
 									References: &migrations.ForeignKeyReference{
-										Column: "id",
+										Column: ptr("id"),
 										Name:   "fk_users_id",
 										Table:  "users",
 									},
@@ -221,7 +221,7 @@ func TestCreateTable(t *testing.T) {
 									Name: "user_id",
 									Type: "integer",
 									References: &migrations.ForeignKeyReference{
-										Column:   "id",
+										Column:   ptr("id"),
 										Name:     "fk_users_id",
 										Table:    "users",
 										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
@@ -447,7 +447,7 @@ func TestCreateTableValidation(t *testing.T) {
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_users_doesntexist",
 										Table:  "users",
-										Column: "doesntexist",
+										Column: ptr("doesntexist"),
 									},
 								},
 								{

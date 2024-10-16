@@ -870,7 +870,7 @@ Add foreign key operations add a foreign key constraint to a column.
     "references": {
       "name": "name of foreign key reference",
       "table": "name of referenced table",
-      "column": "name of referenced column",
+      "column": "name of referenced column (optional)",
       "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
     },
     "up": "SQL expression",
