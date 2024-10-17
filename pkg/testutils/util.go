@@ -129,7 +129,7 @@ func WithUninitializedState(t *testing.T, fn func(*state.State)) {
 	fn(st)
 }
 
-func WithMigratorInSchemaAndConnectionToContainerWithOptions(t *testing.T, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
+func WithMigratorInSchemaAndConnectionToContainerWithOptions(t testing.TB, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -235,7 +235,7 @@ func WithMigratorAndConnectionToContainerWithOptions(t *testing.T, opts []roll.O
 // - a connection to the new database
 // - the connection string to the new database
 // - the name of the new database
-func setupTestDatabase(t *testing.T) (*sql.DB, string, string) {
+func setupTestDatabase(t testing.TB) (*sql.DB, string, string) {
 	t.Helper()
 	ctx := context.Background()
 
