@@ -78,11 +78,12 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	}
 
 	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s NOT VALID",
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(tempColumnName),
 			pq.QuoteIdentifier(o.References.Table),
+			pq.QuoteIdentifier(o.References.Column),
 			onDelete,
 		))
 
