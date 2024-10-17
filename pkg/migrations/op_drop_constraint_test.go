@@ -260,7 +260,7 @@ func TestDropConstraint(t *testing.T) {
 							References: &migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
-								Column: "id",
+								Column: ptr("id"),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -572,7 +572,7 @@ func TestDropConstraint(t *testing.T) {
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
-										Column: "id",
+										Column: ptr("id"),
 									},
 								},
 							},
