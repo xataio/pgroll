@@ -20,11 +20,7 @@ lint:
 examples:
 	@go build
 	@./pgroll init
-	@for file in examples/*.json; do \
-	    if [ -f $$file ]; then \
-	        ./pgroll start --complete $$file; \
-	    fi \
-	done
+	@./pgroll bootstrap examples
 	@go clean
 
 test:
