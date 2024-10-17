@@ -251,9 +251,8 @@ func IsNotNullConstraintName(name string) bool {
 // ColumnSQLWriter writes a column to SQL
 // It can optionally include the primary key constraint
 type ColumnSQLWriter struct {
-	WithPK           bool
-	WithFKConstraint bool
-	Transformer      SQLTransformer
+	WithPK      bool
+	Transformer SQLTransformer
 }
 
 func (w ColumnSQLWriter) Write(col Column) (string, error) {

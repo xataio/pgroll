@@ -23,7 +23,6 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// Create the table under a temporary name
 	tempName := TemporaryName(o.Name)
-	fmt.Printf("CREATE TABLE %s (%s)\n", tempName, columnsSQL)
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(tempName),
 		columnsSQL))

@@ -73,13 +73,6 @@
           "description": "Name of the referenced column",
           "type": "string"
         },
-        "columns": {
-          "description": "List of referenced columns",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "name": {
           "description": "Name of the foreign key constraint",
           "type": "string"
@@ -95,8 +88,7 @@
           "default": "NO ACTION"
         }
       },
-      "required": ["name", "table"],
-      "anyOf": [{ "required": ["column"] }, { "required": ["columns"] }],
+      "required": ["column", "name", "table"],
       "type": "object"
     },
     "OpAddColumn": {
