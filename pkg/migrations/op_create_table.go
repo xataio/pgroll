@@ -133,6 +133,5 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 	if len(primaryKeys) > 0 {
 		sql += fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
 	}
-
 	return sql, nil
 }
