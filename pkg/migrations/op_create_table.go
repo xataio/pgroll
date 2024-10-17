@@ -113,55 +113,25 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 	var sql string
+	var primaryKeys []string
+	columnWriter := ColumnSQLWriter{WithPK: false, Transformer: tr}
 	for i, col := range cols {
 		if i > 0 {
 			sql += ", "
 		}
-		colSQL, err := ColumnToSQL(col, tr)
+		colSQL, err := columnWriter.Write(col)
 		if err != nil {
 			return "", err
 		}
 		sql += colSQL
-	}
-	return sql, nil
-}
 
-// ColumnToSQL generates the SQL for a column definition.
-func ColumnToSQL(col Column, tr SQLTransformer) (string, error) {
-	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
-
-	if col.IsPrimaryKey() {
-		sql += " PRIMARY KEY"
-	}
-	if col.IsUnique() {
-		sql += " UNIQUE"
-	}
-	if !col.IsNullable() {
-		sql += " NOT NULL"
-	}
-	if col.Default != nil {
-		d, err := tr.TransformSQL(*col.Default)
-		if err != nil {
-			return "", err
+		if col.IsPrimaryKey() {
+			primaryKeys = append(primaryKeys, pq.QuoteIdentifier(col.Name))
 		}
-		sql += fmt.Sprintf(" DEFAULT %s", d)
 	}
-	if col.References != nil {
-		onDelete := "NO ACTION"
-		if col.References.OnDelete != "" {
-			onDelete = strings.ToUpper(string(col.References.OnDelete))
-		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
-			pq.QuoteIdentifier(col.References.Name),
-			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(col.References.Column),
-			onDelete)
-	}
-	if col.Check != nil {
-		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
-			pq.QuoteIdentifier(col.Check.Name),
-			col.Check.Constraint)
+	if len(primaryKeys) > 0 {
+		sql += fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
 	}
 	return sql, nil
 }
