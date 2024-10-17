@@ -281,9 +281,9 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		if col.References.OnDelete != "" {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
-		var fkName, references string
+		fkName := pq.QuoteIdentifier(col.References.Name)
+		references := pq.QuoteIdentifier(col.References.Table)
 		if col.References.Column != nil {
-			fkName = pq.QuoteIdentifier(col.References.Name)
 			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), pq.QuoteIdentifier(*col.References.Column))
 		}
 		if col.References.Columns != nil {
