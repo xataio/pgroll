@@ -77,19 +77,12 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
-	var references string
-	if o.References.Column != nil {
-		references = fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), pq.QuoteIdentifier(*o.References.Column))
-	} else {
-		references = pq.QuoteIdentifier(o.References.Table)
-	}
-
 	_, err := conn.ExecContext(ctx,
 		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s NOT VALID",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(tempColumnName),
-			references,
+			pq.QuoteIdentifier(o.References.Table),
 			onDelete,
 		))
 

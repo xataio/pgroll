@@ -282,7 +282,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(*col.References.Column),
+			pq.QuoteIdentifier(col.References.Column),
 			onDelete)
 	}
 	if col.Check != nil {
@@ -290,6 +290,5 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			pq.QuoteIdentifier(col.Check.Name),
 			col.Check.Constraint)
 	}
-	fmt.Println(sql)
 	return sql, nil
 }

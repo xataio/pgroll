@@ -205,7 +205,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 								Nullable: ptr(true),
 							},
@@ -307,7 +307,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 								Nullable: ptr(false),
 							},
@@ -410,7 +410,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 							},
 						},
@@ -521,7 +521,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:     "fk_users_id",
 									Table:    "users",
-									Column:   ptr("id"),
+									Column:   "id",
 									OnDelete: "CASCADE",
 								},
 							},
