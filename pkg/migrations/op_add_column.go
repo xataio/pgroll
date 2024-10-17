@@ -205,7 +205,6 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	o.Column.Name = TemporaryName(o.Column.Name)
 	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
 	colSQL, err := columnWriter.Write(o.Column)
-	fmt.Println(colSQL)
 	if err != nil {
 		return err
 	}
@@ -280,23 +279,11 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		if col.References.OnDelete != "" {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
-		fkName := pq.QuoteIdentifier(col.References.Name)
-		references := pq.QuoteIdentifier(col.References.Table)
-		if col.References.Column != nil {
-			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), pq.QuoteIdentifier(*col.References.Column))
-		}
-		if col.References.Columns != nil {
-			quotedCols := make([]string, len(col.References.Columns))
-			for i, c := range col.References.Columns {
-				quotedCols[i] = pq.QuoteIdentifier(c)
-			}
-			fkName = "FOREIGN KEY " + pq.QuoteIdentifier(col.References.Name)
-			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), strings.Join(quotedCols, ", "))
-		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s ON DELETE %s",
-			fkName,
-			references,
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+			pq.QuoteIdentifier(col.References.Name),
+			pq.QuoteIdentifier(col.References.Table),
+			pq.QuoteIdentifier(*col.References.Column),
 			onDelete)
 	}
 	if col.Check != nil {
