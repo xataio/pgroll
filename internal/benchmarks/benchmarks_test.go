@@ -22,7 +22,6 @@ func TestMain(m *testing.M) {
 
 func BenchmarkBackfill(b *testing.B) {
 	// TODO: Run against different Postgres versions
-	// TODO: Run against different row counts
 
 	ctx := context.Background()
 	testSchema := testutils.TestSchema()
