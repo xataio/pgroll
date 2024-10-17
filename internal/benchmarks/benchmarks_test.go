@@ -68,7 +68,9 @@ func BenchmarkBackfill(b *testing.B) {
 	seed := func(b *testing.B, rowCount int, db *sql.DB) {
 		seedStart := time.Now()
 		defer func() {
-			b.Logf("Seeded %d rows in %s", rowCount, time.Since(seedStart))
+			elapsed := time.Since(seedStart)
+			rowsPerSecond := float64(rowCount) / elapsed.Seconds()
+			b.Logf("Seeded %d rows in %s (%.f rows/s)", rowCount, elapsed, rowsPerSecond)
 		}()
 
 		tx, err := db.Begin()
