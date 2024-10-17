@@ -209,8 +209,6 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 		return err
 	}
 
-	fmt.Printf("ALTER TABLE %s ADD COLUMN %s\n", pq.QuoteIdentifier(t.Name), colSQL)
-
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
 		colSQL,
@@ -249,6 +247,7 @@ func IsNotNullConstraintName(name string) bool {
 
 // ColumnSQLWriter writes a column to SQL
 // It can optionally include the primary key constraint
+// When creating a table, the primary key constraint is not added to the column definition
 type ColumnSQLWriter struct {
 	WithPK      bool
 	Transformer SQLTransformer
