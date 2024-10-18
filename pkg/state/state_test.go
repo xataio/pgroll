@@ -440,9 +440,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{},
 							Indexes: map[string]schema.Index{
 								"id_unique": {
-									Name:    "id_unique",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "id_unique",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX id_unique ON public.table1 USING btree (id)",
 								},
 							},
 							CheckConstraints: map[string]schema.CheckConstraint{},
@@ -480,9 +482,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{},
 							Indexes: map[string]schema.Index{
 								"idx_name": {
-									Name:    "idx_name",
-									Unique:  false,
-									Columns: []string{"name"},
+									Name:       "idx_name",
+									Unique:     false,
+									Columns:    []string{"name"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE INDEX idx_name ON public.table1 USING btree (name)",
 								},
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
@@ -511,9 +515,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:    "table1_pkey",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
@@ -565,9 +571,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:    "table1_pkey",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
@@ -624,9 +632,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:    "table1_pkey",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
 							ForeignKeys: map[string]schema.ForeignKey{},
@@ -667,14 +677,18 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:    "table1_pkey",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 								"name_unique": {
-									Name:    "name_unique",
-									Unique:  true,
-									Columns: []string{"name"},
+									Name:       "name_unique",
+									Unique:     true,
+									Columns:    []string{"name"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX name_unique ON public.table1 USING btree (name)",
 								},
 							},
 							ForeignKeys:      map[string]schema.ForeignKey{},
@@ -714,14 +728,18 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{"id"},
 							Indexes: map[string]schema.Index{
 								"table1_pkey": {
-									Name:    "table1_pkey",
-									Unique:  true,
-									Columns: []string{"id"},
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 								"name_id_unique": {
-									Name:    "name_id_unique",
-									Unique:  true,
-									Columns: []string{"id", "name"},
+									Name:       "name_id_unique",
+									Unique:     true,
+									Columns:    []string{"id", "name"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE UNIQUE INDEX name_id_unique ON public.table1 USING btree (id, name)",
 								},
 							},
 							ForeignKeys:      map[string]schema.ForeignKey{},
@@ -759,9 +777,11 @@ func TestReadSchema(t *testing.T) {
 							PrimaryKey: []string{},
 							Indexes: map[string]schema.Index{
 								"idx_ab": {
-									Name:    "idx_ab",
-									Unique:  false,
-									Columns: []string{"a", "b"},
+									Name:       "idx_ab",
+									Unique:     false,
+									Columns:    []string{"a", "b"},
+									Method:     ptr(string(migrations.OpCreateIndexMethodBtree)),
+									Definition: "CREATE INDEX idx_ab ON public.table1 USING btree (a, b)",
 								},
 							},
 							ForeignKeys:       map[string]schema.ForeignKey{},
@@ -825,3 +845,5 @@ func clearOIDS(s *schema.Schema) {
 		s.Tables[k] = c
 	}
 }
+
+func ptr[T any](x T) *T { return &x }
