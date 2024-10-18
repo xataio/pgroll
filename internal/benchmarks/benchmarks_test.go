@@ -29,6 +29,7 @@ func BenchmarkBackfill(b *testing.B) {
 	testSchema := testutils.TestSchema()
 	var opts []roll.Option
 
+	// Start with a simple table with a nullable `name` field.
 	migCreateTable := migrations.Migration{
 		Name: "01_create_table",
 		Operations: migrations.Operations{
@@ -51,6 +52,8 @@ func BenchmarkBackfill(b *testing.B) {
 		},
 	}
 
+	// Alter the table to make the name field not null and backfill the old name fields with
+	// `placeholder`.
 	migAlterColumn := migrations.Migration{
 		Name: "02_alter_column",
 		Operations: migrations.Operations{
