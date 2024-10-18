@@ -25,3 +25,6 @@ examples:
 
 test:
 	go test ./...
+
+bench:
+	go test ./internal/benchmarks -v -benchtime=1x -bench .
