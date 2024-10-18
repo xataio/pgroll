@@ -34,7 +34,6 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" WHERE %s", *o.Predicate)
 	}
 
-
 	_, err := conn.ExecContext(ctx, stmt)
 	return nil, err
 }
