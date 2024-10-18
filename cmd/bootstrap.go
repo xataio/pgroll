@@ -7,14 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-
-	"github.com/xataio/pgroll/cmd/flags"
-	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/roll"
 )
 
 var bootstrapCmd = &cobra.Command{
@@ -47,41 +41,9 @@ in lexicographical order. All migrations are completed.`,
 		slices.Sort(migrationFiles)
 
 		for _, fileName := range migrationFiles {
-			file, err := os.Open(fileName)
-			if err != nil {
-				return fmt.Errorf("opening migration file: %w", err)
+			if err := runMigrationFromFile(cmd.Context(), m, fileName, true); err != nil {
+				return fmt.Errorf("running migration file '%s': %w", fileName, err)
 			}
-			migration, err := migrations.ReadMigration(file)
-			if err != nil {
-				file.Close()
-				return fmt.Errorf("reading migration file: %w", err)
-			}
-
-			sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
-			cb := func(n int64) {
-				sp.UpdateText(fmt.Sprintf("%d records complete...", n))
-			}
-
-			err = m.Start(cmd.Context(), migration, cb)
-			if err != nil {
-				sp.Fail(fmt.Sprintf("Failed to start migration: %s", err))
-				file.Close()
-				return err
-			}
-			file.Close()
-
-			if err = m.Complete(cmd.Context()); err != nil {
-				sp.Fail(fmt.Sprintf("Failed to complete migration: %s", err))
-				return err
-			}
-
-			version := migration.Name
-			if version == "" {
-				version = strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
-			}
-			viewName := roll.VersionedSchemaName(flags.Schema(), version)
-			msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
-			sp.Success(msg)
 		}
 
 		return nil
