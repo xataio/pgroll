@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -197,7 +198,7 @@ func TestCreateIndex(t *testing.T) {
 				// The index has been created on the underlying table.
 				IndexMustExist(t, db, schema, "users", "idx_users_name_hash")
 				// Check the index definition.
-				CheckIndexDefinition(t, db, schema, "users", "idx_users_name_hash", "CREATE INDEX idx_users_name_hash ON public.users USING hash (name) WITH (fillfactor='70')")
+				CheckIndexDefinition(t, db, schema, "users", "idx_users_name_hash", fmt.Sprintf("CREATE INDEX idx_users_name_hash ON %s.users USING hash (name) WITH (fillfactor='70')", schema))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
