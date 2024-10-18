@@ -23,15 +23,17 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 	if o.Method != nil {
 		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
 	}
+
 	stmt += fmt.Sprintf(" (%s)", strings.Join(quoteColumnNames(o.Columns), ", "))
+
+	if o.StorageParameters != nil {
+		stmt += fmt.Sprintf(" WITH (%s)", *o.StorageParameters)
+	}
 
 	if o.Predicate != nil {
 		stmt += fmt.Sprintf(" WHERE %s", *o.Predicate)
 	}
 
-	if o.StorageParameters != nil {
-		stmt += fmt.Sprintf(" WITH (%s)", *o.StorageParameters)
-	}
 
 	_, err := conn.ExecContext(ctx, stmt)
 	return nil, err

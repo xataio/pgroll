@@ -296,6 +296,27 @@ func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
 	return exists
 }
 
+func CheckIndexDefinition(t *testing.T, db *sql.DB, schema, table, index, expectedDefinition string) {
+	t.Helper()
+
+	var actualDef string
+	err := db.QueryRow(`
+      SELECT indexdef
+      FROM pg_indexes
+      WHERE schemaname = $1
+      AND tablename = $2
+      AND indexname = $3
+    `,
+		schema, table, index).Scan(&actualDef)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if expectedDefinition != actualDef {
+		t.Fatalf("Expected index %q to have definition %q, got %q", index, expectedDefinition, actualDef)
+	}
+}
+
 func checkConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
 	t.Helper()
 
