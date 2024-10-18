@@ -74,6 +74,7 @@ func Execute() error {
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(bootstrapCmd)
 
 	return rootCmd.Execute()
 }
