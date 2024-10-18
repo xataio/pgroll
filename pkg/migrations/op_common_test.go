@@ -178,6 +178,13 @@ func ColumnMustNotHaveComment(t *testing.T, db *sql.DB, schema, table, column st
 	}
 }
 
+func ColumnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) {
+	t.Helper()
+	if !columnMustBePK(t, db, schema, table, column) {
+		t.Fatalf("Expected column %q to be primary key", column)
+	}
+}
+
 func TableMustHaveComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) {
 	t.Helper()
 	if !tableHasComment(t, db, schema, table, expectedComment) {
@@ -524,6 +531,28 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column string, ex
 		return actualComment == nil
 	}
 	return actualComment != nil && *expectedComment == *actualComment
+}
+
+func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(fmt.Sprintf(`
+    SELECT EXISTS (
+	  SELECT a.attname
+      FROM   pg_index i
+      JOIN   pg_attribute a ON a.attrelid = i.indrelid
+                      AND a.attnum = ANY(i.indkey)
+      WHERE  i.indrelid = %[1]s::regclass AND i.indisprimary AND a.attname = %[2]s
+    )`,
+		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+		pq.QuoteLiteral(column)),
+	).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
 }
 
 func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment string) bool {
