@@ -200,7 +200,7 @@ jobs:
         version: latest
         args: release --clean
       env:
-        # We use two github tokens here:
+        # We use two GitHub tokens here:
         # * The actions-bound `GITHUB_TOKEN` with permissions to write packages.
         # * The org level `GIT_TOKEN` to be able to publish the brew tap file.
         # See: https://goreleaser.com/errors/resource-not-accessible-by-integration/
