@@ -124,15 +124,30 @@ type OpCreateIndex struct {
 	// Names of columns on which to define the index
 	Columns []string `json:"columns"`
 
+	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
+	Method *OpCreateIndexMethod `json:"method,omitempty"`
+
 	// Index name
 	Name string `json:"name"`
 
 	// Conditional expression for defining a partial index
 	Predicate *string `json:"predicate,omitempty"`
 
+	// Storage parameters for the index
+	StorageParameters *string `json:"storage_parameters,omitempty"`
+
 	// Name of table on which to define the index
 	Table string `json:"table"`
 }
+
+type OpCreateIndexMethod string
+
+const OpCreateIndexMethodBrin OpCreateIndexMethod = "brin"
+const OpCreateIndexMethodBtree OpCreateIndexMethod = "btree"
+const OpCreateIndexMethodGin OpCreateIndexMethod = "gin"
+const OpCreateIndexMethodGist OpCreateIndexMethod = "gist"
+const OpCreateIndexMethodHash OpCreateIndexMethod = "hash"
+const OpCreateIndexMethodSpgist OpCreateIndexMethod = "spgist"
 
 // Create table operation
 type OpCreateTable struct {

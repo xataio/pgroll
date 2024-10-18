@@ -176,14 +176,16 @@ BEGIN
 				    'name', ix_details.name,
 				    'unique', ix_details.indisunique,
 				    'columns', ix_details.columns,
-				    'predicate', ix_details.predicate
+				    'predicate', ix_details.predicate,
+				    'definition', ix_details.definition
 				  )), '{}'::json)
 				  FROM (
 				    SELECT 
 				      replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') as name,
 				      pi.indisunique,
 				      array_agg(a.attname) AS columns,
-				      pg_get_expr(pi.indpred, t.oid) AS predicate
+				      pg_get_expr(pi.indpred, t.oid) AS predicate,
+				      pg_get_indexdef(pi.indexrelid) AS definition
 				    FROM pg_index pi
 				    JOIN pg_attribute a ON a.attrelid = pi.indrelid AND a.attnum = ANY(pi.indkey)
 				    WHERE indrelid = t.oid::regclass
