@@ -114,6 +114,12 @@ func TestCreateTable(t *testing.T) {
 					"rand": "123",
 					"name": "Alice",
 				})
+				// New record with same keys cannot be inserted.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"rand": "123",
+					"name": "Malice",
+				}, testutils.UniqueViolationErrorCode)
 
 				// Data can be retrieved from the new view.
 				rows := MustSelect(t, db, schema, "01_create_table", "users")
@@ -129,11 +135,22 @@ func TestCreateTable(t *testing.T) {
 				// The view still exists
 				ViewMustExist(t, db, schema, "01_create_table", "users")
 
+				// The columns are still primary keys.
+				ColumnMustBePK(t, db, schema, "users", "id")
+				ColumnMustBePK(t, db, schema, "users", "rand")
+
 				// Data can be inserted into the new view.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"rand": "123",
 					"name": "Alice",
 				})
+
+				// New record with same keys cannot be inserted.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"rand": "123",
+					"name": "Malice",
+				}, testutils.UniqueViolationErrorCode)
 
 				// Data can be retrieved from the new view.
 				rows := MustSelect(t, db, schema, "01_create_table", "users")
