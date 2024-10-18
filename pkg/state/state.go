@@ -177,6 +177,7 @@ BEGIN
 				    'unique', ix_details.indisunique,
 				    'columns', ix_details.columns,
 				    'predicate', ix_details.predicate,
+				    'method', ix_details.method,
 				    'definition', ix_details.definition
 				  )), '{}'::json)
 				  FROM (
@@ -185,11 +186,14 @@ BEGIN
 				      pi.indisunique,
 				      array_agg(a.attname) AS columns,
 				      pg_get_expr(pi.indpred, t.oid) AS predicate,
+				      am.amname AS method,
 				      pg_get_indexdef(pi.indexrelid) AS definition
 				    FROM pg_index pi
 				    JOIN pg_attribute a ON a.attrelid = pi.indrelid AND a.attnum = ANY(pi.indkey)
+				    JOIN pg_class cls ON cls.oid = pi.indexrelid
+				    JOIN pg_am am ON am.oid = cls.relam
 				    WHERE indrelid = t.oid::regclass
-				    GROUP BY pi.indexrelid, pi.indisunique
+				    GROUP BY pi.indexrelid, pi.indisunique, am.amname
 				  ) as ix_details
 				),
 				'checkConstraints', (
