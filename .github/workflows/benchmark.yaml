@@ -23,6 +23,6 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Run benchmarks
-      run: make benchmarks
+      run: make bench
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
