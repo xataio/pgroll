@@ -21,7 +21,7 @@ var bootstrapCmd = &cobra.Command{
 	Use:   "bootstrap <folder>",
 	Short: "Bootstrap a new database from a directory of migration files",
 	Long: `Bootstrap a new database from a directory of migration files. All files in the directory will be executed
-in alphabetical order. All migrations are completed.`,
+in lexicographical order. All migrations are completed.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		migrationsDir := args[0]
