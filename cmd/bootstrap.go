@@ -32,7 +32,7 @@ in lexicographical order. All migrations are completed.`,
 
 		for _, file := range files {
 			if err := runMigrationFromFile(cmd.Context(), m, file, true); err != nil {
-				return fmt.Errorf("running migration file '%s': %w", file, err)
+				return fmt.Errorf("running migration file %q: %w", file, err)
 			}
 		}
 
