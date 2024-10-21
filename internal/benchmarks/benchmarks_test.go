@@ -23,8 +23,6 @@ func TestMain(m *testing.M) {
 }
 
 func BenchmarkBackfill(b *testing.B) {
-	// TODO: Run against different Postgres versions
-
 	ctx := context.Background()
 	testSchema := testutils.TestSchema()
 	var opts []roll.Option
