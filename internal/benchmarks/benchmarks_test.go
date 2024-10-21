@@ -34,7 +34,12 @@ func BenchmarkBackfill(b *testing.B) {
 
 	for _, rowCount := range rowCounts {
 		b.Run(strconv.Itoa(rowCount), func(b *testing.B) {
+
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(b, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
+				b.Cleanup(func() {
+					require.NoError(b, mig.Close())
+				})
+
 				setupInitialTable(b, ctx, testSchema, mig, db, rowCount)
 				b.ResetTimer()
 
@@ -46,7 +51,6 @@ func BenchmarkBackfill(b *testing.B) {
 				b.Logf("Backfilled %d rows in %s", rowCount, b.Elapsed())
 				rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 				b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
-				require.NoError(b, mig.Close())
 			})
 		})
 	}
@@ -72,6 +76,11 @@ func BenchmarkWriteAmplification(b *testing.B) {
 			b.Run(strconv.Itoa(rowCount), func(b *testing.B) {
 				testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(b, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 					setupInitialTable(b, ctx, testSchema, mig, db, rowCount)
+					b.Cleanup(func() {
+						require.NoError(b, mig.Close())
+						assertRowCount(b, db, rowCount)
+					})
+
 					b.ResetTimer()
 
 					// Update the name in all rows
@@ -81,9 +90,6 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
-
-					require.NoError(b, mig.Close())
-					assertRowCount(b, db, rowCount)
 				})
 			})
 		}
@@ -97,6 +103,12 @@ func BenchmarkWriteAmplification(b *testing.B) {
 
 					// Start the migration
 					require.NoError(b, mig.Start(ctx, &migAlterColumn))
+					b.Cleanup(func() {
+						// Finish the migration
+						require.NoError(b, mig.Complete(ctx))
+						require.NoError(b, mig.Close())
+						assertRowCount(b, db, rowCount)
+					})
 
 					b.ResetTimer()
 
@@ -107,11 +119,6 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
-
-					require.NoError(b, mig.Complete(ctx))
-
-					require.NoError(b, mig.Close())
-					assertRowCount(b, db, rowCount)
 				})
 			})
 		}
