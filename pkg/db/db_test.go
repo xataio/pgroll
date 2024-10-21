@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/xataio/pgroll/internal/testutils"
+
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/db"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestMain(m *testing.M) {

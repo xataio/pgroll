@@ -42,6 +42,28 @@
           }
         ]
       }
+    },
+    {
+      "create_table": {
+        "name": "sellers",
+        "columns": [
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "pk": true
+          },
+          {
+            "name": "zip",
+            "type": "integer",
+            "pk": true
+          },
+          {
+            "name": "description",
+            "type": "varchar(255)",
+            "nullable": true
+          }
+        ]
+      }
     }
   ]
 }
