@@ -6,11 +6,11 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-	"github.com/xataio/pgroll/pkg/testutils"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateTable(t *testing.T) {

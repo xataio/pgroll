@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetColumnUnique(t *testing.T) {
