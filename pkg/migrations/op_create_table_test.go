@@ -6,9 +6,9 @@ import (
 	"database/sql"
 	"testing"
 
-	testutils2 "github.com/xataio/pgroll/internal/testutils"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -147,12 +147,12 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table fails as a referencing row exists.
 				MustNotDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
 					"name": "alice",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The table has been dropped, so the foreign key constraint is gone.
@@ -175,12 +175,12 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table fails as a referencing row exists.
 				MustNotDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
 					"name": "bob",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 			},
 		},
 		{
@@ -255,7 +255,7 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table succeeds because of the ON DELETE CASCADE.
 				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
@@ -287,7 +287,7 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_create_table_with_fk", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils2.FKViolationErrorCode)
+				}, testutils.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table succeeds because of the ON DELETE CASCADE.
 				MustDelete(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
@@ -338,7 +338,7 @@ func TestCreateTable(t *testing.T) {
 				// Inserting a row into the table fails when the check constraint is not satisfied.
 				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "b",
-				}, testutils2.CheckViolationErrorCode)
+				}, testutils.CheckViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The table has been dropped, so the check constraint is gone.
@@ -355,7 +355,7 @@ func TestCreateTable(t *testing.T) {
 				// Inserting a row into the table fails when the check constraint is not satisfied.
 				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "c",
-				}, testutils2.CheckViolationErrorCode)
+				}, testutils.CheckViolationErrorCode)
 			},
 		},
 		{
@@ -471,9 +471,9 @@ func TestCreateTableValidation(t *testing.T) {
 func TestCreateTableColumnDefaultTransformation(t *testing.T) {
 	t.Parallel()
 
-	sqlTransformer := testutils2.NewMockSQLTransformer(map[string]string{
+	sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
 		"'default value 1'": "'rewritten'",
-		"'default value 2'": testutils2.MockSQLTransformerError,
+		"'default value 2'": testutils.MockSQLTransformerError,
 	})
 
 	ExecuteTests(t, TestCases{
@@ -552,7 +552,7 @@ func TestCreateTableColumnDefaultTransformation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: testutils2.ErrMockSQLTransformer,
+			wantStartErr: testutils.ErrMockSQLTransformer,
 		},
 	}, roll.WithSQLTransformer(sqlTransformer))
 }
