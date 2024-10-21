@@ -6,11 +6,12 @@ import (
 	"database/sql"
 	"testing"
 
+	testutils2 "github.com/xataio/pgroll/internal/testutils"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestAddColumn(t *testing.T) {
@@ -232,7 +233,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped, so the foreign key constraint is gone.
@@ -256,7 +257,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 		},
 		{
@@ -335,7 +336,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped, so the foreign key constraint is gone.
@@ -359,7 +360,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 		},
 		{
@@ -436,12 +437,12 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table fails as a referencing row exists.
 				MustNotDelete(t, db, schema, "02_add_column", "users", map[string]string{
 					"name": "alice",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped, so the foreign key constraint is gone.
@@ -465,12 +466,12 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table fails as a referencing row exists.
 				MustNotDelete(t, db, schema, "02_add_column", "users", map[string]string{
 					"name": "bob",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 			},
 		},
 		{
@@ -548,7 +549,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "2",
 					"quantity": "200",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table succeeds due to the ON DELETE CASCADE.
 				MustDelete(t, db, schema, "02_add_column", "users", map[string]string{
@@ -581,7 +582,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 				MustNotInsert(t, db, schema, "02_add_column", "orders", map[string]string{
 					"user_id":  "3",
 					"quantity": "300",
-				}, testutils.FKViolationErrorCode)
+				}, testutils2.FKViolationErrorCode)
 
 				// Deleting a row in the referenced table succeeds due to the ON DELETE CASCADE.
 				MustDelete(t, db, schema, "02_add_column", "users", map[string]string{
@@ -911,7 +912,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 				// Inserting a null description through the new view fails.
 				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
 					"name": "banana",
-				}, testutils.CheckViolationErrorCode)
+				}, testutils2.CheckViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// the check constraint has been dropped.
@@ -926,7 +927,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 				// can't insert a null description into the new view; the column now has a NOT NULL constraint.
 				MustNotInsert(t, db, schema, "02_add_column", "products", map[string]string{
 					"name": "orange",
-				}, testutils.NotNullViolationErrorCode)
+				}, testutils2.NotNullViolationErrorCode)
 			},
 		},
 	})
@@ -1215,7 +1216,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 			MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "bob",
 				"age":  "3",
-			}, testutils.CheckViolationErrorCode)
+			}, testutils2.CheckViolationErrorCode)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 		},
@@ -1230,7 +1231,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 			MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
 				"name": "dana",
 				"age":  "3",
-			}, testutils.CheckViolationErrorCode)
+			}, testutils2.CheckViolationErrorCode)
 		},
 	}})
 }
@@ -1294,9 +1295,9 @@ func TestAddColumnWithComment(t *testing.T) {
 func TestAddColumnDefaultTransformation(t *testing.T) {
 	t.Parallel()
 
-	sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+	sqlTransformer := testutils2.NewMockSQLTransformer(map[string]string{
 		"'default value 1'": "'rewritten'",
-		"'default value 2'": testutils.MockSQLTransformerError,
+		"'default value 2'": testutils2.MockSQLTransformerError,
 	})
 
 	ExecuteTests(t, TestCases{
@@ -1386,7 +1387,7 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: testutils.ErrMockSQLTransformer,
+			wantStartErr: testutils2.ErrMockSQLTransformer,
 		},
 	}, roll.WithSQLTransformer(sqlTransformer))
 }

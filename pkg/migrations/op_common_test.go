@@ -11,10 +11,11 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/xataio/pgroll/internal/testutils"
+
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 type TestCase struct {

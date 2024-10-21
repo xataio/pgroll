@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
+	testutils2 "github.com/xataio/pgroll/internal/testutils"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 const (
@@ -22,13 +23,13 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	testutils.SharedTestMain(m)
+	testutils2.SharedTestMain(m)
 }
 
 func TestSchemaIsCreatedAfterMigrationStart(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		version := "1_create_table"
 
@@ -48,7 +49,7 @@ func TestSchemaIsCreatedAfterMigrationStart(t *testing.T) {
 func TestDisabledSchemaManagement(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithDisableViewsManagement()}, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithDisableViewsManagement()}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		version := "1_create_table"
 
@@ -86,7 +87,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	t.Parallel()
 
 	t.Run("when the previous version is a pgroll migration", func(t *testing.T) {
-		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 			const (
 				firstVersion  = "1_create_table"
@@ -116,7 +117,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	})
 
 	t.Run("when the previous version is an inferred DDL migration", func(t *testing.T) {
-		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 			const (
 				firstVersion  = "1_create_table"
@@ -160,7 +161,7 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 
 	opts := []roll.Option{roll.WithNoVersionSchemaForRawSQL()}
 
-	testutils.WithMigratorAndStateAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, st *state.State, db *sql.DB) {
+	testutils2.WithMigratorAndStateAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, st *state.State, db *sql.DB) {
 		ctx := context.Background()
 
 		// Apply a create table migration
@@ -206,7 +207,7 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		version := "1_create_table"
 
@@ -232,7 +233,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 	t.Run("when the DDL phase fails", func(t *testing.T) {
 		t.Parallel()
 
-		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 
 			// start a migration that will fail during the DDL phase
@@ -262,7 +263,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 	t.Run("when the backfill phase fails", func(t *testing.T) {
 		t.Parallel()
 
-		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 
 			// run an initial migration to create the table
@@ -308,7 +309,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 func TestSchemaOptionIsRespected(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainer(t, "schema1", func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainer(t, "schema1", func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		const version1 = "1_create_table"
 		const version2 = "2_create_another_table"
@@ -363,7 +364,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(50)}, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithLockTimeoutMs(50)}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Create a table
@@ -408,7 +409,7 @@ func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 		version := "1_create_table"
 
@@ -490,7 +491,7 @@ func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
 func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Get the initial migration status before any migrations are run
@@ -562,7 +563,7 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 func TestRoleIsRespected(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithRole("pgroll")}, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithRole("pgroll")}, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Start a create table migration
@@ -613,7 +614,7 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 		},
 	})}
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", options, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Start a create table migration
@@ -640,7 +641,7 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Create a table
@@ -680,13 +681,13 @@ func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 	t.Parallel()
 
 	t.Run("when the schema is public", func(t *testing.T) {
-		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "public", func(mig *roll.Roll, _ *sql.DB) {
+		testutils2.WithMigratorInSchemaAndConnectionToContainer(t, "public", func(mig *roll.Roll, _ *sql.DB) {
 			assert.Equal(t, "public", mig.Schema())
 		})
 	})
 
 	t.Run("when the schema is non-public", func(t *testing.T) {
-		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
+		testutils2.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
 			assert.Equal(t, "apples", mig.Schema())
 		})
 	})
@@ -698,12 +699,12 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 	t.Run("when the SQL transformer is used to rewrite SQL", func(t *testing.T) {
 		t.Parallel()
 
-		sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
+		sqlTransformer := testutils2.NewMockSQLTransformer(map[string]string{
 			"'apples'": "'rewritten'",
 		})
 		opts := []roll.Option{roll.WithSQLTransformer(sqlTransformer)}
 
-		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 
 			// Start a create table migration
@@ -754,12 +755,12 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 	t.Run("when the SQL transformer returns an error", func(t *testing.T) {
 		t.Parallel()
 
-		sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
-			"'apples'": testutils.MockSQLTransformerError,
+		sqlTransformer := testutils2.NewMockSQLTransformer(map[string]string{
+			"'apples'": testutils2.MockSQLTransformerError,
 		})
 		opts := []roll.Option{roll.WithSQLTransformer(sqlTransformer)}
 
-		testutils.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
+		testutils2.WithMigratorAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, db *sql.DB) {
 			ctx := context.Background()
 
 			// Start a create table migration
@@ -793,7 +794,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 				},
 			})
 			// Ensure that the start phase has failed with a SQL transformer error
-			require.ErrorIs(t, err, testutils.ErrMockSQLTransformer)
+			require.ErrorIs(t, err, testutils2.ErrMockSQLTransformer)
 		})
 	})
 }
@@ -803,7 +804,7 @@ func TestWithSearchPathOptionIsRespected(t *testing.T) {
 
 	opts := []roll.Option{roll.WithSearchPath("public")}
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "foo", opts, func(mig *roll.Roll, db *sql.DB) {
+	testutils2.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "foo", opts, func(mig *roll.Roll, db *sql.DB) {
 		ctx := context.Background()
 
 		// Create a function in the public schema
