@@ -5,7 +5,6 @@ package benchmarks
 import (
 	"context"
 	"database/sql"
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 	"time"
@@ -34,7 +33,6 @@ func BenchmarkBackfill(b *testing.B) {
 
 	for _, rowCount := range rowCounts {
 		b.Run(strconv.Itoa(rowCount), func(b *testing.B) {
-
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(b, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				b.Cleanup(func() {
 					require.NoError(b, mig.Close())
@@ -67,8 +65,8 @@ func BenchmarkWriteAmplification(b *testing.B) {
 
 		var count int
 		err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM users WHERE name = 'person'").Scan(&count)
-		assert.NoError(b, err)
-		assert.Equal(b, rowCount, count)
+		require.NoError(b, err)
+		require.Equal(b, rowCount, count)
 	}
 
 	b.Run("NoTrigger", func(b *testing.B) {
