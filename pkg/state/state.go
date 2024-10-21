@@ -573,7 +573,7 @@ func (s *State) Complete(ctx context.Context, schema, name string) error {
 // ReadSchema reads the schema for the specified schema name
 func (s *State) ReadSchema(ctx context.Context, schemaName string) (*schema.Schema, error) {
 	var rawSchema []byte
-	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s.read_schema($1)", s.schema), schemaName).Scan(&rawSchema)
+	err := s.pgConn.QueryRowContext(ctx, fmt.Sprintf("SELECT %s.read_schema($1)", pq.QuoteIdentifier(s.schema)), schemaName).Scan(&rawSchema)
 	if err != nil {
 		return nil, err
 	}
