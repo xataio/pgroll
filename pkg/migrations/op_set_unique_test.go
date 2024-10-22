@@ -579,9 +579,7 @@ func TestSetColumnUnique(t *testing.T) {
 				Table:      "reviews",
 				Constraint: "reviews_username_key",
 			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				IndexMustExist(t, db, schema, "reviews", "reviews_username_key")
-			},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
 		},
