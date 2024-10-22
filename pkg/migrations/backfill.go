@@ -143,7 +143,7 @@ func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string 
 	if lastValues != nil {
 		conditions := make([]string, len(sb.identityColumns))
 		for i, col := range sb.identityColumns {
-			conditions[i] = fmt.Sprintf("%s > %s ", col, lastValues[i])
+			conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(lastValues[i]))
 		}
 		whereClause = "WHERE " + strings.Join(conditions, "AND ")
 	}
