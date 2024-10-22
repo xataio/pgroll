@@ -85,7 +85,6 @@ func getIdentityColumns(table *schema.Table) []string {
 type batcher struct {
 	statementBuilder *batchStatementBuilder
 	lastValues       []string
-	batchSize        int
 }
 
 func newBatcher(table *schema.Table, batchSize int) *batcher {
