@@ -527,5 +527,61 @@ func TestSetColumnUnique(t *testing.T) {
 		//
 		// In that case it should be possible to test that existing unique constraints are
 		// preserved when adding a new unique constraint covering the same column.
+		{
+			name: "validate that the constraint name is not already taken",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reviews",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "username",
+									Type:     "text",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_set_unique",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "reviews",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{
+								Name: "reviews_username_key",
+							},
+						},
+					},
+				},
+				{
+					Name: "03_set_unique_again",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "reviews",
+							Column: "username",
+							Unique: &migrations.UniqueConstraint{
+								Name: "reviews_username_key",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ConstraintAlreadyExistsError{
+				Table:      "reviews",
+				Constraint: "reviews_username_key",
+			},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
 	})
 }
