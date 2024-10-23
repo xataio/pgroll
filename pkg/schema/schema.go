@@ -88,6 +88,12 @@ type Index struct {
 
 	// Predicate is the optional predicate for the index
 	Predicate *string `json:"predicate,omitempty"`
+
+	// Method is the method for the index
+	Method string `json:"method,omitempty"`
+
+	// Definition is statement to construct the index
+	Definition string `json:"definition"`
 }
 
 // ForeignKey represents a foreign key on a table
