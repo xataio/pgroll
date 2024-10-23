@@ -10,11 +10,11 @@ import (
 	"strings"
 
 	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+
 	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-
-	"github.com/spf13/cobra"
 )
 
 func startCmd() *cobra.Command {
@@ -43,17 +43,10 @@ func startCmd() *cobra.Command {
 }
 
 func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, complete bool) error {
-	file, err := os.Open(fileName)
+	migration, err := readMigration(fileName)
 	if err != nil {
-		return fmt.Errorf("opening migration file: %w", err)
+		return err
 	}
-
-	migration, err := migrations.ReadMigration(file)
-	if err != nil {
-		file.Close()
-		return fmt.Errorf("reading migration file: %w", err)
-	}
-	file.Close()
 
 	sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
 	cb := func(n int64) {
@@ -82,4 +75,19 @@ func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, co
 	sp.Success(msg)
 
 	return nil
+}
+
+func readMigration(fileName string) (*migrations.Migration, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("opening migration file: %w", err)
+	}
+	defer file.Close()
+
+	migration, err := migrations.ReadMigration(file)
+	if err != nil {
+		return nil, fmt.Errorf("reading migration file: %w", err)
+	}
+
+	return migration, nil
 }
