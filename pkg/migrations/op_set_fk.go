@@ -58,6 +58,18 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 		}
 	}
 
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
+
+	if table.ConstraintExists(o.References.Name) {
+		return ConstraintAlreadyExistsError{
+			Table:      table.Name,
+			Constraint: o.References.Name,
+		}
+	}
+
 	if o.Up == "" {
 		return FieldRequiredError{Name: "up"}
 	}
