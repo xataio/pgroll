@@ -45,7 +45,7 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return err
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetUnique) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

@@ -39,7 +39,7 @@ func (o *OpRawSQL) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, 
 	return err
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpRawSQL) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	if o.Down == "" {
 		return nil
 	}

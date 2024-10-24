@@ -150,12 +150,12 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 	return nil
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	ops := o.subOperations()
 
 	// Perform any operation specific rollback steps
 	for _, ops := range ops {
-		if err := ops.Rollback(ctx, conn, tr); err != nil {
+		if err := ops.Rollback(ctx, conn, tr, nil); err != nil {
 			return err
 		}
 	}

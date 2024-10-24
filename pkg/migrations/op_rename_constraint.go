@@ -27,7 +27,7 @@ func (o *OpRenameConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 	return err
 }
 
-func (o *OpRenameConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpRenameConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// no-op
 	return nil
 }

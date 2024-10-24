@@ -37,7 +37,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 		LatestSchema:   latestSchema,
 		TableName:      o.Table,
 		PhysicalColumn: TemporaryName(column.Name),
-		SQL:            o.upSQL(),
+		SQL:            o.upSQL(column.Name),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -102,23 +102,15 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTrans
 	return err
 }
 
-func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
-	// TODO: We need access to the schema here so that we can look up the column name from the constraint
-	// name. We have a few options:
-	//
-	// 1. Update the signature of this method to accept a schema object like the others. This would force
-	// us to change our Operation interface.
-	//
-	// 2. Fetch the schema manually from the db using a query and unmarshal it. This feel like a bit of a
-	// specific hack but would save us from changing the Operation interface.
-	//
-	// 3. An even bigger hack, embed the schema in the context for this case only. I don't like it, but
-	// wanted to mention it as an option.
+func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	// We have already validated that there is single column related to this constraint.
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
+		pq.QuoteIdentifier(TemporaryName(column.Name)),
 	))
 	if err != nil {
 		return err
@@ -126,7 +118,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTrans
 
 	// Remove the up function and trigger
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column)),
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, column.Name)),
 	))
 	if err != nil {
 		return err
@@ -134,7 +126,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTrans
 
 	// Remove the down function and trigger
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(o.Column))),
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(column.Name))),
 	))
 
 	return err
@@ -158,7 +150,7 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 
 	// We already know the constraint exists because we checked it earlier so we only need to check the
 	// case where there are multiple columns.
-	if len(columns) > 0 {
+	if len(columns) > 1 {
 		return MultiColumnConstraintsNotSupportedError{
 			Table:      table.Name,
 			Constraint: o.Name,
@@ -172,10 +164,10 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 	return nil
 }
 
-func (o *OpDropConstraint) upSQL() string {
+func (o *OpDropConstraint) upSQL(column string) string {
 	if o.Up != "" {
 		return o.Up
 	}
 
-	return pq.QuoteIdentifier(o.Column)
+	return pq.QuoteIdentifier(column)
 }

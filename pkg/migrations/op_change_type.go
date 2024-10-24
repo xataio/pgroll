@@ -29,7 +29,7 @@ func (o *OpChangeType) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return nil
 }
 
-func (o *OpChangeType) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpChangeType) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 
