@@ -24,7 +24,7 @@ func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return err
 }
 
-func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

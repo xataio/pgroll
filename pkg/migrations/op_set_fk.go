@@ -46,7 +46,7 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, tr SQLTransf
 	return nil
 }
 
-func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

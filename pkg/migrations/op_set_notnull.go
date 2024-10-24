@@ -62,7 +62,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetNotNull) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

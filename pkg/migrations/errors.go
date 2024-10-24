@@ -200,3 +200,12 @@ type AlterColumnNoChangesError struct {
 func (e AlterColumnNoChangesError) Error() string {
 	return fmt.Sprintf("alter column %q on table %q requires at least one change", e.Column, e.Table)
 }
+
+type MultiColumnConstraintsNotSupportedError struct {
+	Table      string
+	Constraint string
+}
+
+func (e MultiColumnConstraintsNotSupportedError) Error() string {
+	return fmt.Sprintf("constraint %q on table %q applies to multiple columns", e.Constraint, e.Table)
+}

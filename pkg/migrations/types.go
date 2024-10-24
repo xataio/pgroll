@@ -160,9 +160,6 @@ type OpDropColumn struct {
 
 // Drop constraint operation
 type OpDropConstraint struct {
-	// Name of the column
-	Column string `json:"column"`
-
 	// SQL expression for down migration
 	Down string `json:"down"`
 
