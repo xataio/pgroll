@@ -19,8 +19,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 
 	// By this point Validate() should have run which ensures the constraint exists and that we only have
 	// one column associated with it.
-	columns := table.GetConstraintColumns(o.Name)
-	column := table.GetColumn(columns[0])
+	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Create a copy of the column on the underlying table.
 	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
