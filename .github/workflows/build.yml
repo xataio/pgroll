@@ -25,7 +25,7 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Run tests
-      run: go test -v ./...
+      run: go test -v -parallel 4 ./...
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
         PGROLL_TEST_SCHEMA: ${{ matrix.testSchema }}
