@@ -198,7 +198,7 @@ func (sb *batchStatementBuilder) buildUpdateBatchSubQuery() string {
 func (sb *batchStatementBuilder) buildLastValueQuery() string {
 	lastValues := make([]string, len(sb.identityColumns))
 	for i, col := range sb.identityColumns {
-		lastValues[i] = "LAST_VALUE(" + col + ")"
+		lastValues[i] = "LAST_VALUE(" + col + ") OVER ()"
 	}
-	return fmt.Sprintf("SELECT %[1]s OVER() FROM update", strings.Join(lastValues, ", "))
+	return fmt.Sprintf("SELECT %[1]s FROM update", strings.Join(lastValues, ", "))
 }
