@@ -1334,7 +1334,7 @@ func TestSetForeignKey(t *testing.T) {
 							References: &migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
-								Column: "id",
+								Column: ptr("id"),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -1350,7 +1350,7 @@ func TestSetForeignKey(t *testing.T) {
 							References: &migrations.ForeignKeyReference{
 								Name:   "fk_users_id",
 								Table:  "users",
-								Column: "id",
+								Column: ptr("id"),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
