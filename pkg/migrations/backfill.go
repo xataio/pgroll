@@ -98,6 +98,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		// Build the query to update the next batch of rows
 		query := b.statementBuilder.buildQuery(b.lastValues)
+		fmt.Println(query)
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
