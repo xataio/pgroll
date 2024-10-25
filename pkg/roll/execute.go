@@ -155,7 +155,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	}
 
 	// read the current schema
-	schema, err := m.state.ReadSchema(ctx, m.schema)
+	currentSchema, err := m.state.ReadSchema(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to read schema: %w", err)
 	}
@@ -175,7 +175,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.pgConn, m.sqlTransformer, schema)
+		err := op.Complete(ctx, m.pgConn, m.sqlTransformer, currentSchema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
@@ -189,12 +189,12 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// recreate views for the new version (if some operations require it, ie SQL)
 	if refreshViews && !m.disableVersionSchemas {
-		schema, err = m.state.ReadSchema(ctx, m.schema)
+		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
 		if err != nil {
 			return fmt.Errorf("unable to read schema: %w", err)
 		}
 
-		err = m.ensureViews(ctx, schema, migration.Name)
+		err = m.ensureViews(ctx, currentSchema, migration.Name)
 		if err != nil {
 			return err
 		}
