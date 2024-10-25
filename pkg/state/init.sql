@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: Apache-2.0
+
 CREATE SCHEMA IF NOT EXISTS placeholder;
 
 CREATE TABLE IF NOT EXISTS placeholder.migrations
