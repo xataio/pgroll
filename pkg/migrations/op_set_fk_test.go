@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestSetForeignKey(t *testing.T) {
@@ -1282,6 +1283,88 @@ func TestSetForeignKey(t *testing.T) {
 				// The final column has a comment defined on it
 				ColumnMustHaveComment(t, db, schema, "posts", "user_id", "the id of the author")
 			},
+		},
+		{
+			name: "validate that foreign key name is unique",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "posts",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "title",
+									Type: "text",
+								},
+								{
+									Name:     "user_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_fk_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+				{
+					Name: "03_add_fk_constraint_again",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "posts",
+							Column: "user_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_users_id",
+								Table:  "users",
+								Column: "id",
+							},
+							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+							Down: "user_id",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ConstraintAlreadyExistsError{
+				Table:      "posts",
+				Constraint: "fk_users_id",
+			},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
 		},
 	})
 }

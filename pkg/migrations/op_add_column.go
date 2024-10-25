@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -171,7 +172,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() {
 		return FieldRequiredError{Name: "up"}
 	}
 
@@ -299,6 +300,12 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			fkName,
 			references,
 			onDelete)
+
+		//sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+		//	pq.QuoteIdentifier(col.References.Name),
+		//	pq.QuoteIdentifier(col.References.Table),
+		//	pq.QuoteIdentifier(col.References.Column),
+		//		onDelete)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

@@ -6,11 +6,11 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
-	"github.com/xataio/pgroll/pkg/testutils"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateTable(t *testing.T) {
@@ -73,6 +73,89 @@ func TestCreateTable(t *testing.T) {
 				rows := MustSelect(t, db, schema, "01_create_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
+				}, rows)
+			},
+		},
+		{
+			name: "create table with composite key",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "rand",
+									Type: "varchar(255)",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new view exists in the new version schema.
+				ViewMustExist(t, db, schema, "01_create_table", "users")
+
+				// Data can be inserted into the new view.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"rand": "123",
+					"name": "Alice",
+				})
+				// New record with same keys cannot be inserted.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"rand": "123",
+					"name": "Malice",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Data can be retrieved from the new view.
+				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "rand": "123", "name": "Alice"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The underlying table has been dropped.
+				TableMustNotExist(t, db, schema, "users")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The view still exists
+				ViewMustExist(t, db, schema, "01_create_table", "users")
+
+				// The columns are still primary keys.
+				ColumnMustBePK(t, db, schema, "users", "id")
+				ColumnMustBePK(t, db, schema, "users", "rand")
+
+				// Data can be inserted into the new view.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"rand": "123",
+					"name": "Alice",
+				})
+
+				// New record with same keys cannot be inserted.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"rand": "123",
+					"name": "Malice",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Data can be retrieved from the new view.
+				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "rand": "123", "name": "Alice"},
 				}, rows)
 			},
 		},

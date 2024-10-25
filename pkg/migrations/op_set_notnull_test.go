@@ -8,7 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/testutils"
+
+	"github.com/xataio/pgroll/internal/testutils"
 )
 
 func TestSetNotNull(t *testing.T) {

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -55,6 +56,18 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 			Table:  o.Table,
 			Column: o.Column,
 			Err:    err,
+		}
+	}
+
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
+
+	if table.ConstraintExists(o.Check.Name) {
+		return ConstraintAlreadyExistsError{
+			Table:      table.Name,
+			Constraint: o.Check.Name,
 		}
 	}
 

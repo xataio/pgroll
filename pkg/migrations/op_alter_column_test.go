@@ -6,10 +6,11 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/xataio/pgroll/internal/testutils"
+
 	"github.com/oapi-codegen/nullable"
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestAlterColumnMultipleSubOperations(t *testing.T) {

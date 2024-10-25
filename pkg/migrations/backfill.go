@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
@@ -19,7 +20,7 @@ import (
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...CallbackFn) error {
+func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumn := getIdentityColumn(table)
 	if identityColumn == nil {
@@ -31,7 +32,8 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...Callb
 		table:          table,
 		identityColumn: identityColumn,
 		lastValue:      nil,
-		batchSize:      1000,
+		batchSize:      batchSize,
+		batchDelay:     batchDelay,
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.
@@ -46,6 +48,8 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, cbs ...Callb
 			}
 			return err
 		}
+
+		time.Sleep(b.batchDelay)
 	}
 
 	return nil
@@ -84,6 +88,7 @@ type batcher struct {
 	identityColumn *schema.Column
 	lastValue      *string
 	batchSize      int
+	batchDelay     time.Duration
 }
 
 func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {

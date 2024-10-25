@@ -3,6 +3,8 @@
 package flags
 
 import (
+	"time"
+
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +23,10 @@ func StateSchema() string {
 func LockTimeout() int {
 	return viper.GetInt("LOCK_TIMEOUT")
 }
+
+func BackfillBatchSize() int { return viper.GetInt("BACKFILL_BATCH_SIZE") }
+
+func BackfillBatchDelay() time.Duration { return viper.GetDuration("BACKFILL_BATCH_DELAY") }
 
 func Role() string {
 	return viper.GetString("ROLE")
