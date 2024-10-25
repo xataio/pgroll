@@ -84,7 +84,7 @@ func getIdentityColumns(table *schema.Table) []string {
 
 type batcher struct {
 	statementBuilder *batchStatementBuilder
-	lastValues       []string
+	lastValues       any
 }
 
 func newBatcher(table *schema.Table, batchSize int) *batcher {
@@ -129,7 +129,7 @@ func newBatchStatementBuilder(tableName string, identityColumnNames []string, ba
 }
 
 // buildQuery builds the query used to update the next batch of rows.
-func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
+func (sb *batchStatementBuilder) buildQuery(lastValues any) string {
 	return fmt.Sprintf("WITH batch AS (%[1]s), update AS (%[2]s) %[3]s",
 		sb.buildBatchSubQuery(lastValues),
 		sb.buildUpdateBatchSubQuery(),
@@ -137,12 +137,35 @@ func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
 }
 
 // fetch the next batch of PK of rows to update
-func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string {
+func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues any) string {
 	whereClause := ""
 	if lastValues != nil {
 		conditions := make([]string, len(sb.identityColumns))
-		for i, col := range sb.identityColumns {
-			conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(lastValues[i]))
+		switch lastVals := lastValues.(type) {
+		case []int64:
+			for i, col := range sb.identityColumns {
+				conditions[i] = fmt.Sprintf("%s > %d ", col, lastVals[i])
+			}
+		case []string:
+			for i, col := range sb.identityColumns {
+				conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(lastVals[i]))
+			}
+		case []any:
+			for i, col := range sb.identityColumns {
+				if v, ok := lastVals[i].(int); ok {
+					conditions[i] = fmt.Sprintf("%s > %d ", col, v)
+				} else if v, ok := lastVals[i].(string); ok {
+					conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(v))
+				} else {
+					panic("unsupported type")
+				}
+			}
+		case int64:
+			conditions[0] = fmt.Sprintf("%s > %d ", sb.identityColumns[0], lastVals)
+		case string:
+			conditions[0] = fmt.Sprintf("%s > %s ", sb.identityColumns[0], pq.QuoteLiteral(lastVals))
+		default:
+			panic("unsupported type")
 		}
 		whereClause = "WHERE " + strings.Join(conditions, "AND ")
 	}
