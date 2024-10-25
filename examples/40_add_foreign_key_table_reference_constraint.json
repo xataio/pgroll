@@ -1,5 +1,5 @@
 {
-  "name": "39_add_foreign_key_table_reference_constraint",
+  "name": "40_add_foreign_key_table_reference_constraint",
   "operations": [
     {
       "alter_column": {
