@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xataio/pgroll/internal/testutils"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/db"
 )
 
@@ -24,11 +24,12 @@ func TestExecContext(t *testing.T) {
 
 	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
 		ctx := context.Background()
-		// create a table on which an exclusive lock is held for 2 seconds
-		setupTableLock(t, connStr, 2*time.Second)
 
 		// set the lock timeout to 100ms
 		ensureLockTimeout(t, conn, 100)
+
+		// create a table on which an exclusive lock is held for 1 second
+		setupTableLock(t, connStr, 1*time.Second)
 
 		// execute a query that should retry until the lock is released
 		rdb := &db.RDB{DB: conn}
@@ -43,11 +44,11 @@ func TestWithRetryableTransaction(t *testing.T) {
 	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
 		ctx := context.Background()
 
-		// create a table on which an exclusive lock is held for 2 seconds
-		setupTableLock(t, connStr, 2*time.Second)
-
 		// set the lock timeout to 100ms
 		ensureLockTimeout(t, conn, 100)
+
+		// create a table on which an exclusive lock is held for 1 second
+		setupTableLock(t, connStr, 1*time.Second)
 
 		// run a transaction that should retry until the lock is released
 		rdb := &db.RDB{DB: conn}
