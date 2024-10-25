@@ -25,3 +25,13 @@ func (c *Column) IsPrimaryKey() bool {
 	}
 	return false
 }
+
+// HasImplicitDefault returns true if the column has an implicit default value
+func (c *Column) HasImplicitDefault() bool {
+	switch c.Type {
+	case "smallserial", "serial", "bigserial":
+		return true
+	default:
+		return false
+	}
+}
