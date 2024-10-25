@@ -71,7 +71,7 @@ func (s *State) Init(ctx context.Context) error {
 	}
 
 	// Perform pgroll state initialization
-	q := strings.Replace(sqlInit, "placeholder", pq.QuoteIdentifier(s.schema), -1)
+	q := strings.ReplaceAll(sqlInit, "placeholder", pq.QuoteIdentifier(s.schema))
 	_, err = tx.ExecContext(ctx, q)
 	if err != nil {
 		return err
