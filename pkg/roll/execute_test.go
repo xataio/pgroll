@@ -386,7 +386,7 @@ func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 			errCh <- nil
 
 			// Sleep for two seconds to hold the lock
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 
 			// Commit the transaction
 			tx.Commit()
