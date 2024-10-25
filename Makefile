@@ -1,4 +1,4 @@
-.PHONY: generate format lint examples test
+.PHONY: pgroll generate format lint examples test
 
 pgroll:
 	go build
