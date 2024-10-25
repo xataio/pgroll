@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -171,7 +172,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() {
 		return FieldRequiredError{Name: "up"}
 	}
 

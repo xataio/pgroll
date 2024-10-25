@@ -732,6 +732,8 @@ An add column operation creates a new column on an existing table.
 
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
+**NOTE:** As a special case, the `up` field can be omitted when adding `smallserial`, `serial` and `bigserial` columns. 
+
 Example **add column** migrations:
 
 * [03_add_column.json](../examples/03_add_column.json)
