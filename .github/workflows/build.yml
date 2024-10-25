@@ -5,6 +5,7 @@ on:
     branches:
       - main
 permissions:
+  # Push test
   contents: write
   packages: write
 jobs:
