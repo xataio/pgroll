@@ -37,3 +37,7 @@ func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, tr SQLTransform
 func (o *OpSetComment) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
+
+func (o *OpSetComment) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	return nil
+}

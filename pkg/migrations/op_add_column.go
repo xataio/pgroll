@@ -183,6 +183,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpAddColumn) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	table.AddColumn(o.Column.Name, o.Column)
+	return nil
+}
+
 func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:

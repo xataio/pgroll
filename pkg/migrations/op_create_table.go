@@ -111,6 +111,14 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpCreateTable) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	s.AddTable(o.Name, schema.Table{
+		Name:    o.Name,
+		Columns: columns,
+	})
+	return nil
+}
+
 func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 	var sql string
 	var primaryKeys []string

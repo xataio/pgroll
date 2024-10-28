@@ -73,6 +73,20 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpSetUnique) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	table.Indexes = append(table.Indexes, &schema.Index{
+		Name:   o.Name,
+		Unique: true,
+		Columns: []*schema.Column{
+			{
+				Name: o.Column,
+			},
+		},
+	})
+	return nil
+}
+
 func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn db.DB) error {
 	// create unique index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",

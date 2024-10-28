@@ -69,6 +69,16 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+func (o *OpCreateIndex) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	s.GetTable(o.Table).Indexes[o.Name] = &schema.Index{
+		Name:      o.Name,
+		Table:     o.Table,
+		Columns:   o.Columns,
+		Predicate: o.Predicate,
+	}
+	return nil
+}
+
 func quoteColumnNames(columns []string) (quoted []string) {
 	for _, col := range columns {
 		quoted = append(quoted, pq.QuoteIdentifier(col))

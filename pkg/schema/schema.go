@@ -240,3 +240,12 @@ func (s *Schema) Scan(value interface{}) error {
 
 	return json.Unmarshal(b, &s)
 }
+
+func (s *Schema) Clone() *Schema {
+	clone := *s
+	clone.Tables = make(map[string]Table)
+	for name, table := range s.Tables {
+		clone.Tables[name] = table
+	}
+	return &clone
+}

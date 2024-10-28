@@ -32,6 +32,9 @@ type Operation interface {
 
 	// Validate returns a descriptive error if the operation cannot be applied to the given schema.
 	Validate(ctx context.Context, s *schema.Schema) error
+
+	// DeriveSchema will update the schema to reflect the changes made by the operation.
+	DeriveSchema(ctx context.Context, s *schema.Schema) error
 }
 
 // IsolatedOperation is an operation that cannot be executed with other operations
@@ -79,8 +82,13 @@ func (m *Migration) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	derivedSchema := s.Clone()
 	for _, op := range m.Operations {
-		err := op.Validate(ctx, s)
+		err := op.Validate(ctx, derivedSchema)
+		if err != nil {
+			return err
+		}
+		err = op.DeriveSchema(ctx, derivedSchema)
 		if err != nil {
 			return err
 		}

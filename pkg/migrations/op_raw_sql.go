@@ -71,3 +71,8 @@ func (o *OpRawSQL) IsIsolated() bool {
 }
 
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
+
+// DeriveSchema cannot derive schema from raw SQL.
+func (o *OpRawSQL) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	return nil
+}

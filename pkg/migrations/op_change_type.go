@@ -43,3 +43,7 @@ func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 	return nil
 }
+
+func (o *OpChangeType) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	return nil
+}

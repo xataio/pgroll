@@ -49,3 +49,27 @@ func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) err
 
 	return nil
 }
+
+func (o *OpRenameConstraint) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+
+	_, ok := table.CheckConstraints[name]
+	if ok {
+		table.CheckConstraints[o.To] = table.CheckConstraints[o.From]
+		delete(table.CheckConstraints, o.From)
+		return nil
+	}
+	_, ok = t.UniqueConstraints[name]
+	if ok {
+		table.UniqueConstraints[o.To] = table.UniqueConstraints[o.From]
+		delete(table.UniqueConstraints, o.From)
+		return nil
+	}
+	_, ok = t.ForeignKeys[name]
+	if ok {
+		table.ForeignKeys[o.To] = table.ForeignKeys[o.From]
+		delete(table.ForeignKeys, o.From)
+		return nil
+	}
+	return ConstraintDoesNotExistError{Table: o.Table, Constraint: o.From}
+}
