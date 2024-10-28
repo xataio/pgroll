@@ -955,7 +955,7 @@ Example **add unique** migrations:
 
 ### Create index
 
-A create index operation creates a new btree index on a set of columns.
+A create index operation creates a new index on a set of columns.
 
 **create index** operations have this structure:
 
@@ -966,9 +966,13 @@ A create index operation creates a new btree index on a set of columns.
     "name": "index name",
     "columns": [ "names of columns on which to define the index" ]
     "predicate": "conditional expression for defining a partial index",
+    "method": "btree"
   }
 }
 ```
+
+The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
+You can also specify storage parameters for the index in `storage_parameters`.
 
 Example **create index** migrations:
 

@@ -1,0 +1,20 @@
+This is an invalid 'create_index' migration.
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_index": {
+        "name": "reviews_index",
+        "columns": [
+            "my-column"
+        ],
+        "method": "no_such_index_method"
+      }
+    }
+  ]
+}
+
+-- valid --
+false
