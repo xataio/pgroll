@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/lib/pq"
 	"github.com/oapi-codegen/nullable"
@@ -127,13 +126,6 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 	tb.Helper()
 
 	seed := func(tb testing.TB, rowCount int, db *sql.DB) {
-		seedStart := time.Now()
-		defer func() {
-			elapsed := time.Since(seedStart)
-			rowsPerSecond := float64(rowCount) / elapsed.Seconds()
-			tb.Logf("Seeded %d rows in %s (%.f rows/s)", rowCount, elapsed, rowsPerSecond)
-		}()
-
 		tx, err := db.Begin()
 		require.NoError(tb, err)
 		defer tx.Rollback()
