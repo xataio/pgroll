@@ -63,6 +63,13 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
+	if table.ConstraintExists(o.Name) {
+		return ConstraintAlreadyExistsError{
+			Table:      table.Name,
+			Constraint: o.Name,
+		}
+	}
+
 	return nil
 }
 

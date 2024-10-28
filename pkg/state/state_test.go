@@ -14,10 +14,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 	"github.com/xataio/pgroll/pkg/state"
-	"github.com/xataio/pgroll/pkg/testutils"
 )
 
 func TestMain(m *testing.M) {

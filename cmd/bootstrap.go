@@ -4,9 +4,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"slices"
 
 	"github.com/spf13/cobra"
 )
@@ -27,22 +25,14 @@ in lexicographical order. All migrations are completed.`,
 		defer m.Close()
 
 		// open folder and read all json files
-		files, err := os.ReadDir(migrationsDir)
+		files, err := filepath.Glob(filepath.Join(migrationsDir, "*.json"))
 		if err != nil {
 			return fmt.Errorf("reading migration directory: %w", err)
 		}
-		migrationFiles := []string{}
-		for _, file := range files {
-			if file.IsDir() || filepath.Ext(file.Name()) != ".json" {
-				continue
-			}
-			migrationFiles = append(migrationFiles, filepath.Join(migrationsDir, file.Name()))
-		}
-		slices.Sort(migrationFiles)
 
-		for _, fileName := range migrationFiles {
-			if err := runMigrationFromFile(cmd.Context(), m, fileName, true); err != nil {
-				return fmt.Errorf("running migration file '%s': %w", fileName, err)
+		for _, file := range files {
+			if err := runMigrationFromFile(cmd.Context(), m, file, true); err != nil {
+				return fmt.Errorf("running migration file %q: %w", file, err)
 			}
 		}
 

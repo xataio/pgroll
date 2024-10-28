@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -171,7 +172,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() {
 		return FieldRequiredError{Name: "up"}
 	}
 
@@ -203,7 +204,8 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	o.Column.Check = nil
 
 	o.Column.Name = TemporaryName(o.Column.Name)
-	colSQL, err := ColumnToSQL(o.Column, tr)
+	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
+	colSQL, err := columnWriter.Write(o.Column)
 	if err != nil {
 		return err
 	}
@@ -242,4 +244,52 @@ func NotNullConstraintName(columnName string) string {
 // IsNotNullConstraintName returns true if the given name is a NOT NULL constraint name
 func IsNotNullConstraintName(name string) bool {
 	return strings.HasPrefix(name, "_pgroll_check_not_null_")
+}
+
+// ColumnSQLWriter writes a column to SQL
+// It can optionally include the primary key constraint
+// When creating a table, the primary key constraint is not added to the column definition
+type ColumnSQLWriter struct {
+	WithPK      bool
+	Transformer SQLTransformer
+}
+
+func (w ColumnSQLWriter) Write(col Column) (string, error) {
+	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
+
+	if w.WithPK && col.IsPrimaryKey() {
+		sql += " PRIMARY KEY"
+	}
+
+	if col.IsUnique() {
+		sql += " UNIQUE"
+	}
+	if !col.IsNullable() {
+		sql += " NOT NULL"
+	}
+	if col.Default != nil {
+		d, err := w.Transformer.TransformSQL(*col.Default)
+		if err != nil {
+			return "", err
+		}
+		sql += fmt.Sprintf(" DEFAULT %s", d)
+	}
+	if col.References != nil {
+		onDelete := "NO ACTION"
+		if col.References.OnDelete != "" {
+			onDelete = strings.ToUpper(string(col.References.OnDelete))
+		}
+
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+			pq.QuoteIdentifier(col.References.Name),
+			pq.QuoteIdentifier(col.References.Table),
+			pq.QuoteIdentifier(col.References.Column),
+			onDelete)
+	}
+	if col.Check != nil {
+		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
+			pq.QuoteIdentifier(col.Check.Name),
+			col.Check.Constraint)
+	}
+	return sql, nil
 }
