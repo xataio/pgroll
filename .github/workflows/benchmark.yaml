@@ -4,8 +4,8 @@ on:
     branches:
       - main
 permissions:
-  contents: write
-  packages: write
+  contents: read
+  packages: read
 jobs:
   benchmark:
     name: 'benchmark (pg: ${{ matrix.pgVersion }})'
