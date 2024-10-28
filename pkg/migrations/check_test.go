@@ -10,6 +10,8 @@ import (
 )
 
 func TestCheckConstraintValidate(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Name required", func(t *testing.T) {
 		check := &CheckConstraint{
 			Name: "",
