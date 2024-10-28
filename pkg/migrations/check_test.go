@@ -16,7 +16,6 @@ func TestCheckConstraintValidate(t *testing.T) {
 		check := &CheckConstraint{
 			Name: "",
 		}
-		// For now none of the tests use the schema
 		err := check.Validate()
 		assert.EqualError(t, err, `field "name" is required`)
 	})
@@ -24,7 +23,6 @@ func TestCheckConstraintValidate(t *testing.T) {
 		check := &CheckConstraint{
 			Name: strings.Repeat("x", maxIdentifierLength+1),
 		}
-		// For now none of the tests use the schema
 		err := check.Validate()
 		assert.EqualError(t, err, `length of "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" (64) exceeds maximum length of 63`)
 	})
