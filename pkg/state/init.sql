@@ -160,7 +160,7 @@ BEGIN
                                                JOIN pg_attribute a
                                                     ON a.attrelid = pi.indrelid AND a.attnum = ANY (pi.indkey)
                                                JOIN pg_class cls
-                                                    ON cls.oid = pi.indrelid
+                                                    ON cls.oid = pi.indexrelid
                                                JOIN pg_am am
                                                     ON am.oid = cls.relam
                                       WHERE indrelid = t.oid::regclass
