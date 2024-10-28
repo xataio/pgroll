@@ -42,10 +42,13 @@ func (db *RDB) ExecContext(ctx context.Context, query string, args ...interface{
 
 		pqErr := &pq.Error{}
 		if errors.As(err, &pqErr) && pqErr.Code == lockNotAvailableErrorCode {
-			<-time.After(b.Duration())
-		} else {
-			return nil, err
+			if err := sleepCtx(ctx, b.Duration()); err != nil {
+				return nil, err
+			}
+			continue
 		}
+
+		return nil, err
 	}
 }
 
@@ -70,13 +73,25 @@ func (db *RDB) WithRetryableTransaction(ctx context.Context, f func(context.Cont
 
 		pqErr := &pq.Error{}
 		if errors.As(err, &pqErr) && pqErr.Code == lockNotAvailableErrorCode {
-			<-time.After(b.Duration())
-		} else {
-			return err
+			if err := sleepCtx(ctx, b.Duration()); err != nil {
+				return err
+			}
+			continue
 		}
+
+		return err
 	}
 }
 
 func (db *RDB) Close() error {
 	return db.DB.Close()
+}
+
+func sleepCtx(ctx context.Context, d time.Duration) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(d):
+		return nil
+	}
 }

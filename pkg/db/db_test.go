@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xataio/pgroll/internal/testutils"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/db"
 )
 
@@ -37,6 +37,30 @@ func TestExecContext(t *testing.T) {
 	})
 }
 
+func TestExecContextWhenContextCancelled(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+
+		// create a table on which an exclusive lock is held for 2 seconds
+		setupTableLock(t, connStr, 2*time.Second)
+
+		// set the lock timeout to 100ms
+		ensureLockTimeout(t, conn, 100)
+
+		// execute a query that should retry until the lock is released
+		rdb := &db.RDB{DB: conn}
+
+		// Cancel the context before the lock times out
+		go time.AfterFunc(500*time.Millisecond, cancel)
+
+		_, err := rdb.ExecContext(ctx, "INSERT INTO test(id) VALUES (1)")
+		require.Errorf(t, err, "context canceled")
+	})
+}
+
 func TestWithRetryableTransaction(t *testing.T) {
 	t.Parallel()
 
@@ -55,6 +79,32 @@ func TestWithRetryableTransaction(t *testing.T) {
 			return tx.QueryRowContext(ctx, "SELECT 1 FROM test").Err()
 		})
 		require.NoError(t, err)
+	})
+}
+
+func TestWithRetryableTransactionWhenContextCancelled(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+
+		// create a table on which an exclusive lock is held for 2 seconds
+		setupTableLock(t, connStr, 2*time.Second)
+
+		// set the lock timeout to 100ms
+		ensureLockTimeout(t, conn, 100)
+
+		// run a transaction that should retry until the lock is released
+		rdb := &db.RDB{DB: conn}
+
+		// Cancel the context before the lock times out
+		go time.AfterFunc(500*time.Millisecond, cancel)
+
+		err := rdb.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+			return tx.QueryRowContext(ctx, "SELECT 1 FROM test").Err()
+		})
+		require.Errorf(t, err, "context canceled")
 	})
 }
 
