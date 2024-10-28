@@ -1,71 +1,61 @@
 -- SPDX-License-Identifier: Apache-2.0
-
 CREATE SCHEMA IF NOT EXISTS placeholder;
 
-CREATE TABLE IF NOT EXISTS placeholder.migrations
-(
-    schema           NAME      NOT NULL,
-    name             TEXT      NOT NULL,
-    migration        JSONB     NOT NULL,
-    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    parent           TEXT,
-    done             BOOLEAN   NOT NULL DEFAULT false,
-    resulting_schema JSONB     NOT NULL DEFAULT '{}'::jsonb,
-
-    PRIMARY KEY (schema, name),
-    FOREIGN KEY (schema, parent) REFERENCES placeholder.migrations (schema, name)
+CREATE TABLE IF NOT EXISTS placeholder.migrations (
+  schema NAME NOT NULL,
+  name TEXT NOT NULL,
+  migration JSONB NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  parent TEXT,
+  done BOOLEAN NOT NULL DEFAULT false,
+  resulting_schema JSONB NOT NULL DEFAULT '{}'::jsonb,
+  PRIMARY KEY (schema, name),
+  FOREIGN KEY (schema, parent) REFERENCES placeholder.migrations (schema, name)
 );
 
 -- Only one migration can be active at a time
-CREATE UNIQUE INDEX IF NOT EXISTS only_one_active ON placeholder.migrations (schema, name, done) WHERE done = false;
+CREATE UNIQUE INDEX IF NOT EXISTS only_one_active ON placeholder.migrations (schema, name, done)
+WHERE
+  done = false;
 
 -- Only first migration can exist without parent
-CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON placeholder.migrations (schema) WHERE parent IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON placeholder.migrations (schema)
+WHERE
+  parent IS NULL;
 
 -- History is linear
 CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON placeholder.migrations (schema, parent);
 
 -- Add a column to tell whether the row represents an auto-detected DDL capture or a pgroll migration
 ALTER TABLE placeholder.migrations
-    ADD COLUMN IF NOT EXISTS migration_type
-        VARCHAR(32)
-        DEFAULT 'pgroll'
-        CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred')
-            );
+ADD COLUMN IF NOT EXISTS migration_type VARCHAR(32) DEFAULT 'pgroll' CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred'));
 
 -- Helper functions
-
 -- Are we in the middle of a migration?
-CREATE OR REPLACE FUNCTION placeholder.is_active_migration_period(schemaname NAME) RETURNS boolean
-AS
-$$
+CREATE
+OR REPLACE FUNCTION placeholder.is_active_migration_period (schemaname NAME) RETURNS boolean AS $$
 SELECT EXISTS (SELECT 1 FROM placeholder.migrations WHERE schema = schemaname AND done = false)
-$$
-    LANGUAGE SQL
-    STABLE;
+$$ LANGUAGE SQL STABLE;
 
 -- Get the latest version name (this is the one with child migrations)
-CREATE OR REPLACE FUNCTION placeholder.latest_version(schemaname NAME) RETURNS text
-    SECURITY DEFINER
-    SET search_path = placeholder, pg_catalog, pg_temp
-AS
-$$
+CREATE
+OR REPLACE FUNCTION placeholder.latest_version (schemaname NAME) RETURNS text SECURITY DEFINER
+SET
+  search_path = placeholder,
+  pg_catalog,
+  pg_temp AS $$
 SELECT p.name
 FROM placeholder.migrations p
 WHERE NOT EXISTS (SELECT 1 FROM placeholder.migrations c WHERE schema = schemaname AND c.parent = p.name)
   AND schema = schemaname
-$$
-    LANGUAGE SQL
-    STABLE;
+$$ LANGUAGE SQL STABLE;
 
 -- Get the name of the previous version of the schema, or NULL if there is none.
 -- This ignores previous versions for which no version schema exists, such as
 -- versions corresponding to inferred migrations.
-CREATE OR REPLACE FUNCTION placeholder.previous_version(schemaname NAME) RETURNS text
-AS
-$$
+CREATE
+OR REPLACE FUNCTION placeholder.previous_version (schemaname NAME) RETURNS text AS $$
 WITH RECURSIVE ancestors AS (SELECT name, schema, parent, migration_type, 0 AS depth
                              FROM placeholder.migrations
                              WHERE name = placeholder.latest_version(schemaname)
@@ -84,14 +74,11 @@ WHERE migration_type = 'pgroll'
   AND a.depth > 0
 ORDER by a.depth ASC
 LIMIT 1;
-$$
-    LANGUAGE SQL
-    STABLE;
+$$ LANGUAGE SQL STABLE;
 
 -- Get the JSON representation of the current schema
-CREATE OR REPLACE FUNCTION placeholder.read_schema(schemaname text) RETURNS jsonb
-    LANGUAGE plpgsql AS
-$$
+CREATE
+OR REPLACE FUNCTION placeholder.read_schema (schemaname text) RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE
     tables jsonb;
 BEGIN
@@ -244,11 +231,12 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION placeholder.raw_migration() RETURNS event_trigger
-    LANGUAGE plpgsql
-    SECURITY DEFINER
-    SET search_path = placeholder, pg_catalog, pg_temp AS
-$$
+CREATE
+OR REPLACE FUNCTION placeholder.raw_migration () RETURNS event_trigger LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = placeholder,
+  pg_catalog,
+  pg_temp AS $$
 DECLARE
     schemaname   TEXT;
     migration_id TEXT;
@@ -334,9 +322,11 @@ END;
 $$;
 
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
+
 CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
-EXECUTE FUNCTION placeholder.raw_migration();
+EXECUTE FUNCTION placeholder.raw_migration ();
 
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
+
 CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
-EXECUTE FUNCTION placeholder.raw_migration();
+EXECUTE FUNCTION placeholder.raw_migration ();
