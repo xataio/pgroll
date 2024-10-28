@@ -34,7 +34,6 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 		identityColumn: identityColumn,
 		lastValue:      nil,
 		batchSize:      batchSize,
-		batchDelay:     batchDelay,
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.
@@ -50,7 +49,11 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 			return err
 		}
 
-		time.Sleep(b.batchDelay)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(batchDelay):
+		}
 	}
 
 	return nil
@@ -89,7 +92,6 @@ type batcher struct {
 	identityColumn *schema.Column
 	lastValue      *string
 	batchSize      int
-	batchDelay     time.Duration
 }
 
 func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
