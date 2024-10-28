@@ -9,10 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xataio/pgroll/internal/testutils"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/db"
 )
 
