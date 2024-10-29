@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -45,6 +46,10 @@ func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) err
 
 	if table.ConstraintExists(o.To) {
 		return ConstraintAlreadyExistsError{Table: o.Table, Constraint: o.To}
+	}
+
+	if err := ValidateIdentifierLength(o.To); err != nil {
+		return err
 	}
 
 	return nil

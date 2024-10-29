@@ -14,6 +14,10 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if err := ValidateIdentifierLength(f.Name); err != nil {
+		return err
+	}
+
 	table := s.GetTable(f.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: f.Table}
