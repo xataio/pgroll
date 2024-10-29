@@ -89,6 +89,10 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	for _, col := range o.Columns {
+		if err := ValidateIdentifierLength(col.Name); err != nil {
+			return fmt.Errorf("invalid column: %w", err)
+		}
+
 		// Ensure that any foreign key references are valid, ie. the referenced
 		// table and column exist.
 		if col.References != nil {
