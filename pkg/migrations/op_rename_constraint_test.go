@@ -4,9 +4,11 @@ package migrations_test
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -104,6 +106,7 @@ func TestRenameConstraint(t *testing.T) {
 func TestRenameConstraintValidation(t *testing.T) {
 	t.Parallel()
 
+	invalidName := strings.Repeat("x", 64)
 	createTableMigration := migrations.Migration{
 		Name: "01_create_table",
 		Operations: migrations.Operations{
@@ -179,6 +182,23 @@ func TestRenameConstraintValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.ConstraintAlreadyExistsError{Table: "users", Constraint: "users_text_length_username"},
+		},
+		{
+			name: "the new name must be valid",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpRenameConstraint{
+							Table: "users",
+							From:  "users_text_length_username",
+							To:    invalidName,
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ValidateIdentifierLength(invalidName),
 		},
 	})
 }
