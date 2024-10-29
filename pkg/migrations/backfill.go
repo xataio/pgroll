@@ -98,7 +98,6 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		// Build the query to update the next batch of rows
 		query := b.statementBuilder.buildQuery(b.lastValues)
-		fmt.Println(query)
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
@@ -171,7 +170,7 @@ func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues any) string {
 		whereClause = "WHERE " + strings.Join(conditions, "AND ")
 	}
 
-	return fmt.Sprintf("SELECT %[1]s FROM %[2]s %[3]sORDER BY %[1]s LIMIT %[4]d FOR NO KEY UPDATE",
+	return fmt.Sprintf("SELECT %[1]s FROM %[2]s %[3]s ORDER BY %[1]s LIMIT %[4]d FOR NO KEY UPDATE",
 		strings.Join(sb.identityColumns, ", "), sb.tableName, whereClause, sb.batchSize)
 }
 
