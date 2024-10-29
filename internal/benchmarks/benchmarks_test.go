@@ -19,7 +19,7 @@ import (
 
 const unitRowsPerSecond = "rows/s"
 
-var rowCounts = []int{10_000, 100_000, 1_000_000}
+var rowCounts = []int{10_000, 100_000, 300_000}
 
 func TestMain(m *testing.M) {
 	testutils.SharedTestMain(m)
