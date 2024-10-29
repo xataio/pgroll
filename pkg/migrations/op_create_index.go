@@ -16,10 +16,17 @@ import (
 var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+	// check if table creation is completed
+	fmt.Println("OpCreateIndex Start")
+	tableName, ok := s.GetTemporaryResourceName(o.Table)
+	if !ok {
+		tableName = o.Table
+	}
+
 	// create index concurrently
 	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s",
 		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table))
+		pq.QuoteIdentifier(tableName))
 
 	if o.Method != nil {
 		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
@@ -53,6 +60,7 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 }
 
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
+	fmt.Println("OpCreateIndex Validate")
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
 	}
@@ -63,7 +71,11 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		tableName, ok := s.GetTemporaryResourceName(o.Table)
+		if !ok {
+			return TableDoesNotExistError{Name: o.Table}
+		}
+		table = s.GetTable(tableName)
 	}
 
 	for _, column := range o.Columns {

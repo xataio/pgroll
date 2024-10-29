@@ -1,0 +1,36 @@
+{
+  "name": "40_create_table_and_index",
+  "operations": [
+    {
+      "create_table": {
+        "name": "vegetables",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "unique": true
+          },
+          {
+            "name": "price",
+            "type": "decimal(10,2)"
+          }
+        ]
+      }
+    },
+    {
+      "create_index": {
+        "name": "idx_vegetables_name",
+        "table": "vegetables",
+        "columns": [
+          "name"
+        ],
+        "method": "hash"
+      }
+    }
+  ]
+}

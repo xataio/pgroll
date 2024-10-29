@@ -17,7 +17,8 @@ import (
 
 func New() *Schema {
 	return &Schema{
-		Tables: make(map[string]Table),
+		Tables:                 make(map[string]Table),
+		temporaryResourceNames: make(map[string]string),
 	}
 }
 
@@ -27,6 +28,8 @@ type Schema struct {
 	Name string `json:"name"`
 	// Tables is a map of virtual table name -> table mapping
 	Tables map[string]Table `json:"tables"`
+
+	temporaryResourceNames map[string]string
 }
 
 // Table represents a table in the schema
@@ -254,4 +257,23 @@ func (s *Schema) Clone() *Schema {
 		clone.Tables[name] = table
 	}
 	return &clone
+}
+
+func (s *Schema) AddTemporaryResourceName(tempName, resourceName string) {
+	if s.temporaryResourceNames == nil {
+		fmt.Println("new")
+		s.temporaryResourceNames = make(map[string]string)
+	}
+	fmt.Println("AddTemporaryResourceName", resourceName, tempName)
+	s.temporaryResourceNames[resourceName] = tempName
+}
+
+func (s *Schema) RemoveTemporaryResourceName(resourceName string) {
+	delete(s.temporaryResourceNames, resourceName)
+}
+
+func (s *Schema) GetTemporaryResourceName(resourceName string) (string, bool) {
+	fmt.Println("GetTemporaryResourceName", resourceName, s.temporaryResourceNames)
+	resourceName, ok := s.temporaryResourceNames[resourceName]
+	return resourceName, ok
 }
