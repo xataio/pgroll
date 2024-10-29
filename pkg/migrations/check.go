@@ -8,6 +8,10 @@ func (c *CheckConstraint) Validate() error {
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if err := ValidateIdentifierLength(c.Name); err != nil {
+		return err
+	}
+
 	if c.Constraint == "" {
 		return FieldRequiredError{Name: "constraint"}
 	}

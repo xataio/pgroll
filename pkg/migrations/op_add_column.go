@@ -135,6 +135,10 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransforme
 }
 
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
+	if err := ValidateIdentifierLength(o.Column.Name); err != nil {
+		return err
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
