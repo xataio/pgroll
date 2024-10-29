@@ -3,7 +3,7 @@
   "operations": [
     {
       "create_index": {
-        "name": "idx_fruits_name",
+        "name": "idx_fruits_unique_name",
         "table": "fruits",
         "columns": [
           "name"
