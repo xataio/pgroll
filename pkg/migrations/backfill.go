@@ -144,18 +144,18 @@ func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues any) string {
 		switch lastVals := lastValues.(type) {
 		case []int64:
 			for i, col := range sb.identityColumns {
-				conditions[i] = fmt.Sprintf("%s > %d ", col, lastVals[i])
+				conditions[i] = fmt.Sprintf("%s > %d", col, lastVals[i])
 			}
 		case []string:
 			for i, col := range sb.identityColumns {
-				conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(lastVals[i]))
+				conditions[i] = fmt.Sprintf("%s > %s", col, pq.QuoteLiteral(lastVals[i]))
 			}
 		case []any:
 			for i, col := range sb.identityColumns {
 				if v, ok := lastVals[i].(int); ok {
-					conditions[i] = fmt.Sprintf("%s > %d ", col, v)
+					conditions[i] = fmt.Sprintf("%s > %d", col, v)
 				} else if v, ok := lastVals[i].(string); ok {
-					conditions[i] = fmt.Sprintf("%s > %s ", col, pq.QuoteLiteral(v))
+					conditions[i] = fmt.Sprintf("%s > %s", col, pq.QuoteLiteral(v))
 				} else {
 					panic("unsupported type")
 				}
@@ -167,7 +167,7 @@ func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues any) string {
 		default:
 			panic("unsupported type")
 		}
-		whereClause = "WHERE " + strings.Join(conditions, "AND ")
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
 	return fmt.Sprintf("SELECT %[1]s FROM %[2]s %[3]s ORDER BY %[1]s LIMIT %[4]d FOR NO KEY UPDATE",
