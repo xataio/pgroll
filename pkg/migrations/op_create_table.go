@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -78,12 +79,20 @@ func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 }
 
 func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
+	if err := ValidateIdentifierLength(o.Name); err != nil {
+		return err
+	}
+
 	table := s.GetTable(o.Name)
 	if table != nil {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 
 	for _, col := range o.Columns {
+		if err := ValidateIdentifierLength(col.Name); err != nil {
+			return fmt.Errorf("invalid column: %w", err)
+		}
+
 		// Ensure that any foreign key references are valid, ie. the referenced
 		// table and column exist.
 		if col.References != nil {

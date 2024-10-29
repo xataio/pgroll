@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1492,4 +1493,49 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 			wantStartErr: testutils.ErrMockSQLTransformer,
 		},
 	}, roll.WithSQLTransformer(sqlTransformer))
+}
+
+func TestAddColumnInvalidNameLength(t *testing.T) {
+	t.Parallel()
+
+	invalidName := strings.Repeat("x", 64)
+	ExecuteTests(t, TestCases{
+		{
+			name: "Column name too long",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:    invalidName,
+								Type:    "text",
+								Default: ptr("'default value 1'"),
+							},
+						},
+					},
+				},
+			},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+			wantStartErr:  migrations.ValidateIdentifierLength(invalidName),
+		},
+	})
 }

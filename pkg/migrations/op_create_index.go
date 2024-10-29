@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -16,10 +17,19 @@ var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// create index concurrently
-	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s (%s)",
+	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s",
 		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table),
-		strings.Join(quoteColumnNames(o.Columns), ", "))
+		pq.QuoteIdentifier(o.Table))
+
+	if o.Method != nil {
+		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
+	}
+
+	stmt += fmt.Sprintf(" (%s)", strings.Join(quoteColumnNames(o.Columns), ", "))
+
+	if o.StorageParameters != nil {
+		stmt += fmt.Sprintf(" WITH (%s)", *o.StorageParameters)
+	}
 
 	if o.Predicate != nil {
 		stmt += fmt.Sprintf(" WHERE %s", *o.Predicate)
@@ -45,6 +55,10 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
+	}
+
+	if err := ValidateIdentifierLength(o.Name); err != nil {
+		return err
 	}
 
 	table := s.GetTable(o.Table)
