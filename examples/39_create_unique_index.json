@@ -1,5 +1,5 @@
 {
-  "name": "38_create_hash_index_with_fillfactor",
+  "name": "39_create_unique_index",
   "operations": [
     {
       "create_index": {
@@ -8,7 +8,7 @@
         "columns": [
           "name"
         ],
-        "unique": true,
+        "unique": true
       }
     }
   ]
