@@ -75,15 +75,13 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 
 func (o *OpSetUnique) DeriveSchema(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
-	table.Indexes = append(table.Indexes, &schema.Index{
+	table.Indexes[o.Name] = schema.Index{
 		Name:   o.Name,
 		Unique: true,
-		Columns: []*schema.Column{
-			{
-				Name: o.Column,
-			},
+		Columns: []string{
+			o.Column,
 		},
-	})
+	}
 	return nil
 }
 

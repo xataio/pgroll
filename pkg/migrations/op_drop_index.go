@@ -40,3 +40,8 @@ func (o *OpDropIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 	return IndexDoesNotExistError{Name: o.Name}
 }
+
+func (o *OpDropIndex) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

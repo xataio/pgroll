@@ -82,13 +82,12 @@ func (m *Migration) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	derivedSchema := s.Clone()
 	for _, op := range m.Operations {
-		err := op.Validate(ctx, derivedSchema)
+		err := op.Validate(ctx, s)
 		if err != nil {
 			return err
 		}
-		err = op.DeriveSchema(ctx, derivedSchema)
+		err = op.DeriveSchema(ctx, s)
 		if err != nil {
 			return err
 		}

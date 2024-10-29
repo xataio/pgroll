@@ -42,3 +42,8 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	return nil
 }
+
+func (o *OpRenameTable) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

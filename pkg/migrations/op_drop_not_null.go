@@ -45,3 +45,8 @@ func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 
 	return nil
 }
+
+func (o *OpDropNotNull) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

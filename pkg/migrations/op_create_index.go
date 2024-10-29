@@ -18,10 +18,13 @@ var _ Operation = (*OpCreateIndex)(nil)
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// check if table creation is completed
 	fmt.Println("OpCreateIndex Start")
+	fmt.Println("Table Name: ", o.Table)
 	tableName, ok := s.GetTemporaryResourceName(o.Table)
 	if !ok {
+		fmt.Println("Table does not exist")
 		tableName = o.Table
 	}
+	fmt.Println("Table Name: ", tableName)
 
 	// create index concurrently
 	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s",
@@ -96,12 +99,12 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 }
 
 func (o *OpCreateIndex) DeriveSchema(ctx context.Context, s *schema.Schema) error {
-	s.GetTable(o.Table).Indexes[o.Name] = &schema.Index{
-		Name:      o.Name,
-		Table:     o.Table,
-		Columns:   o.Columns,
-		Predicate: o.Predicate,
-	}
+	// TODO
+	//s.GetTable(o.Table).Indexes[o.Name] = schema.Index{
+	//	Name:      o.Name,
+	//	Columns:   o.Columns,
+	//	Predicate: o.Predicate,
+	//}
 	return nil
 }
 

@@ -147,6 +147,11 @@ func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error
 	return nil
 }
 
+func (o *OpDropConstraint) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}
+
 func (o *OpDropConstraint) upSQL() string {
 	if o.Up != "" {
 		return o.Up

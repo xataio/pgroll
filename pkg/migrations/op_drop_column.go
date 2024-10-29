@@ -67,7 +67,7 @@ func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpAddColumn) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+func (o *OpDropColumn) DeriveSchema(ctx context.Context, s *schema.Schema) error {
 	s.GetTable(o.Table).RemoveColumn(o.Column)
 	return nil
 }

@@ -82,6 +82,11 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	return nil
 }
 
+func (o *OpSetForeignKey) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}
+
 func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
 	tempColumnName := TemporaryName(o.Column)
 

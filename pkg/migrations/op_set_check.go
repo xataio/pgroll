@@ -82,6 +82,11 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	return nil
 }
 
+func (o *OpSetCheckConstraint) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}
+
 func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),

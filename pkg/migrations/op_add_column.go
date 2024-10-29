@@ -189,7 +189,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 func (o *OpAddColumn) DeriveSchema(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
-	table.AddColumn(o.Column.Name, o.Column)
+	table.AddColumn(o.Column.Name, schema.Column{
+		Name:     o.Column.Name,
+		Type:     o.Column.Type,
+		Default:  o.Column.Default,
+		Nullable: *o.Column.Nullable,
+	})
 	return nil
 }
 

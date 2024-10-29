@@ -46,3 +46,8 @@ func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, tr SQLTransform
 func (o *OpSetDefault) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
+
+func (o *OpSetDefault) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

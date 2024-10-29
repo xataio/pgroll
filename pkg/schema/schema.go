@@ -250,21 +250,10 @@ func (s *Schema) Scan(value interface{}) error {
 	return json.Unmarshal(b, &s)
 }
 
-func (s *Schema) Clone() *Schema {
-	clone := *s
-	clone.Tables = make(map[string]Table)
-	for name, table := range s.Tables {
-		clone.Tables[name] = table
-	}
-	return &clone
-}
-
 func (s *Schema) AddTemporaryResourceName(tempName, resourceName string) {
 	if s.temporaryResourceNames == nil {
-		fmt.Println("new")
 		s.temporaryResourceNames = make(map[string]string)
 	}
-	fmt.Println("AddTemporaryResourceName", resourceName, tempName)
 	s.temporaryResourceNames[resourceName] = tempName
 }
 
@@ -273,7 +262,6 @@ func (s *Schema) RemoveTemporaryResourceName(resourceName string) {
 }
 
 func (s *Schema) GetTemporaryResourceName(resourceName string) (string, bool) {
-	fmt.Println("GetTemporaryResourceName", resourceName, s.temporaryResourceNames)
 	resourceName, ok := s.temporaryResourceNames[resourceName]
 	return resourceName, ok
 }

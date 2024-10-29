@@ -38,6 +38,6 @@ func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {
 }
 
 func (o *OpDropTable) DeriveSchema(ctx context.Context, s *schema.Schema) error {
-	s.RemoveTable(o.Table)
+	s.RemoveTable(o.Name)
 	return nil
 }

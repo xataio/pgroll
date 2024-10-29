@@ -60,3 +60,8 @@ func (o *OpSetReplicaIdentity) Validate(ctx context.Context, s *schema.Schema) e
 
 	return nil
 }
+
+func (o *OpSetReplicaIdentity) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

@@ -124,6 +124,12 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 }
 
 func (o *OpCreateTable) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	columns := make(map[string]schema.Column, len(o.Columns))
+	for _, col := range o.Columns {
+		columns[col.Name] = schema.Column{
+			Name: col.Name,
+		}
+	}
 	s.AddTable(o.Name, schema.Table{
 		Name:    o.Name,
 		Columns: columns,

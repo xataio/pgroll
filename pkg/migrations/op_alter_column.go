@@ -382,3 +382,8 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 func (o *OpAlterColumn) IsRenameOnly() bool {
 	return len(o.subOperations()) == 0 && o.Name != nil
 }
+
+func (o *OpAlterColumn) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}

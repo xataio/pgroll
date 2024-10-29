@@ -79,3 +79,8 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 
 	return nil
 }
+
+func (o *OpSetNotNull) DeriveSchema(ctx context.Context, s *schema.Schema) error {
+	panic("not implemented")
+	return nil
+}
