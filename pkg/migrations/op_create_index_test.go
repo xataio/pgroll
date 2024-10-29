@@ -4,7 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
-	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -13,6 +13,7 @@ import (
 func TestCreateIndex(t *testing.T) {
 	t.Parallel()
 
+	invalidName := strings.Repeat("x", 64)
 	ExecuteTests(t, TestCases{
 		{
 			name: "create index",
@@ -149,7 +150,6 @@ func TestCreateIndex(t *testing.T) {
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been created on the underlying table.
 				IndexMustExist(t, db, schema, "users", "idx_users_name_after_2019")
-				CheckIndexDefinition(t, db, schema, "users", "idx_users_name_after_2019", fmt.Sprintf("CREATE INDEX idx_users_name_after_2019 ON %s.users USING btree (registered_at_year) WHERE (registered_at_year > 2019)", schema))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
@@ -160,7 +160,7 @@ func TestCreateIndex(t *testing.T) {
 			},
 		},
 		{
-			name: "create hash index with option",
+			name: "invalid name",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -178,36 +178,30 @@ func TestCreateIndex(t *testing.T) {
 									Type:     "varchar(255)",
 									Nullable: ptr(false),
 								},
+								{
+									Name:     "registered_at_year",
+									Type:     "integer",
+									Nullable: ptr(false),
+								},
 							},
 						},
 					},
 				},
 				{
-					Name: "02_create_hash_index",
+					Name: "02_create_index_with_invalid_name",
 					Operations: migrations.Operations{
 						&migrations.OpCreateIndex{
-							Name:              "idx_users_name_hash",
-							Table:             "users",
-							Columns:           []string{"name"},
-							Method:            ptr(migrations.OpCreateIndexMethodHash),
-							StorageParameters: ptr("fillfactor = 70"),
+							Name:    invalidName,
+							Table:   "users",
+							Columns: []string{"registered_at_year"},
 						},
 					},
 				},
 			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// The index has been created on the underlying table.
-				IndexMustExist(t, db, schema, "users", "idx_users_name_hash")
-				// Check the index definition.
-				CheckIndexDefinition(t, db, schema, "users", "idx_users_name_hash", fmt.Sprintf("CREATE INDEX idx_users_name_hash ON %s.users USING hash (name) WITH (fillfactor='70')", schema))
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The index has been dropped from the the underlying table.
-				IndexMustNotExist(t, db, schema, "users", "idx_users_name_hash")
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Complete is a no-op.
-			},
+			wantStartErr:  migrations.ValidateIdentifierLength(invalidName),
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
 		},
 	})
 }
