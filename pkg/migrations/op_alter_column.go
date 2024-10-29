@@ -8,6 +8,7 @@ import (
 	"maps"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -213,6 +214,9 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name != nil {
 		if table.GetColumn(*o.Name) != nil {
 			return ColumnAlreadyExistsError{Table: o.Table, Name: *o.Name}
+		}
+		if err := ValidateIdentifierLength(*o.Name); err != nil {
+			return err
 		}
 	}
 

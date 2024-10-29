@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -54,6 +55,10 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	if o.Name == "" {
 		return FieldRequiredError{Name: "name"}
+	}
+
+	if err := ValidateIdentifierLength(o.Name); err != nil {
+		return err
 	}
 
 	table := s.GetTable(o.Table)
