@@ -134,7 +134,6 @@ BEGIN
                                           AND attr.attnum = def.adnum
                                                LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
                                           AND attr.attnum = descr.objsubid
-                                               LEFT JOIN pg_enum AS e ON e.enumtypid = tp.oid
                                       WHERE attr.attnum > 0
                                         AND NOT attr.attisdropped
                                         AND attr.attrelid = t.oid
