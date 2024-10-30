@@ -4,15 +4,18 @@ package migrations_test
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 func TestRenameTable(t *testing.T) {
 	t.Parallel()
 
+	invalidName := strings.Repeat("x", 64)
 	ExecuteTests(t, TestCases{
 		{
 			name: "rename table",
@@ -126,7 +129,35 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableAlreadyExistsError{"other_table"},
+			wantStartErr: migrations.TableAlreadyExistsError{Name: "other_table"},
+		},
+		{
+			name: "rename table validation: invalid name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name:    "test_table",
+							Columns: []migrations.Column{},
+						},
+						&migrations.OpCreateTable{
+							Name:    "other_table",
+							Columns: []migrations.Column{},
+						},
+					},
+				},
+				{
+					Name: "02_rename_table",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "test_table",
+							To:   invalidName,
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 	})
 }

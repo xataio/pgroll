@@ -2,7 +2,9 @@
 
 package migrations
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type InvalidMigrationError struct {
 	Reason string
@@ -199,6 +201,27 @@ type AlterColumnNoChangesError struct {
 
 func (e AlterColumnNoChangesError) Error() string {
 	return fmt.Sprintf("alter column %q on table %q requires at least one change", e.Column, e.Table)
+}
+
+// maxIdentifierLength is the maximum length of a valid identifier:
+// https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+const maxIdentifierLength = 63
+
+type InvalidIdentifierLengthError struct {
+	Name string
+}
+
+func (e InvalidIdentifierLengthError) Error() string {
+	return fmt.Sprintf("length of %q (%d) exceeds maximum length of %d", e.Name, len(e.Name), maxIdentifierLength)
+}
+
+// ValidateIdentifierLength returns an error if the given name exceeds the maximum allowed length for
+// a Postgres identifier.
+func ValidateIdentifierLength(name string) error {
+	if len(name) > maxIdentifierLength {
+		return InvalidIdentifierLengthError{Name: name}
+	}
+	return nil
 }
 
 type MultiColumnConstraintsNotSupportedError struct {

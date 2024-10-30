@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -34,6 +35,9 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 	if s.GetTable(o.To) != nil {
 		return TableAlreadyExistsError{Name: o.To}
+	}
+	if err := ValidateIdentifierLength(o.To); err != nil {
+		return err
 	}
 
 	return nil

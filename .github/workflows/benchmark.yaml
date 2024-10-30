@@ -1,0 +1,28 @@
+name: Benchmark
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: read
+  packages: read
+jobs:
+  benchmark:
+    name: 'benchmark (pg: ${{ matrix.pgVersion }})'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pgVersion: ['14.8', '15.3', '16.4', '17.0' ,'latest']
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: 'go.mod'
+
+    - name: Run benchmarks
+      run: make bench
+      env:
+        POSTGRES_VERSION: ${{ matrix.pgVersion }}

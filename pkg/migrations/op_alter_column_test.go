@@ -4,12 +4,13 @@ package migrations_test
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
-
-	"github.com/xataio/pgroll/internal/testutils"
 
 	"github.com/oapi-codegen/nullable"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -552,6 +553,8 @@ func TestIsRenameOnly(t *testing.T) {
 func TestAlterColumnValidation(t *testing.T) {
 	t.Parallel()
 
+	invalidName := strings.Repeat("x", 64)
+
 	createTablesMigration := migrations.Migration{
 		Name: "01_add_tables",
 		Operations: migrations.Operations{
@@ -678,7 +681,7 @@ func TestAlterColumnValidation(t *testing.T) {
 			wantStartErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
 		},
 		{
-			name: "if a backfill is required, the table must have a primary key on exactly one column",
+			name: "backfill with multiple primary keys",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -696,11 +699,12 @@ func TestAlterColumnValidation(t *testing.T) {
 							Table:    "orders",
 							Column:   "quantity",
 							Nullable: ptr(false),
+							Up:       "1",
 						},
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
+			wantStartErr: nil,
 		},
 		{
 			name: "rename-only operations don't have primary key requirements",
@@ -726,6 +730,31 @@ func TestAlterColumnValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: nil,
+		},
+		{
+			name: "invalid name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer)",
+							Down: "DROP TABLE orders",
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "orders",
+							Column: "quantity",
+							Name:   ptr(invalidName),
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ValidateIdentifierLength(invalidName),
 		},
 	})
 }
