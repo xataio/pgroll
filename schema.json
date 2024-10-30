@@ -462,7 +462,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["check", "unique", "foreign"]
+          "enum": ["check", "unique", "foreign_key"]
         },
         "check": {
           "type": "string",
@@ -471,6 +471,16 @@
         "references": {
           "$ref": "#/$defs/ForeignKeyReference",
           "description": "Foreign key constraint for the column"
+        },
+        "up": {
+          "default": "",
+          "description": "SQL expression for up migration",
+          "type": "string"
+        },
+        "down": {
+          "default": "",
+          "description": "SQL expression for down migration",
+          "type": "string"
         }
       },
       "required": ["name", "table", "type"],

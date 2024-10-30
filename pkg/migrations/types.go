@@ -130,6 +130,9 @@ type OpCreateConstraint struct {
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
+	// SQL expression for down migration
+	Down string `json:"down,omitempty"`
+
 	// Name of the constraint
 	Name string `json:"name"`
 
@@ -141,12 +144,15 @@ type OpCreateConstraint struct {
 
 	// Type of the constraint
 	Type OpCreateConstraintType `json:"type"`
+
+	// SQL expression for up migration
+	Up string `json:"up,omitempty"`
 }
 
 type OpCreateConstraintType string
 
 const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
-const OpCreateConstraintTypeForeign OpCreateConstraintType = "foreign"
+const OpCreateConstraintTypeForeignKey OpCreateConstraintType = "foreign_key"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation
