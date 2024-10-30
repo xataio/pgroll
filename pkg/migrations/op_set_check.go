@@ -98,9 +98,8 @@ func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.D
 // column.
 // This function naively rewrites the check expression to apply to the new column.
 func rewriteCheckExpression(check string, oldColumn ...string) string {
-	newCheck := check
 	for _, oldColumn := range oldColumn {
-		newCheck = strings.ReplaceAll(check, oldColumn, TemporaryName(oldColumn))
+		check = strings.ReplaceAll(check, oldColumn, TemporaryName(oldColumn))
 	}
-	return newCheck
+	return check
 }
