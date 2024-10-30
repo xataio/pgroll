@@ -1,50 +1,55 @@
 -- SPDX-License-Identifier: Apache-2.0
 CREATE SCHEMA IF NOT EXISTS placeholder;
 
-CREATE TABLE IF NOT EXISTS placeholder.migrations (
-  schema NAME NOT NULL,
-  name TEXT NOT NULL,
-  migration JSONB NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  parent TEXT,
-  done BOOLEAN NOT NULL DEFAULT false,
-  resulting_schema JSONB NOT NULL DEFAULT '{}'::jsonb,
-  PRIMARY KEY (schema, name),
-  FOREIGN KEY (schema, parent) REFERENCES placeholder.migrations (schema, name)
+CREATE TABLE IF NOT EXISTS placeholder.migrations
+(
+    schema           NAME      NOT NULL,
+    name             TEXT      NOT NULL,
+    migration        JSONB     NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    parent           TEXT,
+    done             BOOLEAN   NOT NULL DEFAULT false,
+    resulting_schema JSONB     NOT NULL DEFAULT '{}'::jsonb,
+    PRIMARY KEY (schema, name),
+    FOREIGN KEY (schema, parent) REFERENCES placeholder.migrations (schema, name)
 );
 
 -- Only one migration can be active at a time
 CREATE UNIQUE INDEX IF NOT EXISTS only_one_active ON placeholder.migrations (schema, name, done)
-WHERE
-  done = false;
+    WHERE
+        done = false;
 
 -- Only first migration can exist without parent
 CREATE UNIQUE INDEX IF NOT EXISTS only_first_migration_without_parent ON placeholder.migrations (schema)
-WHERE
-  parent IS NULL;
+    WHERE
+        parent IS NULL;
 
 -- History is linear
 CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON placeholder.migrations (schema, parent);
 
 -- Add a column to tell whether the row represents an auto-detected DDL capture or a pgroll migration
 ALTER TABLE placeholder.migrations
-ADD COLUMN IF NOT EXISTS migration_type VARCHAR(32) DEFAULT 'pgroll' CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred'));
+    ADD COLUMN IF NOT EXISTS migration_type VARCHAR(32) DEFAULT 'pgroll'
+        CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred'));
 
 -- Helper functions
 -- Are we in the middle of a migration?
 CREATE
-OR REPLACE FUNCTION placeholder.is_active_migration_period (schemaname NAME) RETURNS boolean AS $$
+    OR REPLACE FUNCTION placeholder.is_active_migration_period(schemaname NAME) RETURNS boolean AS
+$$
 SELECT EXISTS (SELECT 1 FROM placeholder.migrations WHERE schema = schemaname AND done = false)
 $$ LANGUAGE SQL STABLE;
 
 -- Get the latest version name (this is the one with child migrations)
 CREATE
-OR REPLACE FUNCTION placeholder.latest_version (schemaname NAME) RETURNS text SECURITY DEFINER
-SET
-  search_path = placeholder,
-  pg_catalog,
-  pg_temp AS $$
+    OR REPLACE FUNCTION placeholder.latest_version(schemaname NAME) RETURNS text
+    SECURITY DEFINER
+    SET
+        search_path = placeholder,
+            pg_catalog,
+            pg_temp AS
+$$
 SELECT p.name
 FROM placeholder.migrations p
 WHERE NOT EXISTS (SELECT 1 FROM placeholder.migrations c WHERE schema = schemaname AND c.parent = p.name)
@@ -55,7 +60,8 @@ $$ LANGUAGE SQL STABLE;
 -- This ignores previous versions for which no version schema exists, such as
 -- versions corresponding to inferred migrations.
 CREATE
-OR REPLACE FUNCTION placeholder.previous_version (schemaname NAME) RETURNS text AS $$
+    OR REPLACE FUNCTION placeholder.previous_version(schemaname NAME) RETURNS text AS
+$$
 WITH RECURSIVE ancestors AS (SELECT name, schema, parent, migration_type, 0 AS depth
                              FROM placeholder.migrations
                              WHERE name = placeholder.latest_version(schemaname)
@@ -78,7 +84,9 @@ $$ LANGUAGE SQL STABLE;
 
 -- Get the JSON representation of the current schema
 CREATE
-OR REPLACE FUNCTION placeholder.read_schema (schemaname text) RETURNS jsonb LANGUAGE plpgsql AS $$
+    OR REPLACE FUNCTION placeholder.read_schema(schemaname text) RETURNS jsonb
+    LANGUAGE plpgsql AS
+$$
 DECLARE
     tables jsonb;
 BEGIN
@@ -89,13 +97,13 @@ BEGIN
                     'oid', t.oid,
                     'comment', descr.description,
                     'columns', (SELECT COALESCE(json_object_agg(name, c), '{}'::json)
-                                FROM (SELECT attr.attname                                                                                        AS name,
-                                             pg_get_expr(def.adbin, def.adrelid)                                                                 AS default,
+                                FROM (SELECT attr.attname                                                                                     AS name,
+                                             pg_get_expr(def.adbin, def.adrelid)                                                              AS default,
                                              NOT (
                                                  attr.attnotnull
                                                      OR tp.typtype = 'd'
                                                      AND tp.typnotnull
-                                                 )                                                                                               AS nullable,
+                                                 )                                                                                            AS nullable,
                                              CASE
                                                  WHEN 'character varying' :: regtype = ANY
                                                       (ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
@@ -110,24 +118,31 @@ BEGIN
                                                          'timestamptz'
                                                                                                )
                                                  ELSE format_type(attr.atttypid, attr.atttypmod)
-                                                 END                                                                                             AS type,
-                                             descr.description                                                                                   AS comment,
-                                             (EXISTS (SELECT 1
-                                                      FROM pg_constraint
-                                                      WHERE conrelid = attr.attrelid
-                                                        AND ARRAY [attr.attnum::int] @> conkey::int[]
-                                                        AND contype = 'u') OR EXISTS (SELECT 1
-                                                                                      FROM pg_index
-                                                                                               JOIN pg_class ON pg_class.oid = pg_index.indexrelid
-                                                                                      WHERE indrelid = attr.attrelid
-                                                                                        AND indisunique
-                                                                                        AND ARRAY [attr.attnum::int] @> pg_index.indkey::int[])) AS unique
+                                                 END                                                                                          AS type,
+                                             descr.description                                                                                AS comment,
+                                             (EXISTS
+
+
+                                                  (SELECT 1
+                                                   FROM pg_constraint
+                                                   WHERE conrelid = attr.attrelid
+                                                     AND ARRAY [attr.attnum::int] @> conkey::int[]
+                                                     AND contype = 'u') OR EXISTS (SELECT 1
+                                                                                   FROM pg_index
+                                                                                            JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+                                                                                   WHERE indrelid = attr.attrelid
+                                                                                     AND indisunique
+                                                                                     AND ARRAY [attr.attnum::int] @> pg_index.indkey::int[])) AS unique,
+                                             (SELECT array_agg(e.enumlabel ORDER BY e.enumsortorder)
+                                              from pg_enum as e
+                                              WHERE e.enumtypid = tp.oid)                                                                     AS enumValues
                                       FROM pg_attribute AS attr
                                                INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
                                                LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
                                           AND attr.attnum = def.adnum
                                                LEFT JOIN pg_description AS descr ON attr.attrelid = descr.objoid
                                           AND attr.attnum = descr.objsubid
+                                               LEFT JOIN pg_enum AS e ON e.enumtypid = tp.oid
                                       WHERE attr.attnum > 0
                                         AND NOT attr.attisdropped
                                         AND attr.attrelid = t.oid
@@ -240,11 +255,14 @@ END;
 $$;
 
 CREATE
-OR REPLACE FUNCTION placeholder.raw_migration () RETURNS event_trigger LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = placeholder,
-  pg_catalog,
-  pg_temp AS $$
+    OR REPLACE FUNCTION placeholder.raw_migration() RETURNS event_trigger
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET
+        search_path = placeholder,
+            pg_catalog,
+            pg_temp AS
+$$
 DECLARE
     schemaname   TEXT;
     migration_id TEXT;
@@ -332,9 +350,9 @@ $$;
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
 
 CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
-EXECUTE FUNCTION placeholder.raw_migration ();
+EXECUTE FUNCTION placeholder.raw_migration();
 
 DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
 
 CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
-EXECUTE FUNCTION placeholder.raw_migration ();
+EXECUTE FUNCTION placeholder.raw_migration();
