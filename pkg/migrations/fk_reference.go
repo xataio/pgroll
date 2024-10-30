@@ -15,6 +15,10 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 		return FieldRequiredError{Name: "name"}
 	}
 
+	if err := ValidateIdentifierLength(f.Name); err != nil {
+		return err
+	}
+
 	if f.Columns != nil && f.Column != nil {
 		return fmt.Errorf("only one of column or columns is allowed")
 	}

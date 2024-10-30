@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -489,6 +490,7 @@ func TestCreateTable(t *testing.T) {
 func TestCreateTableValidation(t *testing.T) {
 	t.Parallel()
 
+	invalidName := strings.Repeat("x", 64)
 	ExecuteTests(t, TestCases{
 		{
 			name: "foreign key validity",
@@ -547,6 +549,58 @@ func TestCreateTableValidation(t *testing.T) {
 				Column: "user_id",
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
 			},
+		},
+		{
+			name: "invalid name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: invalidName,
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
+		},
+		{
+			name: "invalid column name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "table1",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:   invalidName,
+									Type:   "varchar(255)",
+									Unique: ptr(true),
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 	})
 }
