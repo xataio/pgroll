@@ -681,7 +681,7 @@ func TestAlterColumnValidation(t *testing.T) {
 			wantStartErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
 		},
 		{
-			name: "if a backfill is required, the table must have a primary key on exactly one column",
+			name: "backfill with multiple primary keys",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -699,11 +699,12 @@ func TestAlterColumnValidation(t *testing.T) {
 							Table:    "orders",
 							Column:   "quantity",
 							Nullable: ptr(false),
+							Up:       "1",
 						},
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
+			wantStartErr: nil,
 		},
 		{
 			name: "rename-only operations don't have primary key requirements",

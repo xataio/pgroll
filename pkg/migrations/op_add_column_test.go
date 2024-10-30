@@ -1164,7 +1164,7 @@ func TestAddColumnValidation(t *testing.T) {
 			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
-			name: "table must have a primary key on exactly one column if up is defined",
+			name: "table can have multiple primary keys",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -1189,7 +1189,6 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "orders"},
 		},
 		{
 			name: "table has no restrictions on primary keys if up is not defined",
