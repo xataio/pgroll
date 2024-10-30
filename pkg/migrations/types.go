@@ -122,6 +122,33 @@ type OpAlterColumn struct {
 	Up string `json:"up,omitempty"`
 }
 
+// Add constraint to table operation
+type OpCreateConstraint struct {
+	// Check constraint for table
+	Check *string `json:"check,omitempty"`
+
+	// Columns to add constraint to
+	Columns []string `json:"columns,omitempty"`
+
+	// Name of the constraint
+	Name string `json:"name"`
+
+	// Foreign key constraint for the column
+	References *ForeignKeyReference `json:"references,omitempty"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// Type of the constraint
+	Type OpCreateConstraintType `json:"type"`
+}
+
+type OpCreateConstraintType string
+
+const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
+const OpCreateConstraintTypeForeign OpCreateConstraintType = "foreign"
+const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
+
 // Create index operation
 type OpCreateIndex struct {
 	// Names of columns on which to define the index

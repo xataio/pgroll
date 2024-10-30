@@ -20,27 +20,13 @@
         "table": "tickets",
         "column": "sellers_zip",
         "references": {
-            "name": "fk_events",
+            "name": "fk_sellers",
             "table": "sellers",
             "column": "zip",
             "on_delete": "CASCADE"
         },
         "up": "(SELECT CASE WHEN EXISTS (SELECT 1 FROM sellers WHERE sellers.zip = sellers_zip) THEN sellers_zip ELSE NULL END)",
         "down": "sellers_zip"
-      }
-    },
-    {
-      "alter_column": {
-        "table": "tickets",
-        "column": "event_id",
-        "references": {
-            "name": "fk_events",
-            "table": "events",
-            "column": "id",
-            "on_delete": "CASCADE"
-        },
-        "up": "(SELECT CASE WHEN EXISTS (SELECT 1 FROM events WHERE event.id = event_id) THEN event_id ELSE NULL END)",
-        "down": "event_id"
       }
     }
   ]

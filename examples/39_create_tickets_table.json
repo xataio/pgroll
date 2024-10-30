@@ -6,6 +6,11 @@
         "name": "tickets",
         "columns": [
           {
+            "name": "ticket_id",
+            "type": "serial",
+            "pk": true
+          },
+          {
             "name": "sellers_name",
             "type": "varchar(255)"
           },
