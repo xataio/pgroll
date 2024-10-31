@@ -25,7 +25,10 @@ generate: format
 lint:
 	golangci-lint --config=.golangci.yml run
 
-examples:
+ledger:
+	cd examples && ls > .ledger
+
+examples: ledger
 	@go build
 	@./pgroll init
 	@./pgroll bootstrap examples
