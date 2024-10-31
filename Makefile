@@ -31,6 +31,11 @@ examples:
 	@./pgroll bootstrap examples
 	@go clean
 
+test-examples:
+	docker compose up --detach --wait
+	make examples
+	docker compose down
+
 test:
 	go test ./...
 
