@@ -73,6 +73,9 @@ type Column struct {
 
 	// Optional comment for the column
 	Comment string `json:"comment"`
+
+	// Will contain possible enum values if the type is an enum
+	EnumValues []string `json:"enumValues"`
 }
 
 // Index represents an index on a table

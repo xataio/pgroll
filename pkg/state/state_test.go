@@ -816,6 +816,36 @@ func TestReadSchema(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:       "custom enum types",
+				createStmt: "CREATE TYPE review AS ENUM ('good', 'bad', 'ugly'); CREATE TABLE public.table1 (name text, review review);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]schema.Column{
+								"name": {
+									Name:     "name",
+									Type:     "text",
+									Nullable: true,
+								},
+								"review": {
+									Name:       "review",
+									Type:       "public.review",
+									Nullable:   true,
+									EnumValues: []string{"good", "bad", "ugly"},
+								},
+							},
+							PrimaryKey:        []string{},
+							Indexes:           map[string]schema.Index{},
+							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tt := range tests {
