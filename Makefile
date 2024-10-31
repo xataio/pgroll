@@ -26,7 +26,7 @@ lint:
 	golangci-lint --config=.golangci.yml run
 
 ledger:
-	ls examples/* > examples/.ledger
+	cd examples && ls > .ledger
 
 examples: ledger
 	@go build
