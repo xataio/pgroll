@@ -741,6 +741,7 @@ Example **add column** migrations:
 * [17_add_rating_column.json](../examples/17_add_rating_column.json)
 * [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
 * [30_add_column_simple_up.json](../examples/30_add_column_simple_up.json)
+* [41_add_enum_column.json](../examples/41_add_enum_column.json)
 
 ### Alter column
 
