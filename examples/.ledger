@@ -37,3 +37,5 @@
 37_create_partial_index.json
 38_create_hash_index_with_fillfactor.json
 39_add_column_with_multiple_pk_in_table.json
+40_create_enum_type.json
+41_add_enum_column.json
