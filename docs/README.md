@@ -981,7 +981,7 @@ Example **create index** migrations:
 * [10_create_index.json](../examples/10_create_index.json)
 * [37_create_partial_index.json](../examples/37_create_partial_index.json)
 * [38_create_hash_index_with_fillfactor.json](../examples/38_create_hash_index_with_fillfactor.json)
-* [39_create_unique_index.json](../examples/39_create_unique_index.json)
+* [42_create_unique_index.json](../examples/42_create_unique_index.json)
 
 ### Create table
 
