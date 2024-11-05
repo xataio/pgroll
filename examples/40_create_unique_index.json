@@ -1,5 +1,5 @@
 {
-  "name": "39_create_unique_index",
+  "name": "40_create_unique_index",
   "operations": [
     {
       "create_index": {
