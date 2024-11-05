@@ -138,6 +138,9 @@ type OpCreateIndex struct {
 
 	// Name of table on which to define the index
 	Table string `json:"table"`
+
+	// Indicates if the index is unique
+	Unique *bool `json:"unique,omitempty"`
 }
 
 type OpCreateIndexMethod string
