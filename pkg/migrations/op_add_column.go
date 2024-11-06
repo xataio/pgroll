@@ -24,19 +24,19 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 	}
 
 	if o.Column.Comment != nil {
-		if err := addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column.Name), o.Column.Comment); err != nil {
+		if err := addCommentToColumn(ctx, conn, table.Name, TemporaryName(o.Column.Name), o.Column.Comment); err != nil {
 			return nil, fmt.Errorf("failed to add comment to column: %w", err)
 		}
 	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil {
-		if err := addNotNullConstraint(ctx, conn, o.Table, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
+		if err := addNotNullConstraint(ctx, conn, table.Name, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
 			return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 		}
 	}
 
 	if o.Column.Check != nil {
-		if err := o.addCheckConstraint(ctx, conn); err != nil {
+		if err := o.addCheckConstraint(ctx, table.Name, conn); err != nil {
 			return nil, fmt.Errorf("failed to add check constraint: %w", err)
 		}
 	}
@@ -231,9 +231,9 @@ func addNotNullConstraint(ctx context.Context, conn db.DB, table, column, physic
 	return err
 }
 
-func (o *OpAddColumn) addCheckConstraint(ctx context.Context, conn db.DB) error {
+func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, conn db.DB) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(o.Column.Check.Name),
 		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
 	))
