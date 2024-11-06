@@ -1494,6 +1494,74 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 	}, roll.WithSQLTransformer(sqlTransformer))
 }
 
+func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "add column to newly created table",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: ptr(false),
+								Check: &migrations.CheckConstraint{
+									Name:       "age_check",
+									Constraint: "age >= 18",
+								},
+								Comment: ptr("the age of the user"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new column on the new table works.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Alice", "age": "30",
+				})
+
+				// Inserting a value that doesn't meet the check constraint fails.
+				MustNotInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Bob", "age": "8",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new column on the new table works.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Bob", "age": "31",
+				})
+
+				// Inserting a value that doesn't meet the check constraint fails.
+				MustNotInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Carl", "age": "8",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
+	}, roll.WithSkipValidation(true)) // TODO: remove once this migration can be validated
+}
+
 func TestAddColumnInvalidNameLength(t *testing.T) {
 	t.Parallel()
 
