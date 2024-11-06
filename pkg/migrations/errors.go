@@ -231,3 +231,12 @@ func ValidateIdentifierLength(name string) error {
 	}
 	return nil
 }
+
+type MultiColumnConstraintsNotSupportedError struct {
+	Table      string
+	Constraint string
+}
+
+func (e MultiColumnConstraintsNotSupportedError) Error() string {
+	return fmt.Sprintf("constraint %q on table %q applies to multiple columns", e.Constraint, e.Table)
+}

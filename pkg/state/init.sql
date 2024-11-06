@@ -89,13 +89,13 @@ BEGIN
                     'oid', t.oid,
                     'comment', descr.description,
                     'columns', (SELECT COALESCE(json_object_agg(name, c), '{}'::json)
-                                FROM (SELECT attr.attname                                                                                        AS name,
-                                             pg_get_expr(def.adbin, def.adrelid)                                                                 AS default,
+                                FROM (SELECT attr.attname                                                                                     AS name,
+                                             pg_get_expr(def.adbin, def.adrelid)                                                              AS default,
                                              NOT (
                                                  attr.attnotnull
                                                      OR tp.typtype = 'd'
                                                      AND tp.typnotnull
-                                                 )                                                                                               AS nullable,
+                                                 )                                                                                            AS nullable,
                                              CASE
                                                  WHEN 'character varying' :: regtype = ANY
                                                       (ARRAY [attr.atttypid, tp.typelem]) THEN REPLACE(
@@ -110,18 +110,24 @@ BEGIN
                                                          'timestamptz'
                                                                                                )
                                                  ELSE format_type(attr.atttypid, attr.atttypmod)
-                                                 END                                                                                             AS type,
-                                             descr.description                                                                                   AS comment,
-                                             (EXISTS (SELECT 1
-                                                      FROM pg_constraint
-                                                      WHERE conrelid = attr.attrelid
-                                                        AND ARRAY [attr.attnum::int] @> conkey::int[]
-                                                        AND contype = 'u') OR EXISTS (SELECT 1
-                                                                                      FROM pg_index
-                                                                                               JOIN pg_class ON pg_class.oid = pg_index.indexrelid
-                                                                                      WHERE indrelid = attr.attrelid
-                                                                                        AND indisunique
-                                                                                        AND ARRAY [attr.attnum::int] @> pg_index.indkey::int[])) AS unique
+                                                 END                                                                                          AS type,
+                                             descr.description                                                                                AS comment,
+                                             (EXISTS
+
+
+                                                  (SELECT 1
+                                                   FROM pg_constraint
+                                                   WHERE conrelid = attr.attrelid
+                                                     AND ARRAY [attr.attnum::int] @> conkey::int[]
+                                                     AND contype = 'u') OR EXISTS (SELECT 1
+                                                                                   FROM pg_index
+                                                                                            JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+                                                                                   WHERE indrelid = attr.attrelid
+                                                                                     AND indisunique
+                                                                                     AND ARRAY [attr.attnum::int] @> pg_index.indkey::int[])) AS unique,
+                                             (SELECT array_agg(e.enumlabel ORDER BY e.enumsortorder)
+                                              from pg_enum as e
+                                              WHERE e.enumtypid = tp.oid)                                                                     AS enumValues
                                       FROM pg_attribute AS attr
                                                INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
                                                LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid

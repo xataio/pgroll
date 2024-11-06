@@ -741,6 +741,7 @@ Example **add column** migrations:
 * [17_add_rating_column.json](../examples/17_add_rating_column.json)
 * [26_add_column_with_check_constraint.json](../examples/26_add_column_with_check_constraint.json)
 * [30_add_column_simple_up.json](../examples/30_add_column_simple_up.json)
+* [41_add_enum_column.json](../examples/41_add_enum_column.json)
 
 ### Alter column
 
@@ -973,12 +974,14 @@ A create index operation creates a new index on a set of columns.
 
 The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 You can also specify storage parameters for the index in `storage_parameters`.
+To create a unique index set `unique` to `true`.
 
 Example **create index** migrations:
 
 * [10_create_index.json](../examples/10_create_index.json)
 * [37_create_partial_index.json](../examples/37_create_partial_index.json)
 * [38_create_hash_index_with_fillfactor.json](../examples/38_create_hash_index_with_fillfactor.json)
+* [42_create_unique_index.json](../examples/42_create_unique_index.json)
 
 ### Create table
 
@@ -1068,7 +1071,6 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 {
   "drop_constraint": {
     "table": "name of table",
-    "column": "name of column on which constraint is defined",
     "name": "name of constraint to drop",
     "up": "SQL expression",
     "down": "SQL expression"
@@ -1078,9 +1080,9 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
 Example **drop constraint** migrations:
 
-* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
 * [23_drop_check_constraint.json](../examples/23_drop_check_constraint.json)
 * [24_drop_foreign_key_constraint.json](../examples/24_drop_foreign_key_constraint.json)
+* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
 
 ### Drop index
 

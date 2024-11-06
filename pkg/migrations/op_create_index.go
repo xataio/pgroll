@@ -17,7 +17,11 @@ var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	// create index concurrently
-	stmt := fmt.Sprintf("CREATE INDEX CONCURRENTLY %s ON %s",
+	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
+	if o.Unique != nil && *o.Unique {
+		stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
+	}
+	stmt := fmt.Sprintf(stmtFmt,
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table))
 
@@ -44,7 +48,7 @@ func (o *OpCreateIndex) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 	return nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))

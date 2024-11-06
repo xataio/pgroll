@@ -43,6 +43,7 @@ type Roll struct {
 
 	backfillBatchSize  int
 	backfillBatchDelay time.Duration
+	skipValidation     bool
 }
 
 // New creates a new Roll instance
@@ -84,6 +85,7 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		migrationHooks:           rollOpts.migrationHooks,
 		backfillBatchSize:        rollOpts.backfillBatchSize,
 		backfillBatchDelay:       rollOpts.backfillBatchDelay,
+		skipValidation:           rollOpts.skipValidation,
 	}, nil
 }
 

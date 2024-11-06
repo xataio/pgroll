@@ -39,7 +39,7 @@ func (o *OpSetDefault) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return nil
 }
 
-func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 
