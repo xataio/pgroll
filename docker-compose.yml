@@ -9,3 +9,8 @@ services:
       - '5432:5432'
     volumes: 
       - /var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -h localhost"
+      interval: 200ms
+      timeout: 5s
+      retries: 10
