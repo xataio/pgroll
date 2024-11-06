@@ -311,6 +311,5 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			pq.QuoteIdentifier(col.Check.Name),
 			col.Check.Constraint)
 	}
-	fmt.Println(sql)
 	return sql, nil
 }
