@@ -210,12 +210,9 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	o.Column.Name = TemporaryName(o.Column.Name)
 	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
 	colSQL, err := columnWriter.Write(o.Column)
-	fmt.Println(colSQL)
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("ALTER TABLE %s ADD COLUMN %s\n", pq.QuoteIdentifier(t.Name), colSQL)
 
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(t.Name),
