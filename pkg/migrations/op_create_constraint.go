@@ -137,7 +137,7 @@ func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB
 func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
 	cols := make([]string, len(o.Columns))
 	for i, col := range o.Columns {
-		cols[i] = pq.QuoteIdentifier(TemporaryName(col))
+		cols[i] = pq.QuoteIdentifier(col)
 	}
 
 	onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
@@ -151,7 +151,7 @@ func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn d
 	} else if o.References.Columns != nil {
 		refCols := make([]string, len(o.Columns))
 		for i, col := range o.References.Columns {
-			cols[i] = pq.QuoteIdentifier(TemporaryName(col))
+			refCols[i] = pq.QuoteIdentifier(col)
 		}
 		references = fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), strings.Join(refCols, ", "))
 	}
