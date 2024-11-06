@@ -28,6 +28,8 @@ func BackfillBatchSize() int { return viper.GetInt("BACKFILL_BATCH_SIZE") }
 
 func BackfillBatchDelay() time.Duration { return viper.GetDuration("BACKFILL_BATCH_DELAY") }
 
+func SkipValidation() bool { return viper.GetBool("SKIP_VALIDATION") }
+
 func Role() string {
 	return viper.GetString("ROLE")
 }

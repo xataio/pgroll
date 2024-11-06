@@ -33,6 +33,9 @@ type options struct {
 	// the duration to delay after each batch is run
 	backfillBatchDelay time.Duration
 
+	// whether to skip validation
+	skipValidation bool
+
 	migrationHooks MigrationHooks
 }
 
@@ -119,5 +122,13 @@ func WithBackfillBatchSize(batchSize int) Option {
 func WithBackfillBatchDelay(delay time.Duration) Option {
 	return func(o *options) {
 		o.backfillBatchDelay = delay
+	}
+}
+
+// WithSkipValidation controls whether or not to perform validation on
+// migrations. If set to true, validation will be skipped.
+func WithSkipValidation(skip bool) Option {
+	return func(o *options) {
+		o.skipValidation = skip
 	}
 }

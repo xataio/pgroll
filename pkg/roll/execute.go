@@ -44,12 +44,14 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// validate migration
-	err = migration.Validate(ctx, newSchema)
-	if err != nil {
-		if err := m.state.Rollback(ctx, m.schema, migration.Name); err != nil {
-			fmt.Printf("failed to rollback migration: %s\n", err)
+	if !m.skipValidation {
+		err = migration.Validate(ctx, newSchema)
+		if err != nil {
+			if err := m.state.Rollback(ctx, m.schema, migration.Name); err != nil {
+				fmt.Printf("failed to rollback migration: %s\n", err)
+			}
+			return nil, fmt.Errorf("migration is invalid: %w", err)
 		}
-		return nil, fmt.Errorf("migration is invalid: %w", err)
 	}
 
 	// run any BeforeStartDDL hooks
