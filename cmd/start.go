@@ -11,6 +11,7 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -38,6 +39,9 @@ func startCmd() *cobra.Command {
 	}
 
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
+
+	startCmd.Flags().BoolP("skip-validation", "s", false, "skip migration validation")
+	viper.BindPFlag("SKIP_VALIDATION", startCmd.Flags().Lookup("skip-validation"))
 
 	return startCmd
 }
