@@ -21,10 +21,10 @@
           {
             "name": "event_id",
             "type": "integer",
-              "references": {
-                "name": "fk_events",
-                "table": "events",
-                "on_delete": "CASCADE"
+            "references": {
+              "name": "fk_events",
+              "table": "events",
+              "on_delete": "CASCADE"
             }
           }
         ]
