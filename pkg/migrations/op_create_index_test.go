@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func TestCreateIndex(t *testing.T) {
@@ -312,4 +313,53 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 			// Complete is a no-op.
 		},
 	}})
+}
+
+func TestCreateIndexOnTableCreatedInSameMigration(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "create index on newly created table",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+						&migrations.OpCreateIndex{
+							Name:    "idx_users_name",
+							Table:   "users",
+							Columns: []string{"name"},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, migrations.TemporaryName("users"), "idx_users_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The index remains on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_name")
+			},
+		},
+	}, roll.WithSkipValidation(true)) // TODO: Remove once this migration passes validation
 }
