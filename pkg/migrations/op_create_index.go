@@ -16,6 +16,8 @@ import (
 var _ Operation = (*OpCreateIndex)(nil)
 
 func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+	table := s.GetTable(o.Table)
+
 	// create index concurrently
 	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
 	if o.Unique != nil && *o.Unique {
@@ -23,7 +25,7 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 	}
 	stmt := fmt.Sprintf(stmtFmt,
 		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table))
+		pq.QuoteIdentifier(table.Name))
 
 	if o.Method != nil {
 		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
