@@ -59,7 +59,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 	return nil
 }
 
-func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 
