@@ -9,6 +9,7 @@
         "columns": ["sellers_name", "sellers_name"],
         "references": {
             "table": "sellers",
+            "name": "fk_sellers",
             "column": "name",
             "on_delete": "CASCADE"
         },
