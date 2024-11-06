@@ -48,7 +48,7 @@ func (o *OpCreateIndex) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 	return nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))

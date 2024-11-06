@@ -46,7 +46,7 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, tr SQLT
 	return nil
 }
 
-func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

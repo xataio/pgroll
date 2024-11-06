@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // XXX we create a view of the schema with the minimum required for us to
@@ -203,6 +204,25 @@ func (t *Table) ConstraintExists(name string) bool {
 	}
 	_, ok = t.ForeignKeys[name]
 	return ok
+}
+
+// GetConstraintColumns gets the columns associated with the given constraint. It may return a nil
+// slice if the constraint does not exist.
+func (t *Table) GetConstraintColumns(name string) []string {
+	var columns []string
+	if c, ok := t.CheckConstraints[name]; ok {
+		columns = append(columns, c.Columns...)
+	}
+	if c, ok := t.UniqueConstraints[name]; ok {
+		columns = append(columns, c.Columns...)
+	}
+	if c, ok := t.ForeignKeys[name]; ok {
+		columns = append(columns, c.Columns...)
+	}
+
+	// Deduplicate and sort
+	slices.Sort(columns)
+	return slices.Compact(columns)
 }
 
 // GetPrimaryKey returns the columns that make up the primary key

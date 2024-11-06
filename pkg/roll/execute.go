@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -228,9 +229,15 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		}
 	}
 
+	// read the current schema
+	currentSchema, err := m.state.ReadSchema(ctx, m.schema)
+	if err != nil {
+		return fmt.Errorf("unable to read schema: %w", err)
+	}
+
 	// execute operations
 	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.pgConn, m.sqlTransformer)
+		err := op.Rollback(ctx, m.pgConn, m.sqlTransformer, currentSchema)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}

@@ -30,7 +30,7 @@ func (o *OpSetComment) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return nil
 }
 
-func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	return nil
 }
 

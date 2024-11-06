@@ -48,7 +48,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return err
 }
 
-func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
 

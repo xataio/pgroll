@@ -28,7 +28,7 @@ type Operation interface {
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.
-	Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error
+	Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error
 
 	// Validate returns a descriptive error if the operation cannot be applied to the given schema.
 	Validate(ctx context.Context, s *schema.Schema) error

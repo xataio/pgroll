@@ -34,7 +34,7 @@ func (o *OpSetReplicaIdentity) Complete(ctx context.Context, conn db.DB, tr SQLT
 	return nil
 }
 
-func (o *OpSetReplicaIdentity) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer) error {
+func (o *OpSetReplicaIdentity) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// No-op
 	return nil
 }

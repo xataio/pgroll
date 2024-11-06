@@ -1071,7 +1071,6 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 {
   "drop_constraint": {
     "table": "name of table",
-    "column": "name of column on which constraint is defined",
     "name": "name of constraint to drop",
     "up": "SQL expression",
     "down": "SQL expression"
@@ -1081,9 +1080,9 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
 Example **drop constraint** migrations:
 
-* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
 * [23_drop_check_constraint.json](../examples/23_drop_check_constraint.json)
 * [24_drop_foreign_key_constraint.json](../examples/24_drop_foreign_key_constraint.json)
+* [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
 
 ### Drop index
 
