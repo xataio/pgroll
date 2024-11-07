@@ -31,7 +31,9 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
 	}
 
-	stmt += fmt.Sprintf(" (%s)", strings.Join(quoteColumnNames(o.Columns), ", "))
+	stmt += fmt.Sprintf(" (%s)", strings.Join(
+		quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
+	)
 
 	if o.StorageParameters != nil {
 		stmt += fmt.Sprintf(" WITH (%s)", *o.StorageParameters)
