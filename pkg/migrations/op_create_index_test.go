@@ -315,7 +315,7 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 	}})
 }
 
-func TestCreateIndexOnTableCreatedInSameMigration(t *testing.T) {
+func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 	t.Parallel()
 
 	ExecuteTests(t, TestCases{
@@ -361,5 +361,61 @@ func TestCreateIndexOnTableCreatedInSameMigration(t *testing.T) {
 				IndexMustExist(t, db, schema, "users", "idx_users_name")
 			},
 		},
-	}, roll.WithSkipValidation(true)) // TODO: Remove once this migration passes validation
+		{
+			name: "create index on newly created column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column_and_index",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: ptr(true),
+							},
+							Up: "18",
+						},
+						&migrations.OpCreateIndex{
+							Name:    "idx_users_age",
+							Table:   "users",
+							Columns: []string{"age"},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_age")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_users_age")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_age")
+			},
+		},
+	}, roll.WithSkipValidation(true)) // TODO: Remove once these migrations pass validation
 }
