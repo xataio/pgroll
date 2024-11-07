@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func TestCreateIndex(t *testing.T) {
@@ -417,5 +416,5 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 				IndexMustExist(t, db, schema, "users", "idx_users_age")
 			},
 		},
-	}, roll.WithSkipValidation(true)) // TODO: Remove once these migrations pass validation
+	})
 }
