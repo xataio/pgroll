@@ -184,6 +184,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return errors.New("adding primary key columns is not supported")
 	}
 
+	// Update the schema to ensure that the new column is visible to validation of
+	// subsequent operations.
+	table.AddColumn(o.Column.Name, schema.Column{
+		Name: TemporaryName(o.Column.Name),
+	})
+
 	return nil
 }
 
