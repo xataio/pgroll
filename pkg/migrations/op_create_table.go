@@ -47,17 +47,8 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 		}
 	}
 
-	columns := make(map[string]schema.Column, len(o.Columns))
-	for _, col := range o.Columns {
-		columns[col.Name] = schema.Column{
-			Name: col.Name,
-		}
-	}
-
-	s.AddTable(o.Name, schema.Table{
-		Name:    tempName,
-		Columns: columns,
-	})
+	// Update the in-memory schema representation with the new table
+	o.updateSchema(s)
 
 	return nil, nil
 }
@@ -117,7 +108,28 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Update the schema to ensure that the new table is visible to validation of
+	// subsequent operations.
+	o.updateSchema(s)
+
 	return nil
+}
+
+// updateSchema updates the in-memory schema representation with the details of
+// the new table.
+func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
+	columns := make(map[string]schema.Column, len(o.Columns))
+	for _, col := range o.Columns {
+		columns[col.Name] = schema.Column{
+			Name: col.Name,
+		}
+	}
+	s.AddTable(o.Name, schema.Table{
+		Name:    TemporaryName(o.Name),
+		Columns: columns,
+	})
+
+	return s
 }
 
 func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
