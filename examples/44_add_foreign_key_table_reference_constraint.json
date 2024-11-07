@@ -6,12 +6,18 @@
         "type": "foreign_key",
         "table": "tickets",
         "name": "fk_sellers",
-        "columns": ["sellers_name", "sellers_zip"],
+        "columns": [
+          "sellers_name",
+          "sellers_zip"
+        ],
         "references": {
-            "table": "sellers",
-            "name": "fk_sellers",
-            "columns": ["name", "zip"],
-            "on_delete": "CASCADE"
+          "table": "sellers",
+          "name": "fk_sellers",
+          "columns": [
+            "name",
+            "zip"
+          ],
+          "on_delete": "CASCADE"
         }
       }
     }
