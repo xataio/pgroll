@@ -1065,6 +1065,8 @@ A create constraint operation adds a new constraint to an existing table.
 
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be supported.
 
+Required fields: `name`, `table`, `type`.
+
 **create constraint** operations have this structure:
 
 ```json
