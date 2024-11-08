@@ -102,7 +102,13 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 		if o.References == nil {
 			return FieldRequiredError{Name: "references"}
 		}
-		if err := o.References.Validate(s); err != nil {
+		fkReference := ForeignKeyReference{
+			Name:     o.Name,
+			Table:    o.References.Table,
+			Columns:  o.References.Columns,
+			OnDelete: o.References.OnDelete,
+		}
+		if err := fkReference.Validate(s); err != nil {
 			return err
 		}
 	}
@@ -141,20 +147,15 @@ func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn d
 	}
 
 	onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
-	if o.References.OnDelete != "" {
-		onDelete = strings.ToUpper(string(o.References.OnDelete))
+	if o.References.OnDelete != nil {
+		onDelete = strings.ToUpper(string(*o.References.OnDelete))
 	}
 
-	var references string
-	if o.References.Column != nil {
-		references = fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), pq.QuoteIdentifier(*o.References.Column))
-	} else if o.References.Columns != nil {
-		refCols := make([]string, len(o.Columns))
-		for i, col := range o.References.Columns {
-			refCols[i] = pq.QuoteIdentifier(col)
-		}
-		references = fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), strings.Join(refCols, ", "))
+	refCols := make([]string, len(o.Columns))
+	for i, col := range o.References.Columns {
+		refCols[i] = pq.QuoteIdentifier(col)
 	}
+	references := fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), strings.Join(refCols, ", "))
 
 	_, err := conn.ExecContext(ctx,
 		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s NOT VALID",

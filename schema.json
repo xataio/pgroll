@@ -89,15 +89,43 @@
           "type": "string"
         },
         "on_delete": {
-          "description": "On delete behavior of the foreign key constraint",
-          "type": "string",
-          "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
-          "default": "NO ACTION"
+          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+          "description": "Foreign key constraint for the column"
         }
       },
       "required": ["name", "table"],
       "anyOf": [{ "required": ["column"] }, { "required": ["columns"] }],
       "type": "object"
+    },
+    "ForeignKeyReferenceInTable": {
+      "additionalProperties": false,
+      "description": "Foreign key reference definition",
+      "properties": {
+        "columns": {
+          "description": "List of referenced columns",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "table": {
+          "description": "Name of the referenced table",
+          "type": "string"
+        },
+        "on_delete": {
+          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+          "description": "Foreign key constraint for the column"
+        }
+      },
+      "required": ["table", "columns"],
+      "type": "object"
+    },
+    "ForeignKeyReferenceOnDelete": {
+      "additionalProperties": false,
+      "description": "On delete behavior of the foreign key constraint",
+      "type": "string",
+      "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
+      "default": "NO ACTION"
     },
     "OpAddColumn": {
       "additionalProperties": false,
@@ -469,8 +497,8 @@
           "description": "Check constraint for table"
         },
         "references": {
-          "$ref": "#/$defs/ForeignKeyReference",
-          "description": "Foreign key constraint for the column"
+          "$ref": "#/$defs/ForeignKeyReferenceInTable",
+          "description": "Foreign key constraint for the table"
         },
         "up": {
           "default": "",

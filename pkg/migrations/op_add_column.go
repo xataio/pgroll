@@ -280,8 +280,8 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 	if col.References != nil {
 		onDelete := "NO ACTION"
-		if col.References.OnDelete != "" {
-			onDelete = strings.ToUpper(string(col.References.OnDelete))
+		if col.References.OnDelete != nil {
+			onDelete = strings.ToUpper(string(*col.References.OnDelete))
 		}
 		fkName := pq.QuoteIdentifier(col.References.Name)
 		references := pq.QuoteIdentifier(col.References.Table)

@@ -86,8 +86,8 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	tempColumnName := TemporaryName(o.Column)
 
 	onDelete := "NO ACTION"
-	if o.References.OnDelete != "" {
-		onDelete = strings.ToUpper(string(o.References.OnDelete))
+	if o.References.OnDelete != nil {
+		onDelete = strings.ToUpper(string(*o.References.OnDelete))
 	}
 
 	var references string

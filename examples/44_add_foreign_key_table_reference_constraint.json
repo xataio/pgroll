@@ -12,7 +12,6 @@
         ],
         "references": {
           "table": "sellers",
-          "name": "fk_sellers",
           "columns": [
             "name",
             "zip"
