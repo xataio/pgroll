@@ -94,7 +94,6 @@
         }
       },
       "required": ["name", "table"],
-      "anyOf": [{ "required": ["column"] }, { "required": ["columns"] }],
       "type": "object"
     },
     "ForeignKeyReferenceInTable": {

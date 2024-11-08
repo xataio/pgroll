@@ -6,7 +6,10 @@
         "type": "unique",
         "table": "tickets",
         "name": "unique_zip_name",
-        "columns": ["sellers_name", "sellers_zip"]
+        "columns": [
+          "sellers_name",
+          "sellers_zip"
+        ]
       }
     }
   ]
