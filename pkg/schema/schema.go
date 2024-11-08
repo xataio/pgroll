@@ -253,6 +253,16 @@ func (t *Table) RenameColumn(from, to string) {
 	delete(t.Columns, from)
 }
 
+// PhysicalColumnNames returns the physical column names for the given virtual
+// column names
+func (t *Table) PhysicalColumnNamesFor(columnNames ...string) []string {
+	physicalNames := make([]string, 0, len(columnNames))
+	for _, cn := range columnNames {
+		physicalNames = append(physicalNames, t.GetColumn(cn).Name)
+	}
+	return physicalNames
+}
+
 // Make the Schema struct implement the driver.Valuer interface. This method
 // simply returns the JSON-encoded representation of the struct.
 func (s Schema) Value() (driver.Value, error) {
