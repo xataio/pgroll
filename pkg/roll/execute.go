@@ -75,6 +75,13 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 	latestSchema := VersionedSchemaName(m.schema, *latestVersion)
 
+	// Reread the latest schema as validation may have updated the schema object
+	// in memory.
+	newSchema, err = m.state.ReadSchema(ctx, m.schema)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read schema: %w", err)
+	}
+
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
