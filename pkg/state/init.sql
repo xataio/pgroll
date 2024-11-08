@@ -170,7 +170,7 @@ BEGIN
                                                JOIN pg_am am
                                                     ON am.oid = cls.relam
                                       WHERE indrelid = t.oid::regclass
-                                      GROUP BY pi.indexrelid, pi.indisunique, am.amname) as ix_details),
+                                      GROUP BY pi.indexrelid, pi.indisunique, pi.indpred, am.amname) as ix_details),
                     'checkConstraints', (SELECT COALESCE(json_object_agg(cc_details.conname, json_build_object(
                             'name', cc_details.conname,
                             'columns', cc_details.columns,
