@@ -129,7 +129,7 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB)
 func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB) error {
 	cols := make([]string, len(o.Columns))
 	for i, col := range o.Columns {
-		cols[i] = pq.QuoteIdentifier(TemporaryName(col))
+		cols[i] = pq.QuoteIdentifier(col)
 	}
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),

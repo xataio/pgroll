@@ -43,3 +43,4 @@
 43_create_tickets_table.json
 44_add_foreign_key_table_reference_constraint.json
 45_add_table_check_constraint.json
+46_add_table_unique_constraint.json
