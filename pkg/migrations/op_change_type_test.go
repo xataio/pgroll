@@ -194,7 +194,7 @@ func TestChangeColumnType(t *testing.T) {
 										Name:     "fk_employee_department",
 										Table:    "departments",
 										Column:   ptr("id"),
-										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+										OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
 									},
 								},
 							},

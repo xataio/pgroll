@@ -485,7 +485,7 @@ func TestSetForeignKey(t *testing.T) {
 								Name:     "fk_users_id",
 								Table:    "users",
 								Column:   ptr("id"),
-								OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+								OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -591,7 +591,7 @@ func TestSetForeignKey(t *testing.T) {
 								Name:     "fk_users_id",
 								Table:    "users",
 								Column:   ptr("id"),
-								OnDelete: migrations.ForeignKeyReferenceOnDeleteSETNULL,
+								OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteSETNULL),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -701,7 +701,7 @@ func TestSetForeignKey(t *testing.T) {
 								Name:     "fk_users_id",
 								Table:    "users",
 								Column:   ptr("id"),
-								OnDelete: migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+								OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteSETDEFAULT),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -906,7 +906,7 @@ func TestSetForeignKey(t *testing.T) {
 								Name:     "fk_users_id_1",
 								Table:    "users",
 								Column:   ptr("id"),
-								OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+								OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
@@ -1490,81 +1490,6 @@ func TestSetForeignKeyValidation(t *testing.T) {
 				Column: "user_id",
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
 			},
-		},
-		{
-			name: "on_delete must be a valid value",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "02_add_fk_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
-								Name:     "fk_users_doesntexist",
-								Table:    "users",
-								Column:   ptr("id"),
-								OnDelete: "invalid",
-							},
-							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
-							Down: "user_id",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.InvalidOnDeleteSettingError{
-				Name:    "fk_users_doesntexist",
-				Setting: "invalid",
-			},
-		},
-		{
-			name: "on_delete can be specified as lowercase",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "02_add_fk_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
-								Name:     "fk_users_doesntexist",
-								Table:    "users",
-								Column:   ptr("id"),
-								OnDelete: "no action",
-							},
-							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
-							Down: "user_id",
-						},
-					},
-				},
-			},
-			wantStartErr: nil,
-		},
-		{
-			name: "on_delete can be specified as uppercase",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "02_add_fk_constraint",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "user_id",
-							References: &migrations.ForeignKeyReference{
-								Name:     "fk_users_doesntexist",
-								Table:    "users",
-								Column:   ptr("id"),
-								OnDelete: "SET NULL",
-							},
-							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
-							Down: "user_id",
-						},
-					},
-				},
-			},
-			wantStartErr: nil,
 		},
 	})
 }

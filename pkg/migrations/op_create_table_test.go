@@ -308,7 +308,7 @@ func TestCreateTable(t *testing.T) {
 										Column:   ptr("id"),
 										Name:     "fk_users_id",
 										Table:    "users",
-										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+										OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
 									},
 								},
 								{
