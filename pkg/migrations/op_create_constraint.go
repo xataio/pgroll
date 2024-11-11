@@ -40,7 +40,14 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	return nil
+	var err error
+	switch o.Type {
+	case OpCreateConstraintTypeUnique:
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
+			pq.QuoteIdentifier(o.Name)))
+	}
+
+	return err
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {
@@ -80,14 +87,16 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 }
 
 func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB) error {
-	cols := make([]string, len(o.Columns))
-	for i, col := range o.Columns {
-		cols[i] = pq.QuoteIdentifier(col)
-	}
+	stmt := fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
+		pq.QuoteIdentifier(o.Name),
+		pq.QuoteIdentifier(o.Table),
+		strings.Join(quoteColumnNames(o.Columns), ", "),
+	)
+	fmt.Println(stmt)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
-		strings.Join(cols, ", "),
+		strings.Join(quoteColumnNames(o.Columns), ", "),
 	))
 
 	return err
