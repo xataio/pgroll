@@ -47,15 +47,12 @@ type Column struct {
 // Foreign key reference definition
 type ForeignKeyReference struct {
 	// Name of the referenced column
-	Column *string `json:"column,omitempty"`
-
-	// List of referenced columns
-	Columns []string `json:"columns,omitempty"`
+	Column string `json:"column"`
 
 	// Name of the foreign key constraint
 	Name string `json:"name"`
 
-	// Foreign key constraint for the column
+	// On delete behavior of the foreign key constraint
 	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
 	// Name of the referenced table

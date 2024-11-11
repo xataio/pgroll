@@ -73,13 +73,6 @@
           "description": "Name of the referenced column",
           "type": "string"
         },
-        "columns": {
-          "description": "List of referenced columns",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
         "name": {
           "description": "Name of the foreign key constraint",
           "type": "string"
@@ -89,13 +82,13 @@
           "type": "string"
         },
         "on_delete": {
-          "description": "Foreign key constraint for the column",
+          "description": "On delete behavior of the foreign key constraint",
           "type": "string",
           "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
           "default": "NO ACTION"
         }
       },
-      "required": ["name", "table"],
+      "required": ["column", "name", "table"],
       "type": "object"
     },
     "OpAddColumn": {
