@@ -1063,7 +1063,7 @@ Example **drop column** migrations:
 
 A create constraint operation adds a new constraint to an existing table.
 
-Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be supported.
+Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints are supported.
 
 Required fields: `name`, `table`, `type`.
 
