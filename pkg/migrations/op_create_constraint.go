@@ -18,7 +18,7 @@ var _ Operation = (*OpCreateConstraint)(nil)
 func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
-	switch o.Type {
+	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
 		return table, o.addUniqueConstraint(ctx, conn)
 	}
@@ -27,7 +27,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 }
 
 func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	switch o.Type {
+	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
@@ -41,7 +41,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	var err error
-	switch o.Type {
+	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 			pq.QuoteIdentifier(o.Name)))
@@ -76,7 +76,7 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 		}
 	}
 
-	switch o.Type {
+	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
 		if len(o.Columns) == 0 {
 			return FieldRequiredError{Name: "columns"}
