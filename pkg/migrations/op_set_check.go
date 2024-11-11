@@ -86,7 +86,7 @@ func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.D
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(o.Table),
 		pq.QuoteIdentifier(o.Check.Name),
-		rewriteCheckExpression(o.Check.Constraint, o.Column),
+		rewriteCheckExpression(o.Check.Constraint, o.Column, TemporaryName(o.Column)),
 	))
 
 	return err
@@ -97,9 +97,6 @@ func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.D
 // On migration start, however, the check is actually applied to the new (temporary)
 // column.
 // This function naively rewrites the check expression to apply to the new column.
-func rewriteCheckExpression(check string, oldColumn ...string) string {
-	for _, oldColumn := range oldColumn {
-		check = strings.ReplaceAll(check, oldColumn, TemporaryName(oldColumn))
-	}
-	return check
+func rewriteCheckExpression(check string, oldColumn, newColumn string) string {
+	return strings.ReplaceAll(check, oldColumn, newColumn)
 }

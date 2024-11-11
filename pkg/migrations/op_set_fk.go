@@ -86,23 +86,17 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	tempColumnName := TemporaryName(o.Column)
 
 	onDelete := "NO ACTION"
-	if o.References.OnDelete != nil {
-		onDelete = strings.ToUpper(string(*o.References.OnDelete))
-	}
-
-	var references string
-	if o.References.Column != nil {
-		references = fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), pq.QuoteIdentifier(*o.References.Column))
-	} else {
-		references = pq.QuoteIdentifier(o.References.Table)
+	if o.References.OnDelete != "" {
+		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
 	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s NOT VALID",
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(tempColumnName),
-			references,
+			pq.QuoteIdentifier(o.References.Table),
+			pq.QuoteIdentifier(o.References.Column),
 			onDelete,
 		))
 

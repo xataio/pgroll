@@ -19,12 +19,8 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	table := s.GetTable(o.Table)
 
 	switch o.Type {
-	case OpCreateConstraintTypeCheck:
-		return table, o.addCheckConstraint(ctx, conn)
 	case OpCreateConstraintTypeUnique:
 		return table, o.addUniqueConstraint(ctx, conn)
-	case OpCreateConstraintTypeForeignKey:
-		return table, o.addForeignKeyConstraint(ctx, conn)
 	}
 
 	return table, nil
@@ -32,28 +28,12 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	switch o.Type {
-	case OpCreateConstraintTypeCheck:
-		checkOp := &OpSetCheckConstraint{
-			Table: o.Table,
-			Check: CheckConstraint{
-				Name: o.Name,
-			},
-		}
-		return checkOp.Complete(ctx, conn, tr, s)
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
 			Name:  o.Name,
 		}
 		return uniqueOp.Complete(ctx, conn, tr, s)
-	case OpCreateConstraintTypeForeignKey:
-		fkOp := &OpSetForeignKey{
-			Table: o.Table,
-			References: ForeignKeyReference{
-				Name: o.Name,
-			},
-		}
-		return fkOp.Complete(ctx, conn, tr, s)
 	}
 
 	return nil
@@ -90,40 +70,13 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	}
 
 	switch o.Type {
-	case OpCreateConstraintTypeCheck:
-		if o.Check == nil || *o.Check == "" {
-			return FieldRequiredError{Name: "check"}
-		}
 	case OpCreateConstraintTypeUnique:
 		if len(o.Columns) == 0 {
 			return FieldRequiredError{Name: "columns"}
 		}
-	case OpCreateConstraintTypeForeignKey:
-		if o.References == nil {
-			return FieldRequiredError{Name: "references"}
-		}
-		fkReference := ForeignKeyReference{
-			Name:     o.Name,
-			Table:    o.References.Table,
-			Columns:  o.References.Columns,
-			OnDelete: o.References.OnDelete,
-		}
-		if err := fkReference.Validate(s); err != nil {
-			return err
-		}
 	}
 
 	return nil
-}
-
-func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.Name),
-		rewriteCheckExpression(*o.Check, o.Columns...),
-	))
-
-	return err
 }
 
 func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB) error {
@@ -136,35 +89,6 @@ func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB
 		pq.QuoteIdentifier(o.Table),
 		strings.Join(cols, ", "),
 	))
-
-	return err
-}
-
-func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
-	cols := make([]string, len(o.Columns))
-	for i, col := range o.Columns {
-		cols[i] = pq.QuoteIdentifier(col)
-	}
-
-	onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
-	if o.References.OnDelete != nil {
-		onDelete = strings.ToUpper(string(*o.References.OnDelete))
-	}
-
-	refCols := make([]string, len(o.Columns))
-	for i, col := range o.References.Columns {
-		refCols[i] = pq.QuoteIdentifier(col)
-	}
-	references := fmt.Sprintf("%s (%s)", pq.QuoteIdentifier(o.References.Table), strings.Join(refCols, ", "))
-
-	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s NOT VALID",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Name),
-			strings.Join(cols, ", "),
-			references,
-			onDelete,
-		))
 
 	return err
 }

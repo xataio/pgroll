@@ -56,19 +56,7 @@ type ForeignKeyReference struct {
 	Name string `json:"name"`
 
 	// Foreign key constraint for the column
-	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
-
-	// Name of the referenced table
-	Table string `json:"table"`
-}
-
-// Foreign key reference definition
-type ForeignKeyReferenceInTable struct {
-	// List of referenced columns
-	Columns []string `json:"columns"`
-
-	// On delete behavior of the foreign key constraint
-	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
 	// Name of the referenced table
 	Table string `json:"table"`
@@ -136,9 +124,6 @@ type OpAlterColumn struct {
 
 // Add constraint to table operation
 type OpCreateConstraint struct {
-	// Check constraint for table
-	Check *string `json:"check,omitempty"`
-
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
@@ -147,9 +132,6 @@ type OpCreateConstraint struct {
 
 	// Name of the constraint
 	Name string `json:"name"`
-
-	// Foreign key constraint for the table
-	References *ForeignKeyReferenceInTable `json:"references,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`
@@ -163,8 +145,6 @@ type OpCreateConstraint struct {
 
 type OpCreateConstraintType string
 
-const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
-const OpCreateConstraintTypeForeignKey OpCreateConstraintType = "foreign_key"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation

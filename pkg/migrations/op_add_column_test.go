@@ -309,7 +309,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 								Nullable: ptr(true),
 							},
@@ -411,7 +411,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 								Nullable: ptr(false),
 							},
@@ -514,7 +514,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
-									Column: ptr("id"),
+									Column: "id",
 								},
 							},
 						},
@@ -625,8 +625,8 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								References: &migrations.ForeignKeyReference{
 									Name:     "fk_users_id",
 									Table:    "users",
-									Column:   ptr("id"),
-									OnDelete: ptr(migrations.ForeignKeyReferenceOnDelete("CASCADE")),
+									Column:   "id",
+									OnDelete: "CASCADE",
 								},
 							},
 						},
@@ -1524,6 +1524,7 @@ func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
 								Name:     "age",
 								Type:     "integer",
 								Nullable: ptr(false),
+								Default:  ptr("18"),
 								Check: &migrations.CheckConstraint{
 									Name:       "age_check",
 									Constraint: "age >= 18",
@@ -1559,7 +1560,7 @@ func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
 				}, testutils.CheckViolationErrorCode)
 			},
 		},
-	}, roll.WithSkipValidation(true)) // TODO: remove once this migration can be validated
+	})
 }
 
 func TestAddColumnInvalidNameLength(t *testing.T) {

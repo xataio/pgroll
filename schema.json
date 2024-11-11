@@ -89,42 +89,14 @@
           "type": "string"
         },
         "on_delete": {
-          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
-          "description": "Foreign key constraint for the column"
+          "description": "Foreign key constraint for the column",
+          "type": "string",
+          "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
+          "default": "NO ACTION"
         }
       },
       "required": ["name", "table"],
       "type": "object"
-    },
-    "ForeignKeyReferenceInTable": {
-      "additionalProperties": false,
-      "description": "Foreign key reference definition",
-      "properties": {
-        "columns": {
-          "description": "List of referenced columns",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "table": {
-          "description": "Name of the referenced table",
-          "type": "string"
-        },
-        "on_delete": {
-          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
-          "description": "On delete behavior of the foreign key constraint"
-        }
-      },
-      "required": ["table", "columns"],
-      "type": "object"
-    },
-    "ForeignKeyReferenceOnDelete": {
-      "additionalProperties": false,
-      "description": "On delete behavior of the foreign key constraint",
-      "type": "string",
-      "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
-      "default": "NO ACTION"
     },
     "OpAddColumn": {
       "additionalProperties": false,
@@ -489,15 +461,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["check", "unique", "foreign_key"]
-        },
-        "check": {
-          "type": "string",
-          "description": "Check constraint for table"
-        },
-        "references": {
-          "$ref": "#/$defs/ForeignKeyReferenceInTable",
-          "description": "Foreign key constraint for the table"
+          "enum": ["unique"]
         },
         "up": {
           "default": "",

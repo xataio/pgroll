@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/xataio/pgroll/pkg/schema"
 )
 
 func TestForeignKeyReferenceValidate(t *testing.T) {
@@ -29,38 +27,5 @@ func TestForeignKeyReferenceValidate(t *testing.T) {
 		// For now none of the tests use the schema
 		err := fk.Validate(nil)
 		assert.EqualError(t, err, `length of "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" (64) exceeds maximum length of 63`)
-	})
-	t.Run("On delete casing", func(t *testing.T) {
-		for _, onDelete := range []string{
-			"cascade",
-			"CASCADE",
-			"RESTRICT",
-			"resTRIct",
-			"NO ACtiON",
-			"no action",
-			"SET NULL",
-			"set null",
-			"SET DEFAULT",
-			"set default",
-		} {
-			t.Run(onDelete, func(t *testing.T) {
-				fk := &ForeignKeyReference{
-					Table:    "my_table",
-					Name:     "fk",
-					OnDelete: ptr(ForeignKeyReferenceOnDelete(onDelete)),
-				}
-				err := fk.Validate(&schema.Schema{Tables: map[string]schema.Table{"my_table": {}}})
-				assert.NoError(t, err)
-			})
-		}
-	})
-	t.Run("On delete invalid value", func(t *testing.T) {
-		fk := &ForeignKeyReference{
-			Table:    "my_table",
-			Name:     "fk",
-			OnDelete: ptr(ForeignKeyReferenceOnDelete("no such action")),
-		}
-		err := fk.Validate(&schema.Schema{Tables: map[string]schema.Table{"my_table": {}}})
-		assert.EqualError(t, err, `foreign key "fk" on_delete setting must be one of: "NO ACTION", "RESTRICT", "SET DEFAULT", "SET NULL" or "CASCADE", not "no such action"`)
 	})
 }

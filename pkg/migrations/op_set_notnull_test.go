@@ -270,8 +270,8 @@ func TestSetNotNull(t *testing.T) {
 									References: &migrations.ForeignKeyReference{
 										Name:     "fk_employee_department",
 										Table:    "departments",
-										Column:   ptr("id"),
-										OnDelete: ptr(migrations.ForeignKeyReferenceOnDeleteCASCADE),
+										Column:   "id",
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},

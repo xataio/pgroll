@@ -416,7 +416,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Nullable: ptr(false),
 							References: &migrations.ForeignKeyReference{
 								Table:  "events",
-								Column: ptr("id"),
+								Column: "id",
 								Name:   "person_manages_event_fk",
 							},
 						},

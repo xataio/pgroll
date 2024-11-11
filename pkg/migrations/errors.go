@@ -113,14 +113,6 @@ func (e ColumnReferenceError) Error() string {
 		e.Err.Error())
 }
 
-type PrimaryKeyDoesNotExistError struct {
-	Table string
-}
-
-func (e PrimaryKeyDoesNotExistError) Error() string {
-	return fmt.Sprintf("table %q does not have a primary key", e.Table)
-}
-
 type CheckConstraintError struct {
 	Table  string
 	Column string

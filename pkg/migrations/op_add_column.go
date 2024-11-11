@@ -184,6 +184,12 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return errors.New("adding primary key columns is not supported")
 	}
 
+	// Update the schema to ensure that the new column is visible to validation of
+	// subsequent operations.
+	table.AddColumn(o.Column.Name, schema.Column{
+		Name: TemporaryName(o.Column.Name),
+	})
+
 	return nil
 }
 
@@ -235,7 +241,7 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(o.Column.Check.Name),
-		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
+		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name, TemporaryName(o.Column.Name)),
 	))
 	return err
 }
@@ -252,10 +258,10 @@ func IsNotNullConstraintName(name string) bool {
 
 // ColumnSQLWriter writes a column to SQL
 // It can optionally include the primary key constraint
+// When creating a table, the primary key constraint is not added to the column definition
 type ColumnSQLWriter struct {
-	WithPK           bool
-	WithFKConstraint bool
-	Transformer      SQLTransformer
+	WithPK      bool
+	Transformer SQLTransformer
 }
 
 func (w ColumnSQLWriter) Write(col Column) (string, error) {
@@ -280,28 +286,15 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 	if col.References != nil {
 		onDelete := "NO ACTION"
-		if col.References.OnDelete != nil {
-			onDelete = strings.ToUpper(string(*col.References.OnDelete))
-		}
-		fkName := pq.QuoteIdentifier(col.References.Name)
-		references := pq.QuoteIdentifier(col.References.Table)
-		if col.References.Column != nil {
-			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), pq.QuoteIdentifier(*col.References.Column))
-		}
-		if col.References.Columns != nil {
-			quotedCols := make([]string, len(col.References.Columns))
-			for i, c := range col.References.Columns {
-				quotedCols[i] = pq.QuoteIdentifier(c)
-			}
-			fkName = "FOREIGN KEY " + pq.QuoteIdentifier(col.References.Name)
-			references = fmt.Sprintf("%s(%s)", pq.QuoteIdentifier(col.References.Table), strings.Join(quotedCols, ", "))
+		if col.References.OnDelete != "" {
+			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s ON DELETE %s",
-			fkName,
-			references,
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+			pq.QuoteIdentifier(col.References.Name),
+			pq.QuoteIdentifier(col.References.Table),
+			pq.QuoteIdentifier(col.References.Column),
 			onDelete)
-
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
