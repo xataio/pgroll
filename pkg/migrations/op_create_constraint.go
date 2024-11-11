@@ -87,12 +87,6 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 }
 
 func (o *OpCreateConstraint) addUniqueConstraint(ctx context.Context, conn db.DB) error {
-	stmt := fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table),
-		strings.Join(quoteColumnNames(o.Columns), ", "),
-	)
-	fmt.Println(stmt)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
