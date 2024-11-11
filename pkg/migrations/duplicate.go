@@ -136,7 +136,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
 				pq.QuoteIdentifier(d.table.Name),
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, d.column.Name),
+				rewriteCheckExpression(cc.Definition, d.column.Name, d.asName),
 			)
 
 			_, err := d.conn.ExecContext(ctx, sql)
