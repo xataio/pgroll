@@ -33,4 +33,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: benchmark_result.json
-        path: internal/benchmarks/benchmark_result.json
+        path: internal/benchmarks/benchmark_result_${{ matrix.pgVersion }}.json
