@@ -1,5 +1,7 @@
 name: Benchmark
 on:
+  # For testing, remove before merge
+  pull_request:
   push:
     branches:
       - main
