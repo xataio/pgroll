@@ -38,6 +38,7 @@ jobs:
   gather:
     name: 'Gather results'
     runs-on: ubuntu-latest
+    needs: [benchmark]
 
     steps:
     - uses: actions/download-artifact@v4
