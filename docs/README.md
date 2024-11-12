@@ -1059,7 +1059,7 @@ Example **drop column** migrations:
 
 * [09_drop_column.json](../examples/09_drop_column.json)
 
-### CREATE constraint
+### Create constraint
 
 A create constraint operation adds a new constraint to an existing table.
 
