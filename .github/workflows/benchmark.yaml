@@ -34,7 +34,3 @@ jobs:
       with:
         name: benchmark_result_${{ matrix.pgVersion }}.json
         path: internal/benchmarks/benchmark_result_${{ matrix.pgVersion }}.json
-
-  gather_results:
-    - name: Download all workflow run artifacts
-      uses: actions/download-artifact@v4
