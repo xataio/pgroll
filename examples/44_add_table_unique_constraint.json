@@ -13,7 +13,7 @@
         "up": [
           {
             "column": "sellers_name",
-            "sql": "NULL"
+            "sql": "sellers_name"
           },
           {
             "column": "sellers_zip",
