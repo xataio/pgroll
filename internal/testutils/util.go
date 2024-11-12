@@ -75,19 +75,20 @@ func SharedTestMain(m *testing.M, postRunHooks ...func() error) {
 		log.Printf("Failed to terminate container: %v", err)
 	}
 
-	if exitCode == 0 {
-		for _, hook := range postRunHooks {
-			err := hook()
-			if err != nil {
-				log.Printf("Post-run hook failed: %v", err)
-				os.Exit(1)
-			}
-		}
-	} else {
+	if exitCode != 0 {
 		log.Printf("Non zero exit code (%d), skipping post run hooks", exitCode)
+		os.Exit(exitCode)
 	}
 
-	os.Exit(exitCode)
+	for _, hook := range postRunHooks {
+		err := hook()
+		if err != nil {
+			log.Printf("Post-run hook failed: %v", err)
+			os.Exit(1)
+		}
+	}
+
+	os.Exit(0)
 }
 
 // TestSchema returns the schema in which migration tests apply migrations. By
