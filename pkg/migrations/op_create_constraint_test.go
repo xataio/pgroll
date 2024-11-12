@@ -83,7 +83,6 @@ func TestCreateConstraint(t *testing.T) {
 
 				// Functions, triggers and temporary columns are dropped.
 				tableCleanedUp(t, db, schema, "users", "name")
-
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
@@ -243,5 +242,4 @@ func tableCleanedUp(t *testing.T, db *sql.DB, schema, table, column string) {
 	TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, column))
 	// The down trigger no longer exists.
 	TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, migrations.TemporaryName(column)))
-
 }
