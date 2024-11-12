@@ -44,7 +44,6 @@ func TestMain(m *testing.M) {
 		}()
 
 		encoder := json.NewEncoder(w)
-		encoder.SetIndent("  ", "  ")
 		if err := encoder.Encode(reporter); err != nil {
 			return fmt.Errorf("encoding report file: %w", err)
 		}
