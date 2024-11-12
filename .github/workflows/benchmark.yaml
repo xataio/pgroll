@@ -47,10 +47,10 @@ jobs:
         merge-multiple: true
 
     - name: Combine all results
-      run: cat results/*.json > ${{env.GITHUB_SHA}}_benchmark_result.json
+      run: cat results/*.json > ${{github.sha}}_benchmark_result.json
 
     - name: Upload combined results
       uses: actions/upload-artifact@v4
       with:
-        name: ${{env.GITHUB_SHA}}_benchmark_result.json
-        path: ${{env.GITHUB_SHA}}_benchmark_result.json
+        name: ${{github.sha}}_benchmark_result.json
+        path: ${{github.sha}}_benchmark_result.json
