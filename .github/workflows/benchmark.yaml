@@ -43,8 +43,14 @@ jobs:
     steps:
     - uses: actions/download-artifact@v4
       with:
-        path: .
+        path: ./results/
         merge-multiple: true
 
-    - name: List results
-      run: ls -R
+    - name: Combine all results
+      run: cat results/*.json > "{$GITHUB_SHA}_benchmark_result.json"
+
+    - name: Upload combined reults
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{env.GITHUB_SHA}}_benchmark_result.json
+        path: ${{env.GITHUB_SHA}}_benchmark_result.json
