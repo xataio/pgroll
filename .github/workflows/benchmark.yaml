@@ -28,3 +28,9 @@ jobs:
       run: make bench
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark_result.json
+        path: internal/benchmarks/benchmarks_result.json
