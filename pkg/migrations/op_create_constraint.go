@@ -16,13 +16,63 @@ import (
 var _ Operation = (*OpCreateConstraint)(nil)
 
 func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
-	table := s.GetTable(o.Table)
+	var err error
+	var table *schema.Table
+	for _, col := range o.Columns {
+		if table, err = o.duplicateColumnBeforeStart(ctx, conn, latestSchema, tr, col, s); err != nil {
+			return nil, err
+		}
+	}
 
 	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
-		return table, o.addUniqueConstraint(ctx, conn)
+		return table, o.addUniqueIndex(ctx, conn)
 	}
 
+	return table, nil
+}
+
+func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, colName string, s *schema.Schema) (*schema.Table, error) {
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(colName)
+
+	d := duplicatorForOperations([]Operation{o}, conn, table, column)
+	if err := d.Duplicate(ctx); err != nil {
+		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
+	}
+
+	physicalColumnName := TemporaryName(colName)
+	err := createTrigger(ctx, conn, tr, triggerConfig{
+		Name:           TriggerName(o.Table, colName),
+		Direction:      TriggerDirectionUp,
+		Columns:        table.Columns,
+		SchemaName:     s.Name,
+		LatestSchema:   latestSchema,
+		TableName:      o.Table,
+		PhysicalColumn: physicalColumnName,
+		SQL:            o.Up,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create up trigger: %w", err)
+	}
+
+	table.AddColumn(colName, schema.Column{
+		Name: physicalColumnName,
+	})
+
+	err = createTrigger(ctx, conn, tr, triggerConfig{
+		Name:           TriggerName(o.Table, physicalColumnName),
+		Direction:      TriggerDirectionDown,
+		Columns:        table.Columns,
+		LatestSchema:   latestSchema,
+		SchemaName:     s.Name,
+		TableName:      o.Table,
+		PhysicalColumn: colName,
+		SQL:            o.Down,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create down trigger: %w", err)
+	}
 	return table, nil
 }
 
@@ -33,21 +83,80 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 			Table: o.Table,
 			Name:  o.Name,
 		}
-		return uniqueOp.Complete(ctx, conn, tr, s)
+		err := uniqueOp.Complete(ctx, conn, tr, s)
+		if err != nil {
+			return err
+		}
+	}
+
+	// remove old columns
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
+		pq.QuoteIdentifier(o.Table),
+		dropMultipleColumns(quoteColumnNames(o.Columns)),
+	))
+	if err != nil {
+		return err
+	}
+
+	// rename new columns to old name
+	table := s.GetTable(o.Table)
+	for _, col := range o.Columns {
+		column := table.GetColumn(col)
+		if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
+			return err
+		}
+	}
+
+	if err := o.removeTriggers(ctx, conn); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	var err error
 	switch o.Type { //nolint:gocritic // more cases will be added
 	case OpCreateConstraintTypeUnique:
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
+		_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 			pq.QuoteIdentifier(o.Name)))
+		if err != nil {
+			return err
+		}
 	}
 
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
+		pq.QuoteIdentifier(o.Table),
+		dropMultipleColumns(quotedTemporaryNames(o.Columns)),
+	))
+	if err != nil {
+		return err
+	}
+	fmt.Println("remove triggers")
+
+	if err := o.removeTriggers(ctx, conn); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
+	dropFuncs := make([]string, len(o.Columns)*2)
+	for i, j := 0, 0; i < len(o.Columns); i, j = i+1, j+2 {
+		dropFuncs[j] = pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Columns[i]))
+		dropFuncs[j+1] = pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(o.Columns[i])))
+	}
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
+		strings.Join(dropFuncs, ", "),
+	))
 	return err
+}
+
+func dropMultipleColumns(columns []string) string {
+	for i, col := range columns {
+		columns[i] = "DROP COLUMN IF EXISTS " + col
+	}
+	return strings.Join(columns, ", ")
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {
@@ -87,11 +196,20 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 }
 
 func (o *OpCreateConstraint) addUniqueIndex(ctx context.Context, conn db.DB) error {
+	fmt.Println(o.Columns)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
-		strings.Join(quoteColumnNames(o.Columns), ", "),
+		strings.Join(quotedTemporaryNames(o.Columns), ", "),
 	))
 
 	return err
+}
+
+func quotedTemporaryNames(columns []string) []string {
+	names := make([]string, len(columns))
+	for i, col := range columns {
+		names[i] = TemporaryName(col)
+	}
+	return names
 }

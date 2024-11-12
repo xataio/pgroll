@@ -467,7 +467,7 @@
           "type": "string"
         }
       },
-      "required": ["name", "table", "type"],
+      "required": ["name", "table", "type", "up", "down"],
       "type": "object"
     },
     "PgRollOperation": {

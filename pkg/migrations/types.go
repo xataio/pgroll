@@ -125,7 +125,7 @@ type OpCreateConstraint struct {
 	Columns []string `json:"columns,omitempty"`
 
 	// SQL expression for down migration
-	Down string `json:"down,omitempty"`
+	Down string `json:"down"`
 
 	// Name of the constraint
 	Name string `json:"name"`
@@ -137,7 +137,7 @@ type OpCreateConstraint struct {
 	Type OpCreateConstraintType `json:"type"`
 
 	// SQL expression for up migration
-	Up string `json:"up,omitempty"`
+	Up string `json:"up"`
 }
 
 type OpCreateConstraintType string
