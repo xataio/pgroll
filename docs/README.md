@@ -27,6 +27,7 @@
         * [Add unique constraint](#add-unique-constraint)
     * [Create index](#create-index)
     * [Create table](#create-table)
+    * [Create constraint](#create-constraint)
     * [Drop column](#drop-column)
     * [Drop constraint](#drop-constraint)
     * [Drop index](#drop-index)
@@ -687,6 +688,7 @@ See the [examples](../examples) directory for examples of each kind of operation
     * [Add unique constraint](#add-unique-constraint)
 * [Create index](#create-index)
 * [Create table](#create-table)
+* [Create constraint](#create-constraint)
 * [Drop column](#drop-column)
 * [Drop constraint](#drop-constraint)
 * [Drop index](#drop-index)
@@ -1037,28 +1039,6 @@ Example **create table** migrations:
 * [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
 * [28_different_defaults.json](../examples/28_different_defaults.json)
 
-### Drop column
-
-A drop column operation drops a column from an existing table.
-
-**drop column** operations have this structure:
-
-```json
-{
-  "drop_column": {
-    "table": "name of table",
-    "column": "name of column to drop",
-    "down": "SQL expression"
-  }
-}
-```
-
-The `down` field above is required in order to backfill the previous version of the schema during an active migration. For instance, in our [example](../examples/09_drop_column.json), you can see that if a new row is inserted against the new schema without a `price` column, the old schema `price` column will be set to `0`.
-
-Example **drop column** migrations:
-
-* [09_drop_column.json](../examples/09_drop_column.json)
-
 ### Create constraint
 
 A create constraint operation adds a new constraint to an existing table.
@@ -1084,6 +1064,28 @@ Example **create constraint** migrations:
 
 * [44_add_table_unique_constraint.json](../examples/44_add_table_unique_constraint.json)
 
+
+### Drop column
+
+A drop column operation drops a column from an existing table.
+
+**drop column** operations have this structure:
+
+```json
+{
+  "drop_column": {
+    "table": "name of table",
+    "column": "name of column to drop",
+    "down": "SQL expression"
+  }
+}
+```
+
+The `down` field above is required in order to backfill the previous version of the schema during an active migration. For instance, in our [example](../examples/09_drop_column.json), you can see that if a new row is inserted against the new schema without a `price` column, the old schema `price` column will be set to `0`.
+
+Example **drop column** migrations:
+
+* [09_drop_column.json](../examples/09_drop_column.json)
 
 ### Drop constraint
 
