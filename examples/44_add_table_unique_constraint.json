@@ -10,8 +10,8 @@
           "sellers_name",
           "sellers_zip"
         ]
-        "up": "SELECT NULL",
-        "down": "SELECT sellers_name, sellers_zip"
+        "up": "NULL",
+        "down": "SELECT sellers_name, sellers_zip FROM tickets"
       }
     }
   ]
