@@ -10,8 +10,26 @@
           "sellers_name",
           "sellers_zip"
         ],
-        "up": "NULL",
-        "down": "SELECT sellers_name, sellers_zip FROM tickets"
+        "up": [
+          {
+            "column": "sellers_name",
+            "sql": "NULL"
+          },
+          {
+            "column": "sellers_zip",
+            "sql": "NULL"
+          }
+        ],
+        "down": [
+          {
+            "column": "sellers_name",
+            "sql": "sellers_name"
+          },
+          {
+            "column": "sellers_zip",
+            "sql": "sellers_zip"
+          }
+        ]
       }
     }
   ]

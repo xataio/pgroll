@@ -41,6 +41,13 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
 	}
 
+	var upMigration string
+	for _, mig := range o.Up {
+		if mig.Column == colName {
+			upMigration = mig.Sql
+			break
+		}
+	}
 	physicalColumnName := TemporaryName(colName)
 	err := createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, colName),
@@ -50,7 +57,7 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		LatestSchema:   latestSchema,
 		TableName:      o.Table,
 		PhysicalColumn: physicalColumnName,
-		SQL:            o.Up,
+		SQL:            upMigration,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -60,6 +67,13 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		Name: physicalColumnName,
 	})
 
+	var downMigration string
+	for _, mig := range o.Down {
+		if mig.Column == colName {
+			downMigration = mig.Sql
+			break
+		}
+	}
 	err = createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, physicalColumnName),
 		Direction:      TriggerDirectionDown,
@@ -68,7 +82,7 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		SchemaName:     s.Name,
 		TableName:      o.Table,
 		PhysicalColumn: colName,
-		SQL:            o.Down,
+		SQL:            downMigration,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
@@ -131,7 +145,6 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTra
 	if err != nil {
 		return err
 	}
-	fmt.Println("remove triggers")
 
 	if err := o.removeTriggers(ctx, conn); err != nil {
 		return err
@@ -196,7 +209,6 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 }
 
 func (o *OpCreateConstraint) addUniqueIndex(ctx context.Context, conn db.DB) error {
-	fmt.Println(o.Columns)
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),

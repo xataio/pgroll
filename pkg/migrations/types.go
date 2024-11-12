@@ -5,6 +5,15 @@ package migrations
 
 import "github.com/oapi-codegen/nullable"
 
+// Backfill operation of a column
+type BackfillSQL struct {
+	// Name of the column to backfill
+	Column string `json:"column"`
+
+	// SQL expression to backfill column
+	Sql string `json:"sql"`
+}
+
 // Check constraint definition
 type CheckConstraint struct {
 	// Constraint expression
@@ -124,8 +133,8 @@ type OpCreateConstraint struct {
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
-	// SQL expression for down migration
-	Down string `json:"down"`
+	// SQL expression of down migration for each column
+	Down []BackfillSQL `json:"down"`
 
 	// Name of the constraint
 	Name string `json:"name"`
@@ -136,8 +145,8 @@ type OpCreateConstraint struct {
 	// Type of the constraint
 	Type OpCreateConstraintType `json:"type"`
 
-	// SQL expression for up migration
-	Up string `json:"up"`
+	// SQL expression of up migration for each column
+	Up []BackfillSQL `json:"up"`
 }
 
 type OpCreateConstraintType string

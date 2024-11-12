@@ -91,6 +91,22 @@
       "required": ["column", "name", "table"],
       "type": "object"
     },
+    "BackfillSQL": {
+      "description": "Backfill operation of a column",
+      "additionalProperties": false,
+      "properties": {
+        "column": {
+          "description": "Name of the column to backfill",
+          "type": "string"
+        },
+        "sql": {
+          "description": "SQL expression to backfill column",
+          "type": "string"
+        }
+      },
+      "required": ["column", "sql"],
+      "type": "object"
+    },
     "OpAddColumn": {
       "additionalProperties": false,
       "description": "Add column operation",
@@ -457,14 +473,18 @@
           "enum": ["unique"]
         },
         "up": {
-          "default": "",
-          "description": "SQL expression for up migration",
-          "type": "string"
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackfillSQL"
+          },
+          "description": "SQL expression of up migration for each column"
         },
         "down": {
-          "default": "",
-          "description": "SQL expression for down migration",
-          "type": "string"
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BackfillSQL"
+          },
+          "description": "SQL expression of down migration for each column"
         }
       },
       "required": ["name", "table", "type", "up", "down"],
