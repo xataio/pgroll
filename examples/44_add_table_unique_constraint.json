@@ -10,26 +10,14 @@
           "sellers_name",
           "sellers_zip"
         ],
-        "up": [
-          {
-            "column": "sellers_name",
-            "sql": "sellers_name"
-          },
-          {
-            "column": "sellers_zip",
-            "sql": "sellers_zip"
-          }
-        ],
-        "down": [
-          {
-            "column": "sellers_name",
-            "sql": "sellers_name"
-          },
-          {
-            "column": "sellers_zip",
-            "sql": "sellers_zip"
-          }
-        ]
+        "up": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        },
+        "down": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        }
       }
     }
   ]

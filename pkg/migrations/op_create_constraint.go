@@ -36,15 +36,19 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(colName)
 
-	d := duplicatorForOperations([]Operation{o}, conn, table, column)
+	d := NewColumnDuplicator(conn, table, column)
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
 	}
 
-	var upMigration string
-	for _, mig := range o.Up {
-		if mig.Column == colName {
-			upMigration = mig.Sql
+	var upSQL string
+	var ok bool
+	for col, sql := range o.Up {
+		if col == colName {
+			upSQL, ok = sql.(string)
+			if !ok {
+				return nil, fmt.Errorf("up migration for column %s is not a string", col)
+			}
 			break
 		}
 	}
@@ -57,7 +61,7 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		LatestSchema:   latestSchema,
 		TableName:      o.Table,
 		PhysicalColumn: physicalColumnName,
-		SQL:            upMigration,
+		SQL:            upSQL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
@@ -67,10 +71,13 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		Name: physicalColumnName,
 	})
 
-	var downMigration string
-	for _, mig := range o.Down {
-		if mig.Column == colName {
-			downMigration = mig.Sql
+	var downSQL string
+	for col, sql := range o.Up {
+		if col == colName {
+			downSQL, ok = sql.(string)
+			if !ok {
+				return nil, fmt.Errorf("down migration for column %s is not a string", col)
+			}
 			break
 		}
 	}
@@ -82,7 +89,7 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		SchemaName:     s.Name,
 		TableName:      o.Table,
 		PhysicalColumn: colName,
-		SQL:            downMigration,
+		SQL:            downSQL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
@@ -125,15 +132,6 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	switch o.Type { //nolint:gocritic // more cases will be added
-	case OpCreateConstraintTypeUnique:
-		_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
-			pq.QuoteIdentifier(o.Name)))
-		if err != nil {
-			return err
-		}
-	}
-
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
 		pq.QuoteIdentifier(o.Table),
 		dropMultipleColumns(quotedTemporaryNames(o.Columns)),
