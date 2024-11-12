@@ -17,7 +17,7 @@
           },
           {
             "column": "sellers_zip",
-            "sql": "NULL"
+            "sql": "sellers_zip"
           }
         ],
         "down": [
