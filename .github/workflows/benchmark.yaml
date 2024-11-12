@@ -47,7 +47,7 @@ jobs:
         merge-multiple: true
 
     - name: Combine all results
-      run: cat results/*.json > ${{env.GITHUB_SHA}}_benchmark_result.json"
+      run: cat results/*.json > ${{env.GITHUB_SHA}}_benchmark_result.json
 
     - name: Upload combined results
       uses: actions/upload-artifact@v4
