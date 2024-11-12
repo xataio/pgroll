@@ -5,7 +5,11 @@ package benchmarks
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"os"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/lib/pq"
@@ -19,10 +23,35 @@ import (
 
 const unitRowsPerSecond = "rows/s"
 
-var rowCounts = []int{10_000, 100_000, 300_000}
+var (
+	rowCounts = []int{10_000, 100_000, 300_000}
+	reporter  = newReportRecorder()
+)
+
+const reportName = "benchmark_result.json"
 
 func TestMain(m *testing.M) {
-	testutils.SharedTestMain(m)
+	testutils.SharedTestMain(m, func() (err error) {
+		// Only run in GitHub actions
+		if os.Getenv("GITHUB_ACTIONS") != "true" {
+			return nil
+		}
+
+		w, err := os.Create(reportName)
+		if err != nil {
+			return fmt.Errorf("creating report file: %w", err)
+		}
+		defer func() {
+			err = w.Close()
+		}()
+
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("  ", "  ")
+		if err := encoder.Encode(reporter); err != nil {
+			return fmt.Errorf("encoding report file: %w", err)
+		}
+		return nil
+	})
 }
 
 func BenchmarkBackfill(b *testing.B) {
@@ -48,6 +77,12 @@ func BenchmarkBackfill(b *testing.B) {
 				b.Logf("Backfilled %d rows in %s", rowCount, b.Elapsed())
 				rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 				b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+				reporter.AddReport(Report{
+					Name:          b.Name(),
+					RowCount:      rowCount,
+					RowsPerSecond: rowsPerSecond,
+				})
 			})
 		})
 	}
@@ -87,6 +122,12 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+					reporter.AddReport(Report{
+						Name:          b.Name(),
+						RowCount:      rowCount,
+						RowsPerSecond: rowsPerSecond,
+					})
 				})
 			})
 		}
@@ -116,6 +157,12 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+					reporter.AddReport(Report{
+						Name:          b.Name(),
+						RowCount:      rowCount,
+						RowsPerSecond: rowsPerSecond,
+					})
 				})
 			})
 		}
@@ -189,3 +236,30 @@ var migAlterColumn = migrations.Migration{
 }
 
 func ptr[T any](x T) *T { return &x }
+
+type ReportRecorder struct {
+	mu              sync.Mutex
+	GitSHA          string
+	PostgresVersion string
+	Reports         []Report
+}
+
+func newReportRecorder() *ReportRecorder {
+	return &ReportRecorder{
+		GitSHA:          os.Getenv("GITHUB_SHA"),
+		PostgresVersion: os.Getenv("POSTGRES_VERSION"),
+		Reports:         []Report{},
+	}
+}
+
+func (r *ReportRecorder) AddReport(report Report) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.Reports = append(r.Reports, report)
+}
+
+type Report struct {
+	Name          string
+	RowCount      int
+	RowsPerSecond float64
+}

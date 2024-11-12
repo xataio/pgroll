@@ -28,9 +28,11 @@ const defaultPostgresVersion = "15.3"
 // tConnStr holds the connection string to the test container created in TestMain.
 var tConnStr string
 
-// SharedTestMain starts a postgres container to be used by all tests in a package.
-// Each test then connects to the container and creates a new database.
-func SharedTestMain(m *testing.M) {
+// SharedTestMain starts a postgres container to be used by all tests in a package. Each test then
+// connects to the container and creates a new database. Optional functions that will run after all
+// tests can be added and should return nil error to indicate they ran successfully. If they return
+// an error all subsequent functions will be skipped.
+func SharedTestMain(m *testing.M, postRunHooks ...func() error) {
 	ctx := context.Background()
 
 	waitForLogs := wait.
@@ -71,6 +73,18 @@ func SharedTestMain(m *testing.M) {
 
 	if err := ctr.Terminate(ctx); err != nil {
 		log.Printf("Failed to terminate container: %v", err)
+	}
+
+	if exitCode == 0 {
+		for _, hook := range postRunHooks {
+			err := hook()
+			if err != nil {
+				log.Printf("Post-run hook failed: %v", err)
+				os.Exit(1)
+			}
+		}
+	} else {
+		log.Printf("Non zero exit code (%d), skipping post run hooks", exitCode)
 	}
 
 	os.Exit(exitCode)
