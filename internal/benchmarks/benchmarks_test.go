@@ -28,8 +28,6 @@ var (
 	reporter  = newReportRecorder()
 )
 
-const reportName = "benchmark_result.json"
-
 func TestMain(m *testing.M) {
 	testutils.SharedTestMain(m, func() (err error) {
 		// Only run in GitHub actions
@@ -37,7 +35,7 @@ func TestMain(m *testing.M) {
 			return nil
 		}
 
-		w, err := os.Create(reportName)
+		w, err := os.Create(fmt.Sprintf("benchmark_result_%s.json", getPostgresVersion()))
 		if err != nil {
 			return fmt.Errorf("creating report file: %w", err)
 		}
@@ -244,10 +242,14 @@ type ReportRecorder struct {
 	Reports         []Report
 }
 
+func getPostgresVersion() string {
+	return os.Getenv("POSTGRES_VERSION")
+}
+
 func newReportRecorder() *ReportRecorder {
 	return &ReportRecorder{
 		GitSHA:          os.Getenv("GITHUB_SHA"),
-		PostgresVersion: os.Getenv("POSTGRES_VERSION"),
+		PostgresVersion: getPostgresVersion(),
 		Reports:         []Report{},
 	}
 }
