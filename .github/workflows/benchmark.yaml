@@ -42,6 +42,9 @@ jobs:
 
     steps:
     - uses: actions/download-artifact@v4
+      with:
+        path: .
+        merge-multiple: true
 
     - name: List results
       run: ls -R
