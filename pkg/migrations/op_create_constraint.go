@@ -121,11 +121,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 		}
 	}
 
-	if err := o.removeTriggers(ctx, conn); err != nil {
-		return err
-	}
-
-	return nil
+	return o.removeTriggers(ctx, conn)
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
