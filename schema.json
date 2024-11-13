@@ -458,6 +458,7 @@
         },
         "up": {
           "type": "object",
+          "additionalProperties": { "type": "string" },
           "description": "SQL expression of up migration by column"
         },
         "down": {
