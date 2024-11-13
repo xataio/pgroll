@@ -210,7 +210,7 @@ func (o *OpCreateConstraint) addUniqueIndex(ctx context.Context, conn db.DB) err
 func quotedTemporaryNames(columns []string) []string {
 	names := make([]string, len(columns))
 	for i, col := range columns {
-		names[i] = TemporaryName(col)
+		names[i] = pq.QuoteIdentifier(TemporaryName(col))
 	}
 	return names
 }
