@@ -47,10 +47,10 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Type:    "unique",
 							Columns: []string{"name"},
-							Up: migrations.OpCreateConstraintUp(map[string]interface{}{
+							Up: migrations.OpCreateConstraintUp(map[string]string{
 								"name": "name || random()",
 							}),
-							Down: migrations.OpCreateConstraintDown(map[string]interface{}{
+							Down: migrations.OpCreateConstraintDown(map[string]string{
 								"name": "name",
 							}),
 						},
@@ -133,11 +133,11 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Type:    "unique",
 							Columns: []string{"name", "email"},
-							Up: migrations.OpCreateConstraintUp(map[string]interface{}{
+							Up: migrations.OpCreateConstraintUp(map[string]string{
 								"name":  "name || random()",
 								"email": "email || random()",
 							}),
-							Down: migrations.OpCreateConstraintDown(map[string]interface{}{
+							Down: migrations.OpCreateConstraintDown(map[string]string{
 								"name":  "name",
 								"email": "email",
 							}),

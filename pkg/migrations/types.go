@@ -141,14 +141,14 @@ type OpCreateConstraint struct {
 }
 
 // SQL expression of down migration by column
-type OpCreateConstraintDown map[string]interface{}
+type OpCreateConstraintDown map[string]string
 
 type OpCreateConstraintType string
 
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // SQL expression of up migration by column
-type OpCreateConstraintUp map[string]interface{}
+type OpCreateConstraintUp map[string]string
 
 // Create index operation
 type OpCreateIndex struct {

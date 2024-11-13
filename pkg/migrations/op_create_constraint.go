@@ -41,16 +41,9 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
 	}
 
-	var upSQL string
-	var ok bool
-	for col, sql := range o.Up {
-		if col == colName {
-			upSQL, ok = sql.(string)
-			if !ok {
-				return nil, fmt.Errorf("up migration for column %s is not a string", col)
-			}
-			break
-		}
+	upSQL, ok := o.Up[colName]
+	if !ok {
+		return nil, fmt.Errorf("up migration is missing for column %s", colName)
 	}
 	physicalColumnName := TemporaryName(colName)
 	err := createTrigger(ctx, conn, tr, triggerConfig{
@@ -71,15 +64,9 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		Name: physicalColumnName,
 	})
 
-	var downSQL string
-	for col, sql := range o.Up {
-		if col == colName {
-			downSQL, ok = sql.(string)
-			if !ok {
-				return nil, fmt.Errorf("down migration for column %s is not a string", col)
-			}
-			break
-		}
+	downSQL, ok := o.Down[colName]
+	if !ok {
+		return nil, fmt.Errorf("down migration is missing for column %s", colName)
 	}
 	err = createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, physicalColumnName),
