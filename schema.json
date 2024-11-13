@@ -463,6 +463,7 @@
         },
         "down": {
           "type": "object",
+          "additionalProperties": { "type": "string" },
           "description": "SQL expression of down migration by column"
         }
       },
