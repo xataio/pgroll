@@ -9,9 +9,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"sync"
 	"testing"
-	"time"
 
 	"github.com/lib/pq"
 	"github.com/oapi-codegen/nullable"
@@ -234,36 +232,3 @@ var migAlterColumn = migrations.Migration{
 }
 
 func ptr[T any](x T) *T { return &x }
-
-type ReportRecorder struct {
-	mu              sync.Mutex
-	GitSHA          string
-	PostgresVersion string
-	Timestamp       int64
-	Reports         []Report
-}
-
-func getPostgresVersion() string {
-	return os.Getenv("POSTGRES_VERSION")
-}
-
-func newReportRecorder() *ReportRecorder {
-	return &ReportRecorder{
-		GitSHA:          os.Getenv("GITHUB_SHA"),
-		PostgresVersion: getPostgresVersion(),
-		Timestamp:       time.Now().Unix(),
-		Reports:         []Report{},
-	}
-}
-
-func (r *ReportRecorder) AddReport(report Report) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.Reports = append(r.Reports, report)
-}
-
-type Report struct {
-	Name          string
-	RowCount      int
-	RowsPerSecond float64
-}
