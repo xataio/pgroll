@@ -2,12 +2,10 @@ package benchmarks
 
 import (
 	"os"
-	"sync"
 	"time"
 )
 
 type Reports struct {
-	mu              sync.Mutex
 	GitSHA          string
 	PostgresVersion string
 	Timestamp       int64
@@ -15,8 +13,6 @@ type Reports struct {
 }
 
 func (r *Reports) AddReport(report Report) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
 	r.Reports = append(r.Reports, report)
 }
 
