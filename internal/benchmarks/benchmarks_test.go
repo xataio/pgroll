@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/oapi-codegen/nullable"
@@ -238,6 +239,7 @@ type ReportRecorder struct {
 	mu              sync.Mutex
 	GitSHA          string
 	PostgresVersion string
+	Timestamp       int64
 	Reports         []Report
 }
 
@@ -249,6 +251,7 @@ func newReportRecorder() *ReportRecorder {
 	return &ReportRecorder{
 		GitSHA:          os.Getenv("GITHUB_SHA"),
 		PostgresVersion: getPostgresVersion(),
+		Timestamp:       time.Now().Unix(),
 		Reports:         []Report{},
 	}
 }
