@@ -121,6 +121,9 @@ type OpAlterColumn struct {
 
 // Add constraint to table operation
 type OpCreateConstraint struct {
+	// Check constraint expression
+	Check *string `json:"check,omitempty"`
+
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
@@ -145,6 +148,7 @@ type OpCreateConstraintDown map[string]string
 
 type OpCreateConstraintType string
 
+const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // SQL expression of up migration by column

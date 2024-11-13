@@ -1,0 +1,25 @@
+{
+  "name": "45_add_table_check_constraint",
+  "operations": [
+    {
+      "create_constraint": {
+        "type": "check",
+        "table": "tickets",
+        "name": "check_zip_name",
+        "columns": [
+          "sellers_name",
+          "sellers_zip"
+        ],
+        "check": "sellers_name ~ 'Alice' AND sellers_zip IS NOT NULL",
+        "up": {
+          "sellers_name": "Alice",
+          "sellers_zip": "(SELECT CASE WHEN sellers_zip IS NOT NULL THEN sellers_zip ELSE '00000' END)"
+        },
+        "down": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        }
+      }
+    }
+  ]
+}

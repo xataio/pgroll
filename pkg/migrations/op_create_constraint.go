@@ -24,9 +24,11 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		}
 	}
 
-	switch o.Type { //nolint:gocritic // more cases will be added
+	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		return table, o.addUniqueIndex(ctx, conn)
+	case OpCreateConstraintTypeCheck:
+		return table, o.addCheckConstraint(ctx, conn)
 	}
 
 	return table, nil
@@ -85,13 +87,24 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 }
 
 func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	switch o.Type { //nolint:gocritic // more cases will be added
+	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
 			Name:  o.Name,
 		}
 		err := uniqueOp.Complete(ctx, conn, tr, s)
+		if err != nil {
+			return err
+		}
+	case OpCreateConstraintTypeCheck:
+		checkOp := &OpSetCheckConstraint{
+			Table: o.Table,
+			Check: CheckConstraint{
+				Name: o.Name,
+			},
+		}
+		err := checkOp.Complete(ctx, conn, tr, s)
 		if err != nil {
 			return err
 		}
@@ -187,10 +200,14 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 		}
 	}
 
-	switch o.Type { //nolint:gocritic // more cases will be added
+	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		if len(o.Columns) == 0 {
 			return FieldRequiredError{Name: "columns"}
+		}
+	case OpCreateConstraintTypeCheck:
+		if o.Check == nil || *o.Check == "" {
+			return FieldRequiredError{Name: "check"}
 		}
 	}
 
@@ -202,6 +219,16 @@ func (o *OpCreateConstraint) addUniqueIndex(ctx context.Context, conn db.DB) err
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(o.Table),
 		strings.Join(quotedTemporaryNames(o.Columns), ", "),
+	))
+
+	return err
+}
+
+func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(o.Name),
+		rewriteCheckExpression(*o.Check, o.Columns...),
 	))
 
 	return err

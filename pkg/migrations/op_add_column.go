@@ -241,7 +241,7 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
 		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(o.Column.Check.Name),
-		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name, TemporaryName(o.Column.Name)),
+		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
 	))
 	return err
 }

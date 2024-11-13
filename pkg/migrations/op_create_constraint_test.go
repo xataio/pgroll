@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -98,6 +100,79 @@ func TestCreateConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "create check constraint on single column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "name_letters",
+							Table:   "users",
+							Type:    "check",
+							Check:   ptr("name ~ '^[a-zA-Z]+$'"),
+							Columns: []string{"name"},
+							Up: migrations.OpCreateConstraintUp(map[string]string{
+								"name": "regexp_replace(name, '\\d+', '', 'g')",
+							}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"name": "name",
+							}),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new (temporary) column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "users", migrations.TemporaryName("name"))
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "name_letters")
+				// Inserting values into the old schema that violate the check constraint must succeed.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "alice11",
+				})
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "bob2",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "users", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "users", "name")
+
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "carol0",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
+		{
 			name: "create unique constraint on multiple columns",
 			migrations: []migrations.Migration{
 				{
@@ -179,6 +254,98 @@ func TestCreateConstraint(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op.
+			},
+		},
+		{
+			name: "create check constraint on multiple columns",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+								{
+									Name:     "email",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "check_name_email",
+							Table:   "users",
+							Type:    "check",
+							Check:   ptr("name != email"),
+							Columns: []string{"name", "email"},
+							Up: migrations.OpCreateConstraintUp(map[string]string{
+								"name":  "name",
+								"email": "(SELECT CASE WHEN email ~ '@' THEN email ELSE email || '@example.com' END)",
+							}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"name":  "name",
+								"email": "email",
+							}),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new (temporary) column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "users", migrations.TemporaryName("name"))
+				// The new (temporary) column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "users", migrations.TemporaryName("email"))
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_email")
+
+				// Inserting values into the old schema that the check must succeed.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name":  "alice",
+					"email": "alice",
+				})
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name":  "bob",
+					"email": "bob@bob.me",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name":  "bob",
+					"email": "bob",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint must not exists on the table.
+				CheckConstraintMustNotExist(t, db, schema, "users", "check_name_email")
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "users", "name")
+				tableCleanedUp(t, db, schema, "users", "email")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "users", "name")
+				tableCleanedUp(t, db, schema, "users", "email")
+
+				rows := MustSelect(t, db, schema, "02_create_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "email": "alice@example.com"},
+					{"id": 2, "name": "bob", "email": "bob@bob.me"},
+				}, rows)
 			},
 		},
 		{
@@ -266,6 +433,52 @@ func TestCreateConstraint(t *testing.T) {
 				},
 			},
 			wantStartErr:  migrations.ColumnMigrationMissingError{Table: "users", Name: "name"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+		{
+			name: "expression of check constraint is missing",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_migration",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "check_name",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "check",
+							Up: migrations.OpCreateConstraintUp(map[string]string{
+								"name": "name",
+							}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"name": "name",
+							}),
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.FieldRequiredError{Name: "check"},
 			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
