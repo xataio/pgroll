@@ -226,6 +226,50 @@ func TestCreateConstraint(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
 		},
+		{
+			name: "missing migration for constraint creation",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_migration",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "unique_name",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "unique",
+							Up:      migrations.OpCreateConstraintUp(map[string]string{}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"name": "name",
+							}),
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.ColumnMigrationMissingError{Table: "users", Name: "name"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
 	})
 }
 

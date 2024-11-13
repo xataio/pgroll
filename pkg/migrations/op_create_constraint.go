@@ -173,6 +173,18 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 				Name:  col,
 			}
 		}
+		if _, ok := o.Up[col]; !ok {
+			return ColumnMigrationMissingError{
+				Table: o.Table,
+				Name:  col,
+			}
+		}
+		if _, ok := o.Down[col]; !ok {
+			return ColumnMigrationMissingError{
+				Table: o.Table,
+				Name:  col,
+			}
+		}
 	}
 
 	switch o.Type { //nolint:gocritic // more cases will be added
