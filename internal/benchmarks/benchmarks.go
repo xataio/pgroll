@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type ReportRecorder struct {
+type Reports struct {
 	mu              sync.Mutex
 	GitSHA          string
 	PostgresVersion string
@@ -14,7 +14,7 @@ type ReportRecorder struct {
 	Reports         []Report
 }
 
-func (r *ReportRecorder) AddReport(report Report) {
+func (r *Reports) AddReport(report Report) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.Reports = append(r.Reports, report)
@@ -24,8 +24,8 @@ func getPostgresVersion() string {
 	return os.Getenv("POSTGRES_VERSION")
 }
 
-func newReportRecorder() *ReportRecorder {
-	return &ReportRecorder{
+func newReports() *Reports {
+	return &Reports{
 		GitSHA:          os.Getenv("GITHUB_SHA"),
 		PostgresVersion: getPostgresVersion(),
 		Timestamp:       time.Now().Unix(),

@@ -24,7 +24,7 @@ const unitRowsPerSecond = "rows/s"
 
 var (
 	rowCounts = []int{10_000, 100_000, 300_000}
-	reporter  = newReportRecorder()
+	reports   = newReports()
 )
 
 func TestMain(m *testing.M) {
@@ -43,7 +43,7 @@ func TestMain(m *testing.M) {
 		}()
 
 		encoder := json.NewEncoder(w)
-		if err := encoder.Encode(reporter); err != nil {
+		if err := encoder.Encode(reports); err != nil {
 			return fmt.Errorf("encoding report file: %w", err)
 		}
 		return nil
@@ -74,7 +74,7 @@ func BenchmarkBackfill(b *testing.B) {
 				rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 				b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-				reporter.AddReport(Report{
+				reports.AddReport(Report{
 					Name:          b.Name(),
 					RowCount:      rowCount,
 					RowsPerSecond: rowsPerSecond,
@@ -119,7 +119,7 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-					reporter.AddReport(Report{
+					reports.AddReport(Report{
 						Name:          b.Name(),
 						RowCount:      rowCount,
 						RowsPerSecond: rowsPerSecond,
@@ -154,7 +154,7 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-					reporter.AddReport(Report{
+					reports.AddReport(Report{
 						Name:          b.Name(),
 						RowCount:      rowCount,
 						RowsPerSecond: rowsPerSecond,
