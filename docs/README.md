@@ -1045,7 +1045,7 @@ A create constraint operation adds a new constraint to an existing table.
 
 Only `UNIQUE` constraints are supported.
 
-Required fields: `name`, `table`, `type`.
+Required fields: `name`, `table`, `type`, `up`, `down`.
 
 **create constraint** operations have this structure:
 
@@ -1054,8 +1054,16 @@ Required fields: `name`, `table`, `type`.
   "create_constraint": {
     "table": "name of table",
     "name": "my_unique_constraint",
-    "columns": ["list of columns"],
+    "columns": ["col1", "col2"],
     "type": "unique"
+    "up": {
+      "col1": "col1 || random()",
+      "col2": "col2 || random()"
+    },
+    "down": {
+      "col1": "col1",
+      "col2": "col2"
+    }
   }
 }
 ```
