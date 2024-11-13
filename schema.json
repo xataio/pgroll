@@ -432,6 +432,44 @@
       "required": ["identity", "table"],
       "type": "object"
     },
+    "OpCreateConstraint": {
+      "additionalProperties": false,
+      "description": "Add constraint to table operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the constraint",
+          "type": "string"
+        },
+        "columns": {
+          "description": "Columns to add constraint to",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Type of the constraint",
+          "type": "string",
+          "enum": ["unique"]
+        },
+        "up": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "SQL expression of up migration by column"
+        },
+        "down": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "SQL expression of down migration by column"
+        }
+      },
+      "required": ["name", "table", "type", "up", "down"],
+      "type": "object"
+    },
     "PgRollOperation": {
       "anyOf": [
         {
@@ -565,6 +603,17 @@
             }
           },
           "required": ["set_replica_identity"]
+        },
+        {
+          "type": "object",
+          "description": "Add constraint operation",
+          "additionalProperties": false,
+          "properties": {
+            "create_constraint": {
+              "$ref": "#/$defs/OpCreateConstraint"
+            }
+          },
+          "required": ["create_constraint"]
         }
       ]
     },

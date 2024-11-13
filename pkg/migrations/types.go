@@ -119,6 +119,37 @@ type OpAlterColumn struct {
 	Up string `json:"up,omitempty"`
 }
 
+// Add constraint to table operation
+type OpCreateConstraint struct {
+	// Columns to add constraint to
+	Columns []string `json:"columns,omitempty"`
+
+	// SQL expression of down migration by column
+	Down OpCreateConstraintDown `json:"down"`
+
+	// Name of the constraint
+	Name string `json:"name"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// Type of the constraint
+	Type OpCreateConstraintType `json:"type"`
+
+	// SQL expression of up migration by column
+	Up OpCreateConstraintUp `json:"up"`
+}
+
+// SQL expression of down migration by column
+type OpCreateConstraintDown map[string]string
+
+type OpCreateConstraintType string
+
+const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
+
+// SQL expression of up migration by column
+type OpCreateConstraintUp map[string]string
+
 // Create index operation
 type OpCreateIndex struct {
 	// Names of columns on which to define the index

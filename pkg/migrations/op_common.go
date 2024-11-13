@@ -24,6 +24,7 @@ const (
 	OpNameDropConstraint     OpName = "drop_constraint"
 	OpNameSetReplicaIdentity OpName = "set_replica_identity"
 	OpRawSQLName             OpName = "sql"
+	OpCreateConstraintName   OpName = "create_constraint"
 
 	// Internal operation types used by `alter_column`
 	OpNameRenameColumn       OpName = "rename_column"
@@ -124,6 +125,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		case OpRawSQLName:
 			item = &OpRawSQL{}
 
+		case OpCreateConstraintName:
+			item = &OpCreateConstraint{}
+
 		default:
 			return fmt.Errorf("unknown migration type: %v", opName)
 		}
@@ -209,6 +213,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpRawSQL:
 		return OpRawSQLName
+
+	case *OpCreateConstraint:
+		return OpCreateConstraintName
 
 	}
 

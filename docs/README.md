@@ -27,6 +27,7 @@
         * [Add unique constraint](#add-unique-constraint)
     * [Create index](#create-index)
     * [Create table](#create-table)
+    * [Create constraint](#create-constraint)
     * [Drop column](#drop-column)
     * [Drop constraint](#drop-constraint)
     * [Drop index](#drop-index)
@@ -687,6 +688,7 @@ See the [examples](../examples) directory for examples of each kind of operation
     * [Add unique constraint](#add-unique-constraint)
 * [Create index](#create-index)
 * [Create table](#create-table)
+* [Create constraint](#create-constraint)
 * [Drop column](#drop-column)
 * [Drop constraint](#drop-constraint)
 * [Drop index](#drop-index)
@@ -1036,6 +1038,40 @@ Example **create table** migrations:
 * [20_create_posts_table.json](../examples/20_create_posts_table.json)
 * [25_add_table_with_check_constraint.json](../examples/25_add_table_with_check_constraint.json)
 * [28_different_defaults.json](../examples/28_different_defaults.json)
+
+### Create constraint
+
+A create constraint operation adds a new constraint to an existing table.
+
+Only `UNIQUE` constraints are supported.
+
+Required fields: `name`, `table`, `type`, `up`, `down`.
+
+**create constraint** operations have this structure:
+
+```json
+{
+  "create_constraint": {
+    "table": "name of table",
+    "name": "my_unique_constraint",
+    "columns": ["col1", "col2"],
+    "type": "unique"
+    "up": {
+      "col1": "col1 || random()",
+      "col2": "col2 || random()"
+    },
+    "down": {
+      "col1": "col1",
+      "col2": "col2"
+    }
+  }
+}
+```
+
+Example **create constraint** migrations:
+
+* [44_add_table_unique_constraint.json](../examples/44_add_table_unique_constraint.json)
+
 
 ### Drop column
 

@@ -1,0 +1,24 @@
+{
+  "name": "44_add_table_unique_constraint",
+  "operations": [
+    {
+      "create_constraint": {
+        "type": "unique",
+        "table": "tickets",
+        "name": "unique_zip_name",
+        "columns": [
+          "sellers_name",
+          "sellers_zip"
+        ],
+        "up": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        },
+        "down": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        }
+      }
+    }
+  ]
+}
