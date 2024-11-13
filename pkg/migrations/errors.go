@@ -54,6 +54,15 @@ func (e ColumnDoesNotExistError) Error() string {
 	return fmt.Sprintf("column %q does not exist on table %q", e.Name, e.Table)
 }
 
+type ColumnMigrationMissingError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnMigrationMissingError) Error() string {
+	return fmt.Sprintf("migration for column %q in %q is missing", e.Name, e.Table)
+}
+
 type ColumnIsNotNullableError struct {
 	Table string
 	Name  string
