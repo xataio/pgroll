@@ -86,13 +86,6 @@ func (d *ColumnDuplicator) WithoutNotNull() *ColumnDuplicator {
 	return d
 }
 
-func (d *Duplicator) WithColumn(c *schema.Column) *Duplicator {
-	d.column = c
-	d.asName = TemporaryName(c.Name)
-	d.withType = c.Type
-	return d
-}
-
 // Duplicate duplicates a column in the table, including all constraints and
 // comments.
 func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
@@ -156,7 +149,7 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 			}
 			d.duplicatedUnique[DuplicationName(uc.Name)] = schema.UniqueConstraint{
 				Name:    DuplicationName(uc.Name),
-				Columns: copyAndReplace(cols, d.column.Name, d.asName),
+				Columns: copyAndReplace(uc.Columns, d.column.Name, d.asName),
 			}
 		}
 	}
