@@ -16,6 +16,7 @@ import (
 
 // Duplicator duplicates a column in a table, including all constraints and
 // comments.
+// Column must be set with WithColumn before calling Duplicate.
 type Duplicator struct {
 	conn              db.DB
 	table             *schema.Table
@@ -24,6 +25,7 @@ type Duplicator struct {
 	withoutNotNull    bool
 	withType          string
 	withoutConstraint string
+	duplicatedUnique  map[string]schema.UniqueConstraint
 }
 
 const (
@@ -32,13 +34,11 @@ const (
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
-func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
+func NewColumnDuplicator(conn db.DB, table *schema.Table) *Duplicator {
 	return &Duplicator{
-		conn:     conn,
-		table:    table,
-		column:   column,
-		asName:   TemporaryName(column.Name),
-		withType: column.Type,
+		conn:             conn,
+		table:            table,
+		duplicatedUnique: make(map[string]schema.UniqueConstraint),
 	}
 }
 
@@ -60,9 +60,20 @@ func (d *Duplicator) WithoutNotNull() *Duplicator {
 	return d
 }
 
+func (d *Duplicator) WithColumn(c *schema.Column) *Duplicator {
+	d.column = c
+	d.asName = TemporaryName(c.Name)
+	d.withType = c.Type
+	return d
+}
+
 // Duplicate duplicates a column in the table, including all constraints and
 // comments.
 func (d *Duplicator) Duplicate(ctx context.Context) error {
+	if d.column == nil {
+		return errors.New("column not set")
+	}
+
 	const (
 		cAlterTableSQL                   = `ALTER TABLE %s ADD COLUMN %s %s`
 		cAddForeignKeySQL                = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
@@ -171,15 +182,29 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		}
 
 		if slices.Contains(uc.Columns, d.column.Name) {
+			cols := uc.Columns
+			// Drop the existing unique index if it is a duplicated unique constraint
+			if existingConstraint, ok := d.duplicatedUnique[DuplicationName(uc.Name)]; ok {
+				dropIndex := fmt.Sprintf("DROP INDEX CONCURRENTLY %s", pq.QuoteIdentifier(DuplicationName(uc.Name)))
+				_, err := d.conn.ExecContext(ctx, dropIndex)
+				if err != nil {
+					return err
+				}
+				cols = existingConstraint.Columns
+			}
 			sql = fmt.Sprintf(cCreateUniqueIndexSQL,
 				pq.QuoteIdentifier(DuplicationName(uc.Name)),
 				pq.QuoteIdentifier(d.table.Name),
-				strings.Join(quoteColumnNames(copyAndReplace(uc.Columns, d.column.Name, d.asName)), ", "),
+				strings.Join(quoteColumnNames(copyAndReplace(cols, d.column.Name, d.asName)), ", "),
 			)
 
 			_, err = d.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
+			}
+			d.duplicatedUnique[DuplicationName(uc.Name)] = schema.UniqueConstraint{
+				Name:    DuplicationName(uc.Name),
+				Columns: copyAndReplace(cols, d.column.Name, d.asName),
 			}
 		}
 	}

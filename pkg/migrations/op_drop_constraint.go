@@ -22,7 +22,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Create a copy of the column on the underlying table.
-	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
+	d := NewColumnDuplicator(conn, table).WithColumn(column).WithoutConstraint(o.Name)
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}

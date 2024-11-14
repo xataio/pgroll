@@ -17,9 +17,10 @@ var _ Operation = (*OpCreateConstraint)(nil)
 
 func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	var err error
-	var table *schema.Table
+	table := s.GetTable(o.Table)
+	d := NewColumnDuplicator(conn, table)
 	for _, col := range o.Columns {
-		if table, err = o.duplicateColumnBeforeStart(ctx, conn, latestSchema, tr, col, s); err != nil {
+		if err = o.duplicateColumnBeforeStart(ctx, conn, latestSchema, tr, table, col, d, s); err != nil {
 			return nil, err
 		}
 	}
@@ -32,18 +33,15 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	return table, nil
 }
 
-func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, colName string, s *schema.Schema) (*schema.Table, error) {
-	table := s.GetTable(o.Table)
-	column := table.GetColumn(colName)
-
-	d := NewColumnDuplicator(conn, table, column)
+func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, table *schema.Table, colName string, d *Duplicator, s *schema.Schema) error {
+	d.WithColumn(table.GetColumn(colName))
 	if err := d.Duplicate(ctx); err != nil {
-		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
+		return fmt.Errorf("failed to duplicate column for new constraint: %w", err)
 	}
 
 	upSQL, ok := o.Up[colName]
 	if !ok {
-		return nil, fmt.Errorf("up migration is missing for column %s", colName)
+		return fmt.Errorf("up migration is missing for column %s", colName)
 	}
 	physicalColumnName := TemporaryName(colName)
 	err := createTrigger(ctx, conn, tr, triggerConfig{
@@ -57,16 +55,16 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		SQL:            upSQL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
+		return fmt.Errorf("failed to create up trigger: %w", err)
 	}
 
-	table.AddColumn(colName, schema.Column{
+	d.table.AddColumn(colName, schema.Column{
 		Name: physicalColumnName,
 	})
 
 	downSQL, ok := o.Down[colName]
 	if !ok {
-		return nil, fmt.Errorf("down migration is missing for column %s", colName)
+		return fmt.Errorf("down migration is missing for column %s", colName)
 	}
 	err = createTrigger(ctx, conn, tr, triggerConfig{
 		Name:           TriggerName(o.Table, physicalColumnName),
@@ -79,9 +77,9 @@ func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, con
 		SQL:            downSQL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
+		return fmt.Errorf("failed to create down trigger: %w", err)
 	}
-	return table, nil
+	return nil
 }
 
 func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
