@@ -113,7 +113,7 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
 				pq.QuoteIdentifier(d.duplicator.table.Name),
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, d.column.Name, d.asName),
+				rewriteCheckExpression(cc.Definition, d.column.Name),
 			)
 
 			_, err := d.duplicator.conn.ExecContext(ctx, sql)
