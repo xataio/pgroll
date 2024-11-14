@@ -23,9 +23,10 @@ type ColumnDuplicator struct {
 	withoutNotNull    bool
 	withType          string
 	withoutConstraint string
-	duplicatedUnique  map[string]schema.UniqueConstraint
 }
 
+// ColumnGroupDuplicator duplicates a group of columns in a table, including all constraints and
+// comments.
 type ColumnGroupDuplicator struct {
 	duplicator *duplicator
 	columns    []*schema.Column
@@ -146,10 +147,6 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 			_, err := d.duplicator.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
-			}
-			d.duplicatedUnique[DuplicationName(uc.Name)] = schema.UniqueConstraint{
-				Name:    DuplicationName(uc.Name),
-				Columns: copyAndReplace(uc.Columns, d.column.Name, d.asName),
 			}
 		}
 	}
