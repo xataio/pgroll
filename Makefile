@@ -31,7 +31,7 @@ ledger:
 examples: ledger
 	@go build
 	@./pgroll init
-	@./pgroll bootstrap examples
+	@./pgroll migrate examples --complete
 	@go clean
 
 test:
