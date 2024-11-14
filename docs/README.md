@@ -13,6 +13,7 @@
     * [complete](#complete)
     * [rollback](#rollback)
     * [status](#status)
+    * [pull](#pull)
 * [Operations reference](#operations-reference)
     * [Add column](#add-column)
     * [Alter column](#alter-column)
@@ -536,6 +537,7 @@ The `pgroll` CLI offers the following subcommands:
 * [complete](#complete)
 * [rollback](#rollback)
 * [status](#status)
+* [pull](#pull)
 
 The `pgroll` CLI has the following top-level flags:
 * `--postgres-url`: The URL of the postgres instance against which migrations will be run.
@@ -659,6 +661,47 @@ $ pgroll status --schema schema_a
   "Status": "Complete"
 }
 ```
+
+### Pull
+
+`pgroll pull` pulls the complete schema history of applied migrations from the target database and writes the migrations to disk.
+
+Assuming that all [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied, running:
+
+```
+$ pgroll pull migrations/
+```
+
+will write the complete schema history as `.json` files to the `migrations/` directory:
+
+```
+$ ls migrations/
+
+01_create_tables.json
+02_create_another_table.json
+03_add_column_to_products.json
+04_rename_table.json
+05_sql.json
+06_add_column_to_sql_table.json
+...
+```
+
+The command takes an optional `--with-prefixes` flag which will write each filename prefixed with its position in the schema history:
+
+```
+$ ls migrations/
+
+0001_01_create_tables.json
+0002_02_create_another_table.json
+0003_03_add_column_to_products.json
+0004_04_rename_table.json
+0005_05_sql.json
+0006_06_add_column_to_sql_table.json
+...
+```
+The `--with-prefixes` flag ensures that files are sorted lexicographically by their time of application.
+
+If the directory specified as the required argument to `pgroll pull` does not exist, `pgroll pull` will create it.
 
 ## Operations reference
 
