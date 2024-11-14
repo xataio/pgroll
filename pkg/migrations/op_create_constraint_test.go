@@ -320,7 +320,7 @@ func TestCreateConstraint(t *testing.T) {
 					"email": "alice",
 				})
 
-				// Inserting values into the new schema that violate uniqueness should fail.
+				// Inserting values into the new schema that meet the check constraint should succeed.
 				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
 					"name":  "bob",
 					"email": "bob@bob.me",
