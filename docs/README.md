@@ -623,6 +623,21 @@ Migrations cannot be rolled back once completed. Attempting to roll back a migra
 
 :warning: Before running `pgroll rollback` ensure that any new versions of applications that depend on the new database schema are no longer live. Prematurely running `pgroll rollback` can cause downtime of new application instances that depend on the new schema.
 
+
+### Migrate
+
+`pgroll migrate` applies all outstanding migrations from a directory to the target database.
+
+Assuming that migrations up to and including migration `40_create_enum_type` from the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) directory have been applied, running:
+
+```
+$ pgroll migrate examples/
+```
+
+will apply migrations from `41_add_enum_column` onwards to the target database.
+
+If the `--complete` flag is passed to `pgroll migrate` the final migration to be applied will be completed. Otherwise the final migration will be left active (started but not completed).
+
 ### Status
 
 `pgroll status` shows the current status of `pgroll` within a given schema:
