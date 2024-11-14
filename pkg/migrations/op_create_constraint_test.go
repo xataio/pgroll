@@ -314,7 +314,7 @@ func TestCreateConstraint(t *testing.T) {
 				// The check constraint exists on the new table.
 				CheckConstraintMustExist(t, db, schema, "users", "check_name_email")
 
-				// Inserting values into the old schema that the check must succeed.
+				// Inserting values into the old schema that the violate the check constraint must succeed.
 				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
 					"name":  "alice",
 					"email": "alice",
