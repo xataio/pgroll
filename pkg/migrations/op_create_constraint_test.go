@@ -167,7 +167,7 @@ func TestCreateConstraint(t *testing.T) {
 				// Functions, triggers and temporary columns are dropped.
 				tableCleanedUp(t, db, schema, "users", "name")
 
-        // Inserting values into the new schema that violate the check constraint should fail.
+				// Inserting values into the new schema that violate the check constraint should fail.
 				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
 					"name": "carol0",
 				}, testutils.CheckViolationErrorCode)
@@ -341,6 +341,12 @@ func TestCreateConstraint(t *testing.T) {
 				// Functions, triggers and temporary columns are dropped.
 				tableCleanedUp(t, db, schema, "users", "name")
 				tableCleanedUp(t, db, schema, "users", "email")
+
+				// Inserting values into the new schema that the violate the check constraint must fail.
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name":  "carol",
+					"email": "carol",
+				}, testutils.CheckViolationErrorCode)
 
 				rows := MustSelect(t, db, schema, "02_create_constraint", "users")
 				assert.Equal(t, []map[string]any{
