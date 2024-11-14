@@ -144,6 +144,11 @@ func (m *Roll) PgConn() db.DB {
 	return m.pgConn
 }
 
+// State returns the state instance the Roll instance is acting on
+func (m *Roll) State() *state.State {
+	return m.state
+}
+
 // Schema returns the schema the Roll instance is acting on
 func (m *Roll) Schema() string {
 	return m.schema
