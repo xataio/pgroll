@@ -1,6 +1,5 @@
 name: Benchmark
 on:
-  pull_request: # Temporary
   push:
     branches:
       - main
