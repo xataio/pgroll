@@ -161,7 +161,7 @@ func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 		withoutConstraint := ""
 		// Duplicate the column with the new type
 		// and check and fk constraints
-		if err := cg.duplicator.duplicateColumn(ctx, column, asName, notNull, column.Type, withoutConstraint); err != nil {
+		if err := cg.duplicator.duplicateColumn(ctx, column, asName, withoutNotNull, column.Type, withoutConstraint); err != nil {
 			return err
 		}
 
@@ -222,7 +222,6 @@ func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 				return err
 			}
 		}
-
 	}
 
 	return nil
