@@ -74,11 +74,7 @@ func BenchmarkBackfill(b *testing.B) {
 				rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 				b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-				reports.AddReport(Report{
-					Name:          b.Name(),
-					RowCount:      rowCount,
-					RowsPerSecond: rowsPerSecond,
-				})
+				addRowsPerSecond(b, rowCount, rowsPerSecond)
 			})
 		})
 	}
@@ -119,11 +115,7 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-					reports.AddReport(Report{
-						Name:          b.Name(),
-						RowCount:      rowCount,
-						RowsPerSecond: rowsPerSecond,
-					})
+					addRowsPerSecond(b, rowCount, rowsPerSecond)
 				})
 			})
 		}
@@ -154,11 +146,7 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
 
-					reports.AddReport(Report{
-						Name:          b.Name(),
-						RowCount:      rowCount,
-						RowsPerSecond: rowsPerSecond,
-					})
+					addRowsPerSecond(b, rowCount, rowsPerSecond)
 				})
 			})
 		}
@@ -190,6 +178,15 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 	require.NoError(tb, mig.Start(ctx, &migCreateTable))
 	require.NoError(tb, mig.Complete(ctx))
 	seed(tb, rowCount, db)
+}
+
+func addRowsPerSecond(b *testing.B, rowCount int, perSecond float64) {
+	reports.AddReport(Report{
+		Name:     b.Name(),
+		Unit:     unitRowsPerSecond,
+		RowCount: rowCount,
+		Result:   perSecond,
+	})
 }
 
 // Simple table with a nullable `name` field.

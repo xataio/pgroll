@@ -32,7 +32,8 @@ func newReports() *Reports {
 }
 
 type Report struct {
-	Name          string
-	RowCount      int
-	RowsPerSecond float64
+	Name     string
+	RowCount int
+	Unit     string
+	Result   float64
 }
