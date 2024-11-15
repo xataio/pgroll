@@ -60,5 +60,5 @@ jobs:
     - name: Append new results
       run: cat results/*.json >> benchmark-results.json
 
-    - name: Upload with new results
+    - name: Upload combined results
       run: aws s3 cp ./benchmark-results.json s3://pgroll-benchmark-results/benchmark-results.json
