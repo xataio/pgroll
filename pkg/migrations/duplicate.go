@@ -157,7 +157,7 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 	for _, column := range cg.columns {
 		asName := TemporaryName(column.Name)
-		notNull := false
+		withoutNotNull := false
 		withoutConstraint := ""
 		// Duplicate the column with the new type
 		// and check and fk constraints
