@@ -17,7 +17,7 @@ import (
 // Duplicator duplicates a column in a table, including all constraints and
 // comments.
 type Duplicator struct {
-	duplicator        *duplicatorStmtBuilder
+	stmtBuilder       *duplicatorStmtBuilder
 	conn              db.DB
 	columns           map[string]*columnToDuplicate
 	withoutConstraint []string
@@ -48,7 +48,7 @@ const (
 // NewColumnDuplicator creates a new Duplicator for a column.
 func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	return &Duplicator{
-		duplicator: &duplicatorStmtBuilder{
+		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
 		conn: conn,
@@ -73,7 +73,7 @@ func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema
 		}
 	}
 	return &Duplicator{
-		duplicator: &duplicatorStmtBuilder{
+		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
 		conn:    conn,
@@ -108,7 +108,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 
 		// Duplicate the column with the new type
 		// and check and fk constraints
-		if sql := d.duplicator.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType, d.withoutConstraint); sql != "" {
+		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType, d.withoutConstraint); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
@@ -116,7 +116,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		}
 
 		// Duplicate the column's default value
-		if sql := d.duplicator.duplicateDefault(c.column, c.asName); sql != "" {
+		if sql := d.stmtBuilder.duplicateDefault(c.column, c.asName); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
 			if err != nil {
@@ -124,7 +124,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 			}
 		}
 
-		if sql := d.duplicator.duplicateComment(c.column, c.asName); sql != "" {
+		if sql := d.stmtBuilder.duplicateComment(c.column, c.asName); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
@@ -135,7 +135,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	// Generate SQL to duplicate any check constraints on the columns. This may faile
 	// if the check constraint is not valid for the new column type, in which case
 	// the error is ignored.
-	for _, sql := range d.duplicator.duplicateCheckConstraints(d.withoutConstraint, colNames...) {
+	for _, sql := range d.stmtBuilder.duplicateCheckConstraints(d.withoutConstraint, colNames...) {
 		// Update the check constraint expression to use the new column names if any of the columns are duplicated
 		_, err := d.conn.ExecContext(ctx, sql)
 		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
@@ -147,7 +147,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	// Generate SQL to duplicate any unique constraints on the columns
 	// The constraint is duplicated by adding a unique index on the column concurrently.
 	// The index is converted into a unique constraint on migration completion.
-	for _, sql := range d.duplicator.duplicateUniqueConstraints(d.withoutConstraint, colNames...) {
+	for _, sql := range d.stmtBuilder.duplicateUniqueConstraints(d.withoutConstraint, colNames...) {
 		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
 		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
 			return err
