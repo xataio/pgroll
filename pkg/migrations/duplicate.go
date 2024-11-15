@@ -176,23 +176,19 @@ func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 		}
 	}
 
+	colNames := make([]string, len(cg.columns))
+	for i, column := range cg.columns {
+		colNames[i] = column.Name
+	}
+
 	// Generate SQL to duplicate any check constraints on the column group.
 	for _, cc := range cg.duplicator.table.CheckConstraints {
-		sameColumns := true
-		colNames := make([]string, len(cg.columns))
-		for i, column := range cg.columns {
-			if !slices.Contains(cc.Columns, column.Name) {
-				sameColumns = false
-				break
-			}
-			colNames[i] = column.Name
-		}
-
-		if sameColumns {
+		// Update the check constraint expression to use the new column names if any of the columns are duplicated
+		if duplicatedConstraintColumns := cg.duplicator.duplicatedConstraintColumns(cc.Columns, colNames); len(duplicatedConstraintColumns) > 0 {
 			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
 				pq.QuoteIdentifier(cg.duplicator.table.Name),
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, colNames...),
+				rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...),
 			)
 
 			if _, err := cg.duplicator.conn.ExecContext(ctx, sql); err != nil {
@@ -203,19 +199,12 @@ func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 
 	// Generate SQL to duplicate any unique constraints on the column group.
 	for _, uc := range cg.duplicator.table.UniqueConstraints {
-		sameColumns := true
-		for _, column := range cg.columns {
-			if !slices.Contains(uc.Columns, column.Name) {
-				sameColumns = false
-				break
-			}
-		}
-
-		if sameColumns {
+		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
+		if duplicatedMember, constraintColumns := cg.duplicator.allConstraintColumns(uc.Columns, colNames); duplicatedMember {
 			sql := fmt.Sprintf(cCreateUniqueIndexSQL,
 				pq.QuoteIdentifier(DuplicationName(uc.Name)),
 				pq.QuoteIdentifier(cg.duplicator.table.Name),
-				strings.Join(quotedTemporaryNames(uc.Columns), ", "),
+				strings.Join(quoteColumnNames(constraintColumns), ", "),
 			)
 
 			if _, err := cg.duplicator.conn.ExecContext(ctx, sql); err != nil {
@@ -225,6 +214,35 @@ func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// duplicatedConstraintColumns returns a new slice of constraint columns with
+// the columns that are duplicated replaced with temporary names.
+func (d *duplicator) duplicatedConstraintColumns(constraintColumns []string, duplicatedColumns []string) []string {
+	newConstraintColumns := make([]string, 0)
+	for _, column := range constraintColumns {
+		if slices.Contains(duplicatedColumns, column) {
+			newConstraintColumns = append(newConstraintColumns, TemporaryName(column))
+		}
+	}
+	return newConstraintColumns
+}
+
+// allConstraintColumns returns a new slice of constraint columns with the columns
+// that are duplicated replaced with temporary names and a boolean indicating if
+// any of the columns are duplicated.
+func (d *duplicator) allConstraintColumns(constraintColumns []string, duplicatedColumns []string) (bool, []string) {
+	duplicatedMember := false
+	newConstraintColumns := make([]string, len(constraintColumns))
+	for i, column := range constraintColumns {
+		if slices.Contains(duplicatedColumns, column) {
+			newConstraintColumns[i] = TemporaryName(column)
+			duplicatedMember = true
+		} else {
+			newConstraintColumns[i] = column
+		}
+	}
+	return duplicatedMember, newConstraintColumns
 }
 
 func (d *duplicator) duplicateColumn(
