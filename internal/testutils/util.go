@@ -30,7 +30,7 @@ var tConnStr string
 
 // SharedTestMain starts a postgres container to be used by all tests in a package. Each test then
 // connects to the container and creates a new database. Optional functions that will run after all
-// tests can be added and should return nil error to indicate they ran successfully. If they return
+// tests can be added and should return a nil error to indicate they ran successfully. If they return
 // an error all subsequent functions will be skipped.
 func SharedTestMain(m *testing.M, postRunHooks ...func() error) {
 	ctx := context.Background()
