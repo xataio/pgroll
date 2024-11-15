@@ -330,15 +330,15 @@ func (o *OpAlterColumn) subOperations() []Operation {
 }
 
 // duplicatorForOperations returns a Duplicator for the given operations
-func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, column *schema.Column) *ColumnDuplicator {
+func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
 	d := NewColumnDuplicator(conn, table, column)
 
 	for _, op := range ops {
 		switch op := (op).(type) {
 		case *OpDropNotNull:
-			d = d.WithoutNotNull()
+			d = d.WithoutNotNull(column.Name)
 		case *OpChangeType:
-			d = d.WithType(op.Type)
+			d = d.WithType(column.Name, op.Type)
 		}
 	}
 	return d

@@ -11,31 +11,28 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var (
-	table = &schema.Table{
-		Name: "test_table",
-		Columns: map[string]schema.Column{
-			"id":          {Name: "id", Type: "serial"},
-			"name":        {Name: "name", Type: "text"},
-			"nick":        {Name: "nick", Type: "text"},
-			"age":         {Name: "age", Type: "integer"},
-			"email":       {Name: "email", Type: "text"},
-			"city":        {Name: "city", Type: "text"},
-			"description": {Name: "description", Type: "text"},
-		},
-		UniqueConstraints: map[string]schema.UniqueConstraint{
-			"unique_email":     {Name: "unique_email", Columns: []string{"email"}},
-			"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
-		},
-		CheckConstraints: map[string]schema.CheckConstraint{
-			"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`},
-			"adults":          {Name: "adults", Columns: []string{"age"}, Definition: `"age" > 18`},
-			"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
-			"different_nick":  {Name: "different_nick", Columns: []string{"name", "nick"}, Definition: `"name" != "nick"`},
-		},
-	}
-	withoutConstraint = ""
-)
+var table = &schema.Table{
+	Name: "test_table",
+	Columns: map[string]schema.Column{
+		"id":          {Name: "id", Type: "serial"},
+		"name":        {Name: "name", Type: "text"},
+		"nick":        {Name: "nick", Type: "text"},
+		"age":         {Name: "age", Type: "integer"},
+		"email":       {Name: "email", Type: "text"},
+		"city":        {Name: "city", Type: "text"},
+		"description": {Name: "description", Type: "text"},
+	},
+	UniqueConstraints: map[string]schema.UniqueConstraint{
+		"unique_email":     {Name: "unique_email", Columns: []string{"email"}},
+		"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
+	},
+	CheckConstraints: map[string]schema.CheckConstraint{
+		"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`},
+		"adults":          {Name: "adults", Columns: []string{"age"}, Definition: `"age" > 18`},
+		"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
+		"different_nick":  {Name: "different_nick", Columns: []string{"name", "nick"}, Definition: `"name" != "nick"`},
+	},
+}
 
 func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
 	d := &duplicatorStmtBuilder{table}
@@ -75,7 +72,7 @@ func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			stmts := d.duplicateCheckConstraints(withoutConstraint, testCases.columns...)
+			stmts := d.duplicateCheckConstraints(nil, testCases.columns...)
 			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
 			for _, stmt := range stmts {
 				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
@@ -116,7 +113,7 @@ func TestDuplicateStmtBuilderUniqueConstraints(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			stmts := d.duplicateUniqueConstraints(withoutConstraint, testCases.columns...)
+			stmts := d.duplicateUniqueConstraints(nil, testCases.columns...)
 			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
 			for _, stmt := range stmts {
 				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))

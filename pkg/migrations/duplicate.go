@@ -14,24 +14,20 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-// ColumnDuplicator duplicates a column in a table, including all constraints and
+// Duplicator duplicates a column in a table, including all constraints and
 // comments.
-type ColumnDuplicator struct {
+type Duplicator struct {
 	duplicator        *duplicatorStmtBuilder
 	conn              db.DB
-	column            *schema.Column
-	asName            string
-	withoutNotNull    bool
-	withType          string
-	withoutConstraint string
+	columns           map[string]*columnToDuplicate
+	withoutConstraint []string
 }
 
-// ColumnGroupDuplicator duplicates a group of columns in a table, including all constraints and
-// comments.
-type ColumnGroupDuplicator struct {
-	duplicator *duplicatorStmtBuilder
-	conn       db.DB
-	columns    []*schema.Column
+type columnToDuplicate struct {
+	column         *schema.Column
+	asName         string
+	withoutNotNull bool
+	withType       string
 }
 
 // duplicatorStmtBuilder is a helper for building SQL statements to duplicate
@@ -50,78 +46,96 @@ const (
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
-func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *ColumnDuplicator {
-	return &ColumnDuplicator{
+func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
+	return &Duplicator{
 		duplicator: &duplicatorStmtBuilder{
 			table: table,
 		},
-		conn:     conn,
-		column:   column,
-		asName:   TemporaryName(column.Name),
-		withType: column.Type,
+		conn: conn,
+		columns: map[string]*columnToDuplicate{
+			column.Name: {
+				column:   column,
+				asName:   TemporaryName(column.Name),
+				withType: column.Type,
+			},
+		},
+		withoutConstraint: make([]string, 0),
 	}
 }
 
-func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema.Column) *ColumnGroupDuplicator {
-	return &ColumnGroupDuplicator{
+func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema.Column) *Duplicator {
+	cols := make(map[string]*columnToDuplicate, len(columns))
+	for _, column := range columns {
+		cols[column.Name] = &columnToDuplicate{
+			column:   column,
+			asName:   TemporaryName(column.Name),
+			withType: column.Type,
+		}
+	}
+	return &Duplicator{
 		duplicator: &duplicatorStmtBuilder{
 			table: table,
 		},
 		conn:    conn,
-		columns: columns,
+		columns: cols,
 	}
 }
 
 // WithType sets the type of the new column.
-func (d *ColumnDuplicator) WithType(t string) *ColumnDuplicator {
-	d.withType = t
+func (d *Duplicator) WithType(columnName, t string) *Duplicator {
+	d.columns[columnName].withType = t
 	return d
 }
 
 // WithoutConstraint excludes a constraint from being duplicated.
-func (d *ColumnDuplicator) WithoutConstraint(c string) *ColumnDuplicator {
-	d.withoutConstraint = c
+func (d *Duplicator) WithoutConstraint(c string) *Duplicator {
+	d.withoutConstraint = append(d.withoutConstraint, c)
 	return d
 }
 
 // WithoutNotNull excludes the NOT NULL constraint from being duplicated.
-func (d *ColumnDuplicator) WithoutNotNull() *ColumnDuplicator {
-	d.withoutNotNull = true
+func (d *Duplicator) WithoutNotNull(columnName string) *Duplicator {
+	d.columns[columnName].withoutNotNull = true
 	return d
 }
 
 // Duplicate duplicates a column in the table, including all constraints and
 // comments.
-func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
-	// Duplicate the column with the new type
-	// and check and fk constraints
-	if sql := d.duplicator.duplicateColumn(d.column, d.asName, d.withoutNotNull, d.withType, d.withoutConstraint); sql != "" {
-		_, err := d.conn.ExecContext(ctx, sql)
-		if err != nil {
-			return err
+func (d *Duplicator) Duplicate(ctx context.Context) error {
+	colNames := make([]string, 0, len(d.columns))
+	for name, c := range d.columns {
+		colNames = append(colNames, name)
+
+		// Duplicate the column with the new type
+		// and check and fk constraints
+		if sql := d.duplicator.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType, d.withoutConstraint); sql != "" {
+			_, err := d.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Duplicate the column's default value
+		if sql := d.duplicator.duplicateDefault(c.column, c.asName); sql != "" {
+			_, err := d.conn.ExecContext(ctx, sql)
+			err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
+			if err != nil {
+				return err
+			}
+		}
+
+		if sql := d.duplicator.duplicateComment(c.column, c.asName); sql != "" {
+			_, err := d.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	// Duplicate the column's default value
-	if sql := d.duplicator.duplicateDefault(d.column, d.asName); sql != "" {
-		_, err := d.conn.ExecContext(ctx, sql)
-		err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
-		if err != nil {
-			return err
-		}
-	}
-
-	if sql := d.duplicator.duplicateComment(d.column, d.asName); sql != "" {
-		_, err := d.conn.ExecContext(ctx, sql)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Generate SQL to duplicate any check constraints on the column. This may faile
+	// Generate SQL to duplicate any check constraints on the columns. This may faile
 	// if the check constraint is not valid for the new column type, in which case
 	// the error is ignored.
-	for _, sql := range d.duplicator.duplicateCheckConstraints(d.withoutConstraint, d.column.Name) {
+	for _, sql := range d.duplicator.duplicateCheckConstraints(d.withoutConstraint, colNames...) {
 		// Update the check constraint expression to use the new column names if any of the columns are duplicated
 		_, err := d.conn.ExecContext(ctx, sql)
 		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
@@ -130,10 +144,10 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 		}
 	}
 
-	// Generate SQL to duplicate any unique constraints on the column
+	// Generate SQL to duplicate any unique constraints on the columns
 	// The constraint is duplicated by adding a unique index on the column concurrently.
 	// The index is converted into a unique constraint on migration completion.
-	for _, sql := range d.duplicator.duplicateUniqueConstraints(d.withoutConstraint, d.column.Name) {
+	for _, sql := range d.duplicator.duplicateUniqueConstraints(d.withoutConstraint, colNames...) {
 		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
 		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
 			return err
@@ -143,63 +157,10 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 	return nil
 }
 
-func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
-	withoutConstraint := ""
-	colNames := make([]string, len(cg.columns))
-	for i, column := range cg.columns {
-		colNames[i] = column.Name
-		asName := TemporaryName(column.Name)
-		withoutNotNull := false
-		// Duplicate the column with the new type
-		// and check and fk constraints
-		if sql := cg.duplicator.duplicateColumn(column, asName, withoutNotNull, column.Type, withoutConstraint); sql != "" {
-			_, err := cg.conn.ExecContext(ctx, sql)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Duplicate the column's default value
-		if sql := cg.duplicator.duplicateDefault(column, asName); sql != "" {
-			_, err := cg.conn.ExecContext(ctx, sql)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Duplicate the column's comment
-		if sql := cg.duplicator.duplicateComment(column, asName); sql != "" {
-			_, err := cg.conn.ExecContext(ctx, sql)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// Generate SQL to duplicate any check constraints on the column group.
-	for _, sql := range cg.duplicator.duplicateCheckConstraints(withoutConstraint, colNames...) {
-		// Update the check constraint expression to use the new column names if any of the columns are duplicated
-		_, err := cg.conn.ExecContext(ctx, sql)
-		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Generate SQL to duplicate any unique constraints on the column group.
-	for _, sql := range cg.duplicator.duplicateUniqueConstraints(withoutConstraint, colNames...) {
-		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
-		if _, err := cg.conn.ExecContext(ctx, sql); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint string, colNames ...string) []string {
+func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.CheckConstraints))
 	for _, cc := range d.table.CheckConstraints {
-		if cc.Name == withoutConstraint {
+		if slices.Contains(withoutConstraint, cc.Name) {
 			continue
 		}
 		if duplicatedConstraintColumns := d.duplicatedConstraintColumns(cc.Columns, colNames...); len(duplicatedConstraintColumns) > 0 {
@@ -213,10 +174,10 @@ func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint stri
 	return stmts
 }
 
-func (d *duplicatorStmtBuilder) duplicateUniqueConstraints(withoutConstraint string, colNames ...string) []string {
+func (d *duplicatorStmtBuilder) duplicateUniqueConstraints(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.UniqueConstraints))
 	for _, uc := range d.table.UniqueConstraints {
-		if uc.Name == withoutConstraint {
+		if slices.Contains(withoutConstraint, uc.Name) {
 			continue
 		}
 		if duplicatedMember, constraintColumns := d.allConstraintColumns(uc.Columns, colNames...); duplicatedMember {
@@ -264,7 +225,7 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 	asName string,
 	withoutNotNull bool,
 	withType string,
-	withoutConstraint string,
+	withoutConstraint []string,
 ) string {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
@@ -289,7 +250,7 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 
 	// Generate SQL to duplicate any foreign key constraints on the column
 	for _, fk := range d.table.ForeignKeys {
-		if fk.Name == withoutConstraint {
+		if slices.Contains(withoutConstraint, fk.Name) {
 			continue
 		}
 
