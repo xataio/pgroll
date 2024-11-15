@@ -34,6 +34,8 @@ type ColumnGroupDuplicator struct {
 	columns    []*schema.Column
 }
 
+// duplicatorStmtBuilder is a helper for building SQL statements to duplicate
+// columns and constraints in a table.
 type duplicatorStmtBuilder struct {
 	table *schema.Table
 }
