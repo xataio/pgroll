@@ -6,6 +6,7 @@ on:
     branches:
       - main
 permissions:
+  id-token: write # For getting AWS permissions
   contents: read
   packages: read
 jobs:
@@ -46,11 +47,18 @@ jobs:
         path: ./results/
         merge-multiple: true
 
-    - name: Combine all results
-      run: cat results/*.json > ${{github.sha}}_benchmark_result.json
-
-    - name: Upload combined results
-      uses: actions/upload-artifact@v4
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
       with:
-        name: ${{github.sha}}_benchmark_result.json
-        path: ${{github.sha}}_benchmark_result.json
+        role-to-assume: arn:aws:iam::493985724844:role/xata-gh-pgroll-bucket-access
+        aws-region: us-east-1
+        mask-aws-account-id: 'no'
+
+    - name: Download current results from S3
+      run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json ./benchmark-results.json
+
+    - name: Append new results
+      run: cat results/*.json >> benchmark-results.json
+
+    - name: Upload with new results
+      run: aws s3 cp ./benchmark-results.json s3://pgroll-benchmark-results/benchmark-results.json
