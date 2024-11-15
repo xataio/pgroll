@@ -17,7 +17,8 @@ import (
 // ColumnDuplicator duplicates a column in a table, including all constraints and
 // comments.
 type ColumnDuplicator struct {
-	duplicator        *duplicator
+	duplicator        *duplicatorStmtBuilder
+	conn              db.DB
 	column            *schema.Column
 	asName            string
 	withoutNotNull    bool
@@ -28,12 +29,12 @@ type ColumnDuplicator struct {
 // ColumnGroupDuplicator duplicates a group of columns in a table, including all constraints and
 // comments.
 type ColumnGroupDuplicator struct {
-	duplicator *duplicator
+	duplicator *duplicatorStmtBuilder
+	conn       db.DB
 	columns    []*schema.Column
 }
 
-type duplicator struct {
-	conn  db.DB
+type duplicatorStmtBuilder struct {
 	table *schema.Table
 }
 
@@ -49,10 +50,10 @@ const (
 // NewColumnDuplicator creates a new Duplicator for a column.
 func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *ColumnDuplicator {
 	return &ColumnDuplicator{
-		duplicator: &duplicator{
-			conn:  conn,
+		duplicator: &duplicatorStmtBuilder{
 			table: table,
 		},
+		conn:     conn,
 		column:   column,
 		asName:   TemporaryName(column.Name),
 		withType: column.Type,
@@ -61,10 +62,10 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column)
 
 func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema.Column) *ColumnGroupDuplicator {
 	return &ColumnGroupDuplicator{
-		duplicator: &duplicator{
-			conn:  conn,
+		duplicator: &duplicatorStmtBuilder{
 			table: table,
 		},
+		conn:    conn,
 		columns: columns,
 	}
 }
@@ -92,62 +93,47 @@ func (d *ColumnDuplicator) WithoutNotNull() *ColumnDuplicator {
 func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 	// Duplicate the column with the new type
 	// and check and fk constraints
-	if err := d.duplicator.duplicateColumn(ctx, d.column, d.asName, d.withoutNotNull, d.withType, d.withoutConstraint); err != nil {
-		return err
+	if sql := d.duplicator.duplicateColumn(d.column, d.asName, d.withoutNotNull, d.withType, d.withoutConstraint); sql != "" {
+		_, err := d.conn.ExecContext(ctx, sql)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Duplicate the column's default value
-	if err := d.duplicator.duplicateDefault(ctx, d.column, d.asName); err != nil {
-		return err
+	if sql := d.duplicator.duplicateDefault(d.column, d.asName); sql != "" {
+		_, err := d.conn.ExecContext(ctx, sql)
+		if err != nil {
+			return err
+		}
+	}
+
+	if sql := d.duplicator.duplicateComment(d.column, d.asName); sql != "" {
+		_, err := d.conn.ExecContext(ctx, sql)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Generate SQL to duplicate any check constraints on the column. This may faile
 	// if the check constraint is not valid for the new column type, in which case
 	// the error is ignored.
-	for _, cc := range d.duplicator.table.CheckConstraints {
-		if cc.Name == d.withoutConstraint {
-			continue
+	for _, sql := range d.duplicator.duplicateCheckConstraints(d.withoutConstraint, d.column.Name) {
+		// Update the check constraint expression to use the new column names if any of the columns are duplicated
+		_, err := d.conn.ExecContext(ctx, sql)
+		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
+		if err != nil {
+			return err
 		}
-
-		if slices.Contains(cc.Columns, d.column.Name) {
-			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
-				pq.QuoteIdentifier(d.duplicator.table.Name),
-				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, d.column.Name),
-			)
-
-			_, err := d.duplicator.conn.ExecContext(ctx, sql)
-
-			err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := d.duplicator.duplicateComment(ctx, d.column, d.asName); err != nil {
-		return err
 	}
 
 	// Generate SQL to duplicate any unique constraints on the column
 	// The constraint is duplicated by adding a unique index on the column concurrently.
 	// The index is converted into a unique constraint on migration completion.
-	for _, uc := range d.duplicator.table.UniqueConstraints {
-		if uc.Name == d.withoutConstraint {
-			continue
-		}
-
-		if slices.Contains(uc.Columns, d.column.Name) {
-			sql := fmt.Sprintf(cCreateUniqueIndexSQL,
-				pq.QuoteIdentifier(DuplicationName(uc.Name)),
-				pq.QuoteIdentifier(d.duplicator.table.Name),
-				strings.Join(quoteColumnNames(copyAndReplace(uc.Columns, d.column.Name, d.asName)), ", "),
-			)
-
-			_, err := d.duplicator.conn.ExecContext(ctx, sql)
-			if err != nil {
-				return err
-			}
+	for _, sql := range d.duplicator.duplicateUniqueConstraints(d.withoutConstraint, d.column.Name) {
+		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
+		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
+			return err
 		}
 	}
 
@@ -155,74 +141,99 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 }
 
 func (cg *ColumnGroupDuplicator) Duplicate(ctx context.Context) error {
-	for _, column := range cg.columns {
-		asName := TemporaryName(column.Name)
-		withoutNotNull := false
-		withoutConstraint := ""
-		// Duplicate the column with the new type
-		// and check and fk constraints
-		if err := cg.duplicator.duplicateColumn(ctx, column, asName, withoutNotNull, column.Type, withoutConstraint); err != nil {
-			return err
-		}
-
-		// Duplicate the column's default value
-		if err := cg.duplicator.duplicateDefault(ctx, column, asName); err != nil {
-			return err
-		}
-
-		// Duplicate the column's comment
-		if err := cg.duplicator.duplicateComment(ctx, column, asName); err != nil {
-			return err
-		}
-	}
-
+	withoutConstraint := ""
 	colNames := make([]string, len(cg.columns))
 	for i, column := range cg.columns {
 		colNames[i] = column.Name
+		asName := TemporaryName(column.Name)
+		withoutNotNull := false
+		// Duplicate the column with the new type
+		// and check and fk constraints
+		if sql := cg.duplicator.duplicateColumn(column, asName, withoutNotNull, column.Type, withoutConstraint); sql != "" {
+			_, err := cg.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Duplicate the column's default value
+		if sql := cg.duplicator.duplicateDefault(column, asName); sql != "" {
+			_, err := cg.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Duplicate the column's comment
+		if sql := cg.duplicator.duplicateComment(column, asName); sql != "" {
+			_, err := cg.conn.ExecContext(ctx, sql)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Generate SQL to duplicate any check constraints on the column group.
-	for _, cc := range cg.duplicator.table.CheckConstraints {
+	for _, sql := range cg.duplicator.duplicateCheckConstraints(withoutConstraint, colNames...) {
 		// Update the check constraint expression to use the new column names if any of the columns are duplicated
-		if duplicatedConstraintColumns := cg.duplicator.duplicatedConstraintColumns(cc.Columns, colNames); len(duplicatedConstraintColumns) > 0 {
-			sql := fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
-				pq.QuoteIdentifier(cg.duplicator.table.Name),
-				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...),
-			)
-
-			if _, err := cg.duplicator.conn.ExecContext(ctx, sql); err != nil {
-				return err
-			}
+		_, err := cg.conn.ExecContext(ctx, sql)
+		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
+		if err != nil {
+			return err
 		}
 	}
 
 	// Generate SQL to duplicate any unique constraints on the column group.
-	for _, uc := range cg.duplicator.table.UniqueConstraints {
+	for _, sql := range cg.duplicator.duplicateUniqueConstraints(withoutConstraint, colNames...) {
 		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
-		if duplicatedMember, constraintColumns := cg.duplicator.allConstraintColumns(uc.Columns, colNames); duplicatedMember {
-			sql := fmt.Sprintf(cCreateUniqueIndexSQL,
-				pq.QuoteIdentifier(DuplicationName(uc.Name)),
-				pq.QuoteIdentifier(cg.duplicator.table.Name),
-				strings.Join(quoteColumnNames(constraintColumns), ", "),
-			)
-
-			if _, err := cg.duplicator.conn.ExecContext(ctx, sql); err != nil {
-				return err
-			}
+		if _, err := cg.conn.ExecContext(ctx, sql); err != nil {
+			return err
 		}
 	}
-
 	return nil
+}
+
+func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint string, colNames ...string) []string {
+	stmts := make([]string, 0, len(d.table.CheckConstraints))
+	for _, cc := range d.table.CheckConstraints {
+		if cc.Name == withoutConstraint {
+			continue
+		}
+		if duplicatedConstraintColumns := d.duplicatedConstraintColumns(cc.Columns, colNames...); len(duplicatedConstraintColumns) > 0 {
+			stmts = append(stmts, fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
+				pq.QuoteIdentifier(d.table.Name),
+				pq.QuoteIdentifier(DuplicationName(cc.Name)),
+				rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...),
+			))
+		}
+	}
+	return stmts
+}
+
+func (d *duplicatorStmtBuilder) duplicateUniqueConstraints(withoutConstraint string, colNames ...string) []string {
+	stmts := make([]string, 0, len(d.table.UniqueConstraints))
+	for _, uc := range d.table.UniqueConstraints {
+		if uc.Name == withoutConstraint {
+			continue
+		}
+		if duplicatedMember, constraintColumns := d.allConstraintColumns(uc.Columns, colNames...); duplicatedMember {
+			stmts = append(stmts, fmt.Sprintf(cCreateUniqueIndexSQL,
+				pq.QuoteIdentifier(DuplicationName(uc.Name)),
+				pq.QuoteIdentifier(d.table.Name),
+				strings.Join(quoteColumnNames(constraintColumns), ", "),
+			))
+		}
+	}
+	return stmts
 }
 
 // duplicatedConstraintColumns returns a new slice of constraint columns with
 // the columns that are duplicated replaced with temporary names.
-func (d *duplicator) duplicatedConstraintColumns(constraintColumns []string, duplicatedColumns []string) []string {
+func (d *duplicatorStmtBuilder) duplicatedConstraintColumns(constraintColumns []string, duplicatedColumns ...string) []string {
 	newConstraintColumns := make([]string, 0)
 	for _, column := range constraintColumns {
 		if slices.Contains(duplicatedColumns, column) {
-			newConstraintColumns = append(newConstraintColumns, TemporaryName(column))
+			newConstraintColumns = append(newConstraintColumns, column)
 		}
 	}
 	return newConstraintColumns
@@ -231,7 +242,7 @@ func (d *duplicator) duplicatedConstraintColumns(constraintColumns []string, dup
 // allConstraintColumns returns a new slice of constraint columns with the columns
 // that are duplicated replaced with temporary names and a boolean indicating if
 // any of the columns are duplicated.
-func (d *duplicator) allConstraintColumns(constraintColumns []string, duplicatedColumns []string) (bool, []string) {
+func (d *duplicatorStmtBuilder) allConstraintColumns(constraintColumns []string, duplicatedColumns ...string) (bool, []string) {
 	duplicatedMember := false
 	newConstraintColumns := make([]string, len(constraintColumns))
 	for i, column := range constraintColumns {
@@ -245,14 +256,13 @@ func (d *duplicator) allConstraintColumns(constraintColumns []string, duplicated
 	return duplicatedMember, newConstraintColumns
 }
 
-func (d *duplicator) duplicateColumn(
-	ctx context.Context,
+func (d *duplicatorStmtBuilder) duplicateColumn(
 	column *schema.Column,
 	asName string,
 	withoutNotNull bool,
 	withType string,
 	withoutConstraint string,
-) error {
+) string {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
 		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
@@ -291,13 +301,12 @@ func (d *duplicator) duplicateColumn(
 		}
 	}
 
-	_, err := d.conn.ExecContext(ctx, sql)
-	return err
+	return sql
 }
 
-func (d *duplicator) duplicateDefault(ctx context.Context, column *schema.Column, asName string) error {
+func (d *duplicatorStmtBuilder) duplicateDefault(column *schema.Column, asName string) string {
 	if column.Default == nil {
-		return nil
+		return ""
 	}
 
 	const cSetDefaultSQL = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
@@ -305,29 +314,22 @@ func (d *duplicator) duplicateDefault(ctx context.Context, column *schema.Column
 	// Generate SQL to duplicate any default value on the column. This may fail
 	// if the default value is not valid for the new column type, in which case
 	// the error is ignored.
-	sql := fmt.Sprintf(cSetDefaultSQL, pq.QuoteIdentifier(d.table.Name), asName, *column.Default)
-
-	_, err := d.conn.ExecContext(ctx, sql)
-
-	return errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
+	return fmt.Sprintf(cSetDefaultSQL, pq.QuoteIdentifier(d.table.Name), asName, *column.Default)
 }
 
-func (d *duplicator) duplicateComment(ctx context.Context, column *schema.Column, asName string) error {
+func (d *duplicatorStmtBuilder) duplicateComment(column *schema.Column, asName string) string {
 	if column.Comment == "" {
-		return nil
+		return ""
 	}
 
 	const cCommentOnColumnSQL = `COMMENT ON COLUMN %s.%s IS %s`
 
 	// Generate SQL to duplicate the column's comment
-	sql := fmt.Sprintf(cCommentOnColumnSQL,
+	return fmt.Sprintf(cCommentOnColumnSQL,
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(asName),
 		pq.QuoteLiteral(column.Comment),
 	)
-
-	_, err := d.conn.ExecContext(ctx, sql)
-	return err
 }
 
 // DiplicationName returns the name of a duplicated column.
