@@ -105,6 +105,7 @@ func (d *ColumnDuplicator) Duplicate(ctx context.Context) error {
 	// Duplicate the column's default value
 	if sql := d.duplicator.duplicateDefault(d.column, d.asName); sql != "" {
 		_, err := d.conn.ExecContext(ctx, sql)
+		err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
 		if err != nil {
 			return err
 		}
