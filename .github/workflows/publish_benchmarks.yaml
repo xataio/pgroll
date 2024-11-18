@@ -58,6 +58,6 @@ jobs:
           # This should not be hard coded.. how do we get $HOME here
           path: /home/runner/static
 
-#      - name: Deploy to GitHub Pages
-#        id: deployment
-#        uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
