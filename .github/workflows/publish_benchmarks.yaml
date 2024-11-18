@@ -41,22 +41,28 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Download results and build html
-        run: |
-          aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
-          mkdir $HOME/static
-          export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
-          export FILENAME_BENCHMARK_OUTPUT=$HOME/static/index.html
-          go run benchmark-results/build.go 
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./static
+
+      - name: Download results and build html
+        run: |
+            aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
+            export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
+            export FILENAME_BENCHMARK_OUTPUT=$HOME/static/benchmarks.html
+            go run benchmark-results/build.go 
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # This should not be hard coded.. how do we get $HOME here
-          path: /home/runner/static
+          path: ./static
 
       - name: Deploy to GitHub Pages
         id: deployment
