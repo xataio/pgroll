@@ -44,8 +44,9 @@ jobs:
       - name: Download results and build html
         run: |
           aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
+          mkdir $HOME/static
           export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
-          export FILENAME_BENCHMARK_OUTPUT=$HOME/results.html
+          export FILENAME_BENCHMARK_OUTPUT=$HOME/static/index.html
           go run benchmark-results/build.go 
 
       - name: Setup Pages
@@ -54,7 +55,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: results.html
+          path: static
 
 #      - name: Deploy to GitHub Pages
 #        id: deployment
