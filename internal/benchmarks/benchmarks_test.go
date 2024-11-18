@@ -5,6 +5,9 @@ package benchmarks
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"os"
 	"strconv"
 	"testing"
 
@@ -19,10 +22,32 @@ import (
 
 const unitRowsPerSecond = "rows/s"
 
-var rowCounts = []int{10_000, 100_000, 300_000}
+var (
+	rowCounts = []int{10_000, 100_000, 300_000}
+	reports   = newReports()
+)
 
 func TestMain(m *testing.M) {
-	testutils.SharedTestMain(m)
+	testutils.SharedTestMain(m, func() (err error) {
+		// Only run in GitHub actions
+		if os.Getenv("GITHUB_ACTIONS") != "true" {
+			return nil
+		}
+
+		w, err := os.Create(fmt.Sprintf("benchmark_result_%s.json", getPostgresVersion()))
+		if err != nil {
+			return fmt.Errorf("creating report file: %w", err)
+		}
+		defer func() {
+			err = w.Close()
+		}()
+
+		encoder := json.NewEncoder(w)
+		if err := encoder.Encode(reports); err != nil {
+			return fmt.Errorf("encoding report file: %w", err)
+		}
+		return nil
+	})
 }
 
 func BenchmarkBackfill(b *testing.B) {
@@ -48,6 +73,8 @@ func BenchmarkBackfill(b *testing.B) {
 				b.Logf("Backfilled %d rows in %s", rowCount, b.Elapsed())
 				rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 				b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+				addRowsPerSecond(b, rowCount, rowsPerSecond)
 			})
 		})
 	}
@@ -87,6 +114,8 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+					addRowsPerSecond(b, rowCount, rowsPerSecond)
 				})
 			})
 		}
@@ -116,6 +145,8 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					b.StopTimer()
 					rowsPerSecond := float64(rowCount) / b.Elapsed().Seconds()
 					b.ReportMetric(rowsPerSecond, unitRowsPerSecond)
+
+					addRowsPerSecond(b, rowCount, rowsPerSecond)
 				})
 			})
 		}
@@ -147,6 +178,15 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 	require.NoError(tb, mig.Start(ctx, &migCreateTable))
 	require.NoError(tb, mig.Complete(ctx))
 	seed(tb, rowCount, db)
+}
+
+func addRowsPerSecond(b *testing.B, rowCount int, perSecond float64) {
+	reports.AddReport(Report{
+		Name:     b.Name(),
+		Unit:     unitRowsPerSecond,
+		RowCount: rowCount,
+		Result:   perSecond,
+	})
 }
 
 // Simple table with a nullable `name` field.

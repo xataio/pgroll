@@ -1,9 +1,11 @@
 name: Benchmark
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 permissions:
+  id-token: write # For getting AWS permissions
   contents: read
   packages: read
 jobs:
@@ -26,3 +28,36 @@ jobs:
       run: make bench
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark_result_${{ matrix.pgVersion }}.json
+        path: internal/benchmarks/benchmark_result_${{ matrix.pgVersion }}.json
+
+  gather:
+    name: 'Gather results'
+    runs-on: ubuntu-latest
+    needs: [benchmark]
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        path: ./results/
+        merge-multiple: true
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::493985724844:role/pgroll-benchmark-results-access
+        aws-region: us-east-1
+        mask-aws-account-id: 'no'
+
+    - name: Download current results from S3
+      run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json ./benchmark-results.json
+
+    - name: Append new results
+      run: cat results/*.json >> benchmark-results.json
+
+    - name: Upload combined results
+      run: aws s3 cp ./benchmark-results.json s3://pgroll-benchmark-results/benchmark-results.json
