@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -52,12 +50,16 @@ func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, co
 		return err
 	}
 
+	return runMigration(ctx, m, migration, complete)
+}
+
+func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool) error {
 	sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
 	cb := func(n int64) {
 		sp.UpdateText(fmt.Sprintf("%d records complete...", n))
 	}
 
-	err = m.Start(ctx, migration, cb)
+	err := m.Start(ctx, migration, cb)
 	if err != nil {
 		sp.Fail(fmt.Sprintf("Failed to start migration: %s", err))
 		return err
@@ -71,9 +73,6 @@ func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, co
 	}
 
 	version := migration.Name
-	if version == "" {
-		version = strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
-	}
 	viewName := roll.VersionedSchemaName(flags.Schema(), version)
 	msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
 	sp.Success(msg)
