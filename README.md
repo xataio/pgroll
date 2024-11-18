@@ -164,6 +164,10 @@ pgroll --postgres-url postgres://user:password@host:port/dbname rollback
 
 For more advanced usage, a tutorial, and detailed options refer to the full [Documentation](docs/README.md).
 
+## Benchmarks
+
+Some performance benchmarks are run on each commit to `main` in order to track performance over time. They can be seen [here](https://xataio.github.io/pgroll/benchmarks.html)
+
 ## Contributing
 
 We welcome contributions from the community! If you'd like to contribute to `pgroll`, please follow these guidelines:
