@@ -11,7 +11,7 @@ import (
 
 var initCmd = &cobra.Command{
 	Use:   "init <file>",
-	Short: "Initializes pgroll, creating the required pg_roll schema to store state",
+	Short: "Initialize pgroll in the target database",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		m, err := NewRoll(cmd.Context())
 		if err != nil {
