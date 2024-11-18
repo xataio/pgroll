@@ -166,7 +166,7 @@ For more advanced usage, a tutorial, and detailed options refer to the full [Doc
 
 ## Benchmarks
 
-Some performance benchmarks are run on each commit to `main` in order to track performance over time. They can be seen [here](https://xataio.github.io/pgroll/benchmarks.html)
+Some performance benchmarks are run on each commit to `main` in order to track performance over time. They can be seen [here](https://xataio.github.io/pgroll/benchmarks.html).
 
 ## Contributing
 
