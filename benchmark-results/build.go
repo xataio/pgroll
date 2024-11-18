@@ -122,7 +122,8 @@ func generateCharts(reports []benchmarks.Reports) []*charts.Line {
 		xs[key] = x
 	}
 
-	allCharts := make([]*charts.Line, len(xs))
+	allCharts := make([]*charts.Line, 0, len(xs))
+
 	for ck, xValues := range xs {
 		chart := charts.NewLine()
 		chart.SetGlobalOptions(
