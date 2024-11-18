@@ -19,7 +19,7 @@ func pullCmd() *cobra.Command {
 
 	pullCmd := &cobra.Command{
 		Use:   "pull <target directory>",
-		Short: "pull migration history from the target database and write it to disk",
+		Short: "Pull migration history from the target database and write it to disk",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
