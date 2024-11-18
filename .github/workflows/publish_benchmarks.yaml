@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   publish:
-    name: "Publish benchmarks"
+    name: Publish benchmarks
     runs-on: ubuntu-latest
     steps:
       - name: Configure AWS Credentials
@@ -33,7 +33,7 @@ jobs:
           aws-region: us-east-1
           mask-aws-account-id: 'no'
 
-      - name: 'Checkout'
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Go
@@ -41,7 +41,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Download results
+      - name: Download results and build html
         run: |
           aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
           export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
