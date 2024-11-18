@@ -48,14 +48,14 @@ jobs:
           export FILENAME_BENCHMARK_OUTPUT=$HOME/results.html
           go run benchmark-results/build.go 
 
-#      - name: Setup Pages
-#        uses: actions/configure-pages@v5
-#
-#      - name: Upload artifact
-#        uses: actions/upload-pages-artifact@v3
-#        with:
-#          path: results.html
-#
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: results.html
+
 #      - name: Deploy to GitHub Pages
 #        id: deployment
 #        uses: actions/deploy-pages@v4
