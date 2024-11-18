@@ -44,18 +44,18 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Download results and build html
+        run: |
+            aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
+            export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
+            export FILENAME_BENCHMARK_OUTPUT=./benchmarks.html
+            go run benchmark-results/build.go 
+
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
           source: ./
           destination: ./static
-
-      - name: Download results and build html
-        run: |
-            aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
-            export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
-            export FILENAME_BENCHMARK_OUTPUT=/home/runner/work/pgroll/static/benchmarks.html
-            go run benchmark-results/build.go 
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
