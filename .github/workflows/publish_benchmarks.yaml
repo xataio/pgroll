@@ -1,0 +1,40 @@
+name: Publish Benchmark
+on:
+  workflow_run:
+    workflows: [ "Benchmark" ]
+    branches: [ main ]
+    types:
+      - completed
+  workflow_dispatch:
+permissions:
+  id-token: write # For getting AWS permissions
+  contents: write
+  packages: read
+jobs:
+  publish:
+    name: "Publish benchmarks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::493985724844:role/pgroll-benchmark-results-access
+          aws-region: us-east-1
+          mask-aws-account-id: 'no'
+
+      - name: Download results
+        run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json ./benchmark-results.json
+
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Run page builder
+        env:
+          FILENAME_BENCHMARK_RESULTS: benchmark-results.json
+          FILENAME_BENCHMARK_OUTPUT: results.html
+        run: go run benchmark-results/build.go
