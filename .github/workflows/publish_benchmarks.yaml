@@ -46,7 +46,7 @@ jobs:
 
       - name: Run page builder
         env:
-          FILENAME_BENCHMARK_RESULTS: $HOME/benchmark-results.json
+          FILENAME_BENCHMARK_RESULTS: ${HOME}/benchmark-results.json
           FILENAME_BENCHMARK_OUTPUT: results.html
         run: go run benchmark-results/build.go
 
