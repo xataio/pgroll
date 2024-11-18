@@ -59,6 +59,7 @@ func main() {
 	if err := page.Render(f); err != nil {
 		log.Fatalf("Rendering: %s", err)
 	}
+	log.Printf("Charts generated at %s", output)
 }
 
 type dataKey struct {
