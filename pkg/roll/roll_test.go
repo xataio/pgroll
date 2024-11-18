@@ -11,6 +11,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -100,6 +101,34 @@ func TestUnappliedMigrations(t *testing.T) {
 
 			// Assert that no migrations are unapplied
 			require.Len(t, migs, 0)
+		})
+	})
+
+	t.Run("remote migration history does not match local history", func(t *testing.T) {
+		fs := fstest.MapFS{
+			"01_migration_1.json": &fstest.MapFile{Data: exampleMigration(t, "01_migration_1")},
+			"02_migration_2.json": &fstest.MapFile{Data: exampleMigration(t, "02_migration_2")},
+		}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Apply a migration that does not exist in the migrations directory
+			err := m.Start(ctx, &migrations.Migration{
+				Name: "01a_migration_1a",
+				Operations: migrations.Operations{
+					&migrations.OpRawSQL{Up: "SELECT 1"},
+				},
+			})
+			require.NoError(t, err)
+			err = m.Complete(ctx)
+			require.NoError(t, err)
+
+			// Get migrations to apply
+			_, err = m.UnappliedMigrations(ctx, fs)
+
+			// Assert that a mismatched migration error is returned
+			assert.ErrorIs(t, err, roll.ErrMismatchedMigration)
 		})
 	})
 

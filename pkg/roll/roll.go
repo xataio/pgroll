@@ -25,6 +25,8 @@ const (
 	DefaultBackfillDelay     time.Duration = 0
 )
 
+var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local migration")
+
 type Roll struct {
 	pgConn db.DB
 
@@ -172,6 +174,9 @@ func (m *Roll) Close() error {
 // UnappliedMigrations returns a slice of unapplied migrations from `dir`,
 // lexicographically ordered by filename. Applying each of the returned
 // migrations in order will bring the database up to date with `dir`.
+//
+// If the local order of migrations does not match the order of migrations in
+// the schema history, an `ErrMismatchedMigration` error is returned.
 func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migrations.Migration, error) {
 	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
 	if err != nil {
@@ -181,6 +186,11 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	files, err := fs.Glob(dir, "*.json")
 	if err != nil {
 		return nil, fmt.Errorf("reading directory: %w", err)
+	}
+
+	history, err := m.State().SchemaHistory(ctx, m.Schema())
+	if err != nil {
+		return nil, fmt.Errorf("reading schema history: %w", err)
 	}
 
 	// Find the index of the first unapplied migration
@@ -195,6 +205,11 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 			migration, err := migrations.ReadMigration(file)
 			if err != nil {
 				return nil, fmt.Errorf("reading migration file %q: %w", file, err)
+			}
+
+			remoteMigration := history[idx].Migration
+			if remoteMigration.Name != migration.Name {
+				return nil, fmt.Errorf("%w: remote=%q, local=%q", ErrMismatchedMigration, remoteMigration.Name, migration.Name)
 			}
 
 			idx++
