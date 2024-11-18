@@ -336,9 +336,9 @@ func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, c
 	for _, op := range ops {
 		switch op := (op).(type) {
 		case *OpDropNotNull:
-			d = d.WithoutNotNull()
+			d = d.WithoutNotNull(column.Name)
 		case *OpChangeType:
-			d = d.WithType(op.Type)
+			d = d.WithType(column.Name, op.Type)
 		}
 	}
 	return d
