@@ -48,7 +48,7 @@ jobs:
             aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
             export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
             export FILENAME_BENCHMARK_OUTPUT=./benchmarks.html
-            go run benchmark-results/build.go 
+            go run benchmark-results/build.go
 
       # This will pick up the benchmarks.html file generated in the previous step and will also
       # publish the README at index.html
