@@ -1,15 +1,26 @@
 name: Publish Benchmark
+
 on:
+  pull_request: # REMOVE ME
   workflow_run:
     workflows: [ "Benchmark" ]
     branches: [ main ]
     types:
       - completed
   workflow_dispatch:
+
 permissions:
   id-token: write # For getting AWS permissions
   contents: write
   packages: read
+  pages: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: "Publish benchmarks"
@@ -38,3 +49,15 @@ jobs:
           FILENAME_BENCHMARK_RESULTS: benchmark-results.json
           FILENAME_BENCHMARK_OUTPUT: results.html
         run: go run benchmark-results/build.go
+
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v5
+#
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          path: results.html
+#
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
