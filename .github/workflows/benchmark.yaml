@@ -1,5 +1,6 @@
 name: Benchmark
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
