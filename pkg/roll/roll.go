@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"strings"
 	"time"
 
@@ -166,4 +167,57 @@ func (m *Roll) Close() error {
 	}
 
 	return m.pgConn.Close()
+}
+
+// UnappliedMigrations returns a slice of unapplied migrations from `dir`,
+// lexicographically ordered by filename. Applying each of the returned
+// migrations in order will bring the database up to date with `dir`.
+func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migrations.Migration, error) {
+	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
+	if err != nil {
+		return nil, fmt.Errorf("determining latest version: %w", err)
+	}
+
+	files, err := fs.Glob(dir, "*.json")
+	if err != nil {
+		return nil, fmt.Errorf("reading directory: %w", err)
+	}
+
+	// Find the index of the first unapplied migration
+	var idx int
+	if latestVersion != nil {
+		for _, file := range files {
+			file, err := dir.Open(file)
+			if err != nil {
+				return nil, fmt.Errorf("opening migration file %q: %w", file, err)
+			}
+
+			migration, err := migrations.ReadMigration(file)
+			if err != nil {
+				return nil, fmt.Errorf("reading migration file %q: %w", file, err)
+			}
+
+			idx++
+			if migration.Name == *latestVersion {
+				break
+			}
+		}
+	}
+
+	// Return all unapplied migrations
+	migs := make([]*migrations.Migration, 0, len(files))
+	for _, file := range files[idx:] {
+		file, err := dir.Open(file)
+		if err != nil {
+			return nil, fmt.Errorf("opening migration file %q: %w", file, err)
+		}
+
+		migration, err := migrations.ReadMigration(file)
+		if err != nil {
+			return nil, fmt.Errorf("reading migration file %q: %w", file, err)
+		}
+		migs = append(migs, migration)
+	}
+
+	return migs, nil
 }
