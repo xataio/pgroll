@@ -454,7 +454,11 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique"]
+          "enum": ["unique", "check"]
+        },
+        "check": {
+          "description": "Check constraint expression",
+          "type": "string"
         },
         "up": {
           "type": "object",

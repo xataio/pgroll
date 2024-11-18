@@ -1101,7 +1101,7 @@ Example **create table** migrations:
 
 A create constraint operation adds a new constraint to an existing table.
 
-Only `UNIQUE` constraints are supported.
+Only `UNIQUE` and `CHECK` constraints are supported.
 
 Required fields: `name`, `table`, `type`, `up`, `down`.
 
@@ -1129,6 +1129,7 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
 Example **create constraint** migrations:
 
 * [44_add_table_unique_constraint.json](../examples/44_add_table_unique_constraint.json)
+* [45_add_table_check_constraint.json](../examples/45_add_table_check_constraint.json)
 
 
 ### Drop column
