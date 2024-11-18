@@ -42,13 +42,11 @@ jobs:
           go-version-file: 'go.mod'
 
       - name: Download results
-        run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
-
-      - name: Run page builder
-        env:
-          FILENAME_BENCHMARK_RESULTS: ${{vars.HOME}}/benchmark-results.json
-          FILENAME_BENCHMARK_OUTPUT: results.html
-        run: go run benchmark-results/build.go
+        run: |
+          aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
+          export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
+          export FILENAME_BENCHMARK_OUTPUT=$HOME/results.html
+          go run benchmark-results/build.go 
 
 #      - name: Setup Pages
 #        uses: actions/configure-pages@v5
