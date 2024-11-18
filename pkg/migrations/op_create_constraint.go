@@ -16,11 +16,52 @@ import (
 var _ Operation = (*OpCreateConstraint)(nil)
 
 func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
-	var err error
-	var table *schema.Table
-	for _, col := range o.Columns {
-		if table, err = o.duplicateColumnBeforeStart(ctx, conn, latestSchema, tr, col, s); err != nil {
-			return nil, err
+	table := s.GetTable(o.Table)
+	columns := make([]*schema.Column, len(o.Columns))
+	for i, colName := range o.Columns {
+		columns[i] = table.GetColumn(colName)
+	}
+
+	d := NewColumnDuplicator(conn, table, columns...)
+	if err := d.Duplicate(ctx); err != nil {
+		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
+	}
+
+	// Setup triggers
+	for _, colName := range o.Columns {
+		upSQL := o.Up[colName]
+		physicalColumnName := TemporaryName(colName)
+		err := createTrigger(ctx, conn, tr, triggerConfig{
+			Name:           TriggerName(o.Table, colName),
+			Direction:      TriggerDirectionUp,
+			Columns:        table.Columns,
+			SchemaName:     s.Name,
+			LatestSchema:   latestSchema,
+			TableName:      o.Table,
+			PhysicalColumn: physicalColumnName,
+			SQL:            upSQL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create up trigger: %w", err)
+		}
+
+		table.AddColumn(colName, schema.Column{
+			Name: physicalColumnName,
+		})
+
+		downSQL := o.Down[colName]
+		err = createTrigger(ctx, conn, tr, triggerConfig{
+			Name:           TriggerName(o.Table, physicalColumnName),
+			Direction:      TriggerDirectionDown,
+			Columns:        table.Columns,
+			LatestSchema:   latestSchema,
+			SchemaName:     s.Name,
+			TableName:      o.Table,
+			PhysicalColumn: colName,
+			SQL:            downSQL,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create down trigger: %w", err)
 		}
 	}
 
@@ -31,58 +72,6 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		return table, o.addCheckConstraint(ctx, conn)
 	}
 
-	return table, nil
-}
-
-func (o *OpCreateConstraint) duplicateColumnBeforeStart(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, colName string, s *schema.Schema) (*schema.Table, error) {
-	table := s.GetTable(o.Table)
-	column := table.GetColumn(colName)
-
-	d := NewColumnDuplicator(conn, table, column)
-	if err := d.Duplicate(ctx); err != nil {
-		return nil, fmt.Errorf("failed to duplicate column for new constraint: %w", err)
-	}
-
-	upSQL, ok := o.Up[colName]
-	if !ok {
-		return nil, fmt.Errorf("up migration is missing for column %s", colName)
-	}
-	physicalColumnName := TemporaryName(colName)
-	err := createTrigger(ctx, conn, tr, triggerConfig{
-		Name:           TriggerName(o.Table, colName),
-		Direction:      TriggerDirectionUp,
-		Columns:        table.Columns,
-		SchemaName:     s.Name,
-		LatestSchema:   latestSchema,
-		TableName:      o.Table,
-		PhysicalColumn: physicalColumnName,
-		SQL:            upSQL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
-	}
-
-	table.AddColumn(colName, schema.Column{
-		Name: physicalColumnName,
-	})
-
-	downSQL, ok := o.Down[colName]
-	if !ok {
-		return nil, fmt.Errorf("down migration is missing for column %s", colName)
-	}
-	err = createTrigger(ctx, conn, tr, triggerConfig{
-		Name:           TriggerName(o.Table, physicalColumnName),
-		Direction:      TriggerDirectionDown,
-		Columns:        table.Columns,
-		LatestSchema:   latestSchema,
-		SchemaName:     s.Name,
-		TableName:      o.Table,
-		PhysicalColumn: colName,
-		SQL:            downSQL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
-	}
 	return table, nil
 }
 

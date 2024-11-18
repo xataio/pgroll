@@ -151,6 +151,8 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 			if err != nil {
 				return fmt.Errorf("failed to create unique constraint from index %q: %w", ui.Name, err)
 			}
+			// Index no longer exists, remove it from the table
+			delete(table.Indexes, ui.Name)
 		}
 	}
 
