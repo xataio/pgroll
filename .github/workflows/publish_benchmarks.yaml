@@ -41,8 +41,6 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
