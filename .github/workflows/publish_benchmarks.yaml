@@ -54,7 +54,7 @@ jobs:
         run: |
             aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
             export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
-            export FILENAME_BENCHMARK_OUTPUT=$HOME/static/benchmarks.html
+            export FILENAME_BENCHMARK_OUTPUT=/github/workspace/static/benchmarks.html
             go run benchmark-results/build.go 
 
       - name: Upload artifact
