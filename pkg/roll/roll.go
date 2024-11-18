@@ -197,12 +197,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	var idx int
 	if latestVersion != nil {
 		for _, file := range files {
-			file, err := dir.Open(file)
-			if err != nil {
-				return nil, fmt.Errorf("opening migration file %q: %w", file, err)
-			}
-
-			migration, err := migrations.ReadMigration(file)
+			migration, err := openAndReadMigrationFile(dir, file)
 			if err != nil {
 				return nil, fmt.Errorf("reading migration file %q: %w", file, err)
 			}
@@ -222,12 +217,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	// Return all unapplied migrations
 	migs := make([]*migrations.Migration, 0, len(files))
 	for _, file := range files[idx:] {
-		file, err := dir.Open(file)
-		if err != nil {
-			return nil, fmt.Errorf("opening migration file %q: %w", file, err)
-		}
-
-		migration, err := migrations.ReadMigration(file)
+		migration, err := openAndReadMigrationFile(dir, file)
 		if err != nil {
 			return nil, fmt.Errorf("reading migration file %q: %w", file, err)
 		}
@@ -235,4 +225,18 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	}
 
 	return migs, nil
+}
+
+func openAndReadMigrationFile(dir fs.FS, filename string) (*migrations.Migration, error) {
+	file, err := dir.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	migration, err := migrations.ReadMigration(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return migration, nil
 }
