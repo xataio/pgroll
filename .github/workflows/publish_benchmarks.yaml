@@ -34,7 +34,7 @@ jobs:
           mask-aws-account-id: 'no'
 
       - name: Download results
-        run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json ./benchmark-results.json
+        run: aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
 
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
 
       - name: Run page builder
         env:
-          FILENAME_BENCHMARK_RESULTS: benchmark-results.json
+          FILENAME_BENCHMARK_RESULTS: $HOME/benchmark-results.json
           FILENAME_BENCHMARK_OUTPUT: results.html
         run: go run benchmark-results/build.go
 
