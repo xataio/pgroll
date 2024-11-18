@@ -46,24 +46,7 @@ const (
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
-func NewColumnDuplicator(conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
-	return &Duplicator{
-		stmtBuilder: &duplicatorStmtBuilder{
-			table: table,
-		},
-		conn: conn,
-		columns: map[string]*columnToDuplicate{
-			column.Name: {
-				column:   column,
-				asName:   TemporaryName(column.Name),
-				withType: column.Type,
-			},
-		},
-		withoutConstraint: make([]string, 0),
-	}
-}
-
-func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema.Column) *Duplicator {
+func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Column) *Duplicator {
 	cols := make(map[string]*columnToDuplicate, len(columns))
 	for _, column := range columns {
 		cols[column.Name] = &columnToDuplicate{
@@ -76,8 +59,9 @@ func NewColumnGroupDuplicator(conn db.DB, table *schema.Table, columns []*schema
 		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
-		conn:    conn,
-		columns: cols,
+		conn:              conn,
+		columns:           cols,
+		withoutConstraint: make([]string, 0),
 	}
 }
 

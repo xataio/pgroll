@@ -22,7 +22,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		columns[i] = table.GetColumn(colName)
 	}
 
-	d := NewColumnGroupDuplicator(conn, table, columns)
+	d := NewColumnDuplicator(conn, table, columns...)
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
