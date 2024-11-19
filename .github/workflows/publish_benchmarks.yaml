@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'dev/benchmark-results/go.mod'
+          go-version-file: 'dev/go.mod'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
