@@ -1,6 +1,7 @@
 name: Publish Benchmark
 
 on:
+  pull_request: #TEMP
   workflow_run:
     workflows: [ "Benchmark" ]
     branches: [ main ]
