@@ -49,6 +49,7 @@ When no more client applications are using the old schema version, the migration
 - [Installation](#installation)
 - [Usage](#usage)
 - [Documentation](#documentation)
+- [Benchmarks](#benchmarks)
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
