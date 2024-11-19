@@ -237,11 +237,3 @@ func trimName(name string) string {
 func shortSHA(sha string) string {
 	return sha[:7]
 }
-
-func mustEnv(key string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		log.Fatalf("Missing required environment variable: %q", key)
-	}
-	return v
-}
