@@ -44,6 +44,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Test dir
+        run: |
+          pwd
+          echo $HOME
+
       - name: Download results and build html
         working-directory: ./dev
         run: |
