@@ -70,6 +70,8 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		return table, o.addUniqueIndex(ctx, conn)
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn)
+	case OpCreateConstraintTypeForeignKey:
+		return table, o.addForeignKeyConstraint(ctx, conn)
 	}
 
 	return table, nil
@@ -94,6 +96,17 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 			},
 		}
 		err := checkOp.Complete(ctx, conn, tr, s)
+		if err != nil {
+			return err
+		}
+	case OpCreateConstraintTypeForeignKey:
+		fkOp := &OpSetForeignKey{
+			Table: o.Table,
+			References: ForeignKeyReference{
+				Name: o.Name,
+			},
+		}
+		err := fkOp.Complete(ctx, conn, tr, s)
 		if err != nil {
 			return err
 		}
@@ -198,6 +211,22 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 		if o.Check == nil || *o.Check == "" {
 			return FieldRequiredError{Name: "check"}
 		}
+	case OpCreateConstraintTypeForeignKey:
+		if o.References == nil {
+			return FieldRequiredError{Name: "references"}
+		}
+		table := s.GetTable(o.References.Table)
+		if table == nil {
+			return TableDoesNotExistError{Name: o.References.Table}
+		}
+		for _, col := range o.References.Columns {
+			if table.GetColumn(col) == nil {
+				return ColumnDoesNotExistError{
+					Table: o.References.Table,
+					Name:  col,
+				}
+			}
+		}
 	}
 
 	return nil
@@ -219,6 +248,25 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB)
 		pq.QuoteIdentifier(o.Name),
 		rewriteCheckExpression(*o.Check, o.Columns...),
 	))
+
+	return err
+}
+
+func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
+	onDelete := "NO ACTION"
+	if o.References.OnDelete != nil {
+		onDelete = strings.ToUpper(string(*o.References.OnDelete))
+	}
+
+	_, err := conn.ExecContext(ctx,
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Name),
+			strings.Join(quotedTemporaryNames(o.Columns), ","),
+			pq.QuoteIdentifier(o.References.Table),
+			strings.Join(quoteColumnNames(o.References.Columns), ","),
+			onDelete,
+		))
 
 	return err
 }

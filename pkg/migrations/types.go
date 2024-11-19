@@ -53,7 +53,7 @@ type ForeignKeyReference struct {
 	Name string `json:"name"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
 	// Name of the referenced table
 	Table string `json:"table"`
@@ -134,6 +134,9 @@ type OpCreateConstraint struct {
 	// Name of the constraint
 	Name string `json:"name"`
 
+	// Reference to the foreign key
+	References *OpCreateConstraintReferences `json:"references,omitempty"`
+
 	// Name of the table
 	Table string `json:"table"`
 
@@ -147,9 +150,22 @@ type OpCreateConstraint struct {
 // SQL expression of down migration by column
 type OpCreateConstraintDown map[string]string
 
+// Reference to the foreign key
+type OpCreateConstraintReferences struct {
+	// Columns to reference
+	Columns []string `json:"columns"`
+
+	// On delete behavior of the foreign key constraint
+	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+
+	// Name of the table
+	Table string `json:"table"`
+}
+
 type OpCreateConstraintType string
 
 const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
+const OpCreateConstraintTypeForeignKey OpCreateConstraintType = "foreign_key"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // SQL expression of up migration by column

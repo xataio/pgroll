@@ -626,7 +626,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Name:     "fk_users_id",
 									Table:    "users",
 									Column:   "id",
-									OnDelete: "CASCADE",
+									OnDelete: ptr(migrations.ForeignKeyReferenceOnDelete("CASCADE")),
 								},
 							},
 						},

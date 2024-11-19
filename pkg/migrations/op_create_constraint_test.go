@@ -356,6 +356,147 @@ func TestCreateConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "create foreign key constraint on multiple columns",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name: "zip",
+									Type: "integer",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+								{
+									Name:     "email",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "reports",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "users_id",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+								{
+									Name:     "users_zip",
+									Type:     "integer",
+									Nullable: ptr(true),
+								},
+								{
+									Name:     "description",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "fk_users",
+							Table:   "reports",
+							Type:    "foreign_key",
+							Columns: []string{"users_id", "users_zip"},
+							References: &migrations.OpCreateConstraintReferences{
+								Table:   "users",
+								Columns: []string{"id", "zip"},
+							},
+							Up: migrations.OpCreateConstraintUp(map[string]string{
+								"users_id":  "1",
+								"users_zip": "12345",
+							}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"users_id":  "users_id",
+								"users_zip": "users_zip",
+							}),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new (temporary) column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "reports", migrations.TemporaryName("users_id"))
+				// The new (temporary) column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "reports", migrations.TemporaryName("users_zip"))
+				// A temporary FK constraint has been created on the temporary column
+				NotValidatedForeignKeyMustExist(t, db, schema, "reports", "fk_users")
+
+				// Insert values to refer to.
+				MustInsert(t, db, schema, "01_add_tables", "users", map[string]string{
+					"name":  "alice",
+					"email": "alice@example.com",
+					"zip":   "12345",
+				})
+
+				// Inserting values into the old schema that the violate the fk constraint must succeed.
+				MustInsert(t, db, schema, "01_add_tables", "reports", map[string]string{
+					"description": "random report",
+				})
+
+				// Inserting values into the new schema that meet the FK constraint should succeed.
+				MustInsert(t, db, schema, "02_create_constraint", "reports", map[string]string{
+					"description": "alice report",
+					"users_id":    "1",
+					"users_zip":   "12345",
+				})
+				// Inserting data into the new `reports` view with an invalid user reference fails.
+				MustNotInsert(t, db, schema, "02_create_constraint", "reports", map[string]string{
+					"description": "no one report",
+					"users_id":    "100",
+					"users_zip":   "100",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint must not exists on the table.
+				CheckConstraintMustNotExist(t, db, schema, "reports", "fk_users")
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "reports", "users_id")
+				tableCleanedUp(t, db, schema, "reports", "users_zip")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				tableCleanedUp(t, db, schema, "reports", "users_id")
+				tableCleanedUp(t, db, schema, "reports", "users_zip")
+
+				// Inserting values into the new schema that the violate the check constraint must fail.
+				MustNotInsert(t, db, schema, "02_create_constraint", "reports", map[string]string{
+					"description": "no one report",
+					"users_id":    "100",
+					"users_zip":   "100",
+				}, testutils.FKViolationErrorCode)
+
+				rows := MustSelect(t, db, schema, "02_create_constraint", "reports")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "description": "random report", "users_id": 1, "users_zip": 12345},
+					{"id": 2, "description": "alice report", "users_id": 1, "users_zip": 12345},
+				}, rows)
+			},
+		},
+		{
 			name: "invalid constraint name",
 			migrations: []migrations.Migration{
 				{
@@ -486,6 +627,56 @@ func TestCreateConstraint(t *testing.T) {
 				},
 			},
 			wantStartErr:  migrations.FieldRequiredError{Name: "check"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+		{
+			name: "missing referenced table for foreign key constraint creation",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "fk_missing_table",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "foreign_key",
+							References: &migrations.OpCreateConstraintReferences{
+								Table:   "missing_table",
+								Columns: []string{"id"},
+							},
+							Up: migrations.OpCreateConstraintUp(map[string]string{
+								"name": "name",
+							}),
+							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"name": "name",
+							}),
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.TableDoesNotExistError{Name: "missing_table"},
 			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
