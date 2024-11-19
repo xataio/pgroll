@@ -39,7 +39,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'dev/benchmark-results/go.mod'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -47,9 +47,7 @@ jobs:
       - name: Download results and build html
         run: |
             aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
-            export FILENAME_BENCHMARK_RESULTS=$HOME/benchmark-results.json
-            export FILENAME_BENCHMARK_OUTPUT=./benchmarks.html
-            go run benchmark-results/build.go
+            go run dev/benchmark-results/build.go $HOME/benchmark-results.json ./benchmarks.html
 
       # This will pick up the benchmarks.html file generated in the previous step and will also
       # publish the README at index.html
