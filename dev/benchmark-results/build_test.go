@@ -3,23 +3,9 @@
 package main
 
 import (
-	"bufio"
-	"cmp"
-	"encoding/json"
-	"fmt"
-	"maps"
-	"os"
-	"slices"
-	"sort"
-	"strings"
 	"testing"
 
-	"github.com/go-echarts/go-echarts/v2/charts"
-	"github.com/go-echarts/go-echarts/v2/components"
-	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/xataio/pgroll/internal/benchmarks"
 )
 
 // TestBuildChartsRegression is a simple regression test

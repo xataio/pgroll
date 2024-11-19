@@ -182,7 +182,7 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 }
 
 func addRowsPerSecond(b *testing.B, rowCount int, perSecond float64) {
-	reports.AddReport(roll.BenchmarkReport{
+	reports.AddReport(BenchmarkReport{
 		Name:     b.Name(),
 		Unit:     unitRowsPerSecond,
 		RowCount: rowCount,
@@ -235,11 +235,29 @@ func getPostgresVersion() string {
 	return os.Getenv("POSTGRES_VERSION")
 }
 
-func newReports() *roll.BenchmarkReports {
-	return &roll.BenchmarkReports{
+func newReports() *BenchmarkReports {
+	return &BenchmarkReports{
 		GitSHA:          os.Getenv("GITHUB_SHA"),
 		PostgresVersion: getPostgresVersion(),
 		Timestamp:       time.Now().Unix(),
-		Reports:         []roll.BenchmarkReport{},
+		Reports:         []BenchmarkReport{},
 	}
+}
+
+type BenchmarkReports struct {
+	GitSHA          string
+	PostgresVersion string
+	Timestamp       int64
+	Reports         []BenchmarkReport
+}
+
+func (r *BenchmarkReports) AddReport(report BenchmarkReport) {
+	r.Reports = append(r.Reports, report)
+}
+
+type BenchmarkReport struct {
+	Name     string
+	RowCount int
+	Unit     string
+	Result   float64
 }

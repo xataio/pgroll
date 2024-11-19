@@ -18,8 +18,6 @@ import (
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
 	"github.com/spf13/cobra"
-
-	"github.com/xataio/pgroll/internal/benchmarks"
 )
 
 var rootCmd = &cobra.Command{
@@ -95,7 +93,7 @@ type chartKey struct {
 
 // generateCharts will generate charts grouped by postgres version and benchmark with series for each
 // rowCount
-func generateCharts(reports []benchmarks.Reports) []*charts.Line {
+func generateCharts(reports []BenchmarkReports) []*charts.Line {
 	// Time data for each sha so we can order them later
 	timeOrder := make(map[string]int64) // shortSHA -> timestamp
 
@@ -200,7 +198,7 @@ func generateCharts(reports []benchmarks.Reports) []*charts.Line {
 	return allCharts
 }
 
-func loadData(filename string) (allReports []benchmarks.Reports, err error) {
+func loadData(filename string) (allReports []BenchmarkReports, err error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening file: %w", err)
@@ -213,7 +211,7 @@ func loadData(filename string) (allReports []benchmarks.Reports, err error) {
 
 	// Each line represents a collection of results from a single commit
 	for scanner.Scan() {
-		var reports benchmarks.Reports
+		var reports BenchmarkReports
 		line := scanner.Text()
 		if err := json.Unmarshal([]byte(line), &reports); err != nil {
 			return nil, fmt.Errorf("unmarshalling reports: %w", err)
@@ -236,4 +234,22 @@ func trimName(name string) string {
 // First 7 characters
 func shortSHA(sha string) string {
 	return sha[:7]
+}
+
+type BenchmarkReports struct {
+	GitSHA          string
+	PostgresVersion string
+	Timestamp       int64
+	Reports         []BenchmarkReport
+}
+
+func (r *BenchmarkReports) AddReport(report BenchmarkReport) {
+	r.Reports = append(r.Reports, report)
+}
+
+type BenchmarkReport struct {
+	Name     string
+	RowCount int
+	Unit     string
+	Result   float64
 }
