@@ -71,6 +71,7 @@ func openAndReadMigrationFile(dir fs.FS, filename string) (*migrations.Migration
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	migration, err := migrations.ReadMigration(file)
 	if err != nil {
