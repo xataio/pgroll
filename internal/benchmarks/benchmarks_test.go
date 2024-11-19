@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/oapi-codegen/nullable"
@@ -181,7 +182,7 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 }
 
 func addRowsPerSecond(b *testing.B, rowCount int, perSecond float64) {
-	reports.AddReport(Report{
+	reports.AddReport(roll.BenchmarkReport{
 		Name:     b.Name(),
 		Unit:     unitRowsPerSecond,
 		RowCount: rowCount,
@@ -229,3 +230,16 @@ var migAlterColumn = migrations.Migration{
 }
 
 func ptr[T any](x T) *T { return &x }
+
+func getPostgresVersion() string {
+	return os.Getenv("POSTGRES_VERSION")
+}
+
+func newReports() *roll.BenchmarkReports {
+	return &roll.BenchmarkReports{
+		GitSHA:          os.Getenv("GITHUB_SHA"),
+		PostgresVersion: getPostgresVersion(),
+		Timestamp:       time.Now().Unix(),
+		Reports:         []roll.BenchmarkReport{},
+	}
+}

@@ -17,19 +17,36 @@ import (
 	"github.com/go-echarts/go-echarts/v2/charts"
 	"github.com/go-echarts/go-echarts/v2/components"
 	"github.com/go-echarts/go-echarts/v2/opts"
+	"github.com/spf13/cobra"
 
 	"github.com/xataio/pgroll/internal/benchmarks"
 )
 
+var rootCmd = &cobra.Command{
+	Use:          "build <inputfile> <outputfile>",
+	SilenceUsage: true,
+	Args:         cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		err := buildCharts(args[0], args[1])
+		if err != nil {
+			cmd.PrintErr(err)
+			os.Exit(1)
+		}
+		return nil
+	},
+}
+
 // This will generate line charts displaying benchmark results over time. Each set of charts will
 // apply to a single version of Postgres.
-
 func main() {
-	input := mustEnv("FILENAME_BENCHMARK_RESULTS")
-	output := mustEnv("FILENAME_BENCHMARK_OUTPUT")
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
 
+func buildCharts(inputFile, outputFile string) error {
 	log.Println("Loading data")
-	reports, err := loadData(input)
+	reports, err := loadData(inputFile)
 	if err != nil {
 		log.Fatalf("Loading data: %v", err)
 	}
@@ -46,7 +63,7 @@ func main() {
 		page.AddCharts(c)
 	}
 
-	f, err := os.Create(output)
+	f, err := os.Create(outputFile)
 	if err != nil {
 		log.Fatalf("Creating output file: %v", err)
 	}
@@ -59,7 +76,9 @@ func main() {
 	if err := page.Render(f); err != nil {
 		log.Fatalf("Rendering: %s", err)
 	}
-	log.Printf("Charts generated at %s", output)
+	log.Printf("Charts generated at %s", outputFile)
+
+	return nil
 }
 
 type dataKey struct {
