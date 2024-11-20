@@ -177,6 +177,9 @@ func generateCharts(reports []BenchmarkReports) []*charts.Line {
 
 		for _, rowCount := range sortedRowCounts {
 			s := series[rowCount]
+			if len(s) == 0 {
+				continue
+			}
 
 			name := fmt.Sprintf("%d", rowCount)
 			data := make([]opts.LineData, len(series[rowCount]))
