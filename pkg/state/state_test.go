@@ -756,6 +756,79 @@ func TestReadSchema(t *testing.T) {
 				},
 			},
 			{
+				name: "multicolumn foreign key constraint",
+				createStmt: `CREATE TABLE products(
+          customer_id INT NOT NULL, 
+          product_id INT NOT NULL, 
+          PRIMARY KEY(customer_id, product_id));
+
+          CREATE TABLE orders(
+            customer_id INT NOT NULL, 
+            product_id INT NOT NULL, 
+            CONSTRAINT fk_customer_product FOREIGN KEY (customer_id, product_id) REFERENCES products (customer_id, product_id));`,
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]schema.Table{
+						"products": {
+							Name: "products",
+							Columns: map[string]schema.Column{
+								"customer_id": {
+									Name:     "customer_id",
+									Type:     "integer",
+									Nullable: false,
+								},
+								"product_id": {
+									Name:     "product_id",
+									Type:     "integer",
+									Nullable: false,
+								},
+							},
+							PrimaryKey: []string{"customer_id", "product_id"},
+							Indexes: map[string]schema.Index{
+								"products_pkey": {
+									Name:       "products_pkey",
+									Unique:     true,
+									Columns:    []string{"customer_id", "product_id"},
+									Method:     string(migrations.OpCreateIndexMethodBtree),
+									Definition: "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (customer_id, product_id)",
+								},
+							},
+							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+						},
+						"orders": {
+							Name: "orders",
+							Columns: map[string]schema.Column{
+								"customer_id": {
+									Name:     "customer_id",
+									Type:     "integer",
+									Nullable: false,
+								},
+								"product_id": {
+									Name:     "product_id",
+									Type:     "integer",
+									Nullable: false,
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]schema.Index{},
+							ForeignKeys: map[string]schema.ForeignKey{
+								"fk_customer_product": {
+									Name:              "fk_customer_product",
+									Columns:           []string{"customer_id", "product_id"},
+									ReferencedTable:   "public.products",
+									ReferencedColumns: []string{"customer_id", "product_id"},
+									OnDelete:          "NO ACTION",
+								},
+							},
+							CheckConstraints:  map[string]schema.CheckConstraint{},
+							UniqueConstraints: map[string]schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
 				name:       "multi-column index",
 				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
 				wantSchema: &schema.Schema{
