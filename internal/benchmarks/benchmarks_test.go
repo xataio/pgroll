@@ -21,7 +21,10 @@ import (
 	"github.com/xataio/pgroll/pkg/roll"
 )
 
-const unitRowsPerSecond = "rows/s"
+const (
+	unitRowsPerSecond       = "rows/s"
+	unitExecutionsPerSecond = "executions/s"
+)
 
 var (
 	rowCounts = []int{10_000, 100_000, 300_000}
@@ -151,6 +154,38 @@ func BenchmarkWriteAmplification(b *testing.B) {
 				})
 			})
 		}
+	})
+}
+
+func BenchmarkReadSchema(b *testing.B) {
+	ctx := context.Background()
+	testSchema := testutils.TestSchema()
+	var opts []roll.Option
+
+	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(b, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
+		b.Cleanup(func() {
+			require.NoError(b, mig.Close())
+		})
+
+		setupInitialTable(b, ctx, testSchema, mig, db, 1)
+		b.ResetTimer()
+
+		// We don't want this benchmark to test the network so instead we run the actual function in a tight
+		// loop within a single execution.
+		executions := 10000
+		q := fmt.Sprintf(`SELECT %s.read_schema($1) FROM generate_series(1, %d);`, pq.QuoteIdentifier(mig.State().Schema()), executions)
+		_, err := db.ExecContext(ctx, q, testSchema)
+		b.StopTimer()
+		require.NoError(b, err)
+		perSecond := float64(executions) / b.Elapsed().Seconds()
+		b.ReportMetric(perSecond, unitExecutionsPerSecond)
+
+		reports.AddReport(BenchmarkReport{
+			Name:     b.Name(),
+			Unit:     unitExecutionsPerSecond,
+			RowCount: executions,
+			Result:   perSecond,
+		})
 	})
 }
 
