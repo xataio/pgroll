@@ -169,10 +169,10 @@ For more advanced usage, a tutorial, and detailed options refer to the full [Doc
 
 Some performance benchmarks are run on each commit to `main` in order to track performance over time. Each benchmark is run against Postgres 14.8, 15.3, 16.4, 17.0 and "latest". Each line on the chart represents the number of rows the benchmark was run against, currently 10k, 100k and 300k rows.
 
-* Backfill: Rows/s to backfill a text column with the value `placeholder`. We use our default batching strategy of 10k rows per batch with no backoff.
-* WriteAmplification/NoTrigger: Baseline rows/s when writing data to a table without a `pgroll` trigger.
-* WriteAmplification/WithTrigger: Rows/s when writing data to a table when a `pgroll` trigger has been set up.
-* ReadSchema: Checks the number of executions per second of the `read_schema` function which is a core function executed frequently during migrations.
+* `Backfill:` Rows/s to backfill a text column with the value `placeholder`. We use our default batching strategy of 10k rows per batch with no backoff.
+* `WriteAmplification/NoTrigger:` Baseline rows/s when writing data to a table without a `pgroll` trigger.
+* `WriteAmplification/WithTrigger:` Rows/s when writing data to a table when a `pgroll` trigger has been set up.
+* `ReadSchema:` Checks the number of executions per second of the `read_schema` function which is a core function executed frequently during migrations.
 
 They can be seen [here](https://xataio.github.io/pgroll/benchmarks.html).
 
