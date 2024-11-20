@@ -83,18 +83,17 @@
         },
         "on_delete": {
           "description": "On delete behavior of the foreign key constraint",
-          "$ref": "#/$defs/ForeignKeyReferenceOnDelete"
+          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+          "default": "NO ACTION"
         }
       },
       "required": ["column", "name", "table"],
       "type": "object"
     },
     "ForeignKeyReferenceOnDelete": {
-      "additionalProperties": false,
       "description": "On delete behavior of the foreign key constraint",
       "type": "string",
-      "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
-      "default": "NO ACTION"
+      "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"]
     },
     "OpAddColumn": {
       "additionalProperties": false,
@@ -489,7 +488,8 @@
             },
             "on_delete": {
               "description": "On delete behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyReferenceOnDelete"
+              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+              "default": "NO ACTION"
             }
           }
         },

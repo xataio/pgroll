@@ -28,18 +28,16 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: f.Table, Name: f.Column}
 	}
 
-	if f.OnDelete != nil {
-		switch strings.ToUpper(string(*f.OnDelete)) {
-		case string(ForeignKeyReferenceOnDeleteNOACTION):
-		case string(ForeignKeyReferenceOnDeleteRESTRICT):
-		case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
-		case string(ForeignKeyReferenceOnDeleteSETNULL):
-		case string(ForeignKeyReferenceOnDeleteCASCADE):
-		case "":
-			break
-		default:
-			return InvalidOnDeleteSettingError{Name: f.Name, Setting: string(*f.OnDelete)}
-		}
+	switch strings.ToUpper(string(f.OnDelete)) {
+	case string(ForeignKeyReferenceOnDeleteNOACTION):
+	case string(ForeignKeyReferenceOnDeleteRESTRICT):
+	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
+	case string(ForeignKeyReferenceOnDeleteSETNULL):
+	case string(ForeignKeyReferenceOnDeleteCASCADE):
+	case "":
+		break
+	default:
+		return InvalidOnDeleteSettingError{Name: f.Name, Setting: string(f.OnDelete)}
 	}
 
 	return nil

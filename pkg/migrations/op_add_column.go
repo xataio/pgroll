@@ -286,8 +286,8 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 	if col.References != nil {
 		onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
-		if col.References.OnDelete != nil {
-			onDelete = strings.ToUpper(string(*col.References.OnDelete))
+		if col.References.OnDelete != "" {
+			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
 
 		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",

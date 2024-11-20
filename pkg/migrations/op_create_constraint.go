@@ -254,8 +254,8 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB)
 
 func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
 	onDelete := "NO ACTION"
-	if o.References.OnDelete != nil {
-		onDelete = strings.ToUpper(string(*o.References.OnDelete))
+	if o.References.OnDelete != "" {
+		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
 	_, err := conn.ExecContext(ctx,

@@ -53,7 +53,7 @@ type ForeignKeyReference struct {
 	Name string `json:"name"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
 	// Name of the referenced table
 	Table string `json:"table"`
@@ -156,7 +156,7 @@ type OpCreateConstraintReferences struct {
 	Columns []string `json:"columns"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete *ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`
