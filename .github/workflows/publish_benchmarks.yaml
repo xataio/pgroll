@@ -1,0 +1,67 @@
+name: Publish Benchmark
+
+on:
+  workflow_run:
+    workflows: [ "Benchmark" ]
+    branches: [ main ]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  id-token: write # For getting AWS permissions
+  contents: write
+  packages: read
+  pages: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::493985724844:role/pgroll-benchmark-results-access
+          aws-region: us-east-1
+          mask-aws-account-id: 'no'
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'dev/go.mod'
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Download results and build html
+        working-directory: ./dev
+        run: |
+            aws s3 cp s3://pgroll-benchmark-results/benchmark-results.json $HOME/benchmark-results.json
+            go run benchmark-results/build.go $HOME/benchmark-results.json /home/runner/work/pgroll/pgroll/benchmarks.html
+
+      # This will pick up the benchmarks.html file generated in the previous step and will also
+      # publish the README at index.html
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./static
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./static
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
