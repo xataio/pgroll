@@ -173,9 +173,8 @@ func BenchmarkReadSchema(b *testing.B) {
 		// We don't want this benchmark to test the network so instead we run the actual function in a tight
 		// loop within a single execution.
 		executions := 10000
-		// nolint:gosec
-		q := fmt.Sprintf(`SELECT %s.read_schema($1) FROM generate_series(1, %d);`, pq.QuoteIdentifier(mig.State().Schema()), executions)
-		_, err := db.ExecContext(ctx, q, testSchema)
+		q := fmt.Sprintf(`SELECT %s.read_schema($1) FROM generate_series(1, $2);`, pq.QuoteIdentifier(mig.State().Schema()))
+		_, err := db.ExecContext(ctx, q, testSchema, executions)
 		b.StopTimer()
 		require.NoError(b, err)
 		perSecond := float64(executions) / b.Elapsed().Seconds()
