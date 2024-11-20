@@ -226,9 +226,13 @@ func loadData(filename string) (allReports []BenchmarkReports, err error) {
 }
 
 // Benchmarks are grouped by the number of rows they were tested against. We need to trim this off
-// the end.
+// the end if it exists.
 func trimName(name string) string {
-	return strings.TrimPrefix(name[:strings.LastIndex(name, "/")], "Benchmark")
+	name = strings.TrimPrefix(name, "Benchmark")
+	if i := strings.LastIndex(name, "/"); i != -1 {
+		name = name[:i]
+	}
+	return name
 }
 
 // First 7 characters

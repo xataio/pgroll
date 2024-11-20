@@ -18,3 +18,9 @@ func TestBuildChartsRegression(t *testing.T) {
 	// 5 versions * 3 benchmarks
 	assert.Len(t, generated, 15)
 }
+
+func TestTrimName(t *testing.T) {
+	assert.Equal(t, "Test1", trimName("BenchmarkTest1/1000"))
+	assert.Equal(t, "Test1/Case2", trimName("BenchmarkTest1/Case2/1000"))
+	assert.Equal(t, "Test1", trimName("BenchmarkTest1"))
+}
