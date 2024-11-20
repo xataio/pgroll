@@ -173,6 +173,7 @@ func BenchmarkReadSchema(b *testing.B) {
 		// We don't want this benchmark to test the network so instead we run the actual function in a tight
 		// loop within a single execution.
 		executions := 10000
+		// nolint:gosec
 		q := fmt.Sprintf(`SELECT %s.read_schema($1) FROM generate_series(1, %d);`, pq.QuoteIdentifier(mig.State().Schema()), executions)
 		_, err := db.ExecContext(ctx, q, testSchema)
 		b.StopTimer()
