@@ -817,7 +817,7 @@ func TestReadSchema(t *testing.T) {
 								"fk_customer_product": {
 									Name:              "fk_customer_product",
 									Columns:           []string{"customer_id", "product_id"},
-									ReferencedTable:   "public.products",
+									ReferencedTable:   "products",
 									ReferencedColumns: []string{"customer_id", "product_id"},
 									OnDelete:          "NO ACTION",
 								},

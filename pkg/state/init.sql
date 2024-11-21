@@ -205,31 +205,42 @@ BEGIN
                             'columns', fk_details.columns,
                             'referencedTable', fk_details.referencedTable,
                             'referencedColumns', fk_details.referencedColumns,
-                            'onDelete', fk_details.onDelete
-                                                                                        )), '{}'::json)
-                                    FROM (SELECT fk_constraint.conname,
-                                                 array_agg(fk_attr.attname ORDER BY fk_constraint.conkey::int[])   AS columns,
-                                                 fk_cl.relname                                                     AS referencedTable,
-                                                 array_agg(ref_attr.attname ORDER BY fk_constraint.confkey::int[]) AS referencedColumns,
-                                                 CASE
-                                                     WHEN fk_constraint.confdeltype = 'a' THEN 'NO ACTION'
-                                                     WHEN fk_constraint.confdeltype = 'r' THEN 'RESTRICT'
-                                                     WHEN fk_constraint.confdeltype = 'c' THEN 'CASCADE'
-                                                     WHEN fk_constraint.confdeltype = 'd' THEN 'SET DEFAULT'
-                                                     WHEN fk_constraint.confdeltype = 'n' THEN 'SET NULL'
-                                                     END                                                           as onDelete
-                                          FROM pg_constraint AS fk_constraint
-                                                   INNER JOIN pg_class fk_cl ON fk_constraint.confrelid = fk_cl.oid
-                                                   INNER JOIN pg_attribute fk_attr
-                                                              ON fk_attr.attrelid = fk_constraint.conrelid AND
-                                                                 fk_attr.attnum = ANY (fk_constraint.conkey)
-                                                   INNER JOIN pg_attribute ref_attr
-                                                              ON ref_attr.attrelid = fk_constraint.confrelid AND
-                                                                 ref_attr.attnum = ANY (fk_constraint.confkey)
-                                          WHERE fk_constraint.conrelid = t.oid
-                                            AND fk_constraint.contype = 'f'
-                                          GROUP BY fk_constraint.conname, fk_cl.relname,
-                                                   fk_constraint.confdeltype) AS fk_details)
+                            'onDelete', fk_details.onDelete)), '{}'::json)
+                                    FROM (SELECT 
+                                      fk_info.conname as conname,
+                                      fk_info.columns as columns,
+                                      fk_info.relname as referencedTable,
+                                      array_agg(ref_attr.attname ORDER BY ref_attr.attname) AS referencedColumns,
+                                     CASE
+                                         WHEN fk_info.confdeltype = 'a' THEN 'NO ACTION'
+                                         WHEN fk_info.confdeltype = 'r' THEN 'RESTRICT'
+                                         WHEN fk_info.confdeltype = 'c' THEN 'CASCADE'
+                                         WHEN fk_info.confdeltype = 'd' THEN 'SET DEFAULT'
+                                         WHEN fk_info.confdeltype = 'n' THEN 'SET NULL'
+                                         END as onDelete
+                              FROM (
+                                SELECT
+                                  fk_constraint.conname,
+                                  fk_constraint.conrelid,
+                                  fk_constraint.confrelid,
+                                  fk_constraint.confkey,
+                                  fk_cl.relname,
+                                  fk_constraint.confdeltype,
+                                  array_agg(fk_attr.attname ORDER BY fk_attr.attname) AS columns 
+                                    FROM pg_constraint AS fk_constraint
+                                      INNER JOIN pg_class fk_cl ON fk_constraint.confrelid = fk_cl.oid -- join the referenced table
+                                      INNER JOIN pg_attribute fk_attr ON 
+                                        fk_attr.attrelid = fk_constraint.conrelid AND 
+                                        fk_attr.attnum = any(fk_constraint.conkey) -- join the columns of the referencing table
+                                    WHERE fk_constraint.conrelid = t.oid
+                                      AND fk_constraint.contype = 'f'
+                                    GROUP BY fk_constraint.conrelid, fk_constraint.conname, fk_constraint.confrelid, fk_cl.relname, fk_constraint.confkey, fk_constraint.confdeltype
+                            ) AS fk_info
+                            INNER JOIN pg_attribute ref_attr ON
+                              ref_attr.attrelid = fk_info.confrelid AND
+                              ref_attr.attnum = any(fk_info.confkey) -- join the columns of the referenced table
+                            GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confdeltype, fk_info.relname
+                            ) AS fk_details)
                                                                          )), '{}'::json)
                               FROM pg_class AS t
                                        INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
