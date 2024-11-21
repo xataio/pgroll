@@ -73,6 +73,7 @@ jobs:
 
       - name: Generate types
         run: |
+          chmod 666 pkg/state/init.sql
           make generate
 
       - name: Ensure generated types are up-to-date
