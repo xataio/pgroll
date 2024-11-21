@@ -862,7 +862,7 @@ A change default operation changes the default value of a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "default": "new default value (or null)",
+    "default": "new default value" | null,
     "up": "SQL expression",
     "down": "SQL expression"
   }
@@ -885,7 +885,7 @@ A change comment operation changes the comment on a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "comment": "new comment for column" or null,
+    "comment": "new comment for column" | null,
     "up": "SQL expression",
     "down": "SQL expression"
   }
