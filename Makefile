@@ -10,7 +10,7 @@ format:
 	# Format JSON schema
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json node:alpine npx prettier /mnt/schema.json --parser json --tab-width 2 --single-quote --trailing-comma all --no-semi --arrow-parens always --print-width 120 --write
 	# Format embedded SQL
-	docker run --rm -v $$PWD/pkg/state/init.sql:/mnt/init.sql node:alpine npx sql-formatter -l postgresql -o /mnt/init.sql /mnt/init.sql
+	docker run --rm -v $$PWD/pkg/state/init.sql:/data/init.sql backplane/pgformatter --inplace /data/init.sql
 
 generate: format
 	# Generate the types from the JSON schema
