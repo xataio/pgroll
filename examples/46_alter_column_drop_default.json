@@ -5,7 +5,9 @@
       "alter_column": {
         "table": "tickets",
         "column": "ticket_type",
-        "default": null
+        "default": null,
+        "up": "",
+        "down": ""
       }
     }
   ]
