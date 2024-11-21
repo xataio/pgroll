@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 )
 

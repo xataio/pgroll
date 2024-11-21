@@ -17,6 +17,11 @@
           {
             "name": "sellers_zip",
             "type": "integer"
+          },
+          {
+            "name": "ticket_type",
+            "type": "varchar(255)",
+            "default": "'paper'"
           }
         ]
       }

@@ -862,7 +862,7 @@ A change default operation changes the default value of a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "default": "new default value",
+    "default": "new default value" | null,
     "up": "SQL expression",
     "down": "SQL expression"
   }
@@ -872,6 +872,7 @@ A change default operation changes the default value of a column.
 Example **change default** migrations:
 
 * [35_alter_column_multiple.json](../examples/35_alter_column_multiple.json)
+* [46_alter_column_drop_default](../examples/46_alter_column_drop_default.json)
 
 #### Change comment
 
@@ -884,7 +885,7 @@ A change comment operation changes the comment on a column.
   "alter_column": {
     "table": "table name",
     "column": "column name",
-    "comment": "new comment for column" or null,
+    "comment": "new comment for column" | null,
     "up": "SQL expression",
     "down": "SQL expression"
   }

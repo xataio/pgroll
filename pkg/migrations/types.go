@@ -90,8 +90,9 @@ type OpAlterColumn struct {
 	// New comment on the column
 	Comment nullable.Nullable[string] `json:"comment,omitempty"`
 
-	// Default value of the column
-	Default *string `json:"default,omitempty"`
+	// Default value of the column. Setting to null will drop the default if it was
+	// set previously.
+	Default nullable.Nullable[string] `json:"default,omitempty"`
 
 	// SQL expression for down migration
 	Down string `json:"down,omitempty"`

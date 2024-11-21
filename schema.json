@@ -134,8 +134,13 @@
           "type": "string"
         },
         "default": {
-          "description": "Default value of the column",
-          "type": "string"
+          "description": "Default value of the column. Setting to null will drop the default if it was set previously.",
+          "type": ["string", "null"],
+          "goJSONSchema": {
+            "imports": ["github.com/oapi-codegen/nullable"],
+            "nillable": true,
+            "type": "nullable.Nullable[string]"
+          }
         },
         "nullable": {
           "description": "Indicates if the column is nullable (for add/remove not null constraint operation)",

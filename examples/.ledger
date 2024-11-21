@@ -43,3 +43,4 @@
 43_create_tickets_table.json
 44_add_table_unique_constraint.json
 45_add_table_check_constraint.json
+46_alter_column_drop_default.json
