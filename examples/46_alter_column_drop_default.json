@@ -1,0 +1,12 @@
+{
+  "name": "46_alter_column_drop_default",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "tickets",
+        "column": "ticket_type",
+        "default": null
+      }
+    }
+  ]
+}

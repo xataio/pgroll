@@ -7,16 +7,17 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 type OpSetDefault struct {
-	Table   string `json:"table"`
-	Column  string `json:"column"`
-	Default string `json:"default"`
-	Up      string `json:"up"`
-	Down    string `json:"down"`
+	Table   string  `json:"table"`
+	Column  string  `json:"column"`
+	Default *string `json:"default"`
+	Up      string  `json:"up"`
+	Down    string  `json:"down"`
 }
 
 var _ Operation = (*OpSetDefault)(nil)
@@ -24,10 +25,17 @@ var _ Operation = (*OpSetDefault)(nil)
 func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	tbl := s.GetTable(o.Table)
 
-	_, err := conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
-		o.Default))
+	var err error
+	if o.Default == nil {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT`,
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(TemporaryName(o.Column))))
+	} else {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(TemporaryName(o.Column)),
+			*o.Default))
+	}
 	if err != nil {
 		return nil, err
 	}

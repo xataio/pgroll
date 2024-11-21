@@ -204,7 +204,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Table:    "events",
 							Column:   "name",
 							Nullable: ptr(false),
-							Default:  ptr("'default'"),
+							Default:  nullable.NewNullableWithValue("'default'"),
 							Up:       "(SELECT CASE WHEN name IS NULL THEN 'rewritten by up SQL' ELSE name END)",
 						},
 					},

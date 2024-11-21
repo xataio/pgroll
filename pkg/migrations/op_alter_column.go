@@ -302,11 +302,17 @@ func (o *OpAlterColumn) subOperations() []Operation {
 			Down:   o.Down,
 		})
 	}
-	if o.Default != nil {
+	if o.Default.IsSpecified() {
+		// o.Default is either a valid value or `null`.
+		var defaultPtr *string
+		if d, err := o.Default.Get(); err == nil {
+			defaultPtr = &d
+		}
+
 		ops = append(ops, &OpSetDefault{
 			Table:   o.Table,
 			Column:  o.Column,
-			Default: *o.Default,
+			Default: defaultPtr,
 			Up:      o.Up,
 			Down:    o.Down,
 		})
