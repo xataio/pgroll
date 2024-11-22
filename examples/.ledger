@@ -45,3 +45,4 @@
 45_add_table_check_constraint.json
 46_alter_column_drop_default.json
 47_add_table_foreign_key_constraint.json
+48_drop_tickets_check.json
