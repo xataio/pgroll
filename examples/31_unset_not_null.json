@@ -7,7 +7,7 @@
         "column": "title",
         "nullable": true,
         "up": "title",
-        "down": "(SELECT CASE WHEN title IS NULL THEN 'placeholder title' ELSE title END)"
+        "down": "SELECT CASE WHEN title IS NULL THEN 'placeholder title' ELSE title END"
       }
     }
   ]

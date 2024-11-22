@@ -9,6 +9,7 @@ import (
 	"github.com/xataio/pgroll/internal/testutils"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -56,7 +57,7 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "reviews",
 							Column:   "review",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:     "SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END",
 						},
 					},
 				},
@@ -192,7 +193,7 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "reviews",
 							Column:   "review",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END)",
+							Down:     "SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END",
 							Up:       "review || ' (from the old column)'",
 						},
 					},
@@ -278,7 +279,7 @@ func TestDropNotNull(t *testing.T) {
 							Table:    "employees",
 							Column:   "department_id",
 							Nullable: ptr(true),
-							Down:     "(SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END)",
+							Down:     "SELECT CASE WHEN department_id IS NULL THEN 1 ELSE department_id END",
 							Up:       "department_id",
 						},
 					},
@@ -327,7 +328,7 @@ func TestDropNotNull(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(true),
 							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END",
 						},
 					},
 				},
@@ -395,7 +396,7 @@ func TestDropNotNull(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(true),
 							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END",
 						},
 					},
 				},
@@ -460,7 +461,7 @@ func TestDropNotNull(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(true),
 							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END",
 						},
 					},
 				},
@@ -525,7 +526,7 @@ func TestDropNotNull(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(true),
 							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END)",
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'anonymous' ELSE name END",
 						},
 					},
 				},
@@ -616,7 +617,7 @@ func TestDropNotNullValidation(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(true),
 							Up:       "name",
-							Down:     "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END",
 						},
 					},
 				},

@@ -49,12 +49,12 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Type:    "unique",
 							Columns: []string{"name"},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name": "name || random()",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"name": "name",
-							}),
+							},
 						},
 					},
 				},
@@ -131,12 +131,12 @@ func TestCreateConstraint(t *testing.T) {
 							Type:    "check",
 							Check:   ptr("name ~ '^[a-zA-Z]+$'"),
 							Columns: []string{"name"},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name": "regexp_replace(name, '\\d+', '', 'g')",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"name": "name",
-							}),
+							},
 						},
 					},
 				},
@@ -209,14 +209,14 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Type:    "unique",
 							Columns: []string{"name", "email"},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name":  "name || random()",
 								"email": "email || random()",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"name":  "name",
 								"email": "email",
-							}),
+							},
 						},
 					},
 				},
@@ -294,14 +294,14 @@ func TestCreateConstraint(t *testing.T) {
 							Type:    "check",
 							Check:   ptr("name != email"),
 							Columns: []string{"name", "email"},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name":  "name",
-								"email": "(SELECT CASE WHEN email ~ '@' THEN email ELSE email || '@example.com' END)",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+								"email": "SELECT CASE WHEN email ~ '@' THEN email ELSE email || '@example.com' END",
+							},
+							Down: map[string]string{
 								"name":  "name",
 								"email": "email",
-							}),
+							},
 						},
 					},
 				},
@@ -425,14 +425,14 @@ func TestCreateConstraint(t *testing.T) {
 								Table:   "users",
 								Columns: []string{"id", "zip"},
 							},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"users_id":  "1",
 								"users_zip": "12345",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"users_id":  "users_id",
 								"users_zip": "users_zip",
-							}),
+							},
 						},
 					},
 				},
@@ -572,10 +572,10 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Columns: []string{"name"},
 							Type:    "unique",
-							Up:      migrations.OpCreateConstraintUp(map[string]string{}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							Up:      map[string]string{},
+							Down: map[string]string{
 								"name": "name",
-							}),
+							},
 						},
 					},
 				},
@@ -616,12 +616,12 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "users",
 							Columns: []string{"name"},
 							Type:    "check",
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name": "name",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"name": "name",
-							}),
+							},
 						},
 					},
 				},
@@ -666,12 +666,12 @@ func TestCreateConstraint(t *testing.T) {
 								Table:   "missing_table",
 								Columns: []string{"id"},
 							},
-							Up: migrations.OpCreateConstraintUp(map[string]string{
+							Up: map[string]string{
 								"name": "name",
-							}),
-							Down: migrations.OpCreateConstraintDown(map[string]string{
+							},
+							Down: map[string]string{
 								"name": "name",
-							}),
+							},
 						},
 					},
 				},

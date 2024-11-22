@@ -9,7 +9,7 @@
           "name": "title_length",
           "constraint": "length(title) > 3"
         },
-        "up": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)",
+        "up": "SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END",
         "down": "title"
       }
     }

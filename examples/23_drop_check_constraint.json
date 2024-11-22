@@ -6,7 +6,7 @@
         "table": "posts",
         "name": "title_length",
         "up": "title",
-        "down": "(SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END)"
+        "down": "SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END"
       }
     }
   ]

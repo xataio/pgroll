@@ -265,7 +265,7 @@ Here is the `pgroll` migration that will perform the migration to make the `desc
         "table": "users",
         "column": "description",
         "nullable": false,
-        "up": "(SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END)",
+        "up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
         "down": "description"
       }
     }
@@ -307,7 +307,7 @@ You should see something like this:
 `pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.json` file:
 
 ```json
-"up": "(SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END)",
+"up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
 ```
 
 This has copied over all `description` values into the `_pgroll_new_description` field, rewriting any `NULL` values using the provided SQL.

@@ -13,7 +13,7 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-// RenameDuplicatedColumn:
+// RenameDuplicatedColumn
 // * renames a duplicated column to its original name
 // * renames any foreign keys on the duplicated column to their original name.
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
