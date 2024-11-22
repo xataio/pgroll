@@ -1341,7 +1341,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 								Name:     "fk_users_doesntexist",
 								Table:    "users",
 								Column:   "id",
-								OnDelete: migrations.ForeignKeyReferenceOnDelete("invalid"),
+								OnDelete: "invalid",
 							},
 							Up:   "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
 							Down: "user_id",
