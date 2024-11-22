@@ -23,7 +23,7 @@ type Migration struct {
 
 // SchemaHistory returns all migrations applied to a schema in ascending
 // timestamp order
-func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, error) {
+func (s *State) SchemaHistory(ctx context.Context, schema string) (entries []Migration, err error) {
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
 			FROM %s.migrations
@@ -33,16 +33,16 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func() {
+		err = rows.Close()
+	}()
 
-	var entries []Migration
 	for rows.Next() {
 		var name, rawMigration string
 		var createdAt time.Time
 
-		rows.Scan(&name, &rawMigration, &createdAt)
-		if err != nil {
-			return nil, err
+		if err := rows.Scan(&name, &rawMigration, &createdAt); err != nil {
+			return nil, fmt.Errorf("row scan: %w", err)
 		}
 
 		var mig migrations.Migration
