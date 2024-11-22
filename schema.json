@@ -494,14 +494,12 @@
           }
         },
         "up": {
-          "type": "object",
-          "additionalProperties": { "type": "string" },
-          "description": "SQL expression of up migration by column"
+          "description": "SQL expressions for up migrations",
+          "$ref": "#/$defs/MultiColumnUpSQL"
         },
         "down": {
-          "type": "object",
-          "additionalProperties": { "type": "string" },
-          "description": "SQL expression of down migration by column"
+          "description": "SQL expressions for down migrations",
+          "$ref": "#/$defs/MultiColumnDownSQL"
         }
       },
       "required": ["name", "table", "type", "up", "down"],
@@ -702,6 +700,16 @@
       },
       "required": ["name"],
       "type": "object"
+    },
+    "MultiColumnUpSQL": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Map of column names to up SQL expressions"
+    },
+    "MultiColumnDownSQL": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "description": "Map of column names to down SQL expressions"
     }
   }
 }
