@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/migrations/templates"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -38,6 +39,11 @@ func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg trigg
 	if err != nil {
 		return err
 	}
+
+	if len(sql) > 0 && sql[0] != '(' {
+		sql = "(" + sql + ")"
+	}
+
 	cfg.SQL = sql
 
 	funcSQL, err := buildFunction(cfg)

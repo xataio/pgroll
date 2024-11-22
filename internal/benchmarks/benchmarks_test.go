@@ -256,7 +256,7 @@ var migAlterColumn = migrations.Migration{
 		&migrations.OpAlterColumn{
 			Table:    "users",
 			Column:   "name",
-			Up:       "(SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END)",
+			Up:       "SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END",
 			Down:     "user_name",
 			Comment:  nullable.NewNullableWithValue("the name of the user"),
 			Nullable: ptr(false),

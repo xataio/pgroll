@@ -11,7 +11,7 @@
           "column": "id",
           "on_delete": "CASCADE"
         },
-        "up": "(SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END)",
+        "up": "SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = user_id) THEN user_id ELSE NULL END",
         "down": "user_id"
       }
     }

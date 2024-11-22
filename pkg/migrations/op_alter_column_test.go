@@ -47,7 +47,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "events",
 							Column:   "name",
-							Up:       "(SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END)",
+							Up:       "SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END",
 							Down:     "event_name",
 							Name:     ptr("event_name"),
 							Type:     ptr("text"),
@@ -205,7 +205,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Column:   "name",
 							Nullable: ptr(false),
 							Default:  nullable.NewNullableWithValue("'default'"),
-							Up:       "(SELECT CASE WHEN name IS NULL THEN 'rewritten by up SQL' ELSE name END)",
+							Up:       "SELECT CASE WHEN name IS NULL THEN 'rewritten by up SQL' ELSE name END",
 						},
 					},
 				},
@@ -411,7 +411,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 						&migrations.OpAlterColumn{
 							Table:    "people",
 							Column:   "manages",
-							Up:       "(SELECT CASE WHEN manages IS NULL THEN 1 ELSE manages END)",
+							Up:       "SELECT CASE WHEN manages IS NULL THEN 1 ELSE manages END",
 							Down:     "manages",
 							Nullable: ptr(false),
 							References: &migrations.ForeignKeyReference{
