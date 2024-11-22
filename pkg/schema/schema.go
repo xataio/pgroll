@@ -253,7 +253,7 @@ func (t *Table) RenameColumn(from, to string) {
 	delete(t.Columns, from)
 }
 
-// PhysicalColumnNames returns the physical column names for the given virtual
+// PhysicalColumnNamesFor returns the physical column names for the given virtual
 // column names
 func (t *Table) PhysicalColumnNamesFor(columnNames ...string) []string {
 	physicalNames := make([]string, 0, len(columnNames))
