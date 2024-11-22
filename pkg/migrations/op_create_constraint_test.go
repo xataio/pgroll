@@ -296,7 +296,7 @@ func TestCreateConstraint(t *testing.T) {
 							Columns: []string{"name", "email"},
 							Up: migrations.OpCreateConstraintUp(map[string]string{
 								"name":  "name",
-								"email": "(SELECT CASE WHEN email ~ '@' THEN email ELSE email || '@example.com' END)",
+								"email": "SELECT CASE WHEN email ~ '@' THEN email ELSE email || '@example.com' END",
 							}),
 							Down: migrations.OpCreateConstraintDown(map[string]string{
 								"name":  "name",

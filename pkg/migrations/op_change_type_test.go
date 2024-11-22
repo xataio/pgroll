@@ -9,6 +9,7 @@ import (
 	"github.com/xataio/pgroll/internal/testutils"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -390,7 +391,7 @@ func TestChangeColumnType(t *testing.T) {
 							Column: "age",
 							Type:   ptr("integer"),
 							Up:     "CAST(age AS integer)",
-							Down:   "(SELECT CASE WHEN age < 100 THEN age::text ELSE '0' END)",
+							Down:   "SELECT CASE WHEN age < 100 THEN age::text ELSE '0' END",
 						},
 					},
 				},
