@@ -285,7 +285,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		sql += fmt.Sprintf(" DEFAULT %s", d)
 	}
 	if col.References != nil {
-		onDelete := "NO ACTION"
+		onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
 		if col.References.OnDelete != "" {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}

@@ -1,0 +1,31 @@
+{
+  "name": "47_add_table_foreign_key_constraint",
+  "operations": [
+    {
+      "create_constraint": {
+        "type": "foreign_key",
+        "table": "tickets",
+        "name": "fk_sellers",
+        "columns": [
+          "sellers_name",
+          "sellers_zip"
+        ],
+        "references": {
+          "table": "sellers",
+          "columns": [
+            "name",
+            "zip"
+          ]
+        },
+        "up": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        },
+        "down": {
+          "sellers_name": "sellers_name",
+          "sellers_zip": "sellers_zip"
+        }
+      }
+    }
+  ]
+}

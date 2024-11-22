@@ -32,6 +32,10 @@ var table = &schema.Table{
 		"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
 		"different_nick":  {Name: "different_nick", Columns: []string{"name", "nick"}, Definition: `"name" != "nick"`},
 	},
+	ForeignKeys: map[string]schema.ForeignKey{
+		"fk_city":      {Name: "fk_city", Columns: []string{"city"}, ReferencedTable: "cities", ReferencedColumns: []string{"id"}, OnDelete: "NO ACTION"},
+		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE"},
+	},
 }
 
 func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
@@ -117,6 +121,55 @@ func TestDuplicateStmtBuilderUniqueConstraints(t *testing.T) {
 			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
 			for _, stmt := range stmts {
 				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
+			}
+		})
+	}
+}
+
+func TestDuplicateStmtBuilderForeignKeyConstraints(t *testing.T) {
+	d := &duplicatorStmtBuilder{table}
+	for name, testCases := range map[string]struct {
+		columns       []string
+		expectedStmts []string
+	}{
+		"duplicate single column with no FK constraint": {
+			columns:       []string{"description"},
+			expectedStmts: []string{},
+		},
+		"single-column FK with single column duplicated": {
+			columns: []string{"city"},
+			expectedStmts: []string{
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") ON DELETE NO ACTION`,
+			},
+		},
+		"single-column FK with multiple columns duplicated": {
+			columns: []string{"city", "description"},
+			expectedStmts: []string{
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") ON DELETE NO ACTION`,
+			},
+		},
+		"multi-column FK with single column duplicated": {
+			columns: []string{"name"},
+			expectedStmts: []string{
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`,
+			},
+		},
+		"multi-column FK with multiple unrelated column duplicated": {
+			columns: []string{"name", "description"},
+			expectedStmts: []string{
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`,
+			},
+		},
+		"multi-column FK with multiple columns": {
+			columns:       []string{"name", "nick"},
+			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "_pgroll_new_nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stmts := d.duplicateForeignKeyConstraints(nil, testCases.columns...)
+			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
+			for _, stmt := range stmts {
+				assert.Contains(t, testCases.expectedStmts, stmt)
 			}
 		})
 	}

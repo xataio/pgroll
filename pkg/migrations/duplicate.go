@@ -43,6 +43,7 @@ const (
 	cCreateUniqueIndexSQL            = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
 	cSetDefaultSQL                   = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
 	cAlterTableAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
+	cAlterTableAddForeignKeySQL      = `ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
@@ -91,7 +92,6 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		colNames = append(colNames, name)
 
 		// Duplicate the column with the new type
-		// and check and fk constraints
 		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType, d.withoutConstraint); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
@@ -108,6 +108,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 			}
 		}
 
+		// Duplicate the column's comment
 		if sql := d.stmtBuilder.duplicateComment(c.column, c.asName); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
@@ -120,7 +121,6 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	// if the check constraint is not valid for the new column type, in which case
 	// the error is ignored.
 	for _, sql := range d.stmtBuilder.duplicateCheckConstraints(d.withoutConstraint, colNames...) {
-		// Update the check constraint expression to use the new column names if any of the columns are duplicated
 		_, err := d.conn.ExecContext(ctx, sql)
 		err = errorIgnoringErrorCode(err, undefinedFunctionErrorCode)
 		if err != nil {
@@ -132,8 +132,17 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 	// The constraint is duplicated by adding a unique index on the column concurrently.
 	// The index is converted into a unique constraint on migration completion.
 	for _, sql := range d.stmtBuilder.duplicateUniqueConstraints(d.withoutConstraint, colNames...) {
-		// Update the unique constraint columns to use the new column names if any of the columns are duplicated
 		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
+			return err
+		}
+	}
+
+	// Generate SQL to duplicate any foreign key constraints on the columns.
+	// If the foreign key constraint is not valid for a new column type, the error is ignored.
+	for _, sql := range d.stmtBuilder.duplicateForeignKeyConstraints(d.withoutConstraint, colNames...) {
+		_, err := d.conn.ExecContext(ctx, sql)
+		err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
+		if err != nil {
 			return err
 		}
 	}
@@ -169,6 +178,26 @@ func (d *duplicatorStmtBuilder) duplicateUniqueConstraints(withoutConstraint []s
 				pq.QuoteIdentifier(DuplicationName(uc.Name)),
 				pq.QuoteIdentifier(d.table.Name),
 				strings.Join(quoteColumnNames(constraintColumns), ", "),
+			))
+		}
+	}
+	return stmts
+}
+
+func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint []string, colNames ...string) []string {
+	stmts := make([]string, 0, len(d.table.ForeignKeys))
+	for _, fk := range d.table.ForeignKeys {
+		if slices.Contains(withoutConstraint, fk.Name) {
+			continue
+		}
+		if duplicatedMember, constraintColumns := d.allConstraintColumns(fk.Columns, colNames...); duplicatedMember {
+			stmts = append(stmts, fmt.Sprintf(cAlterTableAddForeignKeySQL,
+				pq.QuoteIdentifier(d.table.Name),
+				pq.QuoteIdentifier(DuplicationName(fk.Name)),
+				strings.Join(quoteColumnNames(constraintColumns), ", "),
+				pq.QuoteIdentifier(fk.ReferencedTable),
+				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "),
+				fk.OnDelete,
 			))
 		}
 	}
@@ -213,7 +242,6 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 ) string {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
-		cAddForeignKeySQL      = `ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
 		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
 	)
 
@@ -230,23 +258,6 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 			pq.QuoteIdentifier(DuplicationName(NotNullConstraintName(column.Name))),
 			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(asName)),
 		)
-	}
-
-	// Generate SQL to duplicate any foreign key constraints on the column
-	for _, fk := range d.table.ForeignKeys {
-		if slices.Contains(withoutConstraint, fk.Name) {
-			continue
-		}
-
-		if slices.Contains(fk.Columns, column.Name) {
-			sql += fmt.Sprintf(", "+cAddForeignKeySQL,
-				pq.QuoteIdentifier(DuplicationName(fk.Name)),
-				strings.Join(quoteColumnNames(copyAndReplace(fk.Columns, column.Name, asName)), ", "),
-				pq.QuoteIdentifier(fk.ReferencedTable),
-				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "),
-				fk.OnDelete,
-			)
-		}
 	}
 
 	return sql
@@ -293,17 +304,6 @@ func IsDuplicatedName(name string) bool {
 // StripDuplicationPrefix removes the duplication prefix from a column name.
 func StripDuplicationPrefix(name string) string {
 	return strings.TrimPrefix(name, "_pgroll_dup_")
-}
-
-func copyAndReplace(xs []string, oldValue, newValue string) []string {
-	ys := slices.Clone(xs)
-
-	for i, c := range ys {
-		if c == oldValue {
-			ys[i] = newValue
-		}
-	}
-	return ys
 }
 
 func errorIgnoringErrorCode(err error, code pq.ErrorCode) error {

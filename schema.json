@@ -83,13 +83,17 @@
         },
         "on_delete": {
           "description": "On delete behavior of the foreign key constraint",
-          "type": "string",
-          "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"],
+          "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
           "default": "NO ACTION"
         }
       },
       "required": ["column", "name", "table"],
       "type": "object"
+    },
+    "ForeignKeyReferenceOnDelete": {
+      "description": "On delete behavior of the foreign key constraint",
+      "type": "string",
+      "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"]
     },
     "OpAddColumn": {
       "additionalProperties": false,
@@ -459,11 +463,35 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check"]
+          "enum": ["unique", "check", "foreign_key"]
         },
         "check": {
           "description": "Check constraint expression",
           "type": "string"
+        },
+        "references": {
+          "description": "Reference to the foreign key",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["table", "columns"],
+          "properties": {
+            "table": {
+              "description": "Name of the table",
+              "type": "string"
+            },
+            "columns": {
+              "description": "Columns to reference",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "on_delete": {
+              "description": "On delete behavior of the foreign key constraint",
+              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+              "default": "NO ACTION"
+            }
+          }
         },
         "up": {
           "type": "object",
