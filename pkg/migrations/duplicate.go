@@ -290,7 +290,7 @@ func (d *duplicatorStmtBuilder) duplicateComment(column *schema.Column, asName s
 	)
 }
 
-// DiplicationName returns the name of a duplicated column.
+// DuplicationName returns the name of a duplicated column.
 func DuplicationName(name string) string {
 	return "_pgroll_dup_" + name
 }
