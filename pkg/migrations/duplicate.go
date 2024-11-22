@@ -92,7 +92,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		colNames = append(colNames, name)
 
 		// Duplicate the column with the new type
-		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType, d.withoutConstraint); sql != "" {
+		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
@@ -238,7 +238,6 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 	asName string,
 	withoutNotNull bool,
 	withType string,
-	withoutConstraint []string,
 ) string {
 	const (
 		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
