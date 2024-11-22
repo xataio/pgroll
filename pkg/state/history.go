@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -33,16 +34,13 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 		return nil, err
 	}
 
-	defer rows.Close()
-
 	var entries []Migration
 	for rows.Next() {
 		var name, rawMigration string
 		var createdAt time.Time
 
-		rows.Scan(&name, &rawMigration, &createdAt)
-		if err != nil {
-			return nil, err
+		if err := rows.Scan(&name, &rawMigration, &createdAt); err != nil {
+			return nil, fmt.Errorf("row scan: %w", err)
 		}
 
 		var mig migrations.Migration
@@ -55,6 +53,10 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 			Migration: mig,
 			CreatedAt: createdAt,
 		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating rows: %w", err)
 	}
 
 	return entries, nil

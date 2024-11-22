@@ -903,6 +903,7 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 
 		res = append(res, row)
 	}
+	assert.NoError(t, q.Err())
 
 	return res
 }

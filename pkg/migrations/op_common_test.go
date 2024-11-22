@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -741,6 +742,7 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 
 		res = append(res, row)
 	}
+	assert.NoError(t, q.Err())
 
 	return res
 }

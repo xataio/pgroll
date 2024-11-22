@@ -240,7 +240,6 @@ func TestInferredMigration(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				defer rows.Close()
 
 				var gotMigrations []migrations.Migration
 				for rows.Next() {
@@ -254,6 +253,7 @@ func TestInferredMigration(t *testing.T) {
 					}
 					gotMigrations = append(gotMigrations, gotMigration)
 				}
+				assert.NoError(t, rows.Err())
 
 				assert.Equal(t, len(tt.wantMigrations), len(gotMigrations), "unexpected number of migrations")
 
@@ -296,7 +296,6 @@ func TestInferredMigrationsInTransactionHaveDifferentTimestamps(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer rows.Close()
 
 		type m struct {
 			name      string
@@ -313,6 +312,7 @@ func TestInferredMigrationsInTransactionHaveDifferentTimestamps(t *testing.T) {
 
 			migrations = append(migrations, migration)
 		}
+		assert.NoError(t, rows.Err())
 
 		// Ensure that the two inferred migrations have different timestamps
 		assert.Equal(t, 2, len(migrations), "unexpected number of migrations")
