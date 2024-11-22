@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -23,7 +24,7 @@ type Migration struct {
 
 // SchemaHistory returns all migrations applied to a schema in ascending
 // timestamp order
-func (s *State) SchemaHistory(ctx context.Context, schema string) (entries []Migration, err error) {
+func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, error) {
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
 			FROM %s.migrations
@@ -33,10 +34,7 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) (entries []Mig
 		return nil, err
 	}
 
-	defer func() {
-		err = rows.Close()
-	}()
-
+	var entries []Migration
 	for rows.Next() {
 		var name, rawMigration string
 		var createdAt time.Time
@@ -55,6 +53,10 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) (entries []Mig
 			Migration: mig,
 			CreatedAt: createdAt,
 		})
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating rows: %w", err)
 	}
 
 	return entries, nil
