@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/xataio/pgroll/refs/heads/main/schema.json",
   "name": "32_sql_on_complete",
   "operations": [
     {

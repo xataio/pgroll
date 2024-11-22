@@ -1,13 +1,12 @@
 {
+  "$schema": "https://raw.githubusercontent.com/xataio/pgroll/refs/heads/main/schema.json",
   "name": "38_create_hash_index_with_fillfactor",
   "operations": [
     {
       "create_index": {
         "name": "idx_fruits_name",
         "table": "fruits",
-        "columns": [
-          "name"
-        ],
+        "columns": ["name"],
         "method": "hash",
         "storage_parameters": "fillfactor = 70"
       }

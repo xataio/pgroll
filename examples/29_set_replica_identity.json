@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/xataio/pgroll/refs/heads/main/schema.json",
   "name": "29_set_replica_identity",
   "operations": [
     {

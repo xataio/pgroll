@@ -1,13 +1,12 @@
 {
+  "$schema": "https://raw.githubusercontent.com/xataio/pgroll/refs/heads/main/schema.json",
   "name": "37_create_partial_index",
   "operations": [
     {
       "create_index": {
         "name": "idx_fruits_id_gt_10",
         "table": "fruits",
-        "columns": [
-          "id"
-        ],
+        "columns": ["id"],
         "predicate": "id > 10"
       }
     }

@@ -1,13 +1,12 @@
 {
+  "$schema": "https://raw.githubusercontent.com/xataio/pgroll/refs/heads/main/schema.json",
   "name": "42_create_unique_index",
   "operations": [
     {
       "create_index": {
         "name": "idx_fruits_unique_name",
         "table": "fruits",
-        "columns": [
-          "name"
-        ],
+        "columns": ["name"],
         "unique": true
       }
     }
