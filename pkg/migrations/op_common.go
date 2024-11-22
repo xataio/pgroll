@@ -27,6 +27,7 @@ const (
 	OpCreateConstraintName   OpName = "create_constraint"
 
 	// Internal operation types used by `alter_column`
+
 	OpNameRenameColumn       OpName = "rename_column"
 	OpNameSetUnique          OpName = "set_unique"
 	OpNameSetNotNull         OpName = "set_not_null"
