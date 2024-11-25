@@ -78,6 +78,7 @@ func Execute() error {
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(migrateCmd())
 	rootCmd.AddCommand(pullCmd())
+	rootCmd.AddCommand(latestCmd())
 
 	return rootCmd.Execute()
 }

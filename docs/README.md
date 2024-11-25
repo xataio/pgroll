@@ -13,6 +13,8 @@
     * [complete](#complete)
     * [rollback](#rollback)
     * [status](#status)
+    * [migrate](#migrate)
+    * [latest](#latest)
     * [pull](#pull)
 * [Operations reference](#operations-reference)
     * [Add column](#add-column)
@@ -537,6 +539,8 @@ The `pgroll` CLI offers the following subcommands:
 * [complete](#complete)
 * [rollback](#rollback)
 * [status](#status)
+* [migrate](#migrate)
+* [latest](#latest)
 * [pull](#pull)
 
 The `pgroll` CLI has the following top-level flags:
@@ -637,6 +641,46 @@ $ pgroll migrate examples/
 will apply migrations from `41_add_enum_column` onwards to the target database.
 
 If the `--complete` flag is passed to `pgroll migrate` the final migration to be applied will be completed. Otherwise the final migration will be left active (started but not completed).
+
+### Latest
+
+`pgroll latest` prints the latest schema version in either the target database or a local directory of migration files. 
+
+By default, `pgroll latest` prints the latest version in the target database. Use the `--local` flag to print the latest version in a local directory of migration files instead.
+
+In both cases, the `--with-schema` flag can be used to prefix the latest version with the schema name.
+
+#### Database
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied to the `public` schema in the target database, running:
+
+```
+$ pgroll latest 
+```
+
+will print the latest version in the target database:
+
+```
+45_add_table_check_constraint
+```
+
+The exact output will vary as the `examples/` directory is updated.
+
+#### Local
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) are on disk in a directory called `examples`, running:
+
+```
+$ pgroll latest --local examples/
+```
+
+will print the latest migration in the directory:
+
+```
+45_add_table_check_constraint
+```
+
+The exact output will vary as the `examples/` directory is updated.
 
 ### Status
 
