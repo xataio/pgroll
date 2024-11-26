@@ -249,6 +249,21 @@ type OpDropIndex struct {
 	Name string `json:"name"`
 }
 
+// Drop multi-column constraint operation
+type OpDropMultiColumnConstraint struct {
+	// SQL expressions for down migrations
+	Down MultiColumnDownSQL `json:"down"`
+
+	// Name of the constraint
+	Name string `json:"name"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expressions for up migrations
+	Up MultiColumnUpSQL `json:"up,omitempty"`
+}
+
 // Drop table operation
 type OpDropTable struct {
 	// Name of the table

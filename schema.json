@@ -505,6 +505,30 @@
       "required": ["name", "table", "type", "up", "down"],
       "type": "object"
     },
+    "OpDropMultiColumnConstraint": {
+      "additionalProperties": false,
+      "description": "Drop multi-column constraint operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the constraint",
+          "type": "string"
+        },
+        "up": {
+          "description": "SQL expressions for up migrations",
+          "$ref": "#/$defs/MultiColumnUpSQL"
+        },
+        "down": {
+          "description": "SQL expressions for down migrations",
+          "$ref": "#/$defs/MultiColumnDownSQL"
+        }
+      },
+      "required": ["name", "table", "down"],
+      "type": "object"
+    },
     "PgRollOperation": {
       "anyOf": [
         {
@@ -572,6 +596,17 @@
             }
           },
           "required": ["drop_constraint"]
+        },
+        {
+          "type": "object",
+          "description": "Drop multi-column constraint operation",
+          "additionalProperties": false,
+          "properties": {
+            "drop_multicolumn_constraint": {
+              "$ref": "#/$defs/OpDropMultiColumnConstraint"
+            }
+          },
+          "required": ["drop_multicolumn_constraint"]
         },
         {
           "type": "object",
