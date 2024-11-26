@@ -683,3 +683,196 @@ func TestCreateConstraint(t *testing.T) {
 		},
 	})
 }
+
+func TestCreateConstraintValidation(t *testing.T) {
+	t.Parallel()
+
+	invalidName := strings.Repeat("x", 64)
+	ExecuteTests(t, TestCases{
+		{
+			name: "invalid constraint name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+								{
+									Name:     "registered_at_year",
+									Type:     "integer",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_invalid_name",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    invalidName,
+							Table:   "users",
+							Columns: []string{"registered_at_year"},
+							Type:    "unique",
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.ValidateIdentifierLength(invalidName),
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+		{
+			name: "missing migration for constraint creation",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_migration",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "unique_name",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "unique",
+							Up:      map[string]string{},
+							Down: map[string]string{
+								"name": "name",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.ColumnMigrationMissingError{Table: "users", Name: "name"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+		{
+			name: "expression of check constraint is missing",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_migration",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "check_name",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "check",
+							Up: map[string]string{
+								"name": "name",
+							},
+							Down: map[string]string{
+								"name": "name",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.FieldRequiredError{Name: "check"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+		{
+			name: "missing referenced table for foreign key constraint creation",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   ptr(true),
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: ptr(false),
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint_with_missing_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "fk_missing_table",
+							Table:   "users",
+							Columns: []string{"name"},
+							Type:    "foreign_key",
+							References: &migrations.OpCreateConstraintReferences{
+								Table:   "missing_table",
+								Columns: []string{"id"},
+							},
+							Up: map[string]string{
+								"name": "name",
+							},
+							Down: map[string]string{
+								"name": "name",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr:  migrations.TableDoesNotExistError{Name: "missing_table"},
+			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
+		},
+	})
+}
