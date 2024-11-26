@@ -747,6 +747,32 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	return res
 }
 
+// TableMustBeCleanedUp asserts that the `columns` on `table` in `schema` have
+// been cleaned up after migration rollback or completion. This means:
+// - The temporary columns should not exist on the underlying table.
+// - The up functions for the columns no longer exist.
+// - The down functions for the columns no longer exist.
+// - The up triggers for the columns no longer exist.
+// - The down triggers for the columns no longer exist.
+func TableMustBeCleanedUp(t *testing.T, db *sql.DB, schema, table string, columns ...string) {
+	t.Helper()
+
+	for _, column := range columns {
+		// The temporary column should not exist on the underlying table.
+		ColumnMustNotExist(t, db, schema, table, migrations.TemporaryName(column))
+
+		// The up function for the column no longer exists.
+		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, column))
+		// The down function for the column no longer exists.
+		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, migrations.TemporaryName(column)))
+
+		// The up trigger for the column no longer exists.
+		TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, column))
+		// The down trigger for the column no longer exists.
+		TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, migrations.TemporaryName(column)))
+	}
+}
+
 func mustSetSearchPath(t *testing.T, db *sql.DB, schema string) {
 	t.Helper()
 

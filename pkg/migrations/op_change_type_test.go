@@ -101,24 +101,14 @@ func TestChangeColumnType(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `rating` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("rating"))
-
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "rating"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "rating"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "reviews", "rating")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				newVersionSchema := roll.VersionedSchemaName(schema, "02_change_type")
 
-				// The new (temporary) `rating` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("rating"))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "reviews", "rating")
 
 				// The `rating` column in the new view must have the correct type.
 				ColumnMustHaveType(t, db, newVersionSchema, "reviews", "rating", "integer")

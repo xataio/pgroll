@@ -117,18 +117,8 @@ func TestSetNotNull(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `review` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
-
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "reviews", "review")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `review` column should not exist on the underlying table.
@@ -148,15 +138,8 @@ func TestSetNotNull(t *testing.T) {
 					"product":  "durian",
 				}, testutils.NotNullViolationErrorCode)
 
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "review"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("review")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "review"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("review")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "reviews", "review")
 			},
 		},
 		{

@@ -106,18 +106,8 @@ func TestDropConstraint(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `title` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "posts", migrations.TemporaryName("title"))
-
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "title"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "title"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "posts", "title")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that does not meet the check constraint into the new view works.
@@ -134,15 +124,8 @@ func TestDropConstraint(t *testing.T) {
 					{"id": 5, "title": "e"},
 				}, rows)
 
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "title"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "title"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "posts", "title")
 			},
 		},
 		{
@@ -332,18 +315,8 @@ func TestDropConstraint(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `user_id` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "posts", migrations.TemporaryName("user_id"))
-
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "user_id"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "user_id"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "posts", "user_id")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new (temporary) `user_id` column should not exist on the underlying table.
@@ -364,15 +337,8 @@ func TestDropConstraint(t *testing.T) {
 					{"id": 5, "title": "another post by an unknown user", "user_id": 4},
 				}, rows)
 
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "user_id"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("user_id")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "user_id"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("user_id")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "posts", "user_id")
 			},
 		},
 		{
@@ -430,22 +396,12 @@ func TestDropConstraint(t *testing.T) {
 				})
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `name` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "users", migrations.TemporaryName("name"))
-
-				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("users", "name"))
-				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("users", migrations.TemporaryName("name")))
-
-				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "users", migrations.TriggerName("users", "name"))
-				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "users", migrations.TriggerName("users", migrations.TemporaryName("name")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `name` column should not exist on the underlying table.
-				ColumnMustNotExist(t, db, schema, "users", migrations.TemporaryName("name"))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 
 				// Inserting a row that does not meet the unique constraint into the new view works.
 				MustInsert(t, db, schema, "02_drop_unique_constraint", "users", map[string]string{
