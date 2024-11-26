@@ -124,25 +124,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The temporary columns no longer exist.
-				ColumnMustNotExist(t, db, schema, "products", migrations.TemporaryName("price"))
-				ColumnMustNotExist(t, db, schema, "products", migrations.TemporaryName("discount"))
-
-				// The up functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", "price"))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", "discount"))
-
-				// The down functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", migrations.TemporaryName("price")))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", migrations.TemporaryName("discount")))
-
-				// The up triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", "price"))
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", "discount"))
-
-				// The down triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", migrations.TemporaryName("price")))
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", migrations.TemporaryName("discount")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "products", "price", "discount")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema that violates the check constraint succeeds.
@@ -257,25 +240,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The temporary columns no longer exist.
-				ColumnMustNotExist(t, db, schema, "products", migrations.TemporaryName("name"))
-				ColumnMustNotExist(t, db, schema, "products", migrations.TemporaryName("description"))
-
-				// The up functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", "name"))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", "description"))
-
-				// The down functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", migrations.TemporaryName("name")))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("products", migrations.TemporaryName("description")))
-
-				// The up triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", "name"))
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", "description"))
-
-				// The down triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", migrations.TemporaryName("name")))
-				TriggerMustNotExist(t, db, schema, "products", migrations.TriggerName("products", migrations.TemporaryName("description")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "products", "name", "description")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema that violates the unique constraint succeeds.
@@ -423,25 +389,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The temporary columns no longer exist.
-				ColumnMustNotExist(t, db, schema, "reports", migrations.TemporaryName("user_id"))
-				ColumnMustNotExist(t, db, schema, "reports", migrations.TemporaryName("user_zip"))
-
-				// The up functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reports", "user_id"))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reports", "user_zip"))
-
-				// The down functions no longer exist.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reports", migrations.TemporaryName("user_id")))
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reports", migrations.TemporaryName("user_zip")))
-
-				// The up triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "reports", migrations.TriggerName("reports", "user_id"))
-				TriggerMustNotExist(t, db, schema, "reports", migrations.TriggerName("reports", "user_zip"))
-
-				// The down triggers no longer exist.
-				TriggerMustNotExist(t, db, schema, "reports", migrations.TriggerName("reports", migrations.TemporaryName("user_id")))
-				TriggerMustNotExist(t, db, schema, "reports", migrations.TriggerName("reports", migrations.TemporaryName("user_zip")))
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "reports", "user_id", "user_zip")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that violates the FK constraint into the new schema succeeds.

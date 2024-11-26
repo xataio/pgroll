@@ -84,11 +84,11 @@ func TestCreateConstraint(t *testing.T) {
 				IndexMustNotExist(t, db, schema, "users", "uniue_name")
 
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 
 				// Inserting values into the new schema that violate uniqueness should fail.
 				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
@@ -161,11 +161,11 @@ func TestCreateConstraint(t *testing.T) {
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
 
 				// Inserting values into the new schema that violate the check constraint should fail.
 				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
@@ -250,8 +250,8 @@ func TestCreateConstraint(t *testing.T) {
 				IndexMustNotExist(t, db, schema, "users", "unique_name_email")
 
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
-				tableCleanedUp(t, db, schema, "users", "email")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "email")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op.
@@ -334,13 +334,13 @@ func TestCreateConstraint(t *testing.T) {
 				// The check constraint must not exists on the table.
 				CheckConstraintMustNotExist(t, db, schema, "users", "check_name_email")
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
-				tableCleanedUp(t, db, schema, "users", "email")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "email")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "users", "name")
-				tableCleanedUp(t, db, schema, "users", "email")
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "email")
 
 				// Inserting values into the new schema that the violate the check constraint must fail.
 				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
@@ -474,13 +474,13 @@ func TestCreateConstraint(t *testing.T) {
 				// The check constraint must not exists on the table.
 				CheckConstraintMustNotExist(t, db, schema, "reports", "fk_users")
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "reports", "users_id")
-				tableCleanedUp(t, db, schema, "reports", "users_zip")
+				TableMustBeCleanedUp(t, db, schema, "reports", "users_id")
+				TableMustBeCleanedUp(t, db, schema, "reports", "users_zip")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				tableCleanedUp(t, db, schema, "reports", "users_id")
-				tableCleanedUp(t, db, schema, "reports", "users_zip")
+				TableMustBeCleanedUp(t, db, schema, "reports", "users_id")
+				TableMustBeCleanedUp(t, db, schema, "reports", "users_zip")
 
 				// Inserting values into the new schema that the violate the check constraint must fail.
 				MustNotInsert(t, db, schema, "02_create_constraint", "reports", map[string]string{
