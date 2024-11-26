@@ -1157,7 +1157,7 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
   "create_constraint": {
     "table": "name of table",
     "name": "my_unique_constraint",
-    "columns": ["col1", "col2"],
+    "columns": ["column1", "column2"],
     "type": "unique"| "check" | "foreign_key",
     "check": "SQL expression for CHECK constraint",
     "references": {
@@ -1167,12 +1167,12 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
       "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
     },
     "up": {
-      "col1": "col1 || random()",
-      "col2": "col2 || random()"
+      "column1": "up SQL expressions for each column covered by the constraint",
+      ...
     },
     "down": {
-      "col1": "col1",
-      "col2": "col2"
+      "column1": "up SQL expressions for each column covered by the constraint",
+      ...
     }
   }
 }
