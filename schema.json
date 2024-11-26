@@ -43,7 +43,8 @@
         },
         "pk": {
           "description": "Indicates if the column is part of the primary key",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "references": {
           "$ref": "#/$defs/ForeignKeyReference",
