@@ -67,6 +67,12 @@ const ForeignKeyReferenceOnDeleteRESTRICT ForeignKeyReferenceOnDelete = "RESTRIC
 const ForeignKeyReferenceOnDeleteSETDEFAULT ForeignKeyReferenceOnDelete = "SET DEFAULT"
 const ForeignKeyReferenceOnDeleteSETNULL ForeignKeyReferenceOnDelete = "SET NULL"
 
+// Map of column names to down SQL expressions
+type MultiColumnDownSQL map[string]string
+
+// Map of column names to up SQL expressions
+type MultiColumnUpSQL map[string]string
+
 // Add column operation
 type OpAddColumn struct {
 	// Column to add
@@ -128,8 +134,8 @@ type OpCreateConstraint struct {
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
-	// SQL expression of down migration by column
-	Down OpCreateConstraintDown `json:"down"`
+	// SQL expressions for down migrations
+	Down MultiColumnDownSQL `json:"down"`
 
 	// Name of the constraint
 	Name string `json:"name"`
@@ -143,12 +149,9 @@ type OpCreateConstraint struct {
 	// Type of the constraint
 	Type OpCreateConstraintType `json:"type"`
 
-	// SQL expression of up migration by column
-	Up OpCreateConstraintUp `json:"up"`
+	// SQL expressions for up migrations
+	Up MultiColumnUpSQL `json:"up"`
 }
-
-// SQL expression of down migration by column
-type OpCreateConstraintDown map[string]string
 
 // Reference to the foreign key
 type OpCreateConstraintReferences struct {
@@ -167,9 +170,6 @@ type OpCreateConstraintType string
 const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
 const OpCreateConstraintTypeForeignKey OpCreateConstraintType = "foreign_key"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
-
-// SQL expression of up migration by column
-type OpCreateConstraintUp map[string]string
 
 // Create index operation
 type OpCreateIndex struct {
@@ -247,6 +247,21 @@ type OpDropConstraint struct {
 type OpDropIndex struct {
 	// Index name
 	Name string `json:"name"`
+}
+
+// Drop multi-column constraint operation
+type OpDropMultiColumnConstraint struct {
+	// SQL expressions for down migrations
+	Down MultiColumnDownSQL `json:"down"`
+
+	// Name of the constraint
+	Name string `json:"name"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// SQL expressions for up migrations
+	Up MultiColumnUpSQL `json:"up,omitempty"`
 }
 
 // Drop table operation

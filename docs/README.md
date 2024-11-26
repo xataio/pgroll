@@ -33,6 +33,7 @@
     * [Create constraint](#create-constraint)
     * [Drop column](#drop-column)
     * [Drop constraint](#drop-constraint)
+    * [Drop multi-column constraint](#drop-multi-column-constraint)
     * [Drop index](#drop-index)
     * [Drop table](#drop-table)
     * [Raw SQL](#raw-sql)
@@ -793,6 +794,7 @@ See the [examples](../examples) directory for examples of each kind of operation
 * [Create constraint](#create-constraint)
 * [Drop column](#drop-column)
 * [Drop constraint](#drop-constraint)
+* [Drop multi-column constraint](#drop-multi-column-constraint)
 * [Drop index](#drop-index)
 * [Drop table](#drop-table)
 * [Raw SQL](#raw-sql)
@@ -1208,7 +1210,7 @@ Example **drop column** migrations:
 
 ### Drop constraint
 
-A drop constraint operation drops a constraint from an existing table.
+A drop constraint operation drops a single-column constraint from an existing table.
 
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
@@ -1230,6 +1232,35 @@ Example **drop constraint** migrations:
 * [23_drop_check_constraint.json](../examples/23_drop_check_constraint.json)
 * [24_drop_foreign_key_constraint.json](../examples/24_drop_foreign_key_constraint.json)
 * [27_drop_unique_constraint.json](../examples/27_drop_unique_constraint.json)
+
+### Drop multi-column constraint
+
+A drop constraint operation drops a multi-column constraint from an existing table.
+
+Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
+
+**drop multi-column constraint** operations have this structure:
+
+```json
+{
+  "drop_multicolumn_constraint": {
+    "table": "name of table",
+    "name": "name of constraint to drop",
+    "up": {
+      "column1": "up SQL expressions for each column covered by the constraint",
+      ...
+    },
+    "down": {
+      "column1": "down SQL expressions for each column covered by the constraint",
+      ...
+    }
+  }
+}
+```
+
+Example **drop multi-column constraint** migrations:
+
+* [48_drop_tickets_check.json](../examples/48_drop_tickets_check.json)
 
 ### Drop index
 

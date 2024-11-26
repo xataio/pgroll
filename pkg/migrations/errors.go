@@ -63,6 +63,15 @@ func (e ColumnMigrationMissingError) Error() string {
 	return fmt.Sprintf("migration for column %q in %q is missing", e.Name, e.Table)
 }
 
+type ColumnMigrationRedundantError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnMigrationRedundantError) Error() string {
+	return fmt.Sprintf("migration for column %q in %q is redundant", e.Name, e.Table)
+}
+
 type ColumnIsNotNullableError struct {
 	Table string
 	Name  string
