@@ -16,7 +16,6 @@ import (
 func TestCreateConstraint(t *testing.T) {
 	t.Parallel()
 
-	invalidName := strings.Repeat("x", 64)
 	ExecuteTests(t, TestCases{
 		{
 			name: "create unique constraint on single column",
@@ -496,6 +495,14 @@ func TestCreateConstraint(t *testing.T) {
 				}, rows)
 			},
 		},
+	})
+}
+
+func TestCreateConstraintValidation(t *testing.T) {
+	t.Parallel()
+
+	invalidName := strings.Repeat("x", 64)
+	ExecuteTests(t, TestCases{
 		{
 			name: "invalid constraint name",
 			migrations: []migrations.Migration{
