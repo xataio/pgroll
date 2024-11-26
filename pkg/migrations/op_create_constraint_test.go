@@ -683,18 +683,3 @@ func TestCreateConstraint(t *testing.T) {
 		},
 	})
 }
-
-func tableCleanedUp(t *testing.T, db *sql.DB, schema, table, column string) {
-	// The new, temporary column should not exist on the underlying table.
-	ColumnMustNotExist(t, db, schema, table, migrations.TemporaryName(column))
-
-	// The up function no longer exists.
-	FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, column))
-	// The down function no longer exists.
-	FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, migrations.TemporaryName(column)))
-
-	// The up trigger no longer exists.
-	TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, column))
-	// The down trigger no longer exists.
-	TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, migrations.TemporaryName(column)))
-}
