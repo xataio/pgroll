@@ -30,7 +30,7 @@ func TestAddColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -163,7 +163,7 @@ func TestAddColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -273,7 +273,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -288,7 +288,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -375,7 +375,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -390,7 +390,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -478,7 +478,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -492,7 +492,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -589,7 +589,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -603,7 +603,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "quantity",
@@ -716,7 +716,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -798,7 +798,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -880,7 +880,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -962,7 +962,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name: "id",
 									Type: "text",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -1145,7 +1145,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -1212,7 +1212,7 @@ func TestAddColumnValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   ptr(true),
+						Pk:   true,
 					},
 					{
 						Name:   "name",
@@ -1442,7 +1442,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   ptr(true),
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -1517,7 +1517,7 @@ func TestAddColumnWithComment(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   ptr(true),
+								Pk:   true,
 							},
 							{
 								Name:   "name",
@@ -1579,7 +1579,7 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 							},
 						},
@@ -1633,7 +1633,7 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 							},
 						},
@@ -1674,7 +1674,7 @@ func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -1744,7 +1744,7 @@ func TestAddColumnInvalidNameLength(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 							},
 						},

@@ -32,7 +32,7 @@ type Column struct {
 	Nullable *bool `json:"nullable,omitempty"`
 
 	// Indicates if the column is part of the primary key
-	Pk *bool `json:"pk,omitempty"`
+	Pk bool `json:"pk,omitempty"`
 
 	// Foreign key constraint for the column
 	References *ForeignKeyReference `json:"references,omitempty"`

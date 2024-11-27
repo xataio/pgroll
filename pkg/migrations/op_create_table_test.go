@@ -30,7 +30,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -89,12 +89,12 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "rand",
 									Type: "varchar(255)",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -172,7 +172,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -192,7 +192,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "user_id",
@@ -279,7 +279,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -299,7 +299,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "user_id",
@@ -395,7 +395,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -455,7 +455,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:    "name",
@@ -504,7 +504,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -524,7 +524,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "user_id",
@@ -562,7 +562,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   "name",
@@ -588,7 +588,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:   invalidName,
@@ -626,7 +626,7 @@ func TestCreateTableColumnDefaultTransformation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:    "name",
@@ -677,7 +677,7 @@ func TestCreateTableColumnDefaultTransformation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:    "name",

@@ -235,7 +235,7 @@ var migCreateTable = migrations.Migration{
 				{
 					Name: "id",
 					Type: "serial",
-					Pk:   ptr(true),
+					Pk:   true,
 				},
 				{
 					Name:     "name",
