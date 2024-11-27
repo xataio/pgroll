@@ -35,7 +35,7 @@ func TestAddColumn(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -142,7 +142,7 @@ func TestAddColumn(t *testing.T) {
 								Name:     "description",
 								Type:     "integer",
 								Nullable: false,
-								Unique:   ptr(true),
+								Unique:   true,
 							},
 							Up: "'this is a description'",
 						},
@@ -168,7 +168,7 @@ func TestAddColumn(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -278,7 +278,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -380,7 +380,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -721,7 +721,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -803,7 +803,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -885,7 +885,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -967,7 +967,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -1050,7 +1050,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Unique:   ptr(true),
+									Unique:   true,
 									Nullable: false,
 								},
 							},
@@ -1150,7 +1150,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -1217,7 +1217,7 @@ func TestAddColumnValidation(t *testing.T) {
 					{
 						Name:   "name",
 						Type:   "varchar(255)",
-						Unique: ptr(true),
+						Unique: true,
 					},
 				},
 			},
@@ -1237,7 +1237,7 @@ func TestAddColumnValidation(t *testing.T) {
 					{
 						Name:     "name",
 						Type:     "varchar(255)",
-						Unique:   ptr(true),
+						Unique:   true,
 						Nullable: true,
 					},
 				},
@@ -1258,7 +1258,7 @@ func TestAddColumnValidation(t *testing.T) {
 					{
 						Name:     "name",
 						Type:     "varchar(255)",
-						Unique:   ptr(true),
+						Unique:   true,
 						Nullable: false,
 					},
 				},
@@ -1447,7 +1447,7 @@ func TestAddColumnWithCheckConstraint(t *testing.T) {
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: ptr(true),
+								Unique: true,
 							},
 						},
 					},
@@ -1522,7 +1522,7 @@ func TestAddColumnWithComment(t *testing.T) {
 							{
 								Name:   "name",
 								Type:   "varchar(255)",
-								Unique: ptr(true),
+								Unique: true,
 							},
 						},
 					},

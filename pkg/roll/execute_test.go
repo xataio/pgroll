@@ -847,7 +847,7 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 			{
 				Name:   "name",
 				Type:   "varchar(255)",
-				Unique: ptr(true),
+				Unique: true,
 			},
 		},
 	}

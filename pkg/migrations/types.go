@@ -41,7 +41,7 @@ type Column struct {
 	Type string `json:"type"`
 
 	// Indicates if the column values must be unique
-	Unique *bool `json:"unique,omitempty"`
+	Unique bool `json:"unique,omitempty"`
 }
 
 // Foreign key reference definition

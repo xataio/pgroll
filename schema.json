@@ -57,7 +57,8 @@
         },
         "unique": {
           "description": "Indicates if the column values must be unique",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "comment": {
           "description": "Postgres comment for the column",

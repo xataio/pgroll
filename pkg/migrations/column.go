@@ -9,10 +9,7 @@ func (c *Column) IsNullable() bool {
 
 // IsUnique returns true if the column values must be unique
 func (c *Column) IsUnique() bool {
-	if c.Unique != nil {
-		return *c.Unique
-	}
-	return false
+	return c.Unique
 }
 
 // IsPrimaryKey returns true if the column is part of the primary key

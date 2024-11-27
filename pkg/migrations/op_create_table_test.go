@@ -35,7 +35,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -99,7 +99,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -177,7 +177,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -284,7 +284,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -460,7 +460,7 @@ func TestCreateTable(t *testing.T) {
 								{
 									Name:    "name",
 									Type:    "varchar(255)",
-									Unique:  ptr(true),
+									Unique:  true,
 									Comment: ptr("the username"),
 								},
 							},
@@ -509,7 +509,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -567,7 +567,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -593,7 +593,7 @@ func TestCreateTableValidation(t *testing.T) {
 								{
 									Name:   invalidName,
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
