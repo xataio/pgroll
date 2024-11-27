@@ -30,7 +30,7 @@ func TestDropTable(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "varchar(255)",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},

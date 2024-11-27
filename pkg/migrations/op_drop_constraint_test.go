@@ -358,7 +358,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:   "name",
 									Type:   "text",
-									Unique: ptr(true),
+									Unique: true,
 								},
 							},
 						},
@@ -426,7 +426,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:    "name",
 									Type:    "text",
-									Unique:  ptr(true),
+									Unique:  true,
 									Default: ptr("'anonymous'"),
 								},
 							},
@@ -521,7 +521,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:   "department_id",
 									Type:   "integer",
-									Unique: ptr(true),
+									Unique: true,
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -573,7 +573,7 @@ func TestDropConstraint(t *testing.T) {
 									Name:     "title",
 									Type:     "text",
 									Nullable: true,
-									Unique:   ptr(true),
+									Unique:   true,
 								},
 							},
 						},
@@ -730,7 +730,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Unique:   ptr(true),
+									Unique:   true,
 									Nullable: false,
 								},
 							},
@@ -781,7 +781,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Unique:   ptr(true),
+									Unique:   true,
 									Nullable: false,
 									Comment:  ptr("the title of the post"),
 								},
