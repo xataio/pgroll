@@ -240,7 +240,7 @@ var migCreateTable = migrations.Migration{
 				{
 					Name:     "name",
 					Type:     "varchar(255)",
-					Nullable: ptr(true),
+					Nullable: true,
 					Unique:   ptr(false),
 				},
 			},

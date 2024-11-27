@@ -49,7 +49,7 @@ func TestAddColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: ptr(false),
+								Nullable: false,
 								Default:  ptr("0"),
 								Comment:  ptr("the age of the user"),
 							},
@@ -141,7 +141,7 @@ func TestAddColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "integer",
-								Nullable: ptr(false),
+								Nullable: false,
 								Unique:   ptr(true),
 							},
 							Up: "'this is a description'",
@@ -182,7 +182,7 @@ func TestAddColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "counter_smallserial",
 								Type:     "smallserial",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 						&migrations.OpAddColumn{
@@ -190,14 +190,14 @@ func TestAddColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "counter_serial",
 								Type:     "serial",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						}, &migrations.OpAddColumn{
 							Table: "users",
 							Column: migrations.Column{
 								Name:     "counter_bigserial",
 								Type:     "bigserial",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 					},
@@ -311,7 +311,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Table:  "users",
 									Column: "id",
 								},
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -413,7 +413,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Table:  "users",
 									Column: "id",
 								},
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 							Up: "1",
 						},
@@ -510,7 +510,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "user_id",
 								Type:     "integer",
-								Nullable: ptr(true),
+								Nullable: true,
 								References: &migrations.ForeignKeyReference{
 									Name:   "fk_users_id",
 									Table:  "users",
@@ -621,7 +621,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "user_id",
 								Type:     "integer",
-								Nullable: ptr(true),
+								Nullable: true,
 								References: &migrations.ForeignKeyReference{
 									Name:     "fk_users_id",
 									Table:    "users",
@@ -736,7 +736,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -818,7 +818,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -900,7 +900,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -982,7 +982,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -1051,7 +1051,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 									Name:     "name",
 									Type:     "varchar(255)",
 									Unique:   ptr(true),
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -1071,7 +1071,7 @@ func TestAddColumnWithUpSql(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 						},
 					},
@@ -1165,7 +1165,7 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "description",
 								Type:     "varchar(255)",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 					},
@@ -1238,7 +1238,7 @@ func TestAddColumnValidation(t *testing.T) {
 						Name:     "name",
 						Type:     "varchar(255)",
 						Unique:   ptr(true),
-						Nullable: ptr(true),
+						Nullable: true,
 					},
 				},
 			},
@@ -1259,7 +1259,7 @@ func TestAddColumnValidation(t *testing.T) {
 						Name:     "name",
 						Type:     "varchar(255)",
 						Unique:   ptr(true),
-						Nullable: ptr(false),
+						Nullable: false,
 					},
 				},
 			},
@@ -1279,7 +1279,7 @@ func TestAddColumnValidation(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: ptr(false),
+								Nullable: false,
 								Default:  ptr("0"),
 							},
 						},
@@ -1319,7 +1319,7 @@ func TestAddColumnValidation(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 					},
@@ -1536,7 +1536,7 @@ func TestAddColumnWithComment(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "age",
 							Type:     "integer",
-							Nullable: ptr(false),
+							Nullable: false,
 							Default:  ptr("0"),
 							Comment:  ptr("the age of the user"),
 						},
@@ -1687,7 +1687,7 @@ func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: ptr(false),
+								Nullable: false,
 								Default:  ptr("18"),
 								Check: &migrations.CheckConstraint{
 									Name:       "age_check",

@@ -4,10 +4,7 @@ package migrations
 
 // IsNullable returns true if the column is nullable
 func (c *Column) IsNullable() bool {
-	if c.Nullable != nil {
-		return *c.Nullable
-	}
-	return false
+	return c.Nullable
 }
 
 // IsUnique returns true if the column values must be unique

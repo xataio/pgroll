@@ -219,7 +219,7 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -239,12 +239,12 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 									References: &migrations.ForeignKeyReference{
 										Name:     "fk_employee_department",
 										Table:    "departments",
@@ -365,7 +365,7 @@ func TestSetCheckConstraint(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},

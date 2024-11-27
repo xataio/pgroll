@@ -34,7 +34,7 @@ func TestSchemaHistoryReturnsFullSchemaHistory(t *testing.T) {
 							{
 								Name:     "username",
 								Type:     "text",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 					},

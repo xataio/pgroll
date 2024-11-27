@@ -30,7 +30,7 @@ func TestDropIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -84,7 +84,7 @@ func TestDropIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},

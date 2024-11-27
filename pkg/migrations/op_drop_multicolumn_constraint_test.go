@@ -275,7 +275,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name: "zip",
@@ -295,17 +295,17 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name:     "description",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 								{
 									Name:     "user_zip",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},

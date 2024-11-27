@@ -35,7 +35,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -191,7 +191,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -308,7 +308,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -379,7 +379,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -394,12 +394,12 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 								{
 									Name:     "manages",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},

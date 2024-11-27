@@ -51,7 +51,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -199,7 +199,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -288,7 +288,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -394,7 +394,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -503,7 +503,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 									Default:  ptr("3"),
 								},
 							},
@@ -876,12 +876,12 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -1138,7 +1138,7 @@ func TestSetForeignKey(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},

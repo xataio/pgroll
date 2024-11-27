@@ -156,7 +156,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -176,7 +176,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name: "department_id",
@@ -234,7 +234,7 @@ func TestChangeColumnType(t *testing.T) {
 									Name:     "age",
 									Type:     "text",
 									Default:  ptr("'0'"),
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -299,7 +299,7 @@ func TestChangeColumnType(t *testing.T) {
 									Name:     "username",
 									Type:     "text",
 									Default:  ptr("'alice'"),
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -363,7 +363,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name:     "age",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 									Check: &migrations.CheckConstraint{
 										Name:       "age_length",
 										Constraint: "length(age) < 3",
@@ -422,7 +422,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 									Check: &migrations.CheckConstraint{
 										Name:       "username_length",
 										Constraint: "length(username) > 3",
@@ -479,7 +479,7 @@ func TestChangeColumnType(t *testing.T) {
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},

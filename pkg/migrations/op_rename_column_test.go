@@ -27,7 +27,7 @@ func TestRenameColumn(t *testing.T) {
 					{
 						Name:     "username",
 						Type:     "varchar(255)",
-						Nullable: ptr(false),
+						Nullable: false,
 					},
 				},
 			},

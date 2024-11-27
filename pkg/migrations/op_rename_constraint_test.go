@@ -29,7 +29,7 @@ func TestRenameConstraint(t *testing.T) {
 					{
 						Name:     "username",
 						Type:     "text",
-						Nullable: ptr(false),
+						Nullable: false,
 						Check:    &migrations.CheckConstraint{Constraint: `LENGTH("username") <= 2048`, Name: "users_text_length_username"},
 					},
 				},

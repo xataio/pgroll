@@ -34,7 +34,7 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -115,7 +115,7 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -189,12 +189,12 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "email",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -273,12 +273,12 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "email",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -376,12 +376,12 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "email",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -396,17 +396,17 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "users_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 								{
 									Name:     "users_zip",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 								{
 									Name:     "description",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -520,12 +520,12 @@ func TestCreateConstraintValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "registered_at_year",
 									Type:     "integer",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -565,7 +565,7 @@ func TestCreateConstraintValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -609,7 +609,7 @@ func TestCreateConstraintValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -655,7 +655,7 @@ func TestCreateConstraintValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},

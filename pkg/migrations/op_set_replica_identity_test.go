@@ -26,7 +26,7 @@ func TestSetReplicaIdentity(t *testing.T) {
 					{
 						Name:     "name",
 						Type:     "varchar(255)",
-						Nullable: ptr(false),
+						Nullable: false,
 					},
 				},
 			},

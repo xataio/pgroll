@@ -33,7 +33,7 @@ func TestSetDefault(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -135,7 +135,7 @@ func TestSetDefault(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -237,7 +237,7 @@ func TestSetDefault(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 									Default:  ptr("'unknown user'"),
 								},
 							},
@@ -339,7 +339,7 @@ func TestSetDefault(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 									Default:  ptr("'unknown user'"),
 								},
 							},
