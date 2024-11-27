@@ -29,7 +29,7 @@ type Column struct {
 	Name string `json:"name"`
 
 	// Indicates if the column is nullable
-	Nullable *bool `json:"nullable,omitempty"`
+	Nullable bool `json:"nullable,omitempty"`
 
 	// Indicates if the column is part of the primary key
 	Pk bool `json:"pk,omitempty"`
