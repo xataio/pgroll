@@ -228,7 +228,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "user_id",
 									Type:     "integer",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -496,7 +496,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -516,7 +516,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:   "department_id",
@@ -572,7 +572,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 									Unique:   ptr(true),
 								},
 							},
@@ -640,7 +640,7 @@ func TestDropConstraint(t *testing.T) {
 								{
 									Name:     "title",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},
@@ -731,7 +731,7 @@ func TestDropConstraint(t *testing.T) {
 									Name:     "title",
 									Type:     "text",
 									Unique:   ptr(true),
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -782,7 +782,7 @@ func TestDropConstraint(t *testing.T) {
 									Name:     "title",
 									Type:     "text",
 									Unique:   ptr(true),
-									Nullable: ptr(false),
+									Nullable: false,
 									Comment:  ptr("the title of the post"),
 								},
 							},

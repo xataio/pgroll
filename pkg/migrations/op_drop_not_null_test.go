@@ -34,17 +34,17 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -150,17 +150,17 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "username",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "product",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "review",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -216,7 +216,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -236,12 +236,12 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "department_id",
 									Type:     "integer",
-									Nullable: ptr(false),
+									Nullable: false,
 									References: &migrations.ForeignKeyReference{
 										Name:   "fk_employee_department",
 										Table:  "departments",
@@ -293,7 +293,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 									Default:  ptr("'anonymous'"),
 								},
 							},
@@ -358,7 +358,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 									Check: &migrations.CheckConstraint{
 										Name:       "name_length",
 										Constraint: "length(name) > 3",
@@ -415,7 +415,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -491,7 +491,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 									Comment:  ptr("the name of the user"),
 								},
 							},
@@ -546,7 +546,7 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -583,7 +583,7 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "text",
-									Nullable: ptr(true),
+									Nullable: true,
 								},
 							},
 						},

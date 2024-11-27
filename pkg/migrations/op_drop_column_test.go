@@ -32,12 +32,12 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "email",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},

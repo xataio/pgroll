@@ -33,7 +33,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -79,7 +79,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -125,12 +125,12 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "registered_at_year",
 									Type:     "integer",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -178,12 +178,12 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 								{
 									Name:     "registered_at_year",
 									Type:     "integer",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -222,7 +222,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -278,12 +278,12 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 							{
 								Name:     "name",
 								Type:     "varchar(255)",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 							{
 								Name:     "email",
 								Type:     "varchar(255)",
-								Nullable: ptr(false),
+								Nullable: false,
 							},
 						},
 					},
@@ -335,7 +335,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -377,7 +377,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 								{
 									Name:     "name",
 									Type:     "varchar(255)",
-									Nullable: ptr(false),
+									Nullable: false,
 								},
 							},
 						},
@@ -391,7 +391,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 							Column: migrations.Column{
 								Name:     "age",
 								Type:     "integer",
-								Nullable: ptr(true),
+								Nullable: true,
 							},
 							Up: "18",
 						},

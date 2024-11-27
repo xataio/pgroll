@@ -202,7 +202,7 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	//   on migration completion
 	// This is to avoid unnecessary exclusive table locks.
 	if !o.Column.IsNullable() && o.Column.Default == nil {
-		o.Column.Nullable = ptr(true)
+		o.Column.Nullable = true
 	}
 
 	// Don't add a column with a CHECK constraint directly.

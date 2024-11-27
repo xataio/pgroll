@@ -39,7 +39,8 @@
         },
         "nullable": {
           "description": "Indicates if the column is nullable",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "pk": {
           "description": "Indicates if the column is part of the primary key",

@@ -732,7 +732,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "description",
 							Type:     "text",
-							Nullable: ptr(false),
+							Nullable: false,
 						},
 					},
 				},
@@ -788,7 +788,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 						Column: migrations.Column{
 							Name:     "description",
 							Type:     "text",
-							Nullable: ptr(false),
+							Nullable: false,
 						},
 					},
 				},
@@ -859,7 +859,7 @@ func addColumnOp(tableName string) *migrations.OpAddColumn {
 		Column: migrations.Column{
 			Name:     "age",
 			Type:     "integer",
-			Nullable: ptr(true),
+			Nullable: true,
 		},
 	}
 }
