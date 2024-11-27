@@ -22,7 +22,7 @@ func TestRenameColumn(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   ptr(true),
+						Pk:   true,
 					},
 					{
 						Name:     "username",

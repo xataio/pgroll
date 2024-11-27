@@ -29,7 +29,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "username",
@@ -145,7 +145,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "username",
@@ -211,7 +211,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -231,7 +231,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -288,7 +288,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -353,7 +353,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -410,7 +410,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -486,7 +486,7 @@ func TestDropNotNull(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -541,7 +541,7 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -578,7 +578,7 @@ func TestDropNotNullValidation(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",

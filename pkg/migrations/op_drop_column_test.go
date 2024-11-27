@@ -27,7 +27,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -117,7 +117,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "array",
@@ -159,7 +159,7 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",

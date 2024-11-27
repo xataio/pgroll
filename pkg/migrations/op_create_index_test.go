@@ -28,7 +28,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -74,7 +74,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -120,7 +120,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -173,7 +173,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -217,7 +217,7 @@ func TestCreateIndex(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -273,7 +273,7 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 							{
 								Name: "id",
 								Type: "serial",
-								Pk:   ptr(true),
+								Pk:   true,
 							},
 							{
 								Name:     "name",
@@ -330,7 +330,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -372,7 +372,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 								{
 									Name: "id",
 									Type: "serial",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",

@@ -27,7 +27,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -157,7 +157,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name: "name",
@@ -270,7 +270,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "name",
@@ -280,7 +280,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name: "zip",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 							},
 						},
@@ -290,7 +290,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 								{
 									Name: "id",
 									Type: "integer",
-									Pk:   ptr(true),
+									Pk:   true,
 								},
 								{
 									Name:     "description",
@@ -422,7 +422,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					{
 						Name: "id",
 						Type: "serial",
-						Pk:   ptr(true),
+						Pk:   true,
 					},
 					{
 						Name: "title",

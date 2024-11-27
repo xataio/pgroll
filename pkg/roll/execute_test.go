@@ -842,7 +842,7 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 			{
 				Name: "id",
 				Type: "integer",
-				Pk:   ptr(true),
+				Pk:   true,
 			},
 			{
 				Name:   "name",
