@@ -1210,6 +1210,8 @@ Example **drop column** migrations:
 
 ### Drop constraint
 
+:warning: The **drop constraint** operation is deprecated. Please use the [drop multi-column constraint](#drop-multi-column-constraint) operation instead. The **drop_constraint** operation will be removed in a future release of `pgroll`. :warning:
+
 A drop constraint operation drops a single-column constraint from an existing table.
 
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
