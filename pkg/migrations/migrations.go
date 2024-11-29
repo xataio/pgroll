@@ -92,6 +92,19 @@ func (m *Migration) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
+// UpdateVirtualSchema updates the in-memory schema representation with the changes
+// made by the migration. No changes are made to the physical database.
+func (m *Migration) UpdateVirtualSchema(ctx context.Context, s *schema.Schema) {
+	db := &db.FakeDB{}
+	tr := SQLTransformerFunc(func(sql string) (string, error) { return sql, nil })
+
+	// Run `Start` on each operation using the fake DB. Updates will be made to
+	// the in-memory schema `s` without touching the physical database.
+	for _, op := range m.Operations {
+		op.Start(ctx, db, "", tr, s)
+	}
+}
+
 // ContainsRawSQLOperation returns true if the migration contains a raw SQL operation
 func (m *Migration) ContainsRawSQLOperation() bool {
 	for _, op := range m.Operations {
