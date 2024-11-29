@@ -163,7 +163,7 @@ pgroll --postgres-url postgres://user:password@host:port/dbname rollback
 
 ## Documentation
 
-For more advanced usage, a tutorial, and detailed options refer to the full [Documentation](docs/README.md).
+For more advanced usage, a tutorial, and detailed options refer to the guides and references in the [Documentation](docs/).
 
 ## Benchmarks
 
