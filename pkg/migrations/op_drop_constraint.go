@@ -104,12 +104,12 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTrans
 func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
-	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
+	columnName := table.GetConstraintColumns(o.Name)[0]
 
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(column.Name)),
+		pq.QuoteIdentifier(TemporaryName(columnName)),
 	))
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTrans
 
 	// Remove the up function and trigger
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, column.Name)),
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, columnName)),
 	))
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTrans
 
 	// Remove the down function and trigger
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(column.Name))),
+		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(columnName))),
 	))
 
 	return err
