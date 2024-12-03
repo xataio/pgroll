@@ -27,6 +27,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ALTER COLUMN a DROP NOT NULL",
 			expectedOp: expect.AlterTableOp2,
 		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text",
+			expectedOp: expect.AlterTableOp3,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN a TYPE text",
+			expectedOp: expect.AlterTableOp3,
+		},
 	}
 
 	for _, tc := range tests {

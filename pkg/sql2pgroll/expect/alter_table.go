@@ -23,6 +23,14 @@ var AlterTableOp2 = &migrations.OpAlterColumn{
 	Down:     sql2pgroll.PlaceHolderSQL,
 }
 
+var AlterTableOp3 = &migrations.OpAlterColumn{
+	Table:  "foo",
+	Column: "a",
+	Type:   ptr("text"),
+	Up:     sql2pgroll.PlaceHolderSQL,
+	Down:   sql2pgroll.PlaceHolderSQL,
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }

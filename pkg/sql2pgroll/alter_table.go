@@ -3,6 +3,8 @@
 package sql2pgroll
 
 import (
+	"fmt"
+
 	pgq "github.com/pganalyze/pg_query_go/v6"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -22,25 +24,50 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			continue
 		}
 
-		switch alterTableCmd.Subtype {
+		var op migrations.Operation
+		var err error
+		switch alterTableCmd.GetSubtype() {
 		case pgq.AlterTableType_AT_SetNotNull:
-			ops = append(ops, convertAlterTableSetNotNull(stmt, alterTableCmd, true))
+			op, err = convertAlterTableSetNotNull(stmt, alterTableCmd, true)
 		case pgq.AlterTableType_AT_DropNotNull:
-			ops = append(ops, convertAlterTableSetNotNull(stmt, alterTableCmd, false))
+			op, err = convertAlterTableSetNotNull(stmt, alterTableCmd, false)
+		case pgq.AlterTableType_AT_AlterColumnType:
+			op, err = convertAlterTableAlterColumnType(stmt, alterTableCmd)
 		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		ops = append(ops, op)
 	}
 
 	return ops, nil
 }
 
-func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd, notNull bool) migrations.Operation {
+func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd, notNull bool) (migrations.Operation, error) {
 	return &migrations.OpAlterColumn{
 		Table:    stmt.GetRelation().GetRelname(),
 		Column:   cmd.GetName(),
 		Nullable: ptr(!notNull),
 		Up:       PlaceHolderSQL,
 		Down:     PlaceHolderSQL,
+	}, nil
+}
+
+func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	node, ok := cmd.GetDef().Node.(*pgq.Node_ColumnDef)
+	if !ok {
+		return nil, fmt.Errorf("expected column definition, got %T", cmd.GetDef().Node)
 	}
+
+	return &migrations.OpAlterColumn{
+		Table:  stmt.GetRelation().GetRelname(),
+		Column: cmd.GetName(),
+		Type:   ptr(convertTypeName(node.ColumnDef.GetTypeName())),
+		Up:     PlaceHolderSQL,
+		Down:   PlaceHolderSQL,
+	}, nil
 }
 
 func ptr[T any](x T) *T {
