@@ -26,15 +26,6 @@ const (
 	OpNameDropMultiColumnConstraint OpName = "drop_multicolumn_constraint"
 	OpRawSQLName                    OpName = "sql"
 	OpCreateConstraintName          OpName = "create_constraint"
-
-	// Internal operation types used by `alter_column`
-
-	OpNameRenameColumn       OpName = "rename_column"
-	OpNameSetUnique          OpName = "set_unique"
-	OpNameSetNotNull         OpName = "set_not_null"
-	OpNameSetForeignKey      OpName = "set_foreign_key"
-	OpNameSetCheckConstraint OpName = "set_check_constraint"
-	OpNameChangeType         OpName = "change_type"
 )
 
 const temporaryPrefix = "_pgroll_new_"
@@ -120,9 +111,6 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameDropIndex:
 			item = &OpDropIndex{}
-
-		case OpNameSetUnique:
-			item = &OpSetUnique{}
 
 		case OpRawSQLName:
 			item = &OpRawSQL{}
@@ -212,9 +200,6 @@ func OperationName(op Operation) OpName {
 
 	case *OpDropIndex:
 		return OpNameDropIndex
-
-	case *OpSetUnique:
-		return OpNameSetUnique
 
 	case *OpRawSQL:
 		return OpRawSQLName
