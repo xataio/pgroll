@@ -3,22 +3,22 @@
         {
             "title": "Getting Started",
             "href": "/getting-started",
-            "file": "getting-started.md"
+            "file": "docs/getting-started.md"
         },
         {
             "title": "Tutorial",
             "href": "/tutorial",
-            "file": "tutorial.md"
+            "file": "docs/tutorial.md"
         },
         {
             "title": "Command-line Reference",
             "href": "/cli-reference",
-            "file": "cli-reference.md"
+            "file": "docs/cli-reference.md"
         },
         {
             "title": "Operations Reference",
             "href": "/operations-reference",
-            "file": "operations-reference.md"
+            "file": "docs/operations-reference.md"
         }
     ]
 }
