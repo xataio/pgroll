@@ -22,21 +22,22 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			continue
 		}
 
-		//nolint:gocritic
 		switch alterTableCmd.Subtype {
 		case pgq.AlterTableType_AT_SetNotNull:
-			ops = append(ops, convertAlterTableSetNotNull(stmt, alterTableCmd))
+			ops = append(ops, convertAlterTableSetNotNull(stmt, alterTableCmd, true))
+		case pgq.AlterTableType_AT_DropNotNull:
+			ops = append(ops, convertAlterTableSetNotNull(stmt, alterTableCmd, false))
 		}
 	}
 
 	return ops, nil
 }
 
-func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) migrations.Operation {
+func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd, notNull bool) migrations.Operation {
 	return &migrations.OpAlterColumn{
 		Table:    stmt.GetRelation().GetRelname(),
 		Column:   cmd.GetName(),
-		Nullable: ptr(false),
+		Nullable: ptr(!notNull),
 		Up:       PlaceHolderSQL,
 		Down:     PlaceHolderSQL,
 	}
