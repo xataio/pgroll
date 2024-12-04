@@ -91,7 +91,7 @@
         },
         {
           "title": "Create Constraint",
-          "href": "/create_constraint",
+          "href": "/operations/create_constraint",
           "file": "docs/operations/create_constraint.md"
         },
         {
