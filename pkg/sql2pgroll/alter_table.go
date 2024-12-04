@@ -78,6 +78,10 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 		return nil, fmt.Errorf("expected column definition, got %T", cmd.GetDef().Node)
 	}
 
+	if !canConvertColumnForSetDataType(node.ColumnDef) {
+		return nil, nil
+	}
+
 	return &migrations.OpAlterColumn{
 		Table:  stmt.GetRelation().GetRelname(),
 		Column: cmd.GetName(),
@@ -165,6 +169,16 @@ func canConvertUniqueConstraint(constraint *pgq.Constraint) bool {
 		return false
 	}
 	if constraint.GetIndexspace() != "" {
+		return false
+	}
+	return true
+}
+
+// canConvertColumnForSetDataType checks if `column` can be faithfully
+// converted as part of an OpAlterColumn operation to set a new type for the
+// column.
+func canConvertColumnForSetDataType(column *pgq.ColumnDef) bool {
+	if column.GetCollClause() != nil {
 		return false
 	}
 	return true

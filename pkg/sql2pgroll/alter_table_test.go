@@ -67,6 +67,10 @@ func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
 		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) INCLUDE (b)",
 		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) WITH (fillfactor=70)",
 		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) USING INDEX TABLESPACE baz",
+
+		// Altering a column to change its collation is not representable by an
+		// `OpAlterColumn` operation
+		`ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text COLLATE "en_US"`,
 	}
 
 	for _, sql := range tests {
