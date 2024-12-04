@@ -14,6 +14,7 @@
       "title": "Command-line Reference",
       "href": "/cli",
       "file": "docs/cli/README.md",
+      "noLink": true,
       "items": [
         {
           "title": "Init",
