@@ -181,6 +181,9 @@ func canConvertColumnForSetDataType(column *pgq.ColumnDef) bool {
 	if column.GetCollClause() != nil {
 		return false
 	}
+	if column.GetRawDefault() != nil {
+		return false
+	}
 	return true
 }
 
