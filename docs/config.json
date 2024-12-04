@@ -1,24 +1,145 @@
 {
-    "routes": [
+  "routes": [
+    {
+      "title": "Getting Started",
+      "href": "/getting-started",
+      "file": "docs/getting-started.md"
+    },
+    {
+      "title": "Tutorial",
+      "href": "/tutorial",
+      "file": "docs/tutorial.md"
+    },
+    {
+      "title": "Command-line Reference",
+      "href": "/cli-reference",
+      "file": "docs/cli-reference.md"
+    },
+    {
+      "title": "Operations Reference",
+      "href": "/operations-reference",
+      "file": "docs/operations-reference/README.md",
+      "noLink": true,
+      "items": [
         {
-            "title": "Getting Started",
-            "href": "/getting-started",
-            "file": "docs/getting-started.md"
+          "title": "Add Column",
+          "href": "/add_column",
+          "file": "docs/operations-reference/add_column.md"
         },
         {
-            "title": "Tutorial",
-            "href": "/tutorial",
-            "file": "docs/tutorial.md"
+          "title": "Alter Column",
+          "href": "/alter_column",
+          "file": "docs/operations-reference/alter_column/README.md",
+          "noLink": true,
+          "items": [
+            {
+              "title": "Rename Column",
+              "href": "/rename_column",
+              "file": "docs/operations-reference/alter_column/rename_column.md"
+            },
+            {
+              "title": "Change Type",
+              "href": "/change_type",
+              "file": "docs/operations-reference/alter_column/change_type.md"
+            },
+            {
+              "title": "Change Default",
+              "href": "/change_default",
+              "file": "docs/operations-reference/alter_column/change_default.md"
+            },
+            {
+              "title": "Change Comment",
+              "href": "/change_comment",
+              "file": "docs/operations-reference/alter_column/change_comment.md"
+            },
+            {
+              "title": "Add Check Constraint",
+              "href": "/add_check_constraint",
+              "file": "docs/operations-reference/alter_column/add_check_constraint.md"
+            },
+            {
+              "title": "Add Foreign Key",
+              "href": "/add_foreign_key",
+              "file": "docs/operations-reference/alter_column/add_foreign_key.md"
+            },
+            {
+              "title": "Add Not Null Constraint",
+              "href": "/add_not_null_constraint",
+              "file": "docs/operations-reference/alter_column/add_not_null_constraint.md"
+            },
+            {
+              "title": "Drop Not Null Constraint",
+              "href": "/drop_not_null_constraint",
+              "file": "docs/operations-reference/alter_column/drop_not_null_constraint.md"
+            },
+            {
+              "title": "Add Unique Constraint",
+              "href": "/add_unique_constraint",
+              "file": "docs/operations-reference/alter_column/add_unique_constraint.md"
+            }
+          ]
         },
         {
-            "title": "Command-line Reference",
-            "href": "/cli-reference",
-            "file": "docs/cli-reference.md"
+          "title": "Create Index",
+          "href": "/create_index",
+          "file": "docs/operations-reference/create_index.md"
         },
         {
-            "title": "Operations Reference",
-            "href": "/operations-reference",
-            "file": "docs/operations-reference.md"
+          "title": "Create Table",
+          "href": "/create_table",
+          "file": "docs/operations-reference/create_table.md"
+        },
+        {
+          "title": "Create Constraint",
+          "href": "/create_constraint",
+          "file": "docs/operations-reference/create_constraint.md"
+        },
+        {
+          "title": "Drop Column",
+          "href": "/drop_column",
+          "file": "docs/operations-reference/drop_column.md"
+        },
+        {
+          "title": "Drop Constraint",
+          "href": "/drop_constraint",
+          "file": "docs/operations-reference/drop_constraint.md"
+        },
+        {
+          "title": "Drop Multi-Column Constraint",
+          "href": "/drop_multi_column_constraint",
+          "file": "docs/operations-reference/drop_multi_column_constraint.md"
+        },
+        {
+          "title": "Drop Index",
+          "href": "/drop_index",
+          "file": "docs/operations-reference/drop_index.md"
+        },
+        {
+          "title": "Drop Table",
+          "href": "/drop_table",
+          "file": "docs/operations-reference/drop_table.md"
+        },
+        {
+          "title": "Raw SQL",
+          "href": "/raw_sql",
+          "file": "docs/operations-reference/raw_sql.md"
+        },
+        {
+          "title": "Rename Table",
+          "href": "/rename_table",
+          "file": "docs/operations-reference/rename_table.md"
+        },
+        {
+          "title": "Rename Constraint",
+          "href": "/rename_constraint",
+          "file": "docs/operations-reference/rename_constraint.md"
+        },
+        {
+          "title": "Set Replica Identity",
+          "href": "/set_replica_identity",
+          "file": "docs/operations-reference/set_replica_identity.md"
         }
-    ]
+      ]
+    }
+  ]
 }
