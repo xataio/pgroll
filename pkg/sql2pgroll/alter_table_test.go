@@ -35,6 +35,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ALTER COLUMN a TYPE text",
 			expectedOp: expect.AlterTableOp3,
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
+			expectedOp: expect.AlterTableOp4,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a, b)",
+			expectedOp: expect.AlterTableOp5,
+		},
 	}
 
 	for _, tc := range tests {
@@ -44,10 +52,31 @@ func TestConvertAlterTableStatements(t *testing.T) {
 
 			require.Len(t, ops, 1)
 
-			alterColumnOps, ok := ops[0].(*migrations.OpAlterColumn)
-			require.True(t, ok)
+			assert.Equal(t, tc.expectedOp, ops[0])
+		})
+	}
+}
 
-			assert.Equal(t, tc.expectedOp, alterColumnOps)
+func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []string{
+		// UNIQUE constraints with various options that are not representable by
+		// `OpCreateConstraint` operations
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE NULLS NOT DISTINCT (a)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) INCLUDE (b)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) WITH (fillfactor=70)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) USING INDEX TABLESPACE baz",
+	}
+
+	for _, sql := range tests {
+		t.Run(sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
 		})
 	}
 }
