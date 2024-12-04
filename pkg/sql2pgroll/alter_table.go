@@ -120,6 +120,10 @@ func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTabl
 //
 // to an OpCreateConstraint operation.
 func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
+	if !canConvertUniqueConstraint(constraint) {
+		return nil, nil
+	}
+
 	// Extract the columns covered by the unique constraint
 	columns := make([]string, 0, len(constraint.GetKeys()))
 	for _, keyNode := range constraint.GetKeys() {
@@ -145,6 +149,25 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 		Down:    upDown,
 		Up:      upDown,
 	}, nil
+}
+
+// canConvertUniqueConstraint checks if the unique constraint `constraint` can
+// be faithfully converted to an OpCreateConstraint operation without losing
+// information.
+func canConvertUniqueConstraint(constraint *pgq.Constraint) bool {
+	if constraint.GetNullsNotDistinct() {
+		return false
+	}
+	if len(constraint.GetIncluding()) > 0 {
+		return false
+	}
+	if len(constraint.GetOptions()) > 0 {
+		return false
+	}
+	if constraint.GetIndexspace() != "" {
+		return false
+	}
+	return true
 }
 
 func ptr[T any](x T) *T {

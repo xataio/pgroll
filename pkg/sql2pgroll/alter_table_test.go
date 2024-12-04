@@ -56,3 +56,27 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		})
 	}
 }
+
+func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []string{
+		// UNIQUE constraints with various options that are not representable by
+		// `OpCreateConstraint` operations
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE NULLS NOT DISTINCT (a)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) INCLUDE (b)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) WITH (fillfactor=70)",
+		"ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a) USING INDEX TABLESPACE baz",
+	}
+
+	for _, sql := range tests {
+		t.Run(sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
+		})
+	}
+}
