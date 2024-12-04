@@ -1,5 +1,7 @@
 # Rename constraint
 
+## Structure
+
 A rename constraint operation renames a constraint.
 
 **rename constraint** operations have this structure:
@@ -14,6 +16,6 @@ A rename constraint operation renames a constraint.
 }
 ```
 
-## Example **rename constraint** migrations:
+## Examples
 
 - [33_rename_constraint.json](../../examples/33_rename_constraint.json)

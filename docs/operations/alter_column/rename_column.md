@@ -1,5 +1,7 @@
 # Rename column
 
+## Structure
+
 A rename column operation renames a column.
 
 **rename column** operations have this structure:
@@ -14,6 +16,6 @@ A rename column operation renames a column.
 }
 ```
 
-## Example **rename column** migrations:
+## Examples
 
 - [13_rename_column.json](../../../examples/13_rename_column.json)

@@ -1,5 +1,7 @@
 # Add unique constraint
 
+## Structure
+
 Add unique operations add a `UNIQUE` constraint to a column.
 
 **add unique** operations have this structure:
@@ -18,6 +20,6 @@ Add unique operations add a `UNIQUE` constraint to a column.
 }
 ```
 
-## Example **add unique** migrations:
+## Examples
 
 - [15_set_column_unique.json](../../../examples/15_set_column_unique.json)

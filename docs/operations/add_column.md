@@ -1,5 +1,7 @@
 # Add column
 
+## Structure
+
 An add column operation creates a new column on an existing table.
 
 **add column** operations have this structure:
@@ -36,7 +38,7 @@ Default values are subject to the usual rules for quoting SQL expressions. In pa
 
 **NOTE:** As a special case, the `up` field can be omitted when adding `smallserial`, `serial` and `bigserial` columns.
 
-## Example **add column** migrations:
+## Examples
 
 - [03_add_column.json](../../examples/03_add_column.json)
 - [06_add_column_to_sql_table.json](../../examples/06_add_column_to_sql_table.json)

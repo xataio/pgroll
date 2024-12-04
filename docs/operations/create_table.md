@@ -1,5 +1,7 @@
 # Create table
 
+## Structure
+
 A create table operation creates a new table in the database.
 
 **create table** operations have this structure:
@@ -39,7 +41,7 @@ where each `column` is defined as:
 
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
-## Example **create table** migrations:
+## Examples
 
 - [01_create_tables.json](../../examples/01_create_tables.json)
 - [02_create_another_table.json](../../examples/02_create_another_table.json)

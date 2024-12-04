@@ -1,5 +1,7 @@
 # Change comment
 
+## Structure
+
 A change comment operation changes the comment on a column.
 
 **change comment** operations have this structure:
@@ -16,7 +18,7 @@ A change comment operation changes the comment on a column.
 }
 ```
 
-## Example **change comment** migrations:
+## Examples
 
 - [35_alter_column_multiple.json](../../../examples/35_alter_column_multiple.json)
 - [36_set_comment_to_null.json](../../../examples/36_set_comment_to_null.json)

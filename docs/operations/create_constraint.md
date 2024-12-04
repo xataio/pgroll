@@ -1,5 +1,7 @@
 # Create constraint
 
+## Structure
+
 A create constraint operation adds a new constraint to an existing table.
 
 `UNIQUE`, `CHECK` and `FOREIGN KEY` constraints are supported.
@@ -34,7 +36,7 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
 }
 ```
 
-## Example **create constraint** migrations:
+## Examples
 
 - [44_add_table_unique_constraint.json](../../examples/44_add_table_unique_constraint.json)
 - [45_add_table_check_constraint.json](../../examples/45_add_table_check_constraint.json)

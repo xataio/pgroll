@@ -1,5 +1,7 @@
 # Add check constraint
 
+## Structure
+
 An add check constraint operation adds a `CHECK` constraint to a column.
 
 **add check constraint** migrations have this structure:
@@ -19,6 +21,6 @@ An add check constraint operation adds a `CHECK` constraint to a column.
 }
 ```
 
-## Example **add check constraint** migrations:
+## Examples
 
 - [22_add_check_constraint.json](../../../examples/22_add_check_constraint.json)

@@ -1,5 +1,7 @@
 # Add not null constraint
 
+## Structure
+
 Add not null operations add a `NOT NULL` constraint to a column.
 
 **add not null** operations have this structure:
@@ -16,6 +18,6 @@ Add not null operations add a `NOT NULL` constraint to a column.
 }
 ```
 
-## Example **add not null** migrations:
+## Examples
 
 - [16_set_nullable.json](../../../examples/16_set_nullable.json)

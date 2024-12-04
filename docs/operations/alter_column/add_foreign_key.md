@@ -1,5 +1,7 @@
 # Add foreign key
 
+## Structure
+
 Add foreign key operations add a foreign key constraint to a column.
 
 **add foreign key** constraints have this structure:
@@ -21,6 +23,6 @@ Add foreign key operations add a foreign key constraint to a column.
 }
 ```
 
-## Example **add foreign key** migrations:
+## Examples
 
 - [21_add_foreign_key_constraint.json](../../../examples/21_add_foreign_key_constraint.json)

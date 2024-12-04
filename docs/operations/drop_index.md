@@ -1,5 +1,7 @@
 # Drop index
 
+## Structure
+
 A drop index operation drops an index from a table.
 
 **drop index** operations have this structure:
@@ -12,6 +14,6 @@ A drop index operation drops an index from a table.
 }
 ```
 
-## Example **drop index** migrations:
+## Examples
 
 - [11_drop_index.json](../../examples/11_drop_index.json)

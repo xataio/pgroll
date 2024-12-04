@@ -1,5 +1,7 @@
 # Set replica identity
 
+## Structure
+
 A set replica identity operation sets the replica identity for a table.
 
 **set replica identity** operations have this structure:
@@ -18,6 +20,6 @@ A set replica identity operation sets the replica identity for a table.
 
 :warning: A **set replica identity** operation is applied directly to the underlying table on migration start. This means that both versions of the table exposed in the old and new version schemas will have the new replica identity set. :warning:
 
-## Example **set replica identity** migrations:
+## Examples
 
 - [29_set_replica_identity.json](../../examples/29_set_replica_identity.json)

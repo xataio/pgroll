@@ -1,5 +1,7 @@
 # Change type
 
+## Structure
+
 A change type operation changes the type of a column.
 
 **change type** operations have this structure:
@@ -16,6 +18,6 @@ A change type operation changes the type of a column.
 }
 ```
 
-## Example **change type** migrations:
+## Examples
 
 - [18_change_column_type.json](../../../examples/18_change_column_type.json)

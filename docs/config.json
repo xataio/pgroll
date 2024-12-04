@@ -100,7 +100,7 @@
           "file": "docs/operations/drop_column.md"
         },
         {
-          "title": "Drop Constraint",
+          "title": "Drop Constraint (deprecated)",
           "href": "/operations/drop_constraint",
           "file": "docs/operations/drop_constraint.md"
         },

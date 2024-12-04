@@ -1,5 +1,7 @@
 # Rename table
 
+## Structure
+
 A rename table operation renames a table.
 
 **rename table** operations have this structure:
@@ -13,6 +15,6 @@ A rename table operation renames a table.
 }
 ```
 
-## Example **rename table** migrations:
+## Examples
 
 - [04_rename_table.json](../../examples/04_rename_table.json)

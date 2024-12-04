@@ -1,5 +1,7 @@
 # Drop table
 
+## Structure
+
 A drop table operation drops a table.
 
 **drop table** operations have this structure:
@@ -12,6 +14,6 @@ A drop table operation drops a table.
 }
 ```
 
-## Example **drop table** migrations:
+## Examples
 
 - [07_drop_table.json](../../examples/07_drop_table.json)

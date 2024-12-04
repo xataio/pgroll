@@ -1,5 +1,7 @@
 # Create index
 
+## Structure
+
 A create index operation creates a new index on a set of columns.
 
 **create index** operations have this structure:
@@ -20,7 +22,7 @@ The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 You can also specify storage parameters for the index in `storage_parameters`.
 To create a unique index set `unique` to `true`.
 
-## Example **create index** migrations:
+## Examples
 
 - [10_create_index.json](../../examples/10_create_index.json)
 - [37_create_partial_index.json](../../examples/37_create_partial_index.json)
