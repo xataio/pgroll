@@ -51,6 +51,12 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 	return ops, nil
 }
 
+// convertAlterTableSetNotNull converts SQL statements like:
+//
+// `ALTER TABLE foo ALTER COLUMN a SET NOT NULL`
+// `ALTER TABLE foo ALTER COLUMN a DROP NOT NULL`
+//
+// to an OpAlterColumn operation.
 func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd, notNull bool) (migrations.Operation, error) {
 	return &migrations.OpAlterColumn{
 		Table:    stmt.GetRelation().GetRelname(),
@@ -61,6 +67,11 @@ func convertAlterTableSetNotNull(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCm
 	}, nil
 }
 
+// convertAlterTableAlterColumnType converts a SQL statement like:
+//
+// `ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text`
+//
+// to an OpAlterColumn operation.
 func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	node, ok := cmd.GetDef().Node.(*pgq.Node_ColumnDef)
 	if !ok {
@@ -76,6 +87,11 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 	}, nil
 }
 
+// convertAlterTableAddConstraint converts SQL statements like:
+//
+// `ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)`
+//
+// To an OpCreateConstraint operation.
 func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	node, ok := cmd.GetDef().Node.(*pgq.Node_Constraint)
 	if !ok {
@@ -98,6 +114,11 @@ func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTabl
 	return op, nil
 }
 
+// convertAlterTableAddUniqueConstraint converts SQL statements like:
+//
+// `ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)`
+//
+// to an OpCreateConstraint operation.
 func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
 	// Extract the columns covered by the unique constraint
 	columns := make([]string, 0, len(constraint.GetKeys()))
