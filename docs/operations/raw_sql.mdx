@@ -1,12 +1,16 @@
-# Raw SQL
+---
+title: Raw SQL
+description: A raw SQL operation runs arbitrary SQL against the database.
+---
 
 ## Structure
 
-A raw SQL operation runs arbitrary SQL against the database. This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
+This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
 
-:warning: `pgroll` is unable to guarantee that raw SQL migrations are safe and will not result in application downtime. :warning:
-
-**sql** operations have this structure:
+<Warning>
+  `pgroll` is unable to guarantee that raw SQL migrations are safe and will not
+  result in application downtime.
+</Warning>
 
 ```json
 {
@@ -34,5 +38,6 @@ The `onComplete` flag will make this operation run the `up` expression on the co
 
 ## Examples
 
-- [05_sql.json](../../examples/05_sql.json)
-- [32_sql_on_complete.json](../../examples/32_sql_on_complete.json)
+<ExampleSnippet example="05_sql.json" language="json" />
+
+<ExampleSnippet example="32_sql_on_complete.json" language="json" />

@@ -1,0 +1,64 @@
+---
+title: Create table
+description: A create table operation creates a new table in the database.
+---
+
+## Structure
+
+```json
+{
+  "create_table": {
+    "name": "name of new table",
+    "columns": [...]
+  }
+}
+```
+
+Each `column` is defined as:
+
+```json
+{
+  "name": "column name",
+  "type": "postgres type",
+  "comment": "postgres comment for the column",
+  "nullable": true|false,
+  "unique": true|false,
+  "pk": true|false,
+  "default": "default value",
+  "check": {
+    "name": "name of check constraint",
+    "constraint": "constraint expression"
+  },
+  "references": {
+    "name": "name of foreign key constraint",
+    "table": "name of referenced table",
+    "column": "name of referenced column",
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+  }
+},
+```
+
+Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
+
+## Examples
+
+<ExampleSnippet example="01_create_tables.json" language="json" />
+
+<ExampleSnippet example="02_create_another_table.json" language="json" />
+
+<ExampleSnippet example="08_create_fruits_table.json" language="json" />
+
+<ExampleSnippet example="12_create_employees_table.json" language="json" />
+
+<ExampleSnippet example="14_add_reviews_table.json" language="json" />
+
+<ExampleSnippet example="19_create_orders_table.json" language="json" />
+
+<ExampleSnippet example="20_create_posts_table.json" language="json" />
+
+<ExampleSnippet
+  example="25_add_table_with_check_constraint.json"
+  language="json"
+/>
+
+<ExampleSnippet example="28_different_defaults.json" language="json" />

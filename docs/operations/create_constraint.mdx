@@ -1,14 +1,13 @@
-# Create constraint
+---
+title: Create constraint
+description: A create constraint operation adds a new constraint to an existing table.
+---
 
 ## Structure
-
-A create constraint operation adds a new constraint to an existing table.
 
 `UNIQUE`, `CHECK` and `FOREIGN KEY` constraints are supported.
 
 Required fields: `name`, `table`, `type`, `up`, `down`.
-
-**create constraint** operations have this structure:
 
 ```json
 {
@@ -38,6 +37,11 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
 
 ## Examples
 
-- [44_add_table_unique_constraint.json](../../examples/44_add_table_unique_constraint.json)
-- [45_add_table_check_constraint.json](../../examples/45_add_table_check_constraint.json)
-- [46_add_table_foreign_key_constraint.json](../../examples/46_add_table_foreign_key_constraint.json)
+<ExampleSnippet example="44_add_table_unique_constraint.json" language="json" />
+
+<ExampleSnippet example="45_add_table_check_constraint.json" language="json" />
+
+<ExampleSnippet
+  example="46_add_table_foreign_key_constraint.json"
+  language="json"
+/>

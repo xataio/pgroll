@@ -5,8 +5,6 @@ description: A drop column operation drops a column from an existing table.
 
 ## Structure
 
-A drop column operation drops a column from an existing table.
-
 ```json
 {
   "drop_column": {
@@ -25,4 +23,4 @@ The `down` field above is required in order to backfill the previous version of 
 
 If a new row is inserted against the new schema without a `price` column, the old schema `price` column will be set to `0`.
 
-<ExampleSnippet example="09_drop_column.json" />
+<ExampleSnippet example="09_drop_column.json" language="json" />

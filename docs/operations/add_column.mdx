@@ -1,10 +1,9 @@
-# Add column
+---
+title: Add column
+description: An add column operation creates a new column on an existing table.
+---
 
 ## Structure
-
-An add column operation creates a new column on an existing table.
-
-**add column** operations have this structure:
 
 ```json
 {
@@ -26,7 +25,7 @@ An add column operation creates a new column on an existing table.
       "references": {
         "name": "name of foreign key constraint",
         "table": "name of referenced table",
-        "column": "name of referenced column"
+        "column": "name of referenced column",
         "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
       }
     }
@@ -40,9 +39,17 @@ Default values are subject to the usual rules for quoting SQL expressions. In pa
 
 ## Examples
 
-- [03_add_column.json](../../examples/03_add_column.json)
-- [06_add_column_to_sql_table.json](../../examples/06_add_column_to_sql_table.json)
-- [17_add_rating_column.json](../../examples/17_add_rating_column.json)
-- [26_add_column_with_check_constraint.json](../../examples/26_add_column_with_check_constraint.json)
-- [30_add_column_simple_up.json](../../examples/30_add_column_simple_up.json)
-- [41_add_enum_column.json](../../examples/41_add_enum_column.json)
+<ExampleSnippet example="03_add_column.json" language="json" />
+
+<ExampleSnippet example="06_add_column_to_sql_table.json" language="json" />
+
+<ExampleSnippet example="17_add_rating_column.json" language="json" />
+
+<ExampleSnippet
+  example="26_add_column_with_check_constraint.json"
+  language="json"
+/>
+
+<ExampleSnippet example="30_add_column_simple_up.json" language="json" />
+
+<ExampleSnippet example="41_add_enum_column.json" language="json" />

@@ -1,12 +1,11 @@
-# Drop multi-column constraint
+---
+title: Drop multi-column constraint
+description: A drop constraint operation drops a multi-column constraint from an existing table.
+---
 
 ## Structure
 
-A drop constraint operation drops a multi-column constraint from an existing table.
-
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
-
-**drop multi-column constraint** operations have this structure:
 
 ```json
 {
@@ -27,4 +26,4 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
 ## Examples
 
-- [48_drop_tickets_check.json](../../examples/48_drop_tickets_check.json)
+<ExampleSnippet example="48_drop_tickets_check.json" language="json" />
