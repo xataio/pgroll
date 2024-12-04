@@ -1,0 +1,25 @@
+# Drop column
+
+## Structure
+
+A drop column operation drops a column from an existing table.
+
+```json
+{
+  "drop_column": {
+    "table": "name of table",
+    "column": "name of column to drop",
+    "down": "SQL expression"
+  }
+}
+```
+
+The `down` field above is required in order to backfill the previous version of the schema during an active migration.
+
+## Examples
+
+### Drop a column with a default value
+
+If a new row is inserted against the new schema without a `price` column, the old schema `price` column will be set to `0`.
+
+<ExampleSnippet example="09_drop_column.json" />

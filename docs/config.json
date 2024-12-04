@@ -97,7 +97,7 @@
         {
           "title": "Drop Column",
           "href": "/operations/drop_column",
-          "file": "docs/operations/drop_column.md"
+          "file": "docs/operations/drop_column.mdx"
         },
         {
           "title": "Drop Constraint (deprecated)",
