@@ -35,6 +35,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ALTER COLUMN a TYPE text",
 			expectedOp: expect.AlterTableOp3,
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
+			expectedOp: expect.AlterTableOp4,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a, b)",
+			expectedOp: expect.AlterTableOp5,
+		},
 	}
 
 	for _, tc := range tests {
@@ -44,10 +52,7 @@ func TestConvertAlterTableStatements(t *testing.T) {
 
 			require.Len(t, ops, 1)
 
-			alterColumnOps, ok := ops[0].(*migrations.OpAlterColumn)
-			require.True(t, ok)
-
-			assert.Equal(t, tc.expectedOp, alterColumnOps)
+			assert.Equal(t, tc.expectedOp, ops[0])
 		})
 	}
 }
