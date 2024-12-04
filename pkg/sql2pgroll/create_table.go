@@ -8,7 +8,7 @@ import (
 )
 
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
-func convertCreateStmt(stmt *pgq.CreateStmt) ([]migrations.Operation, error) {
+func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	columns := make([]migrations.Column, 0, len(stmt.TableElts))
 	for _, elt := range stmt.TableElts {
 		columns = append(columns, convertColumnDef(elt.GetColumnDef()))
