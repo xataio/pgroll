@@ -11,10 +11,9 @@
       "file": "docs/tutorial.md"
     },
     {
-      "title": "Command-line Reference",
+      "title": "Command-line Interface",
       "href": "/cli",
       "file": "docs/cli/README.md",
-      "noLink": true,
       "items": [
         {
           "title": "Init",
@@ -59,7 +58,7 @@
       ]
     },
     {
-      "title": "Operations Reference",
+      "title": "Operations",
       "href": "/operations",
       "file": "docs/operations/README.md",
       "noLink": true,
