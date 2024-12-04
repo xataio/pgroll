@@ -1,0 +1,24 @@
+{
+    "routes": [
+        {
+            "title": "Getting Started",
+            "href": "/getting-started",
+            "file": "docs/getting-started.md"
+        },
+        {
+            "title": "Tutorial",
+            "href": "/tutorial",
+            "file": "docs/tutorial.md"
+        },
+        {
+            "title": "Command-line Reference",
+            "href": "/cli-reference",
+            "file": "docs/cli-reference.md"
+        },
+        {
+            "title": "Operations Reference",
+            "href": "/operations-reference",
+            "file": "docs/operations-reference.md"
+        }
+    ]
+}
