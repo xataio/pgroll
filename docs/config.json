@@ -13,7 +13,49 @@
     {
       "title": "Command-line Reference",
       "href": "/cli",
-      "file": "docs/cli.md"
+      "file": "docs/cli/README.md",
+      "items": [
+        {
+          "title": "Init",
+          "href": "/cli/init",
+          "file": "docs/cli/init.mdx"
+        },
+        {
+          "title": "Start",
+          "href": "/cli/start",
+          "file": "docs/cli/start.mdx"
+        },
+        {
+          "title": "Complete",
+          "href": "/cli/complete",
+          "file": "docs/cli/complete.mdx"
+        },
+        {
+          "title": "Rollback",
+          "href": "/cli/rollback",
+          "file": "docs/cli/rollback.mdx"
+        },
+        {
+          "title": "Status",
+          "href": "/cli/status",
+          "file": "docs/cli/status.mdx"
+        },
+        {
+          "title": "Migrate",
+          "href": "/cli/migrate",
+          "file": "docs/cli/migrate.mdx"
+        },
+        {
+          "title": "Latest",
+          "href": "/cli/latest",
+          "file": "docs/cli/latest.mdx"
+        },
+        {
+          "title": "Pull",
+          "href": "/cli/pull",
+          "file": "docs/cli/pull.mdx"
+        }
+      ]
     },
     {
       "title": "Operations Reference",

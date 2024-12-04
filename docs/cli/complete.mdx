@@ -1,0 +1,23 @@
+---
+title: Complete
+description: Complete a pgroll migration, removing the previous schema and leaving only the latest schema.
+---
+
+## Command
+
+```
+$ pgroll complete
+```
+
+This completes the most recently started migration.
+
+Running `pgroll complete` when there is no migration in progress is a no-op.
+
+Completing a `pgroll` migration removes the previous schema version from the database (e.g. `public_02_create_table`), leaving only the latest version of the schema (e.g. `public_03_add_column`). At this point, any temporary columns and triggers created on the affected tables in the `public` schema will also be cleaned up, leaving the table schema in its final state. Note that the real schema (e.g. `public`) should never be used directly by the client as that is not safe; instead, clients should use the schemas with versioned views (e.g. `public_03_add_column`).
+
+<Warning>
+  Before running `pgroll complete` ensure that all applications that depend on
+  the old version of the database schema are no longer live. Prematurely running
+  `pgroll complete` can cause downtime of old application instances that depend
+  on the old schema.
+</Warning>

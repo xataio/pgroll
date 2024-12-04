@@ -1,0 +1,44 @@
+---
+title: Status
+description: Show the current status of pgroll within a given schema.
+---
+
+## Command
+
+```
+$ pgroll status
+```
+
+```json
+{
+  "Schema": "public",
+  "Version": "27_drop_unique_constraint",
+  "Status": "Complete"
+}
+```
+
+The status field can be one of the following values:
+
+- `"No migrations"` - no migrations have been applied in this schema yet.
+- `"In progress"` - a migration has been started, but not yet completed.
+- `"Complete"` - the most recent migration was completed.
+
+The `Version` field gives the name of the latest schema version.
+
+If a migration is `In progress` the schemas for both the latest version indicated by the `Version` field and the previous version will exist in the database.
+
+If a migration is `Complete` only the latest version of the schema will exist in the database.
+
+The top-level `--schema` flag can be used to view the status of `pgroll` in a different schema:
+
+```
+$ pgroll status --schema schema_a
+```
+
+```json
+{
+  "Schema": "schema_a",
+  "Version": "01_create_tables",
+  "Status": "Complete"
+}
+```
