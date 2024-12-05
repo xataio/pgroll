@@ -79,7 +79,6 @@ func Execute() error {
 	rootCmd.AddCommand(migrateCmd())
 	rootCmd.AddCommand(pullCmd())
 	rootCmd.AddCommand(latestCmd())
-	rootCmd.AddCommand(sqlCmd())
 
 	return rootCmd.Execute()
 }
