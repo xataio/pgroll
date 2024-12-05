@@ -31,6 +31,10 @@ func TestConvertRenameStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo RENAME TO bar",
 			expectedOp: expect.RenameTableOp1,
 		},
+		{
+			sql:        "ALTER TABLE foo RENAME CONSTRAINT bar TO baz",
+			expectedOp: expect.RenameConstraintOp1,
+		},
 	}
 
 	for _, tc := range tests {
