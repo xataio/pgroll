@@ -1,24 +1,187 @@
 {
-    "routes": [
+  "routes": [
+    {
+      "title": "Getting started",
+      "href": "/getting-started",
+      "file": "docs/getting-started.md"
+    },
+    {
+      "title": "Tutorial",
+      "href": "/tutorial",
+      "file": "docs/tutorial.md"
+    },
+    {
+      "title": "Command-line interface",
+      "href": "/cli",
+      "file": "docs/cli/README.md",
+      "items": [
         {
-            "title": "Getting Started",
-            "href": "/getting-started",
-            "file": "docs/getting-started.md"
+          "title": "Init",
+          "href": "/cli/init",
+          "file": "docs/cli/init.mdx"
         },
         {
-            "title": "Tutorial",
-            "href": "/tutorial",
-            "file": "docs/tutorial.md"
+          "title": "Start",
+          "href": "/cli/start",
+          "file": "docs/cli/start.mdx"
         },
         {
-            "title": "Command-line Reference",
-            "href": "/cli-reference",
-            "file": "docs/cli-reference.md"
+          "title": "Complete",
+          "href": "/cli/complete",
+          "file": "docs/cli/complete.mdx"
         },
         {
-            "title": "Operations Reference",
-            "href": "/operations-reference",
-            "file": "docs/operations-reference.md"
+          "title": "Rollback",
+          "href": "/cli/rollback",
+          "file": "docs/cli/rollback.mdx"
+        },
+        {
+          "title": "Status",
+          "href": "/cli/status",
+          "file": "docs/cli/status.mdx"
+        },
+        {
+          "title": "Migrate",
+          "href": "/cli/migrate",
+          "file": "docs/cli/migrate.mdx"
+        },
+        {
+          "title": "Latest",
+          "href": "/cli/latest",
+          "file": "docs/cli/latest.mdx"
+        },
+        {
+          "title": "Pull",
+          "href": "/cli/pull",
+          "file": "docs/cli/pull.mdx"
         }
-    ]
+      ]
+    },
+    {
+      "title": "Operations",
+      "href": "/operations",
+      "file": "docs/operations/README.md",
+      "noLink": true,
+      "items": [
+        {
+          "title": "Add column",
+          "href": "/operations/add_column",
+          "file": "docs/operations/add_column.mdx"
+        },
+        {
+          "title": "Alter column",
+          "href": "/operations/alter_column",
+          "file": "docs/operations/alter_column/README.md",
+          "noLink": true,
+          "items": [
+            {
+              "title": "Rename column",
+              "href": "/operations/alter_column/rename_column",
+              "file": "docs/operations/alter_column/rename_column.mdx"
+            },
+            {
+              "title": "Change type",
+              "href": "/operations/alter_column/change_type",
+              "file": "docs/operations/alter_column/change_type.mdx"
+            },
+            {
+              "title": "Change default",
+              "href": "/operations/alter_column/change_default",
+              "file": "docs/operations/alter_column/change_default.mdx"
+            },
+            {
+              "title": "Change comment",
+              "href": "/operations/alter_column/change_comment",
+              "file": "docs/operations/alter_column/change_comment.mdx"
+            },
+            {
+              "title": "Add check constraint",
+              "href": "/operations/alter_column/add_check_constraint",
+              "file": "docs/operations/alter_column/add_check_constraint.mdx"
+            },
+            {
+              "title": "Add foreign key",
+              "href": "/operations/alter_column/add_foreign_key",
+              "file": "docs/operations/alter_column/add_foreign_key.mdx"
+            },
+            {
+              "title": "Add not null constraint",
+              "href": "/operations/alter_column/add_not_null_constraint",
+              "file": "docs/operations/alter_column/add_not_null_constraint.mdx"
+            },
+            {
+              "title": "Drop not null constraint",
+              "href": "/operations/alter_column/drop_not_null_constraint",
+              "file": "docs/operations/alter_column/drop_not_null_constraint.mdx"
+            },
+            {
+              "title": "Add unique constraint",
+              "href": "/operations/alter_column/add_unique_constraint",
+              "file": "docs/operations/alter_column/add_unique_constraint.mdx"
+            }
+          ]
+        },
+        {
+          "title": "Create index",
+          "href": "/operations/create_index",
+          "file": "docs/operations/create_index.mdx"
+        },
+        {
+          "title": "Create table",
+          "href": "/operations/create_table",
+          "file": "docs/operations/create_table.mdx"
+        },
+        {
+          "title": "Create constraint",
+          "href": "/operations/create_constraint",
+          "file": "docs/operations/create_constraint.mdx"
+        },
+        {
+          "title": "Drop column",
+          "href": "/operations/drop_column",
+          "file": "docs/operations/drop_column.mdx"
+        },
+        {
+          "title": "Drop constraint (deprecated)",
+          "href": "/operations/drop_constraint",
+          "file": "docs/operations/drop_constraint.mdx"
+        },
+        {
+          "title": "Drop multi column constraint",
+          "href": "/operations/drop_multi_column_constraint",
+          "file": "docs/operations/drop_multi_column_constraint.mdx"
+        },
+        {
+          "title": "Drop index",
+          "href": "/operations/drop_index",
+          "file": "docs/operations/drop_index.mdx"
+        },
+        {
+          "title": "Drop table",
+          "href": "/operations/drop_table",
+          "file": "docs/operations/drop_table.mdx"
+        },
+        {
+          "title": "Raw SQL",
+          "href": "/operations/raw_sql",
+          "file": "docs/operations/raw_sql.mdx"
+        },
+        {
+          "title": "Rename table",
+          "href": "/operations/rename_table",
+          "file": "docs/operations/rename_table.mdx"
+        },
+        {
+          "title": "Rename constraint",
+          "href": "/operations/rename_constraint",
+          "file": "docs/operations/rename_constraint.mdx"
+        },
+        {
+          "title": "Set replica identity (deprecated)",
+          "href": "/operations/set_replica_identity",
+          "file": "docs/operations/set_replica_identity.mdx"
+        }
+      ]
+    }
+  ]
 }

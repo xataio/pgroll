@@ -1,0 +1,34 @@
+---
+title: Set replica identity
+description: A set replica identity operation sets the replica identity for a table.
+---
+
+<Warning>
+  The **set replica identity** operation is deprecated and will be removed in a
+  future release. Please use a [raw SQL operation](#raw-sql) to set the replica
+  identity of table instead.
+</Warning>
+
+## Structure
+
+```json
+{
+  "set_replica_identity": {
+    "table": "name of the table",
+    "identity": {
+      "type": "full | default | nothing | index"
+      "index": "name of the index, if type is 'index'"
+    }
+  }
+}
+```
+
+<Warning>
+  A **set replica identity** operation is applied directly to the underlying
+  table on migration start. This means that both versions of the table exposed
+  in the old and new version schemas will have the new replica identity set.
+</Warning>
+
+## Examples
+
+<ExampleSnippet example="29_set_replica_identity.json" language="json" />

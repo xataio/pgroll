@@ -1,0 +1,22 @@
+---
+title: Change type
+description: A change type operation changes the type of a column.
+---
+
+## Structure
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "type": "new type of column",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+## Examples
+
+<ExampleSnippet example="18_change_column_type.json" language="json" />

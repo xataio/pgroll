@@ -1,0 +1,42 @@
+---
+title: Latest
+description: Prints the latest schema version in either the target database or a local directory of migration files.
+---
+
+## Command
+
+By default, `pgroll latest` prints the latest version in the target database. Use the `--local` flag to print the latest version in a local directory of migration files instead.
+
+In both cases, the `--with-schema` flag can be used to prefix the latest version with the schema name.
+
+### Database
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied to the `public` schema in the target database, running:
+
+```
+$ pgroll latest
+```
+
+will print the latest version in the target database:
+
+```
+45_add_table_check_constraint
+```
+
+The exact output will vary as the `examples/` directory is updated.
+
+### Local
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) are on disk in a directory called `examples`, running:
+
+```
+$ pgroll latest --local examples/
+```
+
+will print the latest migration in the directory:
+
+```
+45_add_table_check_constraint
+```
+
+The exact output will vary as the `examples/` directory is updated.

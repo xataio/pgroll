@@ -1,0 +1,23 @@
+---
+title: Rollback
+description: Roll back the currently active migration.
+---
+
+## Command
+
+```
+$ pgroll rollback
+```
+
+This rolls back the currently active migration (an active migration is one that has been started but not yet completed).
+
+Rolling back a `pgroll` migration means removing the new schema version. The old schema version was still present throughout the migration period and does not require modification.
+
+Migrations cannot be rolled back once completed. Attempting to roll back a migration that has already been completed is a no-op.
+
+<Warning>
+  Before running `pgroll rollback` ensure that any new versions of applications
+  that depend on the new database schema are no longer live. Prematurely running
+  `pgroll rollback` can cause downtime of new application instances that depend
+  on the new schema.
+</Warning>

@@ -1,0 +1,24 @@
+---
+title: Change default
+description: A change default operation changes the default value of a column.
+---
+
+## Structure
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "default": "new default value" | null,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+## Examples
+
+<ExampleSnippet example="35_alter_column_multiple.json" language="json" />
+
+<ExampleSnippet example="46_alter_column_drop_default.json" language="json" />

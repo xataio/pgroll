@@ -1,0 +1,25 @@
+---
+title: Add check constraint
+description: An add check constraint operation adds a `CHECK` constraint to a column.
+---
+
+## Structure
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "check": {
+      "name": "check constraint name",
+      "constraint": "constraint expression"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+## Examples
+
+<ExampleSnippet example="22_add_check_constraint.json" language="json" />

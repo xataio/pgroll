@@ -1,0 +1,24 @@
+---
+title: Add unique constraint
+description: Add unique operations add a `UNIQUE` constraint to a column.
+---
+
+## Structure
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "unique": {
+      "name": "name of unique constraint"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+## Examples
+
+<ExampleSnippet example="15_set_column_unique.json" language="json" />

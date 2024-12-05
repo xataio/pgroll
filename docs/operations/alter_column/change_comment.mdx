@@ -1,0 +1,24 @@
+---
+title: Change comment
+description: A change comment operation changes the comment on a column.
+---
+
+## Structure
+
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "comment": "new comment for column" | null,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+
+## Examples
+
+<ExampleSnippet example="35_alter_column_multiple.json" language="json" />
+
+<ExampleSnippet example="36_set_comment_to_null.json" language="json" />
