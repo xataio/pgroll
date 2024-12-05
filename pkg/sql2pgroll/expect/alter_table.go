@@ -55,6 +55,12 @@ var AlterTableOp5 = &migrations.OpCreateConstraint{
 	},
 }
 
+var AlterTableOp6 = &migrations.OpAlterColumn{
+	Table:  "foo",
+	Column: "a",
+	Name:   ptr("b"),
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }
