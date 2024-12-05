@@ -8,18 +8,31 @@ import (
 )
 
 func convertRenameStmt(stmt *pgq.RenameStmt) (migrations.Operations, error) {
-	if stmt.GetRelationType() != pgq.ObjectType_OBJECT_TABLE {
-		return nil, nil
-	}
-	if stmt.GetRenameType() != pgq.ObjectType_OBJECT_COLUMN {
-		return nil, nil
+	switch stmt.GetRenameType() {
+	case pgq.ObjectType_OBJECT_TABLE:
+		return convertRenameTable(stmt)
+	case pgq.ObjectType_OBJECT_COLUMN:
+		return convertRenameColumn(stmt)
 	}
 
+	return nil, nil
+}
+
+func convertRenameColumn(stmt *pgq.RenameStmt) (migrations.Operations, error) {
 	return migrations.Operations{
 		&migrations.OpAlterColumn{
 			Table:  stmt.GetRelation().GetRelname(),
 			Column: stmt.GetSubname(),
 			Name:   ptr(stmt.GetNewname()),
+		},
+	}, nil
+}
+
+func convertRenameTable(stmt *pgq.RenameStmt) (migrations.Operations, error) {
+	return migrations.Operations{
+		&migrations.OpRenameTable{
+			From: stmt.GetRelation().GetRelname(),
+			To:   stmt.GetNewname(),
 		},
 	}, nil
 }

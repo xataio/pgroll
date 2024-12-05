@@ -12,7 +12,7 @@ import (
 	"github.com/xataio/pgroll/pkg/sql2pgroll/expect"
 )
 
-func TestConvertRenameColumnStatements(t *testing.T) {
+func TestConvertRenameStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -26,6 +26,10 @@ func TestConvertRenameColumnStatements(t *testing.T) {
 		{
 			sql:        "ALTER TABLE foo RENAME a TO b",
 			expectedOp: expect.AlterColumnOp4,
+		},
+		{
+			sql:        "ALTER TABLE foo RENAME TO bar",
+			expectedOp: expect.RenameTableOp1,
 		},
 	}
 
