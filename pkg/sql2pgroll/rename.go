@@ -7,19 +7,44 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
+// convertRenameStmt converts RenameStmt nodes to pgroll operations.
 func convertRenameStmt(stmt *pgq.RenameStmt) (migrations.Operations, error) {
-	if stmt.GetRelationType() != pgq.ObjectType_OBJECT_TABLE {
+	switch stmt.GetRenameType() {
+	case pgq.ObjectType_OBJECT_TABLE:
+		return convertRenameTable(stmt)
+	case pgq.ObjectType_OBJECT_COLUMN:
+		return convertRenameColumn(stmt)
+	default:
 		return nil, nil
 	}
-	if stmt.GetRenameType() != pgq.ObjectType_OBJECT_COLUMN {
-		return nil, nil
-	}
+}
 
+// convertRenameColumn converts SQL statements like:
+//
+// `ALTER TABLE foo RENAME COLUMN a TO b`
+// `ALTER TABLE foo RENAME a TO b`
+//
+// to an OpAlterColumn operation.
+func convertRenameColumn(stmt *pgq.RenameStmt) (migrations.Operations, error) {
 	return migrations.Operations{
 		&migrations.OpAlterColumn{
 			Table:  stmt.GetRelation().GetRelname(),
 			Column: stmt.GetSubname(),
 			Name:   ptr(stmt.GetNewname()),
+		},
+	}, nil
+}
+
+// convertRenameTable converts SQL statements like:
+//
+// `ALTER TABLE foo RENAME TO bar`
+//
+// to an OpRenameTable operation.
+func convertRenameTable(stmt *pgq.RenameStmt) (migrations.Operations, error) {
+	return migrations.Operations{
+		&migrations.OpRenameTable{
+			From: stmt.GetRelation().GetRelname(),
+			To:   stmt.GetNewname(),
 		},
 	}, nil
 }
