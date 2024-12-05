@@ -21,27 +21,27 @@ func TestConvertAlterTableStatements(t *testing.T) {
 	}{
 		{
 			sql:        "ALTER TABLE foo ALTER COLUMN a SET NOT NULL",
-			expectedOp: expect.AlterTableOp1,
+			expectedOp: expect.AlterColumnOp1,
 		},
 		{
 			sql:        "ALTER TABLE foo ALTER COLUMN a DROP NOT NULL",
-			expectedOp: expect.AlterTableOp2,
+			expectedOp: expect.AlterColumnOp2,
 		},
 		{
 			sql:        "ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text",
-			expectedOp: expect.AlterTableOp3,
+			expectedOp: expect.AlterColumnOp3,
 		},
 		{
 			sql:        "ALTER TABLE foo ALTER COLUMN a TYPE text",
-			expectedOp: expect.AlterTableOp3,
+			expectedOp: expect.AlterColumnOp3,
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
-			expectedOp: expect.AlterTableOp4,
+			expectedOp: expect.CreateConstraintOp1,
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a, b)",
-			expectedOp: expect.AlterTableOp5,
+			expectedOp: expect.CreateConstraintOp2,
 		},
 	}
 
