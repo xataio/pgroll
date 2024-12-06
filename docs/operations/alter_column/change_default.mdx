@@ -17,8 +17,16 @@ description: A change default operation changes the default value of a column.
 }
 ```
 
+The `default` expression is subject to the usual SQL quoting rules. In particular, string literals should be surrounded with `''`.
+
+To remove a column default, set the `default` field to `NULL`.
+
 ## Examples
 
+An alter column migration that makes multiple changes including setting the default:
+
 <ExampleSnippet example="35_alter_column_multiple.json" language="json" />
+
+Drop a default by setting the `default` field to `null`.
 
 <ExampleSnippet example="46_alter_column_drop_default.json" language="json" />
