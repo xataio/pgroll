@@ -17,6 +17,12 @@ description: A change type operation changes the type of a column.
 }
 ```
 
+Use the `up` SQL expression to do data conversion from the old column type to the new type. In the old schema version, the column will have its old data type; in the new version the column will have its new type.
+
+Use the `down` SQL expression to do data conversion in the other direction; from the new data type back to the old.
+
 ## Examples
+
+Change the type of the `rating` column on the `reviews` table:
 
 <ExampleSnippet example="18_change_column_type.json" language="json" />
