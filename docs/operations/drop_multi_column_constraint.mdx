@@ -24,6 +24,27 @@ Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 }
 ```
 
+This operation can also be used to drop single-column constraints and replaces the deprecated (#drop-constraint) operation.
+
+An `up` and `down` SQL expression is required for each column covered by the constraint, and no other column names are permitted. For example, when droping a constraint covering columns `a` and `b` the `up` and `down` fields should look like:
+
+```json
+{
+  "up": {
+    "a": "up SQL expression for column a",
+    "b": "up SQL expression for column b",
+  },
+  "down": {
+    "a": "down SQL expression for column a",
+    "b": "down SQL expression for column b",
+  }
+}
+```
+
+The new versions of the columns will no longer have the constraint, but in the old view of the table the columns will still be covered by the constraint; the `down` expressions should therefore be used to ensure that the combination of values meets the constraint being dropped.
+
 ## Examples
+
+Drop a `CHECK` constraint defined on the `tickets` table.
 
 <ExampleSnippet example="48_drop_tickets_check.json" language="json" />
