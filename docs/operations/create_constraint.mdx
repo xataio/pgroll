@@ -35,13 +35,34 @@ Required fields: `name`, `table`, `type`, `up`, `down`.
 }
 ```
 
+An `up` and `down` SQL expression is required for each column covered by the constraint, and no other column names are permitted. For example, when adding a new constraint covering columns `a` and `b` the `up` and `down` fields should look like:
+
+```json
+{
+  "up": {
+    "a": "up SQL expression for column a",
+    "b": "up SQL expression for column b",
+  },
+  "down": {
+    "a": "down SQL expression for column a",
+    "b": "down SQL expression for column b",
+  }
+}
+```
+
 ## Examples
+
+Add a multi-column unique constraint on the `tickets` table:
 
 <ExampleSnippet example="44_add_table_unique_constraint.json" language="json" />
 
+Add a check constraint on the `sellers_name` and `sellers_zip` fields on the `ticket` table. The `up` SQL expression ensures that pairs of values not meeting the new constraint on the old columns are data migrated to values that meet the new constraint in the new columns:
+
 <ExampleSnippet example="45_add_table_check_constraint.json" language="json" />
 
+Add a multi-column foreign key constraint to the the `tickets` table. The `up` SQL expressions here don't do any data transformation:
+
 <ExampleSnippet
-  example="46_add_table_foreign_key_constraint.json"
+  example="47_add_table_foreign_key_constraint.json"
   language="json"
 />
