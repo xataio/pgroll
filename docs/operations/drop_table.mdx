@@ -13,6 +13,10 @@ description: A drop table operation drops a table.
 }
 ```
 
+The table is not visible in the new version of the schema created when the migration is started, but remains visible to the old version of the schema. The table is dropped on migration completion.
+
 ## Examples
+
+Drop the products table:
 
 <ExampleSnippet example="07_drop_table.json" language="json" />
