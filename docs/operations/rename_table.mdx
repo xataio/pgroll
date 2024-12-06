@@ -14,6 +14,14 @@ description: A rename table operation renames a table.
 }
 ```
 
+The table is accessible by its old name in the old version of the schema, and by its new name in the new version of the schema.
+
+The table itself is renamed on migration completion.
+
 ## Examples
+
+### Rename a table
+
+Rename the customers table:
 
 <ExampleSnippet example="04_rename_table.json" language="json" />

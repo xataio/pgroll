@@ -19,6 +19,12 @@ description: Add unique operations add a `UNIQUE` constraint to a column.
 }
 ```
 
+Use the `up` SQL expression to migrate values from the old non-unique column in the old schema to the `UNIQUE` column in the new schema.
+
 ## Examples
+
+### Add a `UNIQUE` constraint
+
+Add a `UNIQUE` constraint to the `review` column in the `reviews` table. The `up` SQL appends a random suffix to ensure uniqueness:
 
 <ExampleSnippet example="15_set_column_unique.json" language="json" />
