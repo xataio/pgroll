@@ -12,24 +12,33 @@ description: A create index operation creates a new index on a set of columns.
     "name": "index name",
     "columns": [ "names of columns on which to define the index" ]
     "predicate": "conditional expression for defining a partial index",
+    "unique": true | false,
     "method": "btree"
   }
 }
 ```
 
-The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
-You can also specify storage parameters for the index in `storage_parameters`.
-To create a unique index set `unique` to `true`.
+* The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
+* You can also specify storage parameters for the index in `storage_parameters`.
+* To create a unique index set `unique` to `true`.
 
 ## Examples
 
+Create a `btree` index on the `name` column in the `fruits` table:
+
 <ExampleSnippet example="10_create_index.json" language="json" />
 
+Create a partial index on the `id` column in the `fruits` table:
+
 <ExampleSnippet example="37_create_partial_index.json" language="json" />
+
+Set storage parameters and index method:
 
 <ExampleSnippet
   example="38_create_hash_index_with_fillfactor.json"
   language="json"
 />
+
+Create a unique index:
 
 <ExampleSnippet example="42_create_unique_index.json" language="json" />
