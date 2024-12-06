@@ -33,23 +33,37 @@ description: An add column operation creates a new column on an existing table.
 }
 ```
 
+The `up` SQL is used when a row is added to the old version of the table (ie, without the new column). In the new version of the table, the row's value for the new column is determined by the `up` SQL expression. The `up` SQL can be omitted if the new column is nullable or has a `DEFAULT` defined.
+
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
 **NOTE:** As a special case, the `up` field can be omitted when adding `smallserial`, `serial` and `bigserial` columns.
 
 ## Examples
 
+Add three new columns to the `products` table. Each column addition is a separate operation:
+
 <ExampleSnippet example="03_add_column.json" language="json" />
+
+Add a new column to the `users` table and define `up` SQL to ensure that the new column is populated with a value when a row is added to the old version of the table:
 
 <ExampleSnippet example="06_add_column_to_sql_table.json" language="json" />
 
+Add a new column to the `reviews` table. There is no need for `up` SQL because the column has a default:
+
 <ExampleSnippet example="17_add_rating_column.json" language="json" />
+
+Add a new column to the `people` table with a `CHECK` constraint defined:
 
 <ExampleSnippet
   example="26_add_column_with_check_constraint.json"
   language="json"
 />
 
+Add a new column to the `people` table with a comment defined on the new column:
+
 <ExampleSnippet example="30_add_column_simple_up.json" language="json" />
+
+Add a new column to the `fruits` table that has an enum type, defined in an earlier migration:
 
 <ExampleSnippet example="41_add_enum_column.json" language="json" />
