@@ -52,13 +52,19 @@ An `up` and `down` SQL expression is required for each column covered by the con
 
 ## Examples
 
+### Add a `UNIQUE` constraint
+
 Add a multi-column unique constraint on the `tickets` table:
 
 <ExampleSnippet example="44_add_table_unique_constraint.json" language="json" />
 
+### Add a `CHECK` constraint
+
 Add a check constraint on the `sellers_name` and `sellers_zip` fields on the `ticket` table. The `up` SQL expression ensures that pairs of values not meeting the new constraint on the old columns are data migrated to values that meet the new constraint in the new columns:
 
 <ExampleSnippet example="45_add_table_check_constraint.json" language="json" />
+
+### Add a `FOREIGN KEY` constraint
 
 Add a multi-column foreign key constraint to the the `tickets` table. The `up` SQL expressions here don't do any data transformation:
 

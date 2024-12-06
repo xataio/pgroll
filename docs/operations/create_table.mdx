@@ -42,33 +42,49 @@ Default values are subject to the usual rules for quoting SQL expressions. In pa
 
 ## Examples
 
+### Create multiple tables
+
 Create multiple tables. Each table is a separate operation in the migration:
 
 <ExampleSnippet example="01_create_tables.json" language="json" />
+
+### Create one table
 
 Create one table:
 
 <ExampleSnippet example="02_create_another_table.json" language="json" />
 
+### Create one table (2)
+
 Create one table:
 
 <ExampleSnippet example="08_create_fruits_table.json" language="json" />
+
+### Create one table (3)
+
+Create one table:
+
+<ExampleSnippet example="20_create_posts_table.json" language="json" />
+
+### Create a table with a comment 
 
 Create a table with a comment on the table:
 
 <ExampleSnippet example="12_create_employees_table.json" language="json" />
 
+### Create a table with nullable and non-nullable columns
+
 Create a table with a mix of nullable and non-nullable columns:
 
 <ExampleSnippet example="14_add_reviews_table.json" language="json" />
+
+### Create a table with a foreign key
 
 Create a table with a foreign key constraint defined on a column:
 
 <ExampleSnippet example="19_create_orders_table.json" language="json" />
 
-Create a table:
-
-<ExampleSnippet example="20_create_posts_table.json" language="json" />
+### Create a table with a `CHECK` constraint
 
 Create a table with a `CHECK` constraint on one column:
 
@@ -76,6 +92,8 @@ Create a table with a `CHECK` constraint on one column:
   example="25_add_table_with_check_constraint.json"
   language="json"
 />
+
+### Create a table with column defaults
 
 Create a table with different `DEFAULT` values:
 

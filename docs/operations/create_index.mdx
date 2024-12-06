@@ -24,13 +24,19 @@ description: A create index operation creates a new index on a set of columns.
 
 ## Examples
 
+### Create a `btree` index
+
 Create a `btree` index on the `name` column in the `fruits` table:
 
 <ExampleSnippet example="10_create_index.json" language="json" />
 
+### Create a partial index
+
 Create a partial index on the `id` column in the `fruits` table:
 
 <ExampleSnippet example="37_create_partial_index.json" language="json" />
+
+### Create an index with storage parameters
 
 Set storage parameters and index method:
 
@@ -38,6 +44,8 @@ Set storage parameters and index method:
   example="38_create_hash_index_with_fillfactor.json"
   language="json"
 />
+
+### Create a unique index
 
 Create a unique index:
 
