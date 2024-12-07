@@ -25,6 +25,7 @@ builds:
       - goos: windows
         goarch: arm64
     overrides:
+      # These overrides require v2.4.8 or later to work
       - goos: windows
         goarch: amd64
         env:
