@@ -1,3 +1,4 @@
+## TODO: Should run `goreleaser build` as part of CI to test compilation
 version: 2
 
 project_name: pgroll
