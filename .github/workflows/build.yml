@@ -34,7 +34,11 @@ jobs:
       - run: git config --global --add safe.directory $GITHUB_WORKSPACE 
 
       - name: Run GoReleaser
-        run: goreleaser build --snapshot --clean
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: build --snapshot
 
   test:
     name: 'test (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
