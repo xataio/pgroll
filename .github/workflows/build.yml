@@ -7,6 +7,35 @@ permissions:
   contents: write
   packages: write
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: surjection/goreleaser-cross:v1.23-v2.4.8
+      env:
+        DOCKER_CLI_EXPERIMENTAL: "enabled"
+    steps:
+      - name: Print GoReleaser version
+        run: goreleaser --version
+
+      - uses: actions/checkout@v4
+        # with:
+        #   fetch-depth: 0
+
+      # - run: git fetch --force --tags
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - run: git config --global --add safe.directory $GITHUB_WORKSPACE 
+
+      - name: Run GoReleaser
+        run: goreleaser build --snapshot --clean
+
   test:
     name: 'test (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-latest
