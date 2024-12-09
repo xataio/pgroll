@@ -28,7 +28,7 @@ builds:
         goarch: amd64
         env:
           - CC=x86_64-w64-mingw32-gcc
-          - CGO_LDFLAGS=-lssp
+          - CGO_LDFLAGS=-lssp -static
       - goos: linux
         goarch: amd64
         env:
