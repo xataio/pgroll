@@ -11,7 +11,7 @@ permissions:
 jobs:
   benchmark:
     name: 'benchmark (pg: ${{ matrix.pgVersion }})'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +37,7 @@ jobs:
 
   gather:
     name: 'Gather results'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [benchmark]
 
     steps:
