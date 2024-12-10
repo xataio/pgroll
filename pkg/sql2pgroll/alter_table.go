@@ -164,6 +164,19 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 //
 // to an OpDropColumn operation.
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	switch cmd.Behavior {
+	case pgq.DropBehavior_DROP_RESTRICT, pgq.DropBehavior_DROP_BEHAVIOR_UNDEFINED:
+		// Supported
+	case pgq.DropBehavior_DROP_CASCADE:
+		// Fall back to SQL
+		return nil, nil
+	}
+
+	// IF EXISTS not supported
+	if cmd.MissingOk {
+		return nil, nil
+	}
+
 	return &migrations.OpDropColumn{
 		Table:  stmt.GetRelation().GetRelname(),
 		Column: cmd.GetName(),

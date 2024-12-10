@@ -48,6 +48,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo DROP COLUMN bar",
 			expectedOp: expect.DropColumnOp1,
 		},
+		{
+			sql:        "ALTER TABLE foo DROP COLUMN bar RESTRICT ",
+			expectedOp: expect.DropColumnOp1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -77,6 +81,10 @@ func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
 		// operations when changing data type.
 		`ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text COLLATE "en_US"`,
 		"ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text USING 'foo'",
+
+		// CASCADE and IF EXISTS clauses are not represented by OpDropColumn
+		"ALTER TABLE foo DROP COLUMN bar CASCADE",
+		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
 	}
 
 	for _, sql := range tests {
