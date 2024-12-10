@@ -44,6 +44,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a, b)",
 			expectedOp: expect.CreateConstraintOp2,
 		},
+		{
+			sql:        "ALTER TABLE foo DROP COLUMN bar",
+			expectedOp: expect.DropColumnOp1,
+		},
 	}
 
 	for _, tc := range tests {
