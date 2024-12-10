@@ -66,7 +66,7 @@ func TestConvertAlterTableStatements(t *testing.T) {
 	}
 }
 
-func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
+func TestUnconvertableAlterTableStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
