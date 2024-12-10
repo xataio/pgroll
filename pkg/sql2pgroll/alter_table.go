@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	pgq "github.com/pganalyze/pg_query_go/v6"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
