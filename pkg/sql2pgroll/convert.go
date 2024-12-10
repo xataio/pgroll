@@ -45,6 +45,8 @@ func convert(sql string) (migrations.Operations, error) {
 		return convertAlterTableStmt(node.AlterTableStmt)
 	case *pgq.Node_RenameStmt:
 		return convertRenameStmt(node.RenameStmt)
+	case *pgq.Node_DropStmt:
+		return convertDropStatement(node.DropStmt)
 	default:
 		return makeRawSQLOperation(sql), nil
 	}
