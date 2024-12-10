@@ -164,16 +164,7 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 //
 // to an OpDropColumn operation.
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
-	switch cmd.Behavior {
-	case pgq.DropBehavior_DROP_RESTRICT, pgq.DropBehavior_DROP_BEHAVIOR_UNDEFINED:
-		// Supported
-	case pgq.DropBehavior_DROP_CASCADE:
-		// Fall back to SQL
-		return nil, nil
-	}
-
-	// IF EXISTS not supported
-	if cmd.MissingOk {
+	if !canConvertDropColumn(cmd) {
 		return nil, nil
 	}
 
@@ -182,6 +173,17 @@ func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCm
 		Column: cmd.GetName(),
 		Down:   PlaceHolderSQL,
 	}, nil
+}
+
+// canConvertDropColumn checks whether we can convert the command without losing any information.
+func canConvertDropColumn(cmd *pgq.AlterTableCmd) bool {
+	if cmd.MissingOk {
+		return false
+	}
+	if cmd.Behavior == pgq.DropBehavior_DROP_CASCADE {
+		return false
+	}
+	return true
 }
 
 // canConvertUniqueConstraint checks if the unique constraint `constraint` can
