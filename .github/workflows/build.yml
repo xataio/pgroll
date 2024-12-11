@@ -232,6 +232,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    # Mark the checkout as 'safe' despite being owned by `root`
+    - run: git config --global --add safe.directory $GITHUB_WORKSPACE 
+
     - run: git fetch --force --tags
 
     - name: Set up Docker Buildx
