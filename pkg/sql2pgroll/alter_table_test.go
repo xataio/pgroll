@@ -113,6 +113,9 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		// CASCADE and IF EXISTS clauses are not represented by OpDropColumn
 		"ALTER TABLE foo DROP COLUMN bar CASCADE",
 		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
+
+		// Non literal default values
+		"ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
 	}
 
 	for _, sql := range tests {

@@ -174,30 +174,52 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 //
 // to an OpAlterColumn operation.
 func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
-	def := nullable.NewNullNullable[string]()
-	if val := cmd.GetDef().GetAConst().GetVal(); val != nil {
-		switch v := val.(type) {
-		case *pgq.A_Const_Sval:
-			def.Set(v.Sval.GetSval())
-		case *pgq.A_Const_Ival:
-			def.Set(strconv.FormatInt(int64(v.Ival.Ival), 10))
-		case *pgq.A_Const_Fval:
-			def.Set(v.Fval.Fval)
-		case *pgq.A_Const_Boolval:
-			def.Set(strconv.FormatBool(v.Boolval.Boolval))
-		case *pgq.A_Const_Bsval:
-			def.Set(v.Bsval.Bsval)
-		default:
-			return nil, fmt.Errorf("unknown constant type: %T", val)
-		}
+	operation := &migrations.OpAlterColumn{
+		Table:  stmt.GetRelation().GetRelname(),
+		Column: cmd.GetName(),
+		Down:   PlaceHolderSQL,
+		Up:     PlaceHolderSQL,
 	}
-	return &migrations.OpAlterColumn{
-		Table:   stmt.GetRelation().GetRelname(),
-		Column:  cmd.GetName(),
-		Default: def,
-		Down:    PlaceHolderSQL,
-		Up:      PlaceHolderSQL,
-	}, nil
+
+	if c := cmd.GetDef().GetAConst(); c != nil {
+		if c.GetIsnull() {
+			// The default can be set to null
+			operation.Default = nullable.NewNullNullable[string]()
+			return operation, nil
+		}
+
+		// We have a constant
+		switch v := c.GetVal().(type) {
+		case *pgq.A_Const_Sval:
+			operation.Default = nullable.NewNullableWithValue(v.Sval.GetSval())
+		case *pgq.A_Const_Ival:
+			operation.Default = nullable.NewNullableWithValue(strconv.FormatInt(int64(v.Ival.Ival), 10))
+		case *pgq.A_Const_Fval:
+			operation.Default = nullable.NewNullableWithValue(v.Fval.Fval)
+		case *pgq.A_Const_Boolval:
+			operation.Default = nullable.NewNullableWithValue(strconv.FormatBool(v.Boolval.Boolval))
+		case *pgq.A_Const_Bsval:
+			operation.Default = nullable.NewNullableWithValue(v.Bsval.Bsval)
+		default:
+			return nil, fmt.Errorf("unknown constant type: %T", c.GetVal())
+		}
+
+		return operation, nil
+	}
+
+	if cmd.GetDef() != nil {
+		// We're setting it to something other than a constant
+		return nil, nil
+	}
+
+	// We're not setting it to anything, which is the case when we are dropping it
+	if cmd.GetBehavior() == pgq.DropBehavior_DROP_RESTRICT {
+		operation.Default = nullable.NewNullNullable[string]()
+		return operation, nil
+	}
+
+	// Unknown case, fall back to raw SQL
+	return nil, nil
 }
 
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
