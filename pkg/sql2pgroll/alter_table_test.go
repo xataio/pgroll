@@ -37,6 +37,34 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AlterColumnOp3,
 		},
 		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT 'baz'",
+			expectedOp: expect.AlterColumnOp5,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT 123",
+			expectedOp: expect.AlterColumnOp6,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT true",
+			expectedOp: expect.AlterColumnOp9,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT B'0101'",
+			expectedOp: expect.AlterColumnOp10,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT 123.456",
+			expectedOp: expect.AlterColumnOp8,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar DROP DEFAULT",
+			expectedOp: expect.AlterColumnOp7,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT null",
+			expectedOp: expect.AlterColumnOp7,
+		},
+		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
 			expectedOp: expect.CreateConstraintOp1,
 		},
@@ -85,6 +113,9 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		// CASCADE and IF EXISTS clauses are not represented by OpDropColumn
 		"ALTER TABLE foo DROP COLUMN bar CASCADE",
 		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
+
+		// Non literal default values
+		"ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
 	}
 
 	for _, sql := range tests {
