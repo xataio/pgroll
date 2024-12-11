@@ -257,7 +257,7 @@ jobs:
       with:
         distribution: goreleaser
         version: '~> v2'
-        args: release --clean --skip announce,archive,aur,before,chocolatey,docker,homebrew,ko,nfpm,nix,notarize,publish,sbom,scoop,sign,snapcraft,validate,winget
+        args: release --clean --skip announce,archive,aur,before,chocolatey,homebrew,ko,nfpm,nix,notarize,publish,sbom,scoop,sign,snapcraft,validate,winget
       env:
         # We use two GitHub tokens here:
         # * The actions-bound `GITHUB_TOKEN` with permissions to write packages.
