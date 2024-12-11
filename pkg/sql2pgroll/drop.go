@@ -10,8 +10,7 @@ import (
 
 // convertDropStatement converts supported drop statements to pgroll operations
 func convertDropStatement(stmt *pgq.DropStmt) (migrations.Operations, error) {
-	switch stmt.RemoveType {
-	case pgq.ObjectType_OBJECT_INDEX:
+	if stmt.RemoveType == pgq.ObjectType_OBJECT_INDEX {
 		return convertDropIndexStatement(stmt)
 	}
 	return nil, nil
