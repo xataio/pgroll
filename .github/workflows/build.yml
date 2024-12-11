@@ -10,6 +10,35 @@ permissions:
   contents: write
   packages: write
 jobs:
+  cross-build:
+    name: cross-platform build
+    runs-on: ubuntu-24.04
+    container:
+      image: surjection/goreleaser-cross:v1.23-v2.4.8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      # Mark the checkout as 'safe' despite being owned by `root`
+      - run: git config --global --add safe.directory $GITHUB_WORKSPACE 
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: build --snapshot
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: platform-binaries
+          path: dist/
+          if-no-files-found: error
+
   test:
     name: 'test (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-24.04
@@ -192,7 +221,7 @@ jobs:
 
   release:
     runs-on: ubuntu-24.04
-    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger]
+    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
@@ -219,10 +248,10 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v6
       with:
         distribution: goreleaser
-        version: latest
+        version: '~> v2'
         args: release --clean
       env:
         # We use two GitHub tokens here:
