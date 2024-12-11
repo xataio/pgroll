@@ -167,7 +167,7 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 // `ALTER TABLE foo COLUMN bar SET DEFAULT null`
 // `ALTER TABLE foo COLUMN bar DROP DEFAULT`
 //
-// to an OpDropColumn operation.
+// to an OpAlterColumn operation.
 func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	def := nullable.NewNullNullable[string]()
 	if val := cmd.GetDef().GetAConst().GetSval(); val != nil {
