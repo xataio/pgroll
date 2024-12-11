@@ -58,7 +58,7 @@ func buildCharts(inputFile, outputFile string) error {
 	page.SetLayout("flex")
 
 	for _, c := range allCharts {
-		c.Subtitle = getSubTitle(c.Title)
+		c.Subtitle = getSubTitle(c.Title.Title)
 		page.AddCharts(c)
 	}
 
