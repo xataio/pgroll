@@ -251,7 +251,7 @@ func getSubTitle(title string) string {
 	case strings.HasPrefix(title, "WriteAmplification/NoTrigger"):
 		return "Each line represents the rows per second written for a database with the row count indicated. This is a baseline benchmark without the pgroll trigger. The x-axis shows the commits to main ordered by time."
 	case strings.HasPrefix(title, "WriteAmplification/WithTrigger"):
-		return "Each line represents the rows per second written for a database with the row count indicated. This is a benchmark with the pgroll trigger running and should be compared with the WriteAmplification/NoTrigger benchmark running and should be compared with the WriteAmplification/NoTrigger benchmarks. The x-axis shows the commits to main ordered by time."
+		return "Each line represents the rows per second written for a database with the row count indicated. This is a benchmark with the pgroll trigger installed and should be compared with the WriteAmplification/NoTrigger benchmarks. The x-axis shows the commits to main ordered by time."
 	case strings.HasPrefix(title, "ReadSchema"):
 		return "This benchmark shows the executions per second of an important internal SQL function, ReadSchema. The x-axis shows the commits to main ordered by time"
 	}
