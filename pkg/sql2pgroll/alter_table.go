@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/oapi-codegen/nullable"
 	pgq "github.com/pganalyze/pg_query_go/v6"
@@ -170,8 +171,21 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 // to an OpAlterColumn operation.
 func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	def := nullable.NewNullNullable[string]()
-	if val := cmd.GetDef().GetAConst().GetSval(); val != nil {
-		def.Set(val.Sval)
+	if val := cmd.GetDef().GetAConst().GetVal(); val != nil {
+		switch v := val.(type) {
+		case *pgq.A_Const_Sval:
+			def.Set(v.Sval.GetSval())
+		case *pgq.A_Const_Ival:
+			def.Set(strconv.FormatInt(int64(v.Ival.Ival), 10))
+		case *pgq.A_Const_Fval:
+			def.Set(v.Fval.Fval)
+		case *pgq.A_Const_Boolval:
+			def.Set(strconv.FormatBool(v.Boolval.Boolval))
+		case *pgq.A_Const_Bsval:
+			def.Set(v.Bsval.Bsval)
+		default:
+			return nil, fmt.Errorf("unknown constant type: %T", val)
+		}
 	}
 	return &migrations.OpAlterColumn{
 		Table:   stmt.GetRelation().GetRelname(),
