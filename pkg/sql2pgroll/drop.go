@@ -21,7 +21,7 @@ func convertDropIndexStatement(stmt *pgq.DropStmt) (migrations.Operations, error
 	if !canConvertDropIndex(stmt) {
 		return nil, nil
 	}
-	s := stmt.Objects[0].GetList().Items[0].GetString_().GetSval()
+	s := stmt.GetObjects()[0].GetList().GetItems()[0].GetString_().GetSval()
 	return migrations.Operations{
 		&migrations.OpDropIndex{
 			Name: s,
