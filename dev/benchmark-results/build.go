@@ -58,6 +58,7 @@ func buildCharts(inputFile, outputFile string) error {
 	page.SetLayout("flex")
 
 	for _, c := range allCharts {
+		c.Subtitle = getSubTitle(c.Title.Title)
 		page.AddCharts(c)
 	}
 
@@ -241,6 +242,21 @@ func trimName(name string) string {
 // First 7 characters
 func shortSHA(sha string) string {
 	return sha[:7]
+}
+
+func getSubTitle(title string) string {
+	switch {
+	case strings.HasPrefix(title, "Backfill"):
+		return "Each line represents the rows per second backfilled for a database with the row count indicated. The x-axis shows the commits to main ordered by time."
+	case strings.HasPrefix(title, "WriteAmplification/NoTrigger"):
+		return "Each line represents the rows per second written for a database with the row count indicated. This is a baseline benchmark without the pgroll trigger. The x-axis shows the commits to main ordered by time."
+	case strings.HasPrefix(title, "WriteAmplification/WithTrigger"):
+		return "Each line represents the rows per second written for a database with the row count indicated. This is a benchmark with the pgroll trigger installed and should be compared with the WriteAmplification/NoTrigger benchmarks. The x-axis shows the commits to main ordered by time."
+	case strings.HasPrefix(title, "ReadSchema"):
+		return "This benchmark shows the executions per second of an important internal SQL function, ReadSchema. The x-axis shows the commits to main ordered by time"
+	}
+
+	return ""
 }
 
 type BenchmarkReports struct {
