@@ -165,6 +165,10 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 // convertAlterTableSetColumnDefault converts SQL statements like:
 //
 // `ALTER TABLE foo COLUMN bar SET DEFAULT 'foo'`
+// `ALTER TABLE foo COLUMN bar SET DEFAULT 123`
+// `ALTER TABLE foo COLUMN bar SET DEFAULT 123.456`
+// `ALTER TABLE foo COLUMN bar SET DEFAULT true`
+// `ALTER TABLE foo COLUMN bar SET DEFAULT B'0101'`
 // `ALTER TABLE foo COLUMN bar SET DEFAULT null`
 // `ALTER TABLE foo COLUMN bar DROP DEFAULT`
 //
