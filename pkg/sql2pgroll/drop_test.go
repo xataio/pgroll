@@ -26,7 +26,7 @@ func TestDropIndexStatements(t *testing.T) {
 		},
 		{
 			sql:        "DROP INDEX myschema.foo",
-			expectedOp: expect.DropIndexOp1,
+			expectedOp: expect.DropIndexOp2,
 		},
 		{
 			sql:        "DROP INDEX foo RESTRICT",

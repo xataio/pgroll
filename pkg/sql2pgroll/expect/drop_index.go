@@ -9,3 +9,7 @@ import (
 var DropIndexOp1 = &migrations.OpDropIndex{
 	Name: "foo",
 }
+
+var DropIndexOp2 = &migrations.OpDropIndex{
+	Name: "myschema.foo",
+}
