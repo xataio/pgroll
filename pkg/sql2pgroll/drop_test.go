@@ -25,13 +25,18 @@ func TestDropIndexStatements(t *testing.T) {
 			expectedOp: expect.DropIndexOp1,
 		},
 		{
+			sql:        "DROP INDEX myschema.foo",
+			expectedOp: expect.DropIndexOp1,
+		},
+		{
 			sql:        "DROP INDEX foo RESTRICT",
 			expectedOp: expect.DropIndexOp1,
 		},
 		{
 			sql:        "DROP INDEX IF EXISTS foo",
 			expectedOp: expect.DropIndexOp1,
-		}, {
+		},
+		{
 			sql:        "DROP INDEX CONCURRENTLY foo",
 			expectedOp: expect.DropIndexOp1,
 		},
