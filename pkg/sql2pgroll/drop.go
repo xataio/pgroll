@@ -34,9 +34,6 @@ func canConvertDropIndex(stmt *pgq.DropStmt) bool {
 	if len(stmt.Objects) > 1 {
 		return false
 	}
-	if stmt.MissingOk || stmt.Concurrent {
-		return false
-	}
 	if stmt.Behavior == pgq.DropBehavior_DROP_CASCADE {
 		return false
 	}

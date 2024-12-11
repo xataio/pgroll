@@ -28,6 +28,13 @@ func TestDropIndexStatements(t *testing.T) {
 			sql:        "DROP INDEX foo RESTRICT",
 			expectedOp: expect.DropIndexOp1,
 		},
+		{
+			sql:        "DROP INDEX IF EXISTS foo",
+			expectedOp: expect.DropIndexOp1,
+		}, {
+			sql:        "DROP INDEX CONCURRENTLY foo",
+			expectedOp: expect.DropIndexOp1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -46,8 +53,6 @@ func TestUnconvertableDropIndexStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
-		"DROP INDEX CONCURRENTLY foo",
-		"DROP INDEX IF EXISTS foo",
 		"DROP INDEX foo CASCADE",
 	}
 
