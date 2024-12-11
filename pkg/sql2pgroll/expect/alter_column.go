@@ -3,6 +3,8 @@
 package expect
 
 import (
+	"github.com/oapi-codegen/nullable"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
@@ -35,6 +37,22 @@ var AlterColumnOp4 = &migrations.OpAlterColumn{
 	Table:  "foo",
 	Column: "a",
 	Name:   ptr("b"),
+}
+
+var AlterColumnOp5 = &migrations.OpAlterColumn{
+	Table:   "foo",
+	Column:  "bar",
+	Default: nullable.NewNullableWithValue("baz"),
+	Up:      sql2pgroll.PlaceHolderSQL,
+	Down:    sql2pgroll.PlaceHolderSQL,
+}
+
+var AlterColumnOp6 = &migrations.OpAlterColumn{
+	Table:   "foo",
+	Column:  "bar",
+	Default: nullable.NewNullNullable[string](),
+	Up:      sql2pgroll.PlaceHolderSQL,
+	Down:    sql2pgroll.PlaceHolderSQL,
 }
 
 func ptr[T any](v T) *T {

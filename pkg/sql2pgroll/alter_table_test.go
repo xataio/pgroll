@@ -37,6 +37,18 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AlterColumnOp3,
 		},
 		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT 'baz'",
+			expectedOp: expect.AlterColumnOp5,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar DROP DEFAULT",
+			expectedOp: expect.AlterColumnOp6,
+		},
+		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT null",
+			expectedOp: expect.AlterColumnOp6,
+		},
+		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
 			expectedOp: expect.CreateConstraintOp1,
 		},

@@ -5,6 +5,7 @@ package sql2pgroll
 import (
 	"fmt"
 
+	"github.com/oapi-codegen/nullable"
 	pgq "github.com/pganalyze/pg_query_go/v6"
 
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -38,6 +39,8 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			op, err = convertAlterTableAddConstraint(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_DropColumn:
 			op, err = convertAlterTableDropColumn(stmt, alterTableCmd)
+		case pgq.AlterTableType_AT_ColumnDefault:
+			op, err = convertAlterTableSetColumnDefault(stmt, alterTableCmd)
 		}
 
 		if err != nil {
@@ -158,11 +161,27 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 	}, nil
 }
 
-// convertAlterTableDropColumn converts SQL statements like:
+// convertAlterTableSetColumnDefault converts SQL statements like:
 //
-// `ALTER TABLE foo DROP COLUMN bar
+// `ALTER TABLE foo COLUMN bar SET DEFAULT 'foo'
+// `ALTER TABLE foo COLUMN bar SET DEFAULT null
+// `ALTER TABLE foo COLUMN bar DROP DEFAULT
 //
 // to an OpDropColumn operation.
+func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	def := nullable.NewNullNullable[string]()
+	if val := cmd.GetDef().GetAConst().GetSval(); val != nil {
+		def.Set(val.Sval)
+	}
+	return &migrations.OpAlterColumn{
+		Table:   stmt.GetRelation().GetRelname(),
+		Column:  cmd.GetName(),
+		Default: def,
+		Down:    PlaceHolderSQL,
+		Up:      PlaceHolderSQL,
+	}, nil
+}
+
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	if !canConvertDropColumn(cmd) {
 		return nil, nil
