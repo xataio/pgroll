@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 	"github.com/xataio/pgroll/pkg/sql2pgroll/expect"
@@ -43,6 +44,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a, b)",
 			expectedOp: expect.CreateConstraintOp2,
 		},
+		{
+			sql:        "ALTER TABLE foo DROP COLUMN bar",
+			expectedOp: expect.DropColumnOp1,
+		},
+		{
+			sql:        "ALTER TABLE foo DROP COLUMN bar RESTRICT ",
+			expectedOp: expect.DropColumnOp1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -57,7 +66,7 @@ func TestConvertAlterTableStatements(t *testing.T) {
 	}
 }
 
-func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
+func TestUnconvertableAlterTableStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
@@ -72,6 +81,10 @@ func TestUnconvertableAlterTableAddConstraintStatements(t *testing.T) {
 		// operations when changing data type.
 		`ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text COLLATE "en_US"`,
 		"ALTER TABLE foo ALTER COLUMN a SET DATA TYPE text USING 'foo'",
+
+		// CASCADE and IF EXISTS clauses are not represented by OpDropColumn
+		"ALTER TABLE foo DROP COLUMN bar CASCADE",
+		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
 	}
 
 	for _, sql := range tests {

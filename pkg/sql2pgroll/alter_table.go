@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	pgq "github.com/pganalyze/pg_query_go/v6"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -35,6 +36,8 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			op, err = convertAlterTableAlterColumnType(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_AddConstraint:
 			op, err = convertAlterTableAddConstraint(stmt, alterTableCmd)
+		case pgq.AlterTableType_AT_DropColumn:
+			op, err = convertAlterTableDropColumn(stmt, alterTableCmd)
 		}
 
 		if err != nil {
@@ -153,6 +156,34 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 		Down:    upDown,
 		Up:      upDown,
 	}, nil
+}
+
+// convertAlterTableDropColumn converts SQL statements like:
+//
+// `ALTER TABLE foo DROP COLUMN bar
+//
+// to an OpDropColumn operation.
+func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	if !canConvertDropColumn(cmd) {
+		return nil, nil
+	}
+
+	return &migrations.OpDropColumn{
+		Table:  stmt.GetRelation().GetRelname(),
+		Column: cmd.GetName(),
+		Down:   PlaceHolderSQL,
+	}, nil
+}
+
+// canConvertDropColumn checks whether we can convert the command without losing any information.
+func canConvertDropColumn(cmd *pgq.AlterTableCmd) bool {
+	if cmd.MissingOk {
+		return false
+	}
+	if cmd.Behavior == pgq.DropBehavior_DROP_CASCADE {
+		return false
+	}
+	return true
 }
 
 // canConvertUniqueConstraint checks if the unique constraint `constraint` can
