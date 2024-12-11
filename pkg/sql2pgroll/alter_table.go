@@ -163,9 +163,9 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 
 // convertAlterTableSetColumnDefault converts SQL statements like:
 //
-// `ALTER TABLE foo COLUMN bar SET DEFAULT 'foo'
-// `ALTER TABLE foo COLUMN bar SET DEFAULT null
-// `ALTER TABLE foo COLUMN bar DROP DEFAULT
+// `ALTER TABLE foo COLUMN bar SET DEFAULT 'foo'`
+// `ALTER TABLE foo COLUMN bar SET DEFAULT null`
+// `ALTER TABLE foo COLUMN bar DROP DEFAULT`
 //
 // to an OpDropColumn operation.
 func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
