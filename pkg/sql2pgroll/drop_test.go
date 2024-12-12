@@ -54,11 +54,52 @@ func TestDropIndexStatements(t *testing.T) {
 	}
 }
 
-func TestUnconvertableDropIndexStatements(t *testing.T) {
+func TestDropTableStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		sql        string
+		expectedOp migrations.Operation
+	}{
+		{
+			sql:        "DROP TABLE foo",
+			expectedOp: expect.DropTableOp1,
+		},
+		{
+			sql:        "DROP TABLE foo RESTRICT",
+			expectedOp: expect.DropTableOp1,
+		},
+		{
+			sql:        "DROP TABLE IF EXISTS foo",
+			expectedOp: expect.DropTableOp1,
+		},
+		{
+			sql:        "DROP TABLE foo.bar",
+			expectedOp: expect.DropTableOp2,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(tc.sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, tc.expectedOp, ops[0])
+		})
+	}
+}
+
+func TestUnconvertableDropStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
+		// Drop index
 		"DROP INDEX foo CASCADE",
+
+		// Drop table
+		"DROP TABLE foo CASCADE",
 	}
 
 	for _, sql := range tests {
