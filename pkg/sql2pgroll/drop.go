@@ -72,8 +72,5 @@ func convertDropTableStatement(stmt *pgq.DropStmt) (migrations.Operations, error
 
 // canConvertDropTable checks whether we can convert the statement without losing any information.
 func canConvertDropTable(stmt *pgq.DropStmt) bool {
-	if stmt.Behavior == pgq.DropBehavior_DROP_CASCADE {
-		return false
-	}
-	return true
+	return stmt.Behavior != pgq.DropBehavior_DROP_CASCADE
 }
