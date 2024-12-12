@@ -80,6 +80,26 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo DROP COLUMN bar RESTRICT ",
 			expectedOp: expect.DropColumnOp1,
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d);",
+			expectedOp: expect.AddForeignKeyOp1,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE NO ACTION;",
+			expectedOp: expect.AddForeignKeyOp1,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT;",
+			expectedOp: expect.AddForeignKeyOp2,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ;",
+			expectedOp: expect.AddForeignKeyOp3,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET NULL;",
+			expectedOp: expect.AddForeignKeyOp4,
+		},
 	}
 
 	for _, tc := range tests {

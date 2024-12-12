@@ -114,6 +114,8 @@ func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTabl
 	switch node.Constraint.GetContype() {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		op, err = convertAlterTableAddUniqueConstraint(stmt, node.Constraint)
+	case pgq.ConstrType_CONSTR_FOREIGN:
+		op, err = convertAlterTableAddForeignKeyConstraint(stmt, node.Constraint)
 	default:
 		return nil, nil
 	}
@@ -159,6 +161,55 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 		Columns: columns,
 		Down:    upDown,
 		Up:      upDown,
+	}, nil
+}
+
+func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
+	columns := make([]string, len(constraint.GetFkAttrs()))
+	for i := range columns {
+		columns[i] = constraint.GetFkAttrs()[i].GetString_().GetSval()
+	}
+
+	foreignColumns := make([]string, len(constraint.GetPkAttrs()))
+	for i := range columns {
+		foreignColumns[i] = constraint.GetPkAttrs()[i].GetString_().GetSval()
+	}
+
+	migs := make(map[string]string)
+	for _, column := range columns {
+		migs[column] = PlaceHolderSQL
+	}
+
+	foreignTable := constraint.GetPktable().GetRelname()
+
+	var onDelete migrations.ForeignKeyReferenceOnDelete
+	switch constraint.GetFkDelAction() {
+	case "a":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteNOACTION
+	case "c":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteCASCADE
+	case "r":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteRESTRICT
+	case "d":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteSETDEFAULT
+	case "n":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteSETNULL
+	default:
+		return nil, fmt.Errorf("unknown delete action: %q", constraint.GetFkDelAction())
+	}
+
+	return &migrations.OpCreateConstraint{
+		Columns: columns,
+		Up:      migs,
+		Down:    migs,
+		Name:    constraint.GetConname(),
+		References: &migrations.OpCreateConstraintReferences{
+			Columns:  foreignColumns,
+			OnDelete: onDelete,
+			Table:    foreignTable,
+		},
+		Table: stmt.GetRelation().GetRelname(),
+		Type:  migrations.OpCreateConstraintTypeForeignKey,
 	}, nil
 }
 
