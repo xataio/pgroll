@@ -276,7 +276,7 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 		// We have a constant
 		switch v := c.GetVal().(type) {
 		case *pgq.A_Const_Sval:
-			operation.Default = nullable.NewNullableWithValue(v.Sval.GetSval())
+			operation.Default = nullable.NewNullableWithValue(fmt.Sprintf("'%s'", v.Sval.GetSval()))
 		case *pgq.A_Const_Ival:
 			operation.Default = nullable.NewNullableWithValue(strconv.FormatInt(int64(v.Ival.Ival), 10))
 		case *pgq.A_Const_Fval:
@@ -284,7 +284,7 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 		case *pgq.A_Const_Boolval:
 			operation.Default = nullable.NewNullableWithValue(strconv.FormatBool(v.Boolval.Boolval))
 		case *pgq.A_Const_Bsval:
-			operation.Default = nullable.NewNullableWithValue(v.Bsval.Bsval)
+			operation.Default = nullable.NewNullableWithValue(fmt.Sprintf("'%s'", v.Bsval.GetBsval()))
 		default:
 			return nil, fmt.Errorf("unknown constant type: %T", c.GetVal())
 		}
