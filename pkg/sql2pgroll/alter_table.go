@@ -180,8 +180,6 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		migs[column] = PlaceHolderSQL
 	}
 
-	foreignTable := constraint.GetPktable().GetRelname()
-
 	var onDelete migrations.ForeignKeyReferenceOnDelete
 	switch constraint.GetFkDelAction() {
 	case "a":
@@ -198,6 +196,16 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		return nil, fmt.Errorf("unknown delete action: %q", constraint.GetFkDelAction())
 	}
 
+	tableName := stmt.GetRelation().GetRelname()
+	if stmt.GetRelation().GetSchemaname() != "" {
+		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
+	}
+
+	foreignTable := constraint.GetPktable().GetRelname()
+	if constraint.GetPktable().GetSchemaname() != "" {
+		foreignTable = constraint.GetPktable().GetSchemaname() + "." + foreignTable
+	}
+
 	return &migrations.OpCreateConstraint{
 		Columns: columns,
 		Up:      migs,
@@ -208,7 +216,7 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 			OnDelete: onDelete,
 			Table:    foreignTable,
 		},
-		Table: stmt.GetRelation().GetRelname(),
+		Table: tableName,
 		Type:  migrations.OpCreateConstraintTypeForeignKey,
 	}, nil
 }

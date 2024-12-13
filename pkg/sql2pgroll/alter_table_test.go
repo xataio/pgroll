@@ -104,6 +104,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);",
 			expectedOp: expect.AddForeignKeyOp2,
 		},
+		{
+			sql:        "ALTER TABLE schema_a.foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES schema_a.bar (c);",
+			expectedOp: expect.AddForeignKeyOp3,
+		},
 	}
 
 	for _, tc := range tests {

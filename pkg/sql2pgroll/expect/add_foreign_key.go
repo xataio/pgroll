@@ -46,3 +46,21 @@ var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 		"a": sql2pgroll.PlaceHolderSQL,
 	},
 }
+
+var AddForeignKeyOp3 = &migrations.OpCreateConstraint{
+	Columns: []string{"a"},
+	Name:    "fk_bar_c",
+	References: &migrations.OpCreateConstraintReferences{
+		Columns:  []string{"c"},
+		OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+		Table:    "schema_a.bar",
+	},
+	Table: "schema_a.foo",
+	Type:  migrations.OpCreateConstraintTypeForeignKey,
+	Up: map[string]string{
+		"a": sql2pgroll.PlaceHolderSQL,
+	},
+	Down: map[string]string{
+		"a": sql2pgroll.PlaceHolderSQL,
+	},
+}
