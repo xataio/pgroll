@@ -98,11 +98,13 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 	}, nil
 }
 
-// convertAlterTableAddConstraint converts SQL statements like:
+// convertAlterTableAddConstraint converts SQL statements that add UNIQUE or FOREIGN KEY constraints,
+// for example:
 //
 // `ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)`
+// `ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);`
 //
-// To an OpCreateConstraint operation.
+// An OpCreateConstraint operation is returned.
 func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	node, ok := cmd.GetDef().Node.(*pgq.Node_Constraint)
 	if !ok {
@@ -114,6 +116,8 @@ func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTabl
 	switch node.Constraint.GetContype() {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		op, err = convertAlterTableAddUniqueConstraint(stmt, node.Constraint)
+	case pgq.ConstrType_CONSTR_FOREIGN:
+		op, err = convertAlterTableAddForeignKeyConstraint(stmt, node.Constraint)
 	default:
 		return nil, nil
 	}
@@ -160,6 +164,87 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 		Down:    upDown,
 		Up:      upDown,
 	}, nil
+}
+
+func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
+	if !canConvertAlterTableAddForeignKeyConstraint(constraint) {
+		return nil, nil
+	}
+
+	columns := make([]string, len(constraint.GetFkAttrs()))
+	for i := range columns {
+		columns[i] = constraint.GetFkAttrs()[i].GetString_().GetSval()
+	}
+
+	foreignColumns := make([]string, len(constraint.GetPkAttrs()))
+	for i := range columns {
+		foreignColumns[i] = constraint.GetPkAttrs()[i].GetString_().GetSval()
+	}
+
+	migs := make(map[string]string)
+	for _, column := range columns {
+		migs[column] = PlaceHolderSQL
+	}
+
+	var onDelete migrations.ForeignKeyReferenceOnDelete
+	switch constraint.GetFkDelAction() {
+	case "a":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteNOACTION
+	case "c":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteCASCADE
+	case "r":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteRESTRICT
+	case "d":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteSETDEFAULT
+	case "n":
+		onDelete = migrations.ForeignKeyReferenceOnDeleteSETNULL
+	default:
+		return nil, fmt.Errorf("unknown delete action: %q", constraint.GetFkDelAction())
+	}
+
+	tableName := stmt.GetRelation().GetRelname()
+	if stmt.GetRelation().GetSchemaname() != "" {
+		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
+	}
+
+	foreignTable := constraint.GetPktable().GetRelname()
+	if constraint.GetPktable().GetSchemaname() != "" {
+		foreignTable = constraint.GetPktable().GetSchemaname() + "." + foreignTable
+	}
+
+	return &migrations.OpCreateConstraint{
+		Columns: columns,
+		Up:      migs,
+		Down:    migs,
+		Name:    constraint.GetConname(),
+		References: &migrations.OpCreateConstraintReferences{
+			Columns:  foreignColumns,
+			OnDelete: onDelete,
+			Table:    foreignTable,
+		},
+		Table: tableName,
+		Type:  migrations.OpCreateConstraintTypeForeignKey,
+	}, nil
+}
+
+func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
+	switch constraint.GetFkUpdAction() {
+	case "r", "c", "n", "d":
+		// RESTRICT, CASCADE, SET NULL, SET DEFAULT
+		return false
+	case "a":
+		// NO ACTION, the default
+		break
+	}
+	switch constraint.GetFkMatchtype() {
+	case "f":
+		// FULL
+		return false
+	case "s":
+		// SIMPLE, the default
+		break
+	}
+	return true
 }
 
 // convertAlterTableSetColumnDefault converts SQL statements like:

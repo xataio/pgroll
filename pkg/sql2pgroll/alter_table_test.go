@@ -80,6 +80,38 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo DROP COLUMN bar RESTRICT ",
 			expectedOp: expect.DropColumnOp1,
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d);",
+			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE NO ACTION;",
+			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT;",
+			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteRESTRICT),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ;",
+			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteSETDEFAULT),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET NULL;",
+			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteSETNULL),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);",
+			expectedOp: expect.AddForeignKeyOp2,
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c) NOT VALID;",
+			expectedOp: expect.AddForeignKeyOp2,
+		},
+		{
+			sql:        "ALTER TABLE schema_a.foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES schema_a.bar (c);",
+			expectedOp: expect.AddForeignKeyOp3,
+		},
 	}
 
 	for _, tc := range tests {
@@ -116,6 +148,15 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 
 		// Non literal default values
 		"ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
+
+		// Unsupported foreign key statements
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE RESTRICT;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE CASCADE;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET DEFAULT;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL;",
+		// MATCH PARTIAL is not implemented in the actual parser yet
+		//"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH PARTIAL;",
 	}
 
 	for _, sql := range tests {
