@@ -165,6 +165,10 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 }
 
 func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
+	if !canConvertAlterTableAddForeignKeyConstraint(constraint) {
+		return nil, nil
+	}
+
 	columns := make([]string, len(constraint.GetFkAttrs()))
 	for i := range columns {
 		columns[i] = constraint.GetFkAttrs()[i].GetString_().GetSval()
@@ -219,6 +223,15 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		Table: tableName,
 		Type:  migrations.OpCreateConstraintTypeForeignKey,
 	}, nil
+}
+
+func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
+	switch constraint.GetFkUpdAction() {
+	case "r", "c", "n", "d":
+		// We ignore "a" above since this is NO ACTION, the default
+		return false
+	}
+	return true
 }
 
 // convertAlterTableSetColumnDefault converts SQL statements like:

@@ -105,6 +105,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AddForeignKeyOp2,
 		},
 		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c) NOT VALID;",
+			expectedOp: expect.AddForeignKeyOp2,
+		},
+		{
 			sql:        "ALTER TABLE schema_a.foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES schema_a.bar (c);",
 			expectedOp: expect.AddForeignKeyOp3,
 		},
@@ -144,6 +148,12 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 
 		// Non literal default values
 		"ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
+
+		// Unsupported foreign key statements
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE RESTRICT;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE CASCADE;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET DEFAULT;",
 	}
 
 	for _, sql := range tests {
