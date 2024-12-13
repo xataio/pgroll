@@ -221,6 +221,8 @@ jobs:
 
   release:
     runs-on: ubuntu-24.04
+    container:
+      image: surjection/goreleaser-cross:v1.23-v2.4.8
     needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
@@ -229,6 +231,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    # Mark the checkout as 'safe' despite being owned by `root`
+    - run: git config --global --add safe.directory $GITHUB_WORKSPACE 
 
     - run: git fetch --force --tags
 
