@@ -98,11 +98,13 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 	}, nil
 }
 
-// convertAlterTableAddConstraint converts SQL statements like:
+// convertAlterTableAddConstraint converts SQL statements that add UNIQUE or FOREIGN KEY constraints,
+// for example:
 //
 // `ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)`
+// `ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);`
 //
-// To an OpCreateConstraint operation.
+// An OpCreateConstraint operation is returned.
 func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	node, ok := cmd.GetDef().Node.(*pgq.Node_Constraint)
 	if !ok {
