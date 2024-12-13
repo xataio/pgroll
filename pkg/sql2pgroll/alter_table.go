@@ -228,8 +228,19 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
 	switch constraint.GetFkUpdAction() {
 	case "r", "c", "n", "d":
-		// We ignore "a" above since this is NO ACTION, the default
+		// RESTRICT, CASCADE, SET NULL, SET DEFAULT
 		return false
+	case "a":
+		// NO ACTION, the default
+		break
+	}
+	switch constraint.GetFkMatchtype() {
+	case "f":
+		// FULL
+		return false
+	case "s":
+		// SIMPLE, the default
+		break
 	}
 	return true
 }
