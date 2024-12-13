@@ -100,6 +100,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET NULL;",
 			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteSETNULL),
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);",
+			expectedOp: expect.AddForeignKeyOp2,
+		},
 	}
 
 	for _, tc := range tests {

@@ -9,7 +9,6 @@ import (
 
 func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyReferenceOnDelete) *migrations.OpCreateConstraint {
 	return &migrations.OpCreateConstraint{
-		Check:   nil,
 		Columns: []string{"a", "b"},
 		Name:    "fk_bar_cd",
 		References: &migrations.OpCreateConstraintReferences{
@@ -28,4 +27,22 @@ func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyReferenceOnDelet
 			"b": sql2pgroll.PlaceHolderSQL,
 		},
 	}
+}
+
+var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
+	Columns: []string{"a"},
+	Name:    "fk_bar_c",
+	References: &migrations.OpCreateConstraintReferences{
+		Columns:  []string{"c"},
+		OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+		Table:    "bar",
+	},
+	Table: "foo",
+	Type:  migrations.OpCreateConstraintTypeForeignKey,
+	Up: map[string]string{
+		"a": sql2pgroll.PlaceHolderSQL,
+	},
+	Down: map[string]string{
+		"a": sql2pgroll.PlaceHolderSQL,
+	},
 }
