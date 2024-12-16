@@ -136,6 +136,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo RESTRICT",
 			expectedOp: expect.OpDropConstraintWithTable("foo"),
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0)",
+			expectedOp: expect.CreateConstraintOp3,
+		},
+		{
+			sql:        "ALTER TABLE schema.foo ADD CONSTRAINT bar CHECK (age > 0)",
+			expectedOp: expect.CreateConstraintOp4,
+		},
 	}
 
 	for _, tc := range tests {
@@ -181,6 +189,11 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 
 		// Drop constraint with CASCADE
 		"ALTER TABLE foo DROP CONSTRAINT bar CASCADE",
+
+		// NO INHERIT and NOT VALID options on CHECK constraints are not
+		// representable by `OpCreateConstraint`
+		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NO INHERIT",
+		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NOT VALID",
 	}
 
 	for _, sql := range tests {
