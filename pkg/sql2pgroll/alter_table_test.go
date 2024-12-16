@@ -122,15 +122,19 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "ALTER TABLE foo DROP CONSTRAINT constraint_foo",
-			expectedOp: expect.OpDropConstraint1,
+			expectedOp: expect.OpDropConstraintWithTable("foo"),
+		},
+		{
+			sql:        "ALTER TABLE schema.foo DROP CONSTRAINT constraint_foo",
+			expectedOp: expect.OpDropConstraintWithTable("schema.foo"),
 		},
 		{
 			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo",
-			expectedOp: expect.OpDropConstraint1,
+			expectedOp: expect.OpDropConstraintWithTable("foo"),
 		},
 		{
 			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo RESTRICT",
-			expectedOp: expect.OpDropConstraint1,
+			expectedOp: expect.OpDropConstraintWithTable("foo"),
 		},
 	}
 
