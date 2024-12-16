@@ -95,6 +95,10 @@ var AlterColumnOp11 = &migrations.OpAlterColumn{
 	Down:    sql2pgroll.PlaceHolderSQL,
 }
 
+var AlterColumnOp12 = &migrations.OpAlterColumn{
+	Table:   "foo",
+	Column:  "bar",
+	Default: nullable.NewNullableWithValue("(first_name || ' ') || last_name"),
 	Up:      sql2pgroll.PlaceHolderSQL,
 	Down:    sql2pgroll.PlaceHolderSQL,
 }
