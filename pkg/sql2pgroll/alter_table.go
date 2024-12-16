@@ -41,6 +41,8 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			op, err = convertAlterTableDropColumn(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_ColumnDefault:
 			op, err = convertAlterTableSetColumnDefault(stmt, alterTableCmd)
+		case pgq.AlterTableType_AT_DropConstraint:
+			op, err = convertAlterTableDropConstraint(stmt, alterTableCmd)
 		}
 
 		if err != nil {
@@ -291,6 +293,42 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 
 	// Unknown case, fall back to raw SQL
 	return nil, nil
+}
+
+// convertAlterTableDropConstraint convert DROP CONSTRAINT SQL into an OpDropMultiColumnConstraint.
+// Because we are unable to infer the columns involved, placeholder migrations are used.
+//
+// SQL statements like the following are supported:
+//
+// `ALTER TABLE foo DROP CONSTRAINT constraint_foo`
+// `ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo`
+// `ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo RESTRICT`
+//
+// CASCADE is currently not supported and will fall back to raw SQL
+func convertAlterTableDropConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	if !canConvertDropConstraint(cmd) {
+		return nil, nil
+	}
+
+	tableName := stmt.GetRelation().GetRelname()
+	if stmt.GetRelation().GetSchemaname() != "" {
+		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
+	}
+
+	return &migrations.OpDropMultiColumnConstraint{
+		Up: migrations.MultiColumnUpSQL{
+			"placeholder": PlaceHolderSQL,
+		},
+		Down: migrations.MultiColumnDownSQL{
+			"placeholder": PlaceHolderSQL,
+		},
+		Table: tableName,
+		Name:  cmd.GetName(),
+	}, nil
+}
+
+func canConvertDropConstraint(cmd *pgq.AlterTableCmd) bool {
+	return cmd.Behavior != pgq.DropBehavior_DROP_CASCADE
 }
 
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
