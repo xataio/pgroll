@@ -11,7 +11,10 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
-const PlaceHolderSQL = "TODO: Implement SQL data migration"
+const (
+	PlaceHolderColumnName = "placeholder"
+	PlaceHolderSQL        = "TODO: Implement SQL data migration"
+)
 
 // convertAlterTableStmt converts an ALTER TABLE statement to pgroll operations.
 func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, error) {
@@ -99,11 +102,12 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 	}, nil
 }
 
-// convertAlterTableAddConstraint converts SQL statements that add UNIQUE or FOREIGN KEY constraints,
+// convertAlterTableAddConstraint converts SQL statements that add constraints,
 // for example:
 //
 // `ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)`
 // `ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);`
+// `ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0)`
 //
 // An OpCreateConstraint operation is returned.
 func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
@@ -119,6 +123,8 @@ func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTabl
 		op, err = convertAlterTableAddUniqueConstraint(stmt, node.Constraint)
 	case pgq.ConstrType_CONSTR_FOREIGN:
 		op, err = convertAlterTableAddForeignKeyConstraint(stmt, node.Constraint)
+	case pgq.ConstrType_CONSTR_CHECK:
+		op, err = convertAlterTableAddCheckConstraint(stmt, node.Constraint)
 	default:
 		return nil, nil
 	}
@@ -246,6 +252,53 @@ func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) boo
 		break
 	}
 	return true
+}
+
+// convertAlterTableAddCheckConstraint converts SQL statements like:
+//
+// `ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0)`
+//
+// to an OpCreateConstraint operation.
+func convertAlterTableAddCheckConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
+	if !canConvertCheckConstraint(constraint) {
+		return nil, nil
+	}
+
+	tableName := stmt.GetRelation().GetRelname()
+	if stmt.GetRelation().GetSchemaname() != "" {
+		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
+	}
+
+	expr, err := pgq.DeparseExpr(constraint.GetRawExpr())
+	if err != nil {
+		return nil, fmt.Errorf("failed to deparse CHECK expression: %w", err)
+	}
+
+	return &migrations.OpCreateConstraint{
+		Type:    migrations.OpCreateConstraintTypeCheck,
+		Name:    constraint.GetConname(),
+		Table:   tableName,
+		Check:   ptr(expr),
+		Columns: []string{PlaceHolderColumnName},
+		Up: migrations.MultiColumnUpSQL{
+			PlaceHolderColumnName: PlaceHolderSQL,
+		},
+		Down: migrations.MultiColumnDownSQL{
+			PlaceHolderColumnName: PlaceHolderSQL,
+		},
+	}, nil
+}
+
+// canConvertCheckConstraint checks if the CHECK constraint `constraint` can
+// be faithfully converted to an OpCreateConstraint operation without losing
+// information.
+func canConvertCheckConstraint(constraint *pgq.Constraint) bool {
+	switch {
+	case constraint.IsNoInherit, constraint.SkipValidation:
+		return false
+	default:
+		return true
+	}
 }
 
 // convertAlterTableSetColumnDefault converts SQL statements like:
