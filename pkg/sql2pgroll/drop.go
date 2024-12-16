@@ -5,7 +5,7 @@ package sql2pgroll
 import (
 	"strings"
 
-	pgq "github.com/pganalyze/pg_query_go/v6"
+	pgq "github.com/xataio/pg_query_go/v6"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 )
