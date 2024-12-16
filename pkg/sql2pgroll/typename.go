@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	pgq "github.com/pganalyze/pg_query_go/v6"
+	pgq "github.com/xataio/pg_query_go/v6"
 )
 
 // convertTypeName converts a TypeName node to a string.
