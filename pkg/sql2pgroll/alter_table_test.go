@@ -112,6 +112,18 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE schema_a.foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES schema_a.bar (c);",
 			expectedOp: expect.AddForeignKeyOp3,
 		},
+		{
+			sql:        "ALTER TABLE foo DROP CONSTRAINT constraint_foo",
+			expectedOp: expect.OpDropConstraint1,
+		},
+		{
+			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo",
+			expectedOp: expect.OpDropConstraint1,
+		},
+		{
+			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo RESTRICT",
+			expectedOp: expect.OpDropConstraint1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -157,6 +169,9 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL;",
 		// MATCH PARTIAL is not implemented in the actual parser yet
 		//"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH PARTIAL;",
+
+		// Drop constraint with CASCADE
+		"ALTER TABLE foo DROP CONSTRAINT bar CASCADE",
 	}
 
 	for _, sql := range tests {

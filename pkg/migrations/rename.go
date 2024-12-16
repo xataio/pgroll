@@ -14,8 +14,8 @@ import (
 )
 
 // RenameDuplicatedColumn
-// * renames a duplicated column to its original name
-// * renames any foreign keys on the duplicated column to their original name.
+// * Renames a duplicated column to its original name
+// * Renames any foreign keys on the duplicated column to their original name.
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
 func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
 	const (
