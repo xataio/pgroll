@@ -82,7 +82,19 @@ var AlterColumnOp9 = &migrations.OpAlterColumn{
 var AlterColumnOp10 = &migrations.OpAlterColumn{
 	Table:   "foo",
 	Column:  "bar",
-	Default: nullable.NewNullableWithValue("'b0101'"),
+	Default: nullable.NewNullableWithValue("b'0101'"),
+	Up:      sql2pgroll.PlaceHolderSQL,
+	Down:    sql2pgroll.PlaceHolderSQL,
+}
+
+var AlterColumnOp11 = &migrations.OpAlterColumn{
+	Table:   "foo",
+	Column:  "bar",
+	Default: nullable.NewNullableWithValue("now()"),
+	Up:      sql2pgroll.PlaceHolderSQL,
+	Down:    sql2pgroll.PlaceHolderSQL,
+}
+
 	Up:      sql2pgroll.PlaceHolderSQL,
 	Down:    sql2pgroll.PlaceHolderSQL,
 }

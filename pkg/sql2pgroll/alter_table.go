@@ -4,7 +4,6 @@ package sql2pgroll
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/oapi-codegen/nullable"
 	pgq "github.com/xataio/pg_query_go/v6"
@@ -272,29 +271,16 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 			operation.Default = nullable.NewNullNullable[string]()
 			return operation, nil
 		}
-
-		// We have a constant
-		switch v := c.GetVal().(type) {
-		case *pgq.A_Const_Sval:
-			operation.Default = nullable.NewNullableWithValue(fmt.Sprintf("'%s'", v.Sval.GetSval()))
-		case *pgq.A_Const_Ival:
-			operation.Default = nullable.NewNullableWithValue(strconv.FormatInt(int64(v.Ival.Ival), 10))
-		case *pgq.A_Const_Fval:
-			operation.Default = nullable.NewNullableWithValue(v.Fval.Fval)
-		case *pgq.A_Const_Boolval:
-			operation.Default = nullable.NewNullableWithValue(strconv.FormatBool(v.Boolval.Boolval))
-		case *pgq.A_Const_Bsval:
-			operation.Default = nullable.NewNullableWithValue(fmt.Sprintf("'%s'", v.Bsval.GetBsval()))
-		default:
-			return nil, fmt.Errorf("unknown constant type: %T", c.GetVal())
-		}
-
-		return operation, nil
 	}
 
+	// We're setting it to an expression
 	if cmd.GetDef() != nil {
-		// We're setting it to something other than a constant
-		return nil, nil
+		def, err := pgq.DeparseExpr(cmd.GetDef())
+		if err != nil {
+			return nil, fmt.Errorf("failed to deparse expression: %w", err)
+		}
+		operation.Default = nullable.NewNullableWithValue(def)
+		return operation, nil
 	}
 
 	// We're not setting it to anything, which is the case when we are dropping it

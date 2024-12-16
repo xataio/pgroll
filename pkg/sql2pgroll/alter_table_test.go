@@ -65,6 +65,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AlterColumnOp7,
 		},
 		{
+			sql:        "ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
+			expectedOp: expect.AlterColumnOp11,
+		},
+		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT bar UNIQUE (a)",
 			expectedOp: expect.CreateConstraintOp1,
 		},
@@ -145,9 +149,6 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		// CASCADE and IF EXISTS clauses are not represented by OpDropColumn
 		"ALTER TABLE foo DROP COLUMN bar CASCADE",
 		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
-
-		// Non literal default values
-		"ALTER TABLE foo ALTER COLUMN bar SET DEFAULT now()",
 
 		// Unsupported foreign key statements
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE RESTRICT;",
