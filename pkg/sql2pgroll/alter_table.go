@@ -370,10 +370,10 @@ func convertAlterTableDropConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTab
 
 	return &migrations.OpDropMultiColumnConstraint{
 		Up: migrations.MultiColumnUpSQL{
-			"placeholder": PlaceHolderSQL,
+			PlaceHolderColumnName: PlaceHolderSQL,
 		},
 		Down: migrations.MultiColumnDownSQL{
-			"placeholder": PlaceHolderSQL,
+			PlaceHolderColumnName: PlaceHolderSQL,
 		},
 		Table: tableName,
 		Name:  cmd.GetName(),

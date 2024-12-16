@@ -10,10 +10,10 @@ import (
 func OpDropConstraintWithTable(table string) *migrations.OpDropMultiColumnConstraint {
 	return &migrations.OpDropMultiColumnConstraint{
 		Up: migrations.MultiColumnUpSQL{
-			"placeholder": sql2pgroll.PlaceHolderSQL,
+			sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
 		},
 		Down: migrations.MultiColumnDownSQL{
-			"placeholder": sql2pgroll.PlaceHolderSQL,
+			sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
 		},
 		Table: table,
 		Name:  "constraint_foo",
