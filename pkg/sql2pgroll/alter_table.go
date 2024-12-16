@@ -235,6 +235,10 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 }
 
 func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
+	if constraint.SkipValidation {
+		return false
+	}
+
 	switch constraint.GetFkUpdAction() {
 	case "r", "c", "n", "d":
 		// RESTRICT, CASCADE, SET NULL, SET DEFAULT
