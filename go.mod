@@ -6,7 +6,6 @@ require (
 	github.com/cloudflare/backoff v0.0.0-20240920015135-e46b80a3a7d0
 	github.com/lib/pq v1.10.9
 	github.com/oapi-codegen/nullable v1.1.0
-	github.com/pganalyze/pg_query_go/v6 v6.0.0
 	github.com/pterm/pterm v0.12.80
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/spf13/cobra v1.8.1
@@ -14,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
+	github.com/xataio/pg_query_go/v6 v6.0.0-20241216080535-894186571799
 	golang.org/x/tools v0.28.0
 )
 
