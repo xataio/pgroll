@@ -13,7 +13,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.34.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.34.0
-	github.com/xataio/pg_query_go/v6 v6.0.0-20241216080535-894186571799
+	github.com/xataio/pg_query_go/v6 v6.0.0-20241217092625-e7ba1fbaf89e
 	golang.org/x/tools v0.28.0
 )
 
