@@ -3,6 +3,8 @@
 package sql2pgroll
 
 import (
+	"fmt"
+
 	pgq "github.com/xataio/pg_query_go/v6"
 
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -12,7 +14,11 @@ import (
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	columns := make([]migrations.Column, 0, len(stmt.TableElts))
 	for _, elt := range stmt.TableElts {
-		columns = append(columns, convertColumnDef(elt.GetColumnDef()))
+		column, err := convertColumnDef(elt.GetColumnDef())
+		if err != nil {
+			return nil, fmt.Errorf("error converting column definition: %w", err)
+		}
+		columns = append(columns, *column)
 	}
 
 	return migrations.Operations{
@@ -23,9 +29,12 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	}, nil
 }
 
-func convertColumnDef(col *pgq.ColumnDef) migrations.Column {
+func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 	// Convert the column type
-	typeString := convertTypeName(col.TypeName)
+	typeString, err := pgq.DeparseTypeName(col.TypeName)
+	if err != nil {
+		return nil, fmt.Errorf("error deparsing column type: %w", err)
+	}
 
 	// Determine column nullability, uniqueness, and primary key status
 	var notNull, unique, pk bool
@@ -43,12 +52,12 @@ func convertColumnDef(col *pgq.ColumnDef) migrations.Column {
 		}
 	}
 
-	return migrations.Column{
+	return &migrations.Column{
 		Name:     col.Colname,
 		Type:     typeString,
 		Nullable: !notNull,
 		Unique:   unique,
 		Default:  defaultValue,
 		Pk:       pk,
-	}
+	}, nil
 }
