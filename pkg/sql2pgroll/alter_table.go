@@ -209,15 +209,8 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		return nil, fmt.Errorf("unknown delete action: %q", constraint.GetFkDelAction())
 	}
 
-	tableName := stmt.GetRelation().GetRelname()
-	if stmt.GetRelation().GetSchemaname() != "" {
-		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
-	}
-
-	foreignTable := constraint.GetPktable().GetRelname()
-	if constraint.GetPktable().GetSchemaname() != "" {
-		foreignTable = constraint.GetPktable().GetSchemaname() + "." + foreignTable
-	}
+	tableName := getQualifiedRelationName(stmt.Relation)
+	foreignTable := getQualifiedRelationName(constraint.GetPktable())
 
 	return &migrations.OpCreateConstraint{
 		Columns: columns,
@@ -268,10 +261,7 @@ func convertAlterTableAddCheckConstraint(stmt *pgq.AlterTableStmt, constraint *p
 		return nil, nil
 	}
 
-	tableName := stmt.GetRelation().GetRelname()
-	if stmt.GetRelation().GetSchemaname() != "" {
-		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
-	}
+	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	expr, err := pgq.DeparseExpr(constraint.GetRawExpr())
 	if err != nil {
@@ -367,10 +357,7 @@ func convertAlterTableDropConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTab
 		return nil, nil
 	}
 
-	tableName := stmt.GetRelation().GetRelname()
-	if stmt.GetRelation().GetSchemaname() != "" {
-		tableName = stmt.GetRelation().GetSchemaname() + "." + tableName
-	}
+	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	return &migrations.OpDropMultiColumnConstraint{
 		Up: migrations.MultiColumnUpSQL{
@@ -441,6 +428,13 @@ func canConvertColumnForSetDataType(column *pgq.ColumnDef) bool {
 		return false
 	}
 	return true
+}
+
+func getQualifiedRelationName(rel *pgq.RangeVar) string {
+	if rel.GetSchemaname() == "" {
+		return rel.GetRelname()
+	}
+	return fmt.Sprintf("%s.%s", rel.GetSchemaname(), rel.GetRelname())
 }
 
 func ptr[T any](x T) *T {
