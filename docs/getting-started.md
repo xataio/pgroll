@@ -10,7 +10,7 @@ This guide covers the key concepts of `pgroll` and how to get started with it.
 
 `pgroll` migrations are applied in two steps, following an [expand/contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/).
 
-![migration flow](img/migration-flow@2x.png)
+![migration flow](img/schema-changes-flow@2x.png)
 
 During the migration start phase, `pgroll` will perform only additive changes to the database schema. This includes: creating new tables, adding new columns, and creating new indexes. In the cases where a required change is not backwards compatible, `pgroll` will take the necessary steps to ensure that the current schema is still valid. For example, if a new column is added to a table with a `NOT NULL` constraint, `pgroll` will backfill the new column with a default value.
 

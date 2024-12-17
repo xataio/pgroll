@@ -31,7 +31,7 @@ See the [introductory blog post](https://pgroll.com/blog/introducing-pgroll-zero
 
 `pgroll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
 
-![Multiple schema versions with pgroll](docs/img/migration-flow@2x.png)
+![Multiple schema versions with pgroll](docs/img/schema-changes-flow@2x.png)
 
 
 `pgroll` follows a [expand/contract workflow](https://openpracticelibrary.com/practice/expand-and-contract-pattern/). On migration start, it will perform all the additive changes (create tables, add columns, etc) in the physical schema, without breaking it.
