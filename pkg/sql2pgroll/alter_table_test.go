@@ -113,10 +113,6 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AddForeignKeyOp2,
 		},
 		{
-			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c) NOT VALID;",
-			expectedOp: expect.AddForeignKeyOp2,
-		},
-		{
 			sql:        "ALTER TABLE schema_a.foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES schema_a.bar (c);",
 			expectedOp: expect.AddForeignKeyOp3,
 		},
@@ -135,6 +131,14 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		{
 			sql:        "ALTER TABLE foo DROP CONSTRAINT IF EXISTS constraint_foo RESTRICT",
 			expectedOp: expect.OpDropConstraintWithTable("foo"),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0)",
+			expectedOp: expect.CreateConstraintOp3,
+		},
+		{
+			sql:        "ALTER TABLE schema.foo ADD CONSTRAINT bar CHECK (age > 0)",
+			expectedOp: expect.CreateConstraintOp4,
 		},
 	}
 
@@ -176,11 +180,17 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL;",
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET DEFAULT;",
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL;",
+		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) NOT VALID",
 		// MATCH PARTIAL is not implemented in the actual parser yet
 		//"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH PARTIAL;",
 
 		// Drop constraint with CASCADE
 		"ALTER TABLE foo DROP CONSTRAINT bar CASCADE",
+
+		// NO INHERIT and NOT VALID options on CHECK constraints are not
+		// representable by `OpCreateConstraint`
+		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NO INHERIT",
+		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NOT VALID",
 	}
 
 	for _, sql := range tests {

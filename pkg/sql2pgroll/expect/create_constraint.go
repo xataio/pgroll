@@ -30,3 +30,31 @@ var CreateConstraintOp2 = &migrations.OpCreateConstraint{
 		"b": sql2pgroll.PlaceHolderSQL,
 	},
 }
+
+var CreateConstraintOp3 = &migrations.OpCreateConstraint{
+	Type:    migrations.OpCreateConstraintTypeCheck,
+	Name:    "bar",
+	Table:   "foo",
+	Check:   ptr("age > 0"),
+	Columns: []string{sql2pgroll.PlaceHolderColumnName},
+	Up: map[string]string{
+		sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
+	},
+	Down: map[string]string{
+		sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
+	},
+}
+
+var CreateConstraintOp4 = &migrations.OpCreateConstraint{
+	Type:    migrations.OpCreateConstraintTypeCheck,
+	Name:    "bar",
+	Table:   "schema.foo",
+	Check:   ptr("age > 0"),
+	Columns: []string{sql2pgroll.PlaceHolderColumnName},
+	Up: map[string]string{
+		sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
+	},
+	Down: map[string]string{
+		sql2pgroll.PlaceHolderColumnName: sql2pgroll.PlaceHolderSQL,
+	},
+}
