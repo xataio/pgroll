@@ -9,7 +9,7 @@ var CreateTableOp1 = &migrations.OpCreateTable{
 	Columns: []migrations.Column{
 		{
 			Name:     "a",
-			Type:     "int4",
+			Type:     "int",
 			Nullable: true,
 		},
 	},
@@ -20,7 +20,7 @@ var CreateTableOp2 = &migrations.OpCreateTable{
 	Columns: []migrations.Column{
 		{
 			Name: "a",
-			Type: "int4",
+			Type: "int",
 		},
 	},
 }
@@ -41,7 +41,7 @@ var CreateTableOp4 = &migrations.OpCreateTable{
 	Columns: []migrations.Column{
 		{
 			Name:     "a",
-			Type:     "numeric(10,2)",
+			Type:     "numeric(10, 2)",
 			Nullable: true,
 		},
 	},
@@ -52,7 +52,7 @@ var CreateTableOp5 = &migrations.OpCreateTable{
 	Columns: []migrations.Column{
 		{
 			Name:     "a",
-			Type:     "int4",
+			Type:     "int",
 			Nullable: true,
 			Unique:   true,
 		},
@@ -64,7 +64,7 @@ var CreateTableOp6 = &migrations.OpCreateTable{
 	Columns: []migrations.Column{
 		{
 			Name: "a",
-			Type: "int4",
+			Type: "int",
 			Pk:   true,
 		},
 	},

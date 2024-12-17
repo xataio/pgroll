@@ -89,6 +89,11 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 		return nil, fmt.Errorf("expected column definition, got %T", cmd.GetDef().Node)
 	}
 
+	typeName, err := pgq.DeparseTypeName(node.ColumnDef.GetTypeName())
+	if err != nil {
+		return nil, fmt.Errorf("failed to deparse type name: %w", err)
+	}
+
 	if !canConvertColumnForSetDataType(node.ColumnDef) {
 		return nil, nil
 	}
@@ -96,7 +101,7 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 	return &migrations.OpAlterColumn{
 		Table:  stmt.GetRelation().GetRelname(),
 		Column: cmd.GetName(),
-		Type:   ptr(convertTypeName(node.ColumnDef.GetTypeName())),
+		Type:   ptr(typeName),
 		Up:     PlaceHolderSQL,
 		Down:   PlaceHolderSQL,
 	}, nil
