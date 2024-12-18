@@ -77,12 +77,15 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
-		// Temporary and unlogged tables are not representable as a pgroll
-		// operation
+		// CREATE TABLE options that are not representable as `pgroll` operations.
 		"CREATE TEMPORARY TABLE foo(a int)",
 		"CREATE UNLOGGED TABLE foo(a int)",
 		"CREATE TABLE IF NOT EXISTS foo(a int)",
 		"CREATE TABLE foo(a int) INHERITS (bar)",
+
+		// Any kind of partitioning is not supported
+		"CREATE TABLE foo(a int) PARTITION BY RANGE (a)",
+		"CREATE TABLE foo(a int) PARTITION BY LIST (a)",
 	}
 
 	for _, sql := range tests {

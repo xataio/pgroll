@@ -48,6 +48,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// Table inheritance is not supported
 	case len(stmt.GetInhRelations()) != 0:
 		return false
+	// Paritioned tables are not supported
+	case stmt.GetPartspec() != nil:
+		return false
 	default:
 		return true
 	}
