@@ -12,6 +12,12 @@ import (
 
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
+	// Check if the statement can be converted
+	if !canConvertCreateStatement(stmt) {
+		return nil, nil
+	}
+
+	// Convert the column definitions
 	columns := make([]migrations.Column, 0, len(stmt.TableElts))
 	for _, elt := range stmt.TableElts {
 		column, err := convertColumnDef(elt.GetColumnDef())
@@ -27,6 +33,39 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 			Columns: columns,
 		},
 	}, nil
+}
+
+// canConvertCreateTableStatement returns true iff `stmt` can be converted to a
+// pgroll operation.
+func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
+	switch {
+	// Temporary and unlogged tables are not supported
+	case stmt.GetRelation().GetRelpersistence() != "p":
+		return false
+	// CREATE TABLE IF NOT EXISTS is not supported
+	case stmt.GetIfNotExists():
+		return false
+	// Table inheritance is not supported
+	case len(stmt.GetInhRelations()) != 0:
+		return false
+	// Paritioned tables are not supported
+	case stmt.GetPartspec() != nil:
+		return false
+	// Specifying an access method is not supported
+	case stmt.GetAccessMethod() != "":
+		return false
+	// Specifying storage options is not supported
+	case len(stmt.GetOptions()) != 0:
+		return false
+	// ON COMMIT options are not supported
+	case stmt.GetOncommit() != pgq.OnCommitAction_ONCOMMIT_NOOP:
+		return false
+	// Setting a tablespace is not supported
+	case stmt.GetTablespacename() != "":
+		return false
+	default:
+		return true
+	}
 }
 
 func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {

@@ -72,3 +72,48 @@ func TestConvertCreateTableStatements(t *testing.T) {
 		})
 	}
 }
+
+func TestUnconvertableCreateTableStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []string{
+		// Temporary and unlogged tables are not supported
+		"CREATE TEMPORARY TABLE foo(a int)",
+		"CREATE UNLOGGED TABLE foo(a int)",
+
+		// The IF NOT EXISTS clause is not supported
+		"CREATE TABLE IF NOT EXISTS foo(a int)",
+
+		// Table inheritance is not supported
+		"CREATE TABLE foo(a int) INHERITS (bar)",
+
+		// Any kind of partitioning is not supported
+		"CREATE TABLE foo(a int) PARTITION BY RANGE (a)",
+		"CREATE TABLE foo(a int) PARTITION BY LIST (a)",
+
+		// Specifying a table access method is not supported
+		"CREATE TABLE foo(a int) USING bar",
+
+		// Specifying storage options is not supported
+		"CREATE TABLE foo(a int) WITH (fillfactor=70)",
+
+		// ON COMMMIT options are not supported. These options are syntactically
+		// valid for all tables, but Postgres will reject them for non-temporary
+		// tables. We err on the side of caution and reject them for all tables.
+		"CREATE TABLE foo(a int) ON COMMIT DROP",
+
+		// Specifying a tablespace is not supported
+		"CREATE TABLE foo(a int) TABLESPACE bar",
+	}
+
+	for _, sql := range tests {
+		t.Run(sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
+		})
+	}
+}
