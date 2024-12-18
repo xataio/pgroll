@@ -126,8 +126,11 @@ func canConvertColumnDef(col *pgq.ColumnDef) bool {
 	// Column storage options are not supported
 	case col.GetStorageName() != "":
 		return false
-		// Column compression options are not supported
+	// Column compression options are not supported
 	case col.GetCompression() != "":
+		return false
+	// Column collation options are not supported
+	case col.GetCollClause() != nil:
 		return false
 	default:
 		return true
