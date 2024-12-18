@@ -81,6 +81,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// operation
 		"CREATE TEMPORARY TABLE foo(a int)",
 		"CREATE UNLOGGED TABLE foo(a int)",
+		"CREATE TABLE IF NOT EXISTS foo(a int)",
 	}
 
 	for _, sql := range tests {

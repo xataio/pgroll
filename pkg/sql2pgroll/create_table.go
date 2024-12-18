@@ -42,6 +42,10 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	if stmt.GetRelation().GetRelpersistence() != "p" {
 		return false
 	}
+	// CREATE TABLE IF NOT EXISTS is not supported
+	if stmt.GetIfNotExists() {
+		return false
+	}
 	return true
 }
 
