@@ -46,6 +46,8 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 			op, err = convertAlterTableSetColumnDefault(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_DropConstraint:
 			op, err = convertAlterTableDropConstraint(stmt, alterTableCmd)
+		case pgq.AlterTableType_AT_AddColumn:
+			op, err = convertAlterTableAddColumn(stmt, alterTableCmd)
 		}
 
 		if err != nil {
@@ -198,20 +200,9 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		migs[column] = PlaceHolderSQL
 	}
 
-	var onDelete migrations.ForeignKeyReferenceOnDelete
-	switch constraint.GetFkDelAction() {
-	case "a":
-		onDelete = migrations.ForeignKeyReferenceOnDeleteNOACTION
-	case "c":
-		onDelete = migrations.ForeignKeyReferenceOnDeleteCASCADE
-	case "r":
-		onDelete = migrations.ForeignKeyReferenceOnDeleteRESTRICT
-	case "d":
-		onDelete = migrations.ForeignKeyReferenceOnDeleteSETDEFAULT
-	case "n":
-		onDelete = migrations.ForeignKeyReferenceOnDeleteSETNULL
-	default:
-		return nil, fmt.Errorf("unknown delete action: %q", constraint.GetFkDelAction())
+	onDelete, err := parseOnDeleteAction(constraint.GetFkDelAction())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse on delete action: %w", err)
 	}
 
 	tableName := getQualifiedRelationName(stmt.Relation)
@@ -230,6 +221,23 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		Table: tableName,
 		Type:  migrations.OpCreateConstraintTypeForeignKey,
 	}, nil
+}
+
+func parseOnDeleteAction(action string) (migrations.ForeignKeyReferenceOnDelete, error) {
+	switch action {
+	case "a":
+		return migrations.ForeignKeyReferenceOnDeleteNOACTION, nil
+	case "c":
+		return migrations.ForeignKeyReferenceOnDeleteCASCADE, nil
+	case "r":
+		return migrations.ForeignKeyReferenceOnDeleteRESTRICT, nil
+	case "d":
+		return migrations.ForeignKeyReferenceOnDeleteSETDEFAULT, nil
+	case "n":
+		return migrations.ForeignKeyReferenceOnDeleteSETNULL, nil
+	default:
+		return migrations.ForeignKeyReferenceOnDeleteNOACTION, fmt.Errorf("unknown delete action: %q", action)
+	}
 }
 
 func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
@@ -319,21 +327,12 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 		Up:     PlaceHolderSQL,
 	}
 
-	if c := cmd.GetDef().GetAConst(); c != nil {
-		if c.GetIsnull() {
-			// The default can be set to null
-			operation.Default = nullable.NewNullNullable[string]()
-			return operation, nil
-		}
+	def, err := extractDefault(cmd.GetDef())
+	if err != nil {
+		return nil, err
 	}
-
-	// We're setting it to an expression
-	if cmd.GetDef() != nil {
-		def, err := pgq.DeparseExpr(cmd.GetDef())
-		if err != nil {
-			return nil, fmt.Errorf("failed to deparse expression: %w", err)
-		}
-		operation.Default = nullable.NewNullableWithValue(def)
+	if def.IsSpecified() {
+		operation.Default = def
 		return operation, nil
 	}
 
@@ -347,7 +346,25 @@ func convertAlterTableSetColumnDefault(stmt *pgq.AlterTableStmt, cmd *pgq.AlterT
 	return nil, nil
 }
 
-// convertAlterTableDropConstraint convert DROP CONSTRAINT SQL into an OpDropMultiColumnConstraint.
+func extractDefault(node *pgq.Node) (nullable.Nullable[string], error) {
+	if c := node.GetAConst(); c != nil && c.GetIsnull() {
+		// The default can be set to null
+		return nullable.NewNullNullable[string](), nil
+	}
+
+	// It's an expression
+	if node != nil {
+		def, err := pgq.DeparseExpr(node)
+		if err != nil {
+			return nil, fmt.Errorf("failed to deparse expression: %w", err)
+		}
+		return nullable.NewNullableWithValue(def), nil
+	}
+
+	return nil, nil
+}
+
+// convertAlterTableDropConstraint converts DROP CONSTRAINT SQL into an OpDropMultiColumnConstraint.
 // Because we are unable to infer the columns involved, placeholder migrations are used.
 //
 // SQL statements like the following are supported:
@@ -378,6 +395,115 @@ func convertAlterTableDropConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTab
 
 func canConvertDropConstraint(cmd *pgq.AlterTableCmd) bool {
 	return cmd.Behavior != pgq.DropBehavior_DROP_CASCADE
+}
+
+// convertAlterTableAddColumn converts ADD COLUMN SQL into an OpAddColumn.
+//
+// See TestConvertAlterTableStatements and TestUnconvertableAlterTableStatements for statements we
+// support.
+func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
+	if !canConvertAddColumn(cmd) {
+		return nil, nil
+	}
+
+	columnDef := cmd.GetDef().GetColumnDef()
+	if !canConvertColumnDef(columnDef) {
+		return nil, nil
+	}
+
+	columnType, err := pgq.DeparseTypeName(columnDef.GetTypeName())
+	if err != nil {
+		return nil, fmt.Errorf("failed to deparse type name: %w", err)
+	}
+
+	operation := &migrations.OpAddColumn{
+		Column: migrations.Column{
+			Name: columnDef.GetColname(),
+			Type: columnType,
+		},
+		Table: getQualifiedRelationName(stmt.GetRelation()),
+		Up:    PlaceHolderSQL,
+	}
+
+	if len(columnDef.GetConstraints()) > 0 {
+		for _, constraint := range columnDef.GetConstraints() {
+			switch constraint.GetConstraint().GetContype() {
+			case pgq.ConstrType_CONSTR_NULL:
+				operation.Column.Nullable = true
+			case pgq.ConstrType_CONSTR_PRIMARY:
+				operation.Column.Pk = true
+			case pgq.ConstrType_CONSTR_UNIQUE:
+				operation.Column.Unique = true
+			case pgq.ConstrType_CONSTR_CHECK:
+				raw, err := pgq.DeparseExpr(constraint.GetConstraint().GetRawExpr())
+				if err != nil {
+					return nil, fmt.Errorf("failed to deparse raw expression: %w", err)
+				}
+				operation.Column.Check = &migrations.CheckConstraint{
+					Constraint: raw,
+					Name:       constraint.GetConstraint().GetConname(),
+				}
+			case pgq.ConstrType_CONSTR_DEFAULT:
+				defaultExpr := constraint.GetConstraint().GetRawExpr()
+				def, err := extractDefault(defaultExpr)
+				if err != nil {
+					return nil, err
+				}
+				if !def.IsNull() {
+					v := def.MustGet()
+					operation.Column.Default = &v
+				}
+			case pgq.ConstrType_CONSTR_FOREIGN:
+				onDelete, err := parseOnDeleteAction(constraint.GetConstraint().GetFkDelAction())
+				if err != nil {
+					return nil, err
+				}
+				fk := &migrations.ForeignKeyReference{
+					Name:     constraint.GetConstraint().GetConname(),
+					OnDelete: onDelete,
+					Column:   constraint.GetConstraint().GetPkAttrs()[0].GetString_().GetSval(),
+					Table:    getQualifiedRelationName(constraint.GetConstraint().GetPktable()),
+				}
+				operation.Column.References = fk
+			}
+		}
+	}
+
+	return operation, nil
+}
+
+func canConvertAddColumn(cmd *pgq.AlterTableCmd) bool {
+	if cmd.GetMissingOk() {
+		return false
+	}
+	for _, constraint := range cmd.GetDef().GetColumnDef().GetConstraints() {
+		switch constraint.GetConstraint().GetContype() {
+		case pgq.ConstrType_CONSTR_DEFAULT,
+			pgq.ConstrType_CONSTR_NULL,
+			pgq.ConstrType_CONSTR_NOTNULL,
+			pgq.ConstrType_CONSTR_PRIMARY,
+			pgq.ConstrType_CONSTR_UNIQUE,
+			pgq.ConstrType_CONSTR_FOREIGN,
+			pgq.ConstrType_CONSTR_CHECK:
+			switch constraint.GetConstraint().GetFkUpdAction() {
+			case "r", "c", "n", "d":
+				// RESTRICT, CASCADE, SET NULL, SET DEFAULT
+				return false
+			case "a":
+				// NO ACTION, the default
+				break
+			}
+		case pgq.ConstrType_CONSTR_ATTR_DEFERRABLE,
+			pgq.ConstrType_CONSTR_ATTR_DEFERRED,
+			pgq.ConstrType_CONSTR_IDENTITY,
+			pgq.ConstrType_CONSTR_GENERATED:
+			return false
+		case pgq.ConstrType_CONSTR_ATTR_NOT_DEFERRABLE, pgq.ConstrType_CONSTR_ATTR_IMMEDIATE:
+			break
+		}
+	}
+
+	return true
 }
 
 func convertAlterTableDropColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
