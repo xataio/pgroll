@@ -565,24 +565,6 @@ func getQualifiedRelationName(rel *pgq.RangeVar) string {
 	return fmt.Sprintf("%s.%s", rel.GetSchemaname(), rel.GetRelname())
 }
 
-// canConvertColumnDef returns true iff `col` can be converted to a pgroll `Column` definition.
-// TODO: Copied from WIP PR
-func canConvertColumnDef(col *pgq.ColumnDef) bool {
-	switch {
-	// Column storage options are not supported
-	case col.GetStorageName() != "":
-		return false
-	// Column compression options are not supported
-	case col.GetCompression() != "":
-		return false
-	// Column collation options are not supported
-	case col.GetCollClause() != nil:
-		return false
-	default:
-		return true
-	}
-}
-
 func ptr[T any](x T) *T {
 	return &x
 }
