@@ -29,6 +29,9 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error converting column definition: %w", err)
 			}
+			if column == nil {
+				return nil, nil
+			}
 			columns = append(columns, *column)
 		default:
 			return nil, nil
@@ -80,6 +83,10 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 }
 
 func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
+	if !canConvertColumnDef(col) {
+		return nil, nil
+	}
+
 	// Convert the column type
 	typeString, err := pgq.DeparseTypeName(col.TypeName)
 	if err != nil {
@@ -110,4 +117,15 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 		Default:  defaultValue,
 		Pk:       pk,
 	}, nil
+}
+
+// canConvertColumnDef returns true iff `col` can be converted to a pgroll
+// `Column` definition.
+func canConvertColumnDef(col *pgq.ColumnDef) bool {
+	// Column storage options are not supported
+	if col.GetStorageName() != "" {
+		return false
+	}
+
+	return true
 }
