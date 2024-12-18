@@ -51,6 +51,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// Paritioned tables are not supported
 	case stmt.GetPartspec() != nil:
 		return false
+	// Specifying an access method is not supported
+	case stmt.GetAccessMethod() != "":
+		return false
 	default:
 		return true
 	}
