@@ -108,6 +108,10 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// CREATE TABLE OF type_name is not supported
 		"CREATE TABLE foo OF type_bar",
+
+		// The LIKE clause is not supported
+		"CREATE TABLE foo(a int, LIKE bar)",
+		"CREATE TABLE foo(LIKE bar)",
 	}
 
 	for _, sql := range tests {
