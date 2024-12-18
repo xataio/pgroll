@@ -12,6 +12,12 @@ import (
 
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
+	// Check if the statement can be converted
+	if !canConvertCreateStatement(stmt) {
+		return nil, nil
+	}
+
+	// Convert the column definitions
 	columns := make([]migrations.Column, 0, len(stmt.TableElts))
 	for _, elt := range stmt.TableElts {
 		column, err := convertColumnDef(elt.GetColumnDef())
@@ -27,6 +33,16 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 			Columns: columns,
 		},
 	}, nil
+}
+
+// canConvertCreateTableStatement returns true iff `stmt` can be converted to a
+// pgroll operation.
+func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
+	// Temporary tables are not supported
+	if stmt.GetRelation().GetRelpersistence() == "t" {
+		return false
+	}
+	return true
 }
 
 func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {

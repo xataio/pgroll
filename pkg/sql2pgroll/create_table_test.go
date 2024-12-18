@@ -72,3 +72,23 @@ func TestConvertCreateTableStatements(t *testing.T) {
 		})
 	}
 }
+
+func TestUnconvertableCreateTableStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []string{
+		// Temporary tables are not representable as a pgroll operation
+		"CREATE TEMPORARY TABLE foo(a int)",
+	}
+
+	for _, sql := range tests {
+		t.Run(sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
+		})
+	}
+}
