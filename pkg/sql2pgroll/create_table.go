@@ -19,7 +19,7 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	// Convert the table elements - table elements can be:
 	// - Column definitions
-	// - Constraints
+	// - Table constraints (not supported)
 	// - LIKE clauses (not supported)
 	var columns []migrations.Column
 	for _, elt := range stmt.TableElts {
@@ -50,32 +50,25 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 // pgroll operation.
 func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	switch {
-	// Temporary and unlogged tables are not supported
-	case stmt.GetRelation().GetRelpersistence() != "p":
-		return false
-	// CREATE TABLE IF NOT EXISTS is not supported
-	case stmt.GetIfNotExists():
-		return false
-	// Table inheritance is not supported
-	case len(stmt.GetInhRelations()) != 0:
-		return false
-	// Paritioned tables are not supported
-	case stmt.GetPartspec() != nil:
-		return false
-	// Specifying an access method is not supported
-	case stmt.GetAccessMethod() != "":
-		return false
-	// Specifying storage options is not supported
-	case len(stmt.GetOptions()) != 0:
-		return false
-	// ON COMMIT options are not supported
-	case stmt.GetOncommit() != pgq.OnCommitAction_ONCOMMIT_NOOP:
-		return false
-	// Setting a tablespace is not supported
-	case stmt.GetTablespacename() != "":
-		return false
-	// CREATE TABLE OF type_name is not supported
-	case stmt.GetOfTypename() != nil:
+	case
+		// Temporary and unlogged tables are not supported
+		stmt.GetRelation().GetRelpersistence() != "p",
+		// CREATE TABLE IF NOT EXISTS is not supported
+		stmt.GetIfNotExists(),
+		// Table inheritance is not supported
+		len(stmt.GetInhRelations()) != 0,
+		// Paritioned tables are not supported
+		stmt.GetPartspec() != nil,
+		// Specifying an access method is not supported
+		stmt.GetAccessMethod() != "",
+		// Specifying storage options is not supported
+		len(stmt.GetOptions()) != 0,
+		// ON COMMIT options are not supported
+		stmt.GetOncommit() != pgq.OnCommitAction_ONCOMMIT_NOOP,
+		// Setting a tablespace is not supported
+		stmt.GetTablespacename() != "",
+		// CREATE TABLE OF type_name is not supported
+		stmt.GetOfTypename() != nil:
 		return false
 	default:
 		return true
@@ -123,14 +116,12 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 // `Column` definition.
 func canConvertColumnDef(col *pgq.ColumnDef) bool {
 	switch {
-	// Column storage options are not supported
-	case col.GetStorageName() != "":
-		return false
-	// Column compression options are not supported
-	case col.GetCompression() != "":
-		return false
-	// Column collation options are not supported
-	case col.GetCollClause() != nil:
+	case
+		col.GetStorageName() != "",
+		// Column compression options are not supported
+		col.GetCompression() != "",
+		// Column collation options are not supported
+		col.GetCollClause() != nil:
 		return false
 	default:
 		return true

@@ -121,6 +121,16 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Column collation is not supported
 		"CREATE TABLE foo(a text COLLATE en_US)",
+
+		// Table constraints, named and unnamed, are not supported
+		"CREATE TABLE foo(a int, CONSTRAINT foo_check CHECK (a > 0))",
+		"CREATE TABLE foo(a int, CONSTRAINT foo_unique UNIQUE (a))",
+		"CREATE TABLE foo(a int, CONSTRAINT foo_pk PRIMARY KEY (a))",
+		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
+		"CREATE TABLE foo(a int, CHECK (a > 0))",
+		"CREATE TABLE foo(a int, UNIQUE (a))",
+		"CREATE TABLE foo(a int, PRIMARY KEY (a))",
+		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 	}
 
 	for _, sql := range tests {
