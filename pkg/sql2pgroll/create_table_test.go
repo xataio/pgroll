@@ -90,6 +90,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Any kind of partitioning is not supported
 		"CREATE TABLE foo(a int) PARTITION BY RANGE (a)",
 		"CREATE TABLE foo(a int) PARTITION BY LIST (a)",
+		"CREATE TABLE foo PARTITION OF bar FOR VALUES FROM (1) to (10)",
 
 		// Specifying a table access method is not supported
 		"CREATE TABLE foo(a int) USING bar",
