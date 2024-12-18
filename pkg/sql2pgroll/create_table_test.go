@@ -90,6 +90,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Any kind of partitioning is not supported
 		"CREATE TABLE foo(a int) PARTITION BY RANGE (a)",
 		"CREATE TABLE foo(a int) PARTITION BY LIST (a)",
+		"CREATE TABLE foo PARTITION OF bar FOR VALUES FROM (1) to (10)",
 
 		// Specifying a table access method is not supported
 		"CREATE TABLE foo(a int) USING bar",
@@ -104,6 +105,13 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Specifying a tablespace is not supported
 		"CREATE TABLE foo(a int) TABLESPACE bar",
+
+		// CREATE TABLE OF type_name is not supported
+		"CREATE TABLE foo OF type_bar",
+
+		// The LIKE clause is not supported
+		"CREATE TABLE foo(a int, LIKE bar)",
+		"CREATE TABLE foo(LIKE bar)",
 	}
 
 	for _, sql := range tests {

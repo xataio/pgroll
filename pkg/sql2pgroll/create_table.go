@@ -17,14 +17,22 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 		return nil, nil
 	}
 
-	// Convert the column definitions
-	columns := make([]migrations.Column, 0, len(stmt.TableElts))
+	// Convert the table elements - table elements can be:
+	// - Column definitions
+	// - Constraints
+	// - LIKE clauses (not supported)
+	var columns []migrations.Column
 	for _, elt := range stmt.TableElts {
-		column, err := convertColumnDef(elt.GetColumnDef())
-		if err != nil {
-			return nil, fmt.Errorf("error converting column definition: %w", err)
+		switch elt.Node.(type) {
+		case *pgq.Node_ColumnDef:
+			column, err := convertColumnDef(elt.GetColumnDef())
+			if err != nil {
+				return nil, fmt.Errorf("error converting column definition: %w", err)
+			}
+			columns = append(columns, *column)
+		default:
+			return nil, nil
 		}
-		columns = append(columns, *column)
 	}
 
 	return migrations.Operations{
@@ -62,6 +70,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 		return false
 	// Setting a tablespace is not supported
 	case stmt.GetTablespacename() != "":
+		return false
+	// CREATE TABLE OF type_name is not supported
+	case stmt.GetOfTypename() != nil:
 		return false
 	default:
 		return true
