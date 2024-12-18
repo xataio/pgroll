@@ -104,6 +104,9 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Specifying a tablespace is not supported
 		"CREATE TABLE foo(a int) TABLESPACE bar",
+
+		// CREATE TABLE OF type_name is not supported
+		"CREATE TABLE foo OF type_bar",
 	}
 
 	for _, sql := range tests {

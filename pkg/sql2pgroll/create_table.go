@@ -63,6 +63,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// Setting a tablespace is not supported
 	case stmt.GetTablespacename() != "":
 		return false
+	// CREATE TABLE OF type_name is not supported
+	case stmt.GetOfTypename() != nil:
+		return false
 	default:
 		return true
 	}
