@@ -54,6 +54,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// Specifying an access method is not supported
 	case stmt.GetAccessMethod() != "":
 		return false
+	// Specifying storage options is not supported
+	case len(stmt.GetOptions()) != 0:
+		return false
 	default:
 		return true
 	}

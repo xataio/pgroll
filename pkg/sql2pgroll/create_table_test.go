@@ -89,6 +89,9 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Specifying a table access method is not supported
 		"CREATE TABLE foo(a int) USING bar",
+
+		// Specifying storage options is not supported
+		"CREATE TABLE foo(a int) WITH (fillfactor=70)",
 	}
 
 	for _, sql := range tests {
