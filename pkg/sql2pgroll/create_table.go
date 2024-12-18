@@ -60,6 +60,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// ON COMMIT options are not supported
 	case stmt.GetOncommit() != pgq.OnCommitAction_ONCOMMIT_NOOP:
 		return false
+	// Setting a tablespace is not supported
+	case stmt.GetTablespacename() != "":
+		return false
 	default:
 		return true
 	}

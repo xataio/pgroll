@@ -77,10 +77,14 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
-		// CREATE TABLE options that are not representable as `pgroll` operations.
+		// Temporary and unlogged tables are not supported
 		"CREATE TEMPORARY TABLE foo(a int)",
 		"CREATE UNLOGGED TABLE foo(a int)",
+
+		// The IF NOT EXISTS clause is not supported
 		"CREATE TABLE IF NOT EXISTS foo(a int)",
+
+		// Table inheritance is not supported
 		"CREATE TABLE foo(a int) INHERITS (bar)",
 
 		// Any kind of partitioning is not supported
@@ -97,6 +101,9 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// valid for all tables, but Postgres will reject them for non-temporary
 		// tables. We err on the side of caution and reject them for all tables.
 		"CREATE TABLE foo(a int) ON COMMIT DROP",
+
+		// Specifying a tablespace is not supported
+		"CREATE TABLE foo(a int) TABLESPACE bar",
 	}
 
 	for _, sql := range tests {
