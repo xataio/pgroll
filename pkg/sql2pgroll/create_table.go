@@ -57,6 +57,9 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	// Specifying storage options is not supported
 	case len(stmt.GetOptions()) != 0:
 		return false
+	// ON COMMIT options are not supported
+	case stmt.GetOncommit() != pgq.OnCommitAction_ONCOMMIT_NOOP:
+		return false
 	default:
 		return true
 	}
