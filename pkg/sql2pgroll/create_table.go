@@ -122,10 +122,14 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 // canConvertColumnDef returns true iff `col` can be converted to a pgroll
 // `Column` definition.
 func canConvertColumnDef(col *pgq.ColumnDef) bool {
+	switch {
 	// Column storage options are not supported
-	if col.GetStorageName() != "" {
+	case col.GetStorageName() != "":
 		return false
+		// Column compression options are not supported
+	case col.GetCompression() != "":
+		return false
+	default:
+		return true
 	}
-
-	return true
 }

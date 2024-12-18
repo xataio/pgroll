@@ -113,8 +113,11 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int, LIKE bar)",
 		"CREATE TABLE foo(LIKE bar)",
 
-		// column `STORAGE` options are not supported
+		// Column `STORAGE` options are not supported
 		"CREATE TABLE foo(a int STORAGE PLAIN)",
+
+		// Column compression options are not supported
+		"CREATE TABLE foo(a text COMPRESSION pglz)",
 	}
 
 	for _, sql := range tests {
