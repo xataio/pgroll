@@ -82,6 +82,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TEMPORARY TABLE foo(a int)",
 		"CREATE UNLOGGED TABLE foo(a int)",
 		"CREATE TABLE IF NOT EXISTS foo(a int)",
+		"CREATE TABLE foo(a int) INHERITS (bar)",
 	}
 
 	for _, sql := range tests {

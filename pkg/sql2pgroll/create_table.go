@@ -38,15 +38,19 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 // canConvertCreateTableStatement returns true iff `stmt` can be converted to a
 // pgroll operation.
 func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
+	switch {
 	// Temporary and unlogged tables are not supported
-	if stmt.GetRelation().GetRelpersistence() != "p" {
+	case stmt.GetRelation().GetRelpersistence() != "p":
 		return false
-	}
 	// CREATE TABLE IF NOT EXISTS is not supported
-	if stmt.GetIfNotExists() {
+	case stmt.GetIfNotExists():
 		return false
+	// Table inheritance is not supported
+	case len(stmt.GetInhRelations()) != 0:
+		return false
+	default:
+		return true
 	}
-	return true
 }
 
 func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
