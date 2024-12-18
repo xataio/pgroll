@@ -19,7 +19,7 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	// Convert the table elements - table elements can be:
 	// - Column definitions
-	// - Constraints
+	// - Table constraints (not supported)
 	// - LIKE clauses (not supported)
 	var columns []migrations.Column
 	for _, elt := range stmt.TableElts {
