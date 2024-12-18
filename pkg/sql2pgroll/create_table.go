@@ -38,8 +38,8 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 // canConvertCreateTableStatement returns true iff `stmt` can be converted to a
 // pgroll operation.
 func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
-	// Temporary tables are not supported
-	if stmt.GetRelation().GetRelpersistence() == "t" {
+	// Temporary and unlogged tables are not supported
+	if stmt.GetRelation().GetRelpersistence() != "p" {
 		return false
 	}
 	return true
