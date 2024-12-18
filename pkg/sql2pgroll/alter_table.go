@@ -364,7 +364,7 @@ func extractDefault(node *pgq.Node) (nullable.Nullable[string], error) {
 	return nil, nil
 }
 
-// convertAlterTableDropConstraint convert DROP CONSTRAINT SQL into an OpDropMultiColumnConstraint.
+// convertAlterTableDropConstraint converts DROP CONSTRAINT SQL into an OpDropMultiColumnConstraint.
 // Because we are unable to infer the columns involved, placeholder migrations are used.
 //
 // SQL statements like the following are supported:
@@ -397,6 +397,10 @@ func canConvertDropConstraint(cmd *pgq.AlterTableCmd) bool {
 	return cmd.Behavior != pgq.DropBehavior_DROP_CASCADE
 }
 
+// convertAlterTableAddColumn converts ADD COLUMN SQL into an OpAddColumn.
+//
+// See TestConvertAlterTableStatements and TestUnconvertableAlterTableStatements for statements we
+// support.
 func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
 	if !canConvertAddColumn(cmd) {
 		return nil, nil
@@ -421,7 +425,6 @@ func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd
 		Up:    PlaceHolderSQL,
 	}
 
-	// Currently only handles DEFAULT
 	if len(columnDef.GetConstraints()) > 0 {
 		for _, constraint := range columnDef.GetConstraints() {
 			switch constraint.GetConstraint().GetContype() {
