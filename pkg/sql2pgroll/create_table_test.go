@@ -112,6 +112,15 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// The LIKE clause is not supported
 		"CREATE TABLE foo(a int, LIKE bar)",
 		"CREATE TABLE foo(LIKE bar)",
+
+		// Column `STORAGE` options are not supported
+		"CREATE TABLE foo(a int STORAGE PLAIN)",
+
+		// Column compression options are not supported
+		"CREATE TABLE foo(a text COMPRESSION pglz)",
+
+		// Column collation is not supported
+		"CREATE TABLE foo(a text COLLATE en_US)",
 	}
 
 	for _, sql := range tests {
