@@ -98,6 +98,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	// Convert column constraints
 	var notNull, pk, unique bool
 	var check *migrations.CheckConstraint
+	var defaultValue *string
 	for _, c := range col.GetConstraints() {
 		switch c.GetConstraint().GetContype() {
 		case pgq.ConstrType_CONSTR_NULL:
@@ -123,6 +124,12 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			if check == nil {
 				return nil, nil
 			}
+		case pgq.ConstrType_CONSTR_DEFAULT:
+			d, err := pgq.DeparseExpr(c.GetConstraint().GetRawExpr())
+			if err != nil {
+				return nil, fmt.Errorf("error deparsing default value: %w", err)
+			}
+			defaultValue = &d
 		case pgq.ConstrType_CONSTR_FOREIGN:
 			if !canConvertForeignKeyConstraint(c.GetConstraint()) {
 				return nil, nil
@@ -136,6 +143,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		Nullable: !notNull,
 		Pk:       pk,
 		Check:    check,
+		Default:  defaultValue,
 		Unique:   unique,
 	}, nil
 }

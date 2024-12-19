@@ -45,6 +45,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp10,
 		},
 		{
+			sql:        "CREATE TABLE foo(a timestamptz DEFAULT now())",
+			expectedOp: expect.CreateTableOp11,
+		},
+		{
 			sql:        "CREATE TABLE foo(a varchar(255))",
 			expectedOp: expect.CreateTableOp3,
 		},
