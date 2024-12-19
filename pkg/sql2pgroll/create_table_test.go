@@ -25,6 +25,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp1,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int NULL)",
+			expectedOp: expect.CreateTableOp1,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int NOT NULL)",
 			expectedOp: expect.CreateTableOp2,
 		},
@@ -131,6 +135,34 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int, UNIQUE (a))",
 		"CREATE TABLE foo(a int, PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
+
+		// Primary key constraint options are not supported
+		"CREATE TABLE foo(a int PRIMARY KEY USING INDEX TABLESPACE bar)",
+		"CREATE TABLE foo(a int PRIMARY KEY WITH (fillfactor=70))",
+
+		// CHECK constraint NO INHERIT option is not supported
+		"CREATE TABLE foo(a int CHECK (a > 0) NO INHERIT)",
+
+		// Options on UNIQUE constraints are not supported
+		"CREATE TABLE foo(a int UNIQUE NULLS NOT DISTINCT)",
+		"CREATE TABLE foo(a int UNIQUE WITH (fillfactor=70))",
+		"CREATE TABLE foo(a int UNIQUE USING INDEX TABLESPACE baz)",
+
+		// Some options on FOREIGN KEY constraints are not supported
+		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE RESTRICT)",
+		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE CASCADE)",
+		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET NULL)",
+		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET DEFAULT)",
+		"CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL)",
+
+		// Named inline constraints are not supported
+		"CREATE TABLE foo(a int CONSTRAINT foo_check CHECK (a > 0))",
+		"CREATE TABLE foo(a int CONSTRAINT foo_unique UNIQUE)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_pk PRIMARY KEY)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_fk REFERENCES bar(b))",
+		"CREATE TABLE foo(a int CONSTRAINT foo_default DEFAULT 0)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_null NULL)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_notnull NOT NULL)",
 	}
 
 	for _, sql := range tests {

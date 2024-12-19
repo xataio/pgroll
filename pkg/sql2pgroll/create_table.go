@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"slices"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -80,35 +81,56 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 		return nil, nil
 	}
 
-	// Convert the column type
+	// Deparse the column type
 	typeString, err := pgq.DeparseTypeName(col.TypeName)
 	if err != nil {
 		return nil, fmt.Errorf("error deparsing column type: %w", err)
 	}
 
-	// Determine column nullability, uniqueness, and primary key status
-	var notNull, unique, pk bool
-	var defaultValue *string
-	for _, constraint := range col.Constraints {
-		if constraint.GetConstraint().GetContype() == pgq.ConstrType_CONSTR_NOTNULL {
+	// Named inline constraints are not supported
+	anyNamed := slices.ContainsFunc(col.GetConstraints(), func(c *pgq.Node) bool {
+		return c.GetConstraint().GetConname() != ""
+	})
+	if anyNamed {
+		return nil, nil
+	}
+
+	// Convert column constraints
+	var notNull, pk, unique bool
+	for _, c := range col.GetConstraints() {
+		switch c.GetConstraint().GetContype() {
+		case pgq.ConstrType_CONSTR_NULL:
+			notNull = false
+		case pgq.ConstrType_CONSTR_NOTNULL:
 			notNull = true
-		}
-		if constraint.GetConstraint().GetContype() == pgq.ConstrType_CONSTR_UNIQUE {
+		case pgq.ConstrType_CONSTR_UNIQUE:
+			if !canConvertUniqueConstraint(c.GetConstraint()) {
+				return nil, nil
+			}
 			unique = true
-		}
-		if constraint.GetConstraint().GetContype() == pgq.ConstrType_CONSTR_PRIMARY {
+		case pgq.ConstrType_CONSTR_PRIMARY:
+			if !canConvertPrimaryKeyConstraint(c.GetConstraint()) {
+				return nil, nil
+			}
 			pk = true
 			notNull = true
+		case pgq.ConstrType_CONSTR_CHECK:
+			if !canConvertCheckConstraint(c.GetConstraint()) {
+				return nil, nil
+			}
+		case pgq.ConstrType_CONSTR_FOREIGN:
+			if !canConvertForeignKeyConstraint(c.GetConstraint()) {
+				return nil, nil
+			}
 		}
 	}
 
 	return &migrations.Column{
-		Name:     col.Colname,
+		Name:     col.GetColname(),
 		Type:     typeString,
 		Nullable: !notNull,
-		Unique:   unique,
-		Default:  defaultValue,
 		Pk:       pk,
+		Unique:   unique,
 	}, nil
 }
 
@@ -122,6 +144,21 @@ func canConvertColumnDef(col *pgq.ColumnDef) bool {
 		col.GetCompression() != "",
 		// Column collation options are not supported
 		col.GetCollClause() != nil:
+		return false
+	default:
+		return true
+	}
+}
+
+// canConvertPrimaryKeyConstraint returns true iff `constraint` can be converted
+// to a pgroll primary key constraint.
+func canConvertPrimaryKeyConstraint(constraint *pgq.Constraint) bool {
+	switch {
+	case
+		// Specifying an index tablespace is not supported
+		constraint.GetIndexspace() != "",
+		// Storage options are not supported
+		len(constraint.GetOptions()) != 0:
 		return false
 	default:
 		return true

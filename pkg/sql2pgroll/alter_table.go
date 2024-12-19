@@ -181,7 +181,7 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 }
 
 func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
-	if !canConvertAlterTableAddForeignKeyConstraint(constraint) {
+	if !canConvertForeignKeyConstraint(constraint) {
 		return nil, nil
 	}
 
@@ -240,7 +240,7 @@ func parseOnDeleteAction(action string) (migrations.ForeignKeyReferenceOnDelete,
 	}
 }
 
-func canConvertAlterTableAddForeignKeyConstraint(constraint *pgq.Constraint) bool {
+func canConvertForeignKeyConstraint(constraint *pgq.Constraint) bool {
 	if constraint.SkipValidation {
 		return false
 	}
