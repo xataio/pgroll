@@ -29,10 +29,6 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			expectedOp: expect.CreateIndexOp1,
 		},
 		{
-			sql:        "CREATE INDEX idx_name ON foo (bar NULLS)",
-			expectedOp: expect.CreateIndexOp1,
-		},
-		{
 			sql:        "CREATE INDEX idx_name ON foo USING btree (bar)",
 			expectedOp: expect.CreateIndexOp1,
 		},
@@ -137,6 +133,11 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 		"CREATE INDEX idx_name ON foo (bar NULLS FIRST)",
 		"CREATE INDEX idx_name ON foo (bar NULLS LAST)",
 		"CREATE INDEX idx_name ON foo (bar) INCLUDE (baz)",
+		"CREATE INDEX idx_name ON foo (bar opclass (test = test))",
+		"CREATE INDEX idx_name ON foo (bar NULLS)",
+
+		// TODO: Can't figure out how to detect this case
+		//"CREATE INDEX idx_name ON ONLY foo (bar)",
 	}
 
 	for _, sql := range tests {
