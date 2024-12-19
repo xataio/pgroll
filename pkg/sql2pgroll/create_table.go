@@ -26,7 +26,7 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	for _, elt := range stmt.TableElts {
 		switch elt.Node.(type) {
 		case *pgq.Node_ColumnDef:
-			column, err := convertColumnDef(elt.GetColumnDef())
+			column, err := convertColumnDef(stmt.Relation.GetRelname(), elt.GetColumnDef())
 			if err != nil {
 				return nil, fmt.Errorf("error converting column definition: %w", err)
 			}
@@ -41,7 +41,7 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	return migrations.Operations{
 		&migrations.OpCreateTable{
-			Name:    stmt.Relation.Relname,
+			Name:    stmt.Relation.GetRelname(),
 			Columns: columns,
 		},
 	}, nil
@@ -76,7 +76,7 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	}
 }
 
-func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
+func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column, error) {
 	if !canConvertColumnDef(col) {
 		return nil, nil
 	}
@@ -97,6 +97,7 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 
 	// Convert column constraints
 	var notNull, pk, unique bool
+	var check *migrations.CheckConstraint
 	for _, c := range col.GetConstraints() {
 		switch c.GetConstraint().GetContype() {
 		case pgq.ConstrType_CONSTR_NULL:
@@ -115,7 +116,11 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 			pk = true
 			notNull = true
 		case pgq.ConstrType_CONSTR_CHECK:
-			if !canConvertCheckConstraint(c.GetConstraint()) {
+			check, err = convertInlineCheckConstraint(tableName, col.GetColname(), c.GetConstraint())
+			if err != nil {
+				return nil, fmt.Errorf("error converting inline check constraint: %w", err)
+			}
+			if check == nil {
 				return nil, nil
 			}
 		case pgq.ConstrType_CONSTR_FOREIGN:
@@ -130,6 +135,7 @@ func convertColumnDef(col *pgq.ColumnDef) (*migrations.Column, error) {
 		Type:     typeString,
 		Nullable: !notNull,
 		Pk:       pk,
+		Check:    check,
 		Unique:   unique,
 	}, nil
 }
@@ -163,4 +169,25 @@ func canConvertPrimaryKeyConstraint(constraint *pgq.Constraint) bool {
 	default:
 		return true
 	}
+}
+
+func convertInlineCheckConstraint(tableName, columnName string, constraint *pgq.Constraint) (*migrations.CheckConstraint, error) {
+	if !canConvertCheckConstraint(constraint) {
+		return nil, nil
+	}
+
+	expr, err := pgq.DeparseExpr(constraint.GetRawExpr())
+	if err != nil {
+		return nil, fmt.Errorf("failed to deparse CHECK expression: %w", err)
+	}
+
+	name := fmt.Sprintf("%s_%s_check", tableName, columnName)
+	if constraint.GetConname() != "" {
+		name = constraint.GetConname()
+	}
+
+	return &migrations.CheckConstraint{
+		Name:       name,
+		Constraint: expr,
+	}, nil
 }

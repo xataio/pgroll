@@ -33,20 +33,24 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp2,
 		},
 		{
-			sql:        "CREATE TABLE foo(a varchar(255))",
-			expectedOp: expect.CreateTableOp3,
-		},
-		{
-			sql:        "CREATE TABLE foo(a numeric(10, 2))",
-			expectedOp: expect.CreateTableOp4,
-		},
-		{
 			sql:        "CREATE TABLE foo(a int UNIQUE)",
 			expectedOp: expect.CreateTableOp5,
 		},
 		{
 			sql:        "CREATE TABLE foo(a int PRIMARY KEY)",
 			expectedOp: expect.CreateTableOp6,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int CHECK (a > 0))",
+			expectedOp: expect.CreateTableOp10,
+		},
+		{
+			sql:        "CREATE TABLE foo(a varchar(255))",
+			expectedOp: expect.CreateTableOp3,
+		},
+		{
+			sql:        "CREATE TABLE foo(a numeric(10, 2))",
+			expectedOp: expect.CreateTableOp4,
 		},
 		{
 			sql:        "CREATE TABLE foo(a text[])",

@@ -102,3 +102,18 @@ var CreateTableOp9 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp10 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			Check: &migrations.CheckConstraint{
+				Name:       "foo_a_check",
+				Constraint: "a > 0",
+			},
+		},
+	},
+}
