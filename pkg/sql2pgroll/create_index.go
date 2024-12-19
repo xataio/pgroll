@@ -101,6 +101,9 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 		if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
 			return false
 		}
+		if param.GetIndexElem().GetOpclass() != nil || param.GetIndexElem().GetOpclassopts() != nil {
+			return false
+		}
 	}
 	if stmt.GetTableSpace() != "" {
 		return false
