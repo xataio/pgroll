@@ -53,3 +53,13 @@ var CreateIndexOp5 = &migrations.OpCreateIndex{
 	Method:    ptr(migrations.OpCreateIndexMethodBtree),
 	Predicate: ptr("foo > 0"),
 }
+
+func CreateIndexOpWithStorageParam(param string) *migrations.OpCreateIndex {
+	return &migrations.OpCreateIndex{
+		Name:              "idx_name",
+		Table:             "foo",
+		Columns:           []string{"bar"},
+		Method:            ptr(migrations.OpCreateIndexMethodBtree),
+		StorageParameters: ptr(param),
+	}
+}

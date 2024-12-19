@@ -72,7 +72,38 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			sql:        "CREATE INDEX idx_name ON foo (bar) WHERE foo > 0",
 			expectedOp: expect.CreateIndexOp5,
 		},
-		// TODO: StorageParams
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (fillfactor = 70)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("fillfactor = 70"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (deduplicate_items = true)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("deduplicate_items = true"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (buffering = ON)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("buffering = on"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (buffering = OFF)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("buffering = off"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (buffering = AUTO)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("buffering = auto"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (fastupdate = true)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("fastupdate = true"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (pages_per_range = 100)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("pages_per_range = 100"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (autosummarize = true)",
+			expectedOp: expect.CreateIndexOpWithStorageParam("autosummarize = true"),
+		},
 	}
 
 	for _, tc := range tests {

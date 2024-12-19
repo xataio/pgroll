@@ -4,6 +4,8 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -40,14 +42,43 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 		predicate = &deparsed
 	}
 
+	// TODO: We don't support more than one storage param
+	var storageParams *string
+	for _, option := range stmt.GetOptions() {
+		// TODO: It may be easier to deparse this in pgq, but for now it is not supported
+		k := option.GetDefElem().GetDefname()
+		var v string
+		switch k {
+		case "fillfactor", "gin_pending_list_limit", "pages_per_range":
+			v = strconv.Itoa(int(option.GetDefElem().GetArg().GetInteger().GetIval()))
+		case "deduplicate_items", "fastupdate", "autosummarize":
+			// Even though it is a boolean, the parser returns it as a string
+			v = option.GetDefElem().GetArg().GetString_().GetSval()
+		case "buffering":
+			// Annoyingly when the value is ON, it comes through as a string. But when the value is AUTO or OFF
+			// it is parsed as a type.
+			v = option.GetDefElem().GetArg().GetString_().GetSval()
+			if v == "" {
+				var names []string
+				for _, node := range option.GetDefElem().GetArg().GetTypeName().GetNames() {
+					names = append(names, node.GetString_().GetSval())
+				}
+				v = strings.Join(names, " ")
+			}
+		}
+		kv := fmt.Sprintf("%s = %s", k, v)
+		storageParams = &kv
+	}
+
 	return migrations.Operations{
 		&migrations.OpCreateIndex{
-			Table:     tableName,
-			Columns:   columns,
-			Name:      stmt.GetIdxname(),
-			Method:    &method,
-			Unique:    unique,
-			Predicate: predicate,
+			Table:             tableName,
+			Columns:           columns,
+			Name:              stmt.GetIdxname(),
+			Method:            &method,
+			Unique:            unique,
+			Predicate:         predicate,
+			StorageParameters: storageParams,
 		},
 	}, nil
 }
