@@ -111,6 +111,7 @@ var CreateTableOp10 = &migrations.OpCreateTable{
 			Type:     "int",
 			Nullable: true,
 			Check: &migrations.CheckConstraint{
+				Name:       "foo_a_check",
 				Constraint: "a > 0",
 			},
 		},
