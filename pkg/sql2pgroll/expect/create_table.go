@@ -117,3 +117,15 @@ var CreateTableOp10 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp11 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "timestamptz",
+			Nullable: true,
+			Default:  ptr("now()"),
+		},
+	},
+}
