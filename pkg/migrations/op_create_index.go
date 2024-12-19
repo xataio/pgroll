@@ -97,3 +97,23 @@ func quoteColumnNames(columns []string) (quoted []string) {
 	}
 	return quoted
 }
+
+// ParseCreateIndexMethod parsed index methods into OpCreateIndexMethod
+func ParseCreateIndexMethod(method string) (OpCreateIndexMethod, error) {
+	switch method {
+	case "btree":
+		return OpCreateIndexMethodBtree, nil
+	case "hash":
+		return OpCreateIndexMethodHash, nil
+	case "gist":
+		return OpCreateIndexMethodGist, nil
+	case "spgist":
+		return OpCreateIndexMethodSpgist, nil
+	case "gin":
+		return OpCreateIndexMethodGin, nil
+	case "brin":
+		return OpCreateIndexMethodBrin, nil
+	default:
+		return OpCreateIndexMethodBtree, fmt.Errorf("unknown method: %s", method)
+	}
+}
