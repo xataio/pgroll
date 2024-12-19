@@ -199,6 +199,10 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int CONSTRAINT foo_default DEFAULT 0)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_null NULL)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_notnull NOT NULL)",
+
+		// Generated columns are not supported
+		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
+		"CREATE TABLE foo(a int GENERATED ALWAYS AS IDENTITY)",
 	}
 
 	for _, sql := range tests {
