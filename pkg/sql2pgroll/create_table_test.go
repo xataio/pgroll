@@ -235,6 +235,17 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Generated columns are not supported
 		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
 		"CREATE TABLE foo(a int GENERATED ALWAYS AS IDENTITY)",
+
+		// Deferrable constraints are not supported
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE)",
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE INITIALLY DEFERRED)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE INITIALLY DEFERRED)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE INITIALLY DEFERRED)",
 	}
 
 	for _, sql := range tests {
