@@ -25,6 +25,14 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			expectedOp: expect.CreateIndexOp1,
 		},
 		{
+			sql:        "CREATE INDEX idx_name ON foo (bar ASC)",
+			expectedOp: expect.CreateIndexOp1,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar NULLS)",
+			expectedOp: expect.CreateIndexOp1,
+		},
+		{
 			sql:        "CREATE INDEX idx_name ON foo USING btree (bar)",
 			expectedOp: expect.CreateIndexOp1,
 		},
@@ -114,6 +122,31 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			require.Len(t, ops, 1)
 
 			assert.Equal(t, tc.expectedOp, ops[0])
+		})
+	}
+}
+
+func TestUnconvertableCreateIndexStatements(t *testing.T) {
+	t.Parallel()
+
+	tests := []string{
+		"CREATE INDEX idx_name ON foo (bar) WITH (fillfactor = 70, deduplicate_items = true)",
+		"CREATE INDEX idx_name ON foo (bar) TABLESPACE baz",
+		"CREATE INDEX idx_name ON foo (bar COLLATE en_US)",
+		"CREATE INDEX idx_name ON foo (bar DESC)",
+		"CREATE INDEX idx_name ON foo (bar NULLS FIRST)",
+		"CREATE INDEX idx_name ON foo (bar NULLS LAST)",
+		"CREATE INDEX idx_name ON foo (bar) INCLUDE (baz)",
+	}
+
+	for _, sql := range tests {
+		t.Run(sql, func(t *testing.T) {
+			ops, err := sql2pgroll.Convert(sql)
+			require.NoError(t, err)
+
+			require.Len(t, ops, 1)
+
+			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
 		})
 	}
 }

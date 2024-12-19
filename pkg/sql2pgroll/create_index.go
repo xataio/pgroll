@@ -14,6 +14,10 @@ import (
 
 // convertCreateIndexStmt converts CREATE INDEX statements into pgroll operations.
 func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) {
+	if !canConvertCreateIndexStmt(stmt) {
+		return nil, nil
+	}
+
 	tableName := getQualifiedRelationName(stmt.GetRelation())
 	var columns []string
 
@@ -42,7 +46,6 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 		predicate = &deparsed
 	}
 
-	// TODO: We don't support more than one storage param
 	var storageParams *string
 	for _, option := range stmt.GetOptions() {
 		// TODO: It may be easier to deparse this in pgq, but for now it is not supported
@@ -81,4 +84,30 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 			StorageParameters: storageParams,
 		},
 	}, nil
+}
+
+func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
+	if len(stmt.GetOptions()) > 1 {
+		return false
+	}
+	for _, param := range stmt.GetIndexParams() {
+		if param.GetIndexElem().GetCollation() != nil {
+			return false
+		}
+		ordering := param.GetIndexElem().GetOrdering()
+		if ordering != pgq.SortByDir_SORTBY_DEFAULT && ordering != pgq.SortByDir_SORTBY_ASC {
+			return false
+		}
+		if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
+			return false
+		}
+	}
+	if stmt.GetTableSpace() != "" {
+		return false
+	}
+	if stmt.GetIndexIncludingParams() != nil {
+		return false
+	}
+
+	return true
 }
