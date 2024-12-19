@@ -57,8 +57,20 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp10,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int CONSTRAINT my_check CHECK (a > 0))",
+			expectedOp: expect.CreateTableOp18,
+		},
+		{
 			sql:        "CREATE TABLE foo(a timestamptz DEFAULT now())",
 			expectedOp: expect.CreateTableOp11,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int CONSTRAINT my_fk REFERENCES bar(b))",
+			expectedOp: expect.CreateTableOp19,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b))",
+			expectedOp: expect.CreateTableOp12,
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) NOT DEFERRABLE)",
@@ -227,14 +239,13 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET DEFAULT)",
 		"CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL)",
 
-		// Named inline constraints are not supported
-		"CREATE TABLE foo(a int CONSTRAINT foo_check CHECK (a > 0))",
-		"CREATE TABLE foo(a int CONSTRAINT foo_unique UNIQUE)",
-		"CREATE TABLE foo(a int CONSTRAINT foo_pk PRIMARY KEY)",
-		"CREATE TABLE foo(a int CONSTRAINT foo_fk REFERENCES bar(b))",
+		// Named inline constraints are not supported for DEFAULT, NULL, NOT NULL,
+		// UNIQUE or PRIMARY KEY constraints
 		"CREATE TABLE foo(a int CONSTRAINT foo_default DEFAULT 0)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_null NULL)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_notnull NOT NULL)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_unique UNIQUE)",
+		"CREATE TABLE foo(a int CONSTRAINT foo_pk PRIMARY KEY)",
 
 		// Generated columns are not supported
 		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
