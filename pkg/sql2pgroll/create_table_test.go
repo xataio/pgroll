@@ -37,7 +37,15 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp5,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int UNIQUE NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp5,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int PRIMARY KEY)",
+			expectedOp: expect.CreateTableOp6,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int PRIMARY KEY NOT DEFERRABLE)",
 			expectedOp: expect.CreateTableOp6,
 		},
 		{
@@ -49,7 +57,7 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp11,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int REFERENCES bar(b))",
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) NOT DEFERRABLE)",
 			expectedOp: expect.CreateTableOp12,
 		},
 		{
@@ -57,7 +65,15 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp12,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON UPDATE NO ACTION NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE NO ACTION)",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE NO ACTION NOT DEFERRABLE)",
 			expectedOp: expect.CreateTableOp12,
 		},
 		{
@@ -65,7 +81,15 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp13,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE RESTRICT NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp13,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE SET NULL)",
+			expectedOp: expect.CreateTableOp14,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE SET NULL NOT DEFERRABLE)",
 			expectedOp: expect.CreateTableOp14,
 		},
 		{
@@ -73,7 +97,15 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp15,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE SET DEFAULT NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp15,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE CASCADE)",
+			expectedOp: expect.CreateTableOp16,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE CASCADE NOT DEFERRABLE)",
 			expectedOp: expect.CreateTableOp16,
 		},
 		{
@@ -203,6 +235,17 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Generated columns are not supported
 		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
 		"CREATE TABLE foo(a int GENERATED ALWAYS AS IDENTITY)",
+
+		// Deferrable constraints are not supported
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE)",
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE INITIALLY IMMEDIATE)",
+		"CREATE TABLE foo(a int UNIQUE DEFERRABLE INITIALLY DEFERRED)",
+		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE INITIALLY DEFERRED)",
+		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE INITIALLY DEFERRED)",
 	}
 
 	for _, sql := range tests {
