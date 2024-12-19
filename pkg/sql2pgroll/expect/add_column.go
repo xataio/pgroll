@@ -11,8 +11,9 @@ var AddColumnOp1 = &migrations.OpAddColumn{
 	Table: "foo",
 	Up:    sql2pgroll.PlaceHolderSQL,
 	Column: migrations.Column{
-		Name: "bar",
-		Type: "int",
+		Name:     "bar",
+		Type:     "int",
+		Nullable: true,
 	},
 }
 
@@ -20,8 +21,9 @@ var AddColumnOp2 = &migrations.OpAddColumn{
 	Table: "schema.foo",
 	Up:    sql2pgroll.PlaceHolderSQL,
 	Column: migrations.Column{
-		Name: "bar",
-		Type: "int",
+		Name:     "bar",
+		Type:     "int",
+		Nullable: true,
 	},
 }
 
@@ -30,9 +32,10 @@ func AddColumnOp1WithDefault(def *string) *migrations.OpAddColumn {
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,
 		Column: migrations.Column{
-			Name:    "bar",
-			Type:    "int",
-			Default: def,
+			Name:     "bar",
+			Type:     "int",
+			Default:  def,
+			Nullable: true,
 		},
 	}
 }
@@ -51,9 +54,10 @@ var AddColumnOp4 = &migrations.OpAddColumn{
 	Table: "foo",
 	Up:    sql2pgroll.PlaceHolderSQL,
 	Column: migrations.Column{
-		Name:   "bar",
-		Type:   "int",
-		Unique: true,
+		Name:     "bar",
+		Type:     "int",
+		Unique:   true,
+		Nullable: true,
 	},
 }
 
@@ -71,8 +75,9 @@ var AddColumnOp6 = &migrations.OpAddColumn{
 	Table: "foo",
 	Up:    sql2pgroll.PlaceHolderSQL,
 	Column: migrations.Column{
-		Name: "bar",
-		Type: "int",
+		Name:     "bar",
+		Type:     "int",
+		Nullable: true,
 		Check: &migrations.CheckConstraint{
 			Constraint: "bar > 0",
 			Name:       "",
@@ -84,12 +89,23 @@ var AddColumnOp7 = &migrations.OpAddColumn{
 	Table: "foo",
 	Up:    sql2pgroll.PlaceHolderSQL,
 	Column: migrations.Column{
-		Name: "bar",
-		Type: "int",
+		Name:     "bar",
+		Type:     "int",
+		Nullable: true,
 		Check: &migrations.CheckConstraint{
 			Constraint: "bar > 0",
 			Name:       "check_bar",
 		},
+	},
+}
+
+var AddColumnOp8 = &migrations.OpAddColumn{
+	Table: "foo",
+	Up:    sql2pgroll.PlaceHolderSQL,
+	Column: migrations.Column{
+		Name:     "bar",
+		Type:     "int",
+		Nullable: false,
 	},
 }
 
@@ -98,8 +114,9 @@ func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyReferenceOnDelet
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,
 		Column: migrations.Column{
-			Name: "bar",
-			Type: "int",
+			Name:     "bar",
+			Type:     "int",
+			Nullable: true,
 			References: &migrations.ForeignKeyReference{
 				Column:   "bar",
 				Name:     "fk_baz",

@@ -148,7 +148,7 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int NOT NULL",
-			expectedOp: expect.AddColumnOp1,
+			expectedOp: expect.AddColumnOp8,
 		},
 		{
 			sql:        "ALTER TABLE schema.foo ADD COLUMN bar int",
