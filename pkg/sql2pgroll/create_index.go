@@ -25,12 +25,18 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 		return nil, fmt.Errorf("parse create index method: %w", err)
 	}
 
+	var unique *bool
+	if stmt.GetUnique() {
+		unique = ptr(true)
+	}
+
 	return migrations.Operations{
 		&migrations.OpCreateIndex{
 			Table:   tableName,
 			Columns: columns,
 			Name:    stmt.GetIdxname(),
 			Method:  &method,
+			Unique:  unique,
 		},
 	}, nil
 }
