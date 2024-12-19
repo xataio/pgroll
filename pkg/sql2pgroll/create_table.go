@@ -41,7 +41,7 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	return migrations.Operations{
 		&migrations.OpCreateTable{
-			Name:    stmt.Relation.GetRelname(),
+			Name:    getQualifiedRelationName(stmt.GetRelation()),
 			Columns: columns,
 		},
 	}, nil

@@ -214,3 +214,14 @@ var CreateTableOp16 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp17 = &migrations.OpCreateTable{
+	Name: "schema.foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+}

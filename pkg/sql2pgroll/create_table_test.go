@@ -25,6 +25,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp1,
 		},
 		{
+			sql:        "CREATE TABLE schema.foo(a int)",
+			expectedOp: expect.CreateTableOp17,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int NULL)",
 			expectedOp: expect.CreateTableOp1,
 		},
