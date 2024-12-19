@@ -29,12 +29,40 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			expectedOp: expect.CreateIndexOp1,
 		},
 		{
+			sql:        "CREATE INDEX idx_name ON foo USING brin (bar)",
+			expectedOp: expect.CreateIndexOp1WithMethod("brin"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo USING gin (bar)",
+			expectedOp: expect.CreateIndexOp1WithMethod("gin"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo USING gist (bar)",
+			expectedOp: expect.CreateIndexOp1WithMethod("gist"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo USING hash (bar)",
+			expectedOp: expect.CreateIndexOp1WithMethod("hash"),
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo USING spgist (bar)",
+			expectedOp: expect.CreateIndexOp1WithMethod("spgist"),
+		},
+		{
 			sql:        "CREATE INDEX CONCURRENTLY idx_name ON foo (bar)",
 			expectedOp: expect.CreateIndexOp1,
 		},
 		{
 			sql:        "CREATE INDEX idx_name ON schema.foo (bar)",
 			expectedOp: expect.CreateIndexOp2,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar, baz)",
+			expectedOp: expect.CreateIndexOp3,
+		},
+		{
+			sql:        "CREATE UNIQUE INDEX idx_name ON foo (bar)",
+			expectedOp: expect.CreateIndexOp4,
 		},
 	}
 
