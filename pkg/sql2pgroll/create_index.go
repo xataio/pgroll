@@ -20,6 +20,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 			columns = append(columns, colName)
 		}
 	}
+
 	method, err := migrations.ParseCreateIndexMethod(stmt.GetAccessMethod())
 	if err != nil {
 		return nil, fmt.Errorf("parse create index method: %w", err)
@@ -30,13 +31,23 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 		unique = ptr(true)
 	}
 
+	var predicate *string
+	if where := stmt.GetWhereClause(); where != nil {
+		deparsed, err := pgq.DeparseExpr(where)
+		if err != nil {
+			return nil, fmt.Errorf("parsing where clause: %w", err)
+		}
+		predicate = &deparsed
+	}
+
 	return migrations.Operations{
 		&migrations.OpCreateIndex{
-			Table:   tableName,
-			Columns: columns,
-			Name:    stmt.GetIdxname(),
-			Method:  &method,
-			Unique:  unique,
+			Table:     tableName,
+			Columns:   columns,
+			Name:      stmt.GetIdxname(),
+			Method:    &method,
+			Unique:    unique,
+			Predicate: predicate,
 		},
 	}, nil
 }

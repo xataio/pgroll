@@ -45,3 +45,11 @@ var CreateIndexOp4 = &migrations.OpCreateIndex{
 	Method:  ptr(migrations.OpCreateIndexMethodBtree),
 	Unique:  ptr(true),
 }
+
+var CreateIndexOp5 = &migrations.OpCreateIndex{
+	Name:      "idx_name",
+	Table:     "foo",
+	Columns:   []string{"bar"},
+	Method:    ptr(migrations.OpCreateIndexMethodBtree),
+	Predicate: ptr("foo > 0"),
+}

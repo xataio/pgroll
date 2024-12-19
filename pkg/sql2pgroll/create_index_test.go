@@ -64,6 +64,15 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			sql:        "CREATE UNIQUE INDEX idx_name ON foo (bar)",
 			expectedOp: expect.CreateIndexOp4,
 		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WHERE (foo > 0)",
+			expectedOp: expect.CreateIndexOp5,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar) WHERE foo > 0",
+			expectedOp: expect.CreateIndexOp5,
+		},
+		// TODO: StorageParams
 	}
 
 	for _, tc := range tests {
