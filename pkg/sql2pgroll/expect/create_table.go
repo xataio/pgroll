@@ -129,3 +129,88 @@ var CreateTableOp11 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp12 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "foo_a_fkey",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+			},
+		},
+	},
+}
+
+var CreateTableOp13 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "foo_a_fkey",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteRESTRICT,
+			},
+		},
+	},
+}
+
+var CreateTableOp14 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "foo_a_fkey",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteSETNULL,
+			},
+		},
+	},
+}
+
+var CreateTableOp15 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "foo_a_fkey",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+			},
+		},
+	},
+}
+
+var CreateTableOp16 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "foo_a_fkey",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+			},
+		},
+	},
+}

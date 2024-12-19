@@ -49,6 +49,34 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp11,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b))",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON UPDATE NO ACTION)",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE NO ACTION)",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE RESTRICT)",
+			expectedOp: expect.CreateTableOp13,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE SET NULL)",
+			expectedOp: expect.CreateTableOp14,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE SET DEFAULT)",
+			expectedOp: expect.CreateTableOp15,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) ON DELETE CASCADE)",
+			expectedOp: expect.CreateTableOp16,
+		},
+		{
 			sql:        "CREATE TABLE foo(a varchar(255))",
 			expectedOp: expect.CreateTableOp3,
 		},

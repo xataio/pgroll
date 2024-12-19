@@ -98,6 +98,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	// Convert column constraints
 	var notNull, pk, unique bool
 	var check *migrations.CheckConstraint
+	var foreignKey *migrations.ForeignKeyReference
 	var defaultValue *string
 	for _, c := range col.GetConstraints() {
 		switch c.GetConstraint().GetContype() {
@@ -131,20 +132,25 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			}
 			defaultValue = &d
 		case pgq.ConstrType_CONSTR_FOREIGN:
-			if !canConvertForeignKeyConstraint(c.GetConstraint()) {
+			foreignKey, err = convertInlineForeignKeyConstraint(tableName, col.GetColname(), c.GetConstraint())
+			if err != nil {
+				return nil, fmt.Errorf("error converting inline foreign key constraint: %w", err)
+			}
+			if foreignKey == nil {
 				return nil, nil
 			}
 		}
 	}
 
 	return &migrations.Column{
-		Name:     col.GetColname(),
-		Type:     typeString,
-		Nullable: !notNull,
-		Pk:       pk,
-		Check:    check,
-		Default:  defaultValue,
-		Unique:   unique,
+		Name:       col.GetColname(),
+		Type:       typeString,
+		Nullable:   !notNull,
+		Pk:         pk,
+		Check:      check,
+		References: foreignKey,
+		Default:    defaultValue,
+		Unique:     unique,
 	}, nil
 }
 
@@ -179,6 +185,8 @@ func canConvertPrimaryKeyConstraint(constraint *pgq.Constraint) bool {
 	}
 }
 
+// convertInlineCheckConstraint converts an inline check constraint to a
+// `CheckConstraint`.
 func convertInlineCheckConstraint(tableName, columnName string, constraint *pgq.Constraint) (*migrations.CheckConstraint, error) {
 	if !canConvertCheckConstraint(constraint) {
 		return nil, nil
@@ -197,5 +205,30 @@ func convertInlineCheckConstraint(tableName, columnName string, constraint *pgq.
 	return &migrations.CheckConstraint{
 		Name:       name,
 		Constraint: expr,
+	}, nil
+}
+
+// convertInlineForeignKeyConstraint converts an inline foreign key constraint
+// to a `ForeignKeyReference`.
+func convertInlineForeignKeyConstraint(tableName, columnName string, constraint *pgq.Constraint) (*migrations.ForeignKeyReference, error) {
+	if !canConvertForeignKeyConstraint(constraint) {
+		return nil, nil
+	}
+
+	onDelete, err := parseOnDeleteAction(constraint.GetFkDelAction())
+	if err != nil {
+		return nil, err
+	}
+
+	name := fmt.Sprintf("%s_%s_fkey", tableName, columnName)
+	if constraint.GetConname() != "" {
+		name = constraint.GetConname()
+	}
+
+	return &migrations.ForeignKeyReference{
+		Name:     name,
+		OnDelete: onDelete,
+		Column:   constraint.GetPkAttrs()[0].GetString_().GetSval(),
+		Table:    getQualifiedRelationName(constraint.GetPktable()),
 	}, nil
 }
