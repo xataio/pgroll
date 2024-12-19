@@ -418,8 +418,9 @@ func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd
 
 	operation := &migrations.OpAddColumn{
 		Column: migrations.Column{
-			Name: columnDef.GetColname(),
-			Type: columnType,
+			Name:     columnDef.GetColname(),
+			Type:     columnType,
+			Nullable: true,
 		},
 		Table: getQualifiedRelationName(stmt.GetRelation()),
 		Up:    PlaceHolderSQL,
@@ -430,8 +431,11 @@ func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd
 			switch constraint.GetConstraint().GetContype() {
 			case pgq.ConstrType_CONSTR_NULL:
 				operation.Column.Nullable = true
+			case pgq.ConstrType_CONSTR_NOTNULL:
+				operation.Column.Nullable = false
 			case pgq.ConstrType_CONSTR_PRIMARY:
 				operation.Column.Pk = true
+				operation.Column.Nullable = false
 			case pgq.ConstrType_CONSTR_UNIQUE:
 				operation.Column.Unique = true
 			case pgq.ConstrType_CONSTR_CHECK:
