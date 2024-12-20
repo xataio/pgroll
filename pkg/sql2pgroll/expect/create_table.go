@@ -268,3 +268,29 @@ var CreateTableOp20 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp21 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name: "a",
+			Type: "serial",
+			Pk:   true,
+		},
+		{
+			Name:    "b",
+			Type:    "int",
+			Default: ptr("100"),
+			Check: &migrations.CheckConstraint{
+				Name:       "foo_b_check",
+				Constraint: "b > 0",
+			},
+			Nullable: true,
+		},
+		{
+			Name:   "c",
+			Type:   "text",
+			Unique: true,
+		},
+	},
+}

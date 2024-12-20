@@ -160,6 +160,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(a text[5][3])",
 			expectedOp: expect.CreateTableOp9,
 		},
+		{
+			sql:        "CREATE TABLE foo(a serial PRIMARY KEY, b int DEFAULT 100 CHECK (b > 0), c text NOT NULL UNIQUE)",
+			expectedOp: expect.CreateTableOp21,
+		},
 	}
 
 	for _, tc := range tests {
