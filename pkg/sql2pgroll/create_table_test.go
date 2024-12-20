@@ -73,6 +73,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp11,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int DEFAULT NULL)",
+			expectedOp: expect.CreateTableOp20,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int CONSTRAINT my_fk REFERENCES bar(b))",
 			expectedOp: expect.CreateTableOp19,
 		},
