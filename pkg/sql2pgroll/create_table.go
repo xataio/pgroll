@@ -150,9 +150,11 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			if foreignKey == nil {
 				return nil, nil
 			}
-		case pgq.ConstrType_CONSTR_ATTR_NOT_DEFERRABLE:
-			// NOT DEFERRABLE constraints are the default and are supported, but no
-			// extra annotation is needed
+		case
+			pgq.ConstrType_CONSTR_ATTR_NOT_DEFERRABLE,
+			pgq.ConstrType_CONSTR_ATTR_IMMEDIATE:
+			// NOT DEFERRABLE and INITIALLY IMMEDIATE constraints are the default and
+			// are supported, but no extra annotation is needed
 			continue
 		case pgq.ConstrType_CONSTR_GENERATED:
 			// Generated columns are not supported
@@ -162,9 +164,6 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			return nil, nil
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRABLE:
 			// Deferrable constraints are not supported
-			return nil, nil
-		case pgq.ConstrType_CONSTR_ATTR_IMMEDIATE:
-			// Initially immediate deferred constraints are not supported
 			return nil, nil
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRED:
 			// Initially deferred deferred constraints are not supported
