@@ -126,16 +126,22 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
+		// More than one storage parameter is not supported
 		"CREATE INDEX idx_name ON foo (bar) WITH (fillfactor = 70, deduplicate_items = true)",
+		// Tablespaces are not supported
 		"CREATE INDEX idx_name ON foo (bar) TABLESPACE baz",
+		// Index collations are not supported
 		"CREATE INDEX idx_name ON foo (bar COLLATE en_US)",
+		// Index ordering other than the default ASC is not supported
 		"CREATE INDEX idx_name ON foo (bar DESC)",
+		// Index nulls ordering is not supported
 		"CREATE INDEX idx_name ON foo (bar NULLS FIRST)",
 		"CREATE INDEX idx_name ON foo (bar NULLS LAST)",
+		// Included columns are not supported
 		"CREATE INDEX idx_name ON foo (bar) INCLUDE (baz)",
+		// opclasses with or without options are not supported
 		"CREATE INDEX idx_name ON foo (bar opclass (test = test))",
-		"CREATE INDEX idx_name ON foo (bar NULLS)",
-
+		"CREATE INDEX idx_name ON foo (bar opclass)",
 		// TODO: Can't figure out how to detect this case
 		//"CREATE INDEX idx_name ON ONLY foo (bar)",
 	}
