@@ -100,6 +100,10 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	if !stmt.GetRelation().GetInh() {
 		return false
 	}
+	// Indexes with NULLS NOT DISTINCT are not supported
+	if stmt.GetNullsNotDistinct() {
+		return false
+	}
 
 	for _, param := range stmt.GetIndexParams() {
 		if param.GetIndexElem().GetCollation() != nil {

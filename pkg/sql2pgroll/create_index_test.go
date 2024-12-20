@@ -144,6 +144,8 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 		"CREATE INDEX idx_name ON foo (bar opclass)",
 		// Indexes created with ONLY are not supported
 		"CREATE INDEX idx_name ON ONLY foo (bar)",
+		// Indexes with NULLS NOT DISTINCT are not supported
+		"CREATE INDEX idx_name ON foo(a) NULLS NOT DISTINCT",
 	}
 
 	for _, sql := range tests {
