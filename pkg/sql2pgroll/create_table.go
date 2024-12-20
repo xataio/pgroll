@@ -137,11 +137,14 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			if isConstraintNamed(c.GetConstraint()) {
 				return nil, nil
 			}
-			d, err := pgq.DeparseExpr(c.GetConstraint().GetRawExpr())
+			d, err := extractDefault(c.GetConstraint().GetRawExpr())
 			if err != nil {
 				return nil, fmt.Errorf("error deparsing default value: %w", err)
 			}
-			defaultValue = &d
+			if !d.IsNull() {
+				v := d.MustGet()
+				defaultValue = &v
+			}
 		case pgq.ConstrType_CONSTR_FOREIGN:
 			foreignKey, err = convertInlineForeignKeyConstraint(tableName, col.GetColname(), c.GetConstraint())
 			if err != nil {
