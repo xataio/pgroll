@@ -142,8 +142,8 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 		// opclasses with or without options are not supported
 		"CREATE INDEX idx_name ON foo (bar opclass (test = test))",
 		"CREATE INDEX idx_name ON foo (bar opclass)",
-		// TODO: Can't figure out how to detect this case
-		//"CREATE INDEX idx_name ON ONLY foo (bar)",
+		// Indexes created with ONLY are not supported
+		"CREATE INDEX idx_name ON ONLY foo (bar)",
 	}
 
 	for _, sql := range tests {

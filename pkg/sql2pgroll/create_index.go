@@ -96,6 +96,11 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	if stmt.GetIndexIncludingParams() != nil {
 		return false
 	}
+	// Indexes created with ONLY are not supported
+	if !stmt.GetRelation().GetInh() {
+		return false
+	}
+
 	for _, param := range stmt.GetIndexParams() {
 		if param.GetIndexElem().GetCollation() != nil {
 			return false
