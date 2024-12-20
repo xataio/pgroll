@@ -104,6 +104,10 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	if stmt.GetNullsNotDistinct() {
 		return false
 	}
+	// IF NOT EXISTS is unsupported
+	if stmt.GetIfNotExists() {
+		return false
+	}
 
 	for _, param := range stmt.GetIndexParams() {
 		if param.GetIndexElem().GetCollation() != nil {
