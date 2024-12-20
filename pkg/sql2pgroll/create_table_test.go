@@ -45,11 +45,19 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp5,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int UNIQUE INITIALLY IMMEDIATE)",
+			expectedOp: expect.CreateTableOp5,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int PRIMARY KEY)",
 			expectedOp: expect.CreateTableOp6,
 		},
 		{
 			sql:        "CREATE TABLE foo(a int PRIMARY KEY NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp6,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int PRIMARY KEY INITIALLY IMMEDIATE)",
 			expectedOp: expect.CreateTableOp6,
 		},
 		{
@@ -74,6 +82,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) NOT DEFERRABLE)",
+			expectedOp: expect.CreateTableOp12,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar(b) INITIALLY IMMEDIATE)",
 			expectedOp: expect.CreateTableOp12,
 		},
 		{
