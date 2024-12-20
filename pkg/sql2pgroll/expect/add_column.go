@@ -80,7 +80,7 @@ var AddColumnOp6 = &migrations.OpAddColumn{
 		Nullable: true,
 		Check: &migrations.CheckConstraint{
 			Constraint: "bar > 0",
-			Name:       "",
+			Name:       "foo_bar_check",
 		},
 	},
 }
