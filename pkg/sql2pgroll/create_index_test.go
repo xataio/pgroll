@@ -148,6 +148,9 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 		"CREATE INDEX idx_name ON foo(a) NULLS NOT DISTINCT",
 		// IF NOT EXISTS is unsupported
 		"CREATE INDEX IF NOT EXISTS idx_name ON foo(a)",
+		// Indexes defined on expressions are not supported
+		"CREATE INDEX idx_name ON foo(LOWER(a))",
+		"CREATE INDEX idx_name ON foo(a, LOWER(b))",
 	}
 
 	for _, sql := range tests {
