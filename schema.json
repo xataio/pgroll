@@ -238,20 +238,24 @@
         },
         "predicate": {
           "description": "Conditional expression for defining a partial index",
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "method": {
           "description": "Index method to use for the index: btree, hash, gist, spgist, gin, brin",
           "type": "string",
-          "enum": ["btree", "hash", "gist", "spgist", "gin", "brin"]
+          "enum": ["btree", "hash", "gist", "spgist", "gin", "brin"],
+          "default": "btree"
         },
         "storage_parameters": {
           "description": "Storage parameters for the index",
-          "type": "string"
+          "type": "string",
+          "default": ""
         },
         "unique": {
           "description": "Indicates if the index is unique",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         }
       },
       "required": ["columns", "name", "table"],
