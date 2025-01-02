@@ -20,27 +20,27 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// create index concurrently
 	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
-	if o.Unique != nil && *o.Unique {
+	if o.Unique {
 		stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
 	}
 	stmt := fmt.Sprintf(stmtFmt,
 		pq.QuoteIdentifier(o.Name),
 		pq.QuoteIdentifier(table.Name))
 
-	if o.Method != nil {
-		stmt += fmt.Sprintf(" USING %s", string(*o.Method))
+	if o.Method != "" {
+		stmt += fmt.Sprintf(" USING %s", string(o.Method))
 	}
 
 	stmt += fmt.Sprintf(" (%s)", strings.Join(
 		quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
 	)
 
-	if o.StorageParameters != nil {
-		stmt += fmt.Sprintf(" WITH (%s)", *o.StorageParameters)
+	if o.StorageParameters != "" {
+		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
 	}
 
-	if o.Predicate != nil {
-		stmt += fmt.Sprintf(" WHERE %s", *o.Predicate)
+	if o.Predicate != "" {
+		stmt += fmt.Sprintf(" WHERE %s", o.Predicate)
 	}
 
 	_, err := conn.ExecContext(ctx, stmt)

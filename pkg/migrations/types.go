@@ -177,22 +177,22 @@ type OpCreateIndex struct {
 	Columns []string `json:"columns"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
-	Method *OpCreateIndexMethod `json:"method,omitempty"`
+	Method OpCreateIndexMethod `json:"method,omitempty"`
 
 	// Index name
 	Name string `json:"name"`
 
 	// Conditional expression for defining a partial index
-	Predicate *string `json:"predicate,omitempty"`
+	Predicate string `json:"predicate,omitempty"`
 
 	// Storage parameters for the index
-	StorageParameters *string `json:"storage_parameters,omitempty"`
+	StorageParameters string `json:"storage_parameters,omitempty"`
 
 	// Name of table on which to define the index
 	Table string `json:"table"`
 
 	// Indicates if the index is unique
-	Unique *bool `json:"unique,omitempty"`
+	Unique bool `json:"unique,omitempty"`
 }
 
 type OpCreateIndexMethod string
