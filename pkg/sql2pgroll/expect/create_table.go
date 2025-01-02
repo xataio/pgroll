@@ -225,3 +225,35 @@ var CreateTableOp17 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp18 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			Check: &migrations.CheckConstraint{
+				Name:       "my_check",
+				Constraint: "a > 0",
+			},
+		},
+	},
+}
+
+var CreateTableOp19 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Name:     "my_fk",
+				Table:    "bar",
+				Column:   "b",
+				OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+			},
+		},
+	},
+}

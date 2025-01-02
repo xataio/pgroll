@@ -4,7 +4,6 @@ package sql2pgroll
 
 import (
 	"fmt"
-	"slices"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -87,14 +86,6 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		return nil, fmt.Errorf("error deparsing column type: %w", err)
 	}
 
-	// Named inline constraints are not supported
-	anyNamed := slices.ContainsFunc(col.GetConstraints(), func(c *pgq.Node) bool {
-		return c.GetConstraint().GetConname() != ""
-	})
-	if anyNamed {
-		return nil, nil
-	}
-
 	// Convert column constraints
 	var notNull, pk, unique bool
 	var check *migrations.CheckConstraint
@@ -103,15 +94,31 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	for _, c := range col.GetConstraints() {
 		switch c.GetConstraint().GetContype() {
 		case pgq.ConstrType_CONSTR_NULL:
+			// named NULL constraints are not supported
+			if isConstraintNamed(c.GetConstraint()) {
+				return nil, nil
+			}
 			notNull = false
 		case pgq.ConstrType_CONSTR_NOTNULL:
+			// named NOT NULL constraints are not supported
+			if isConstraintNamed(c.GetConstraint()) {
+				return nil, nil
+			}
 			notNull = true
 		case pgq.ConstrType_CONSTR_UNIQUE:
+			// named UNIQUE constraints are not supported
+			if isConstraintNamed(c.GetConstraint()) {
+				return nil, nil
+			}
 			if !canConvertUniqueConstraint(c.GetConstraint()) {
 				return nil, nil
 			}
 			unique = true
 		case pgq.ConstrType_CONSTR_PRIMARY:
+			// named PRIMARY KEY constraints are not supported
+			if isConstraintNamed(c.GetConstraint()) {
+				return nil, nil
+			}
 			if !canConvertPrimaryKeyConstraint(c.GetConstraint()) {
 				return nil, nil
 			}
@@ -126,6 +133,10 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 				return nil, nil
 			}
 		case pgq.ConstrType_CONSTR_DEFAULT:
+			// named DEFAULT constraints are not supported
+			if isConstraintNamed(c.GetConstraint()) {
+				return nil, nil
+			}
 			d, err := pgq.DeparseExpr(c.GetConstraint().GetRawExpr())
 			if err != nil {
 				return nil, fmt.Errorf("error deparsing default value: %w", err)
@@ -253,4 +264,16 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 		Column:   constraint.GetPkAttrs()[0].GetString_().GetSval(),
 		Table:    getQualifiedRelationName(constraint.GetPktable()),
 	}, nil
+}
+
+// isConstraintNamed returns true iff `constraint` has a name.
+// Column constraints defined inline in CREATE TABLE statements can be either
+// named or unnamed, for example:
+// - CREATE TABLE t (a INT PRIMARY KEY);
+// - CREATE TABLE t (a INT CONSTRAINT my_pk PRIMARY KEY);
+// Likewise, table constraints can also be either named or unnamed, for example:
+// - CREATE TABLE foo(a int, CONSTRAINT foo_check CHECK (a > 0)),
+// - CREATE TABLE foo(a int, CHECK (a > 0)),
+func isConstraintNamed(constraint *pgq.Constraint) bool {
+	return constraint.GetConname() != ""
 }
