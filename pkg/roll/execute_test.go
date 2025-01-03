@@ -655,7 +655,7 @@ func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
 
 		// Define a mock callback
 		invoked := false
-		cb := func(n int64) { invoked = true }
+		cb := func(n, total int64) { invoked = true }
 
 		// Start a migration that requires a backfill
 		err = mig.Start(ctx, &migrations.Migration{

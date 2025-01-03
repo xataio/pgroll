@@ -20,6 +20,7 @@ const (
 
 type DB interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error
 	Close() error
 }
@@ -50,6 +51,11 @@ func (db *RDB) ExecContext(ctx context.Context, query string, args ...interface{
 
 		return nil, err
 	}
+}
+
+// QueryRowContext wraps sql.DB.QueryRowContext.
+func (db *RDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	return db.DB.QueryRowContext(ctx, query, args...)
 }
 
 // WithRetryableTransaction runs `f` in a transaction, retrying on lock_timeout errors.
