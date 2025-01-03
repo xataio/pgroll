@@ -55,8 +55,12 @@ func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, co
 
 func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool) error {
 	sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
-	cb := func(n int64) {
-		sp.UpdateText(fmt.Sprintf("%d records complete...", n))
+	cb := func(n int64, total int64) {
+		var percent float64
+		if total > 0 {
+			percent = float64(n) / float64(total) * 100
+		}
+		sp.UpdateText(fmt.Sprintf("%d records complete... (%.2f%%)", n, percent))
 	}
 
 	err := m.Start(ctx, migration, cb)

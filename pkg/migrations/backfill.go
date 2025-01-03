@@ -29,13 +29,30 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 		return BackfillNotPossibleError{Table: table.Name}
 	}
 
+	var total int64
+
+	// Try and get estimated row count
+	row := conn.QueryRowContext(ctx, `SELECT n_live_tup AS estimate
+	FROM pg_stat_user_tables
+	WHERE relname = $1`, table.Name)
+	if err := row.Scan(&total); err != nil {
+		return fmt.Errorf("scanning row count estimate for %q: %w", table.Name, err)
+	}
+	// If the estimate is zero, fall back to full count
+	if total == 0 {
+		row = conn.QueryRowContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, table.Name))
+		if err := row.Scan(&total); err != nil {
+			return fmt.Errorf("scanning row count for %q: %w", table.Name, err)
+		}
+	}
+
 	// Create a batcher for the table.
 	b := newBatcher(table, batchSize)
 
 	// Update each batch of rows, invoking callbacks for each one.
 	for batch := 0; ; batch++ {
 		for _, cb := range cbs {
-			cb(int64(batch * batchSize))
+			cb(int64(batch*batchSize), total)
 		}
 
 		if err := b.updateBatch(ctx, conn); err != nil {
