@@ -60,7 +60,15 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 		if total > 0 {
 			percent = float64(n) / float64(total) * 100
 		}
-		sp.UpdateText(fmt.Sprintf("%d records complete... (%.2f%%)", n, percent))
+		if percent > 100 {
+			// This can happen if we're on the last batch
+			percent = 100
+		}
+		if total > 0 {
+			sp.UpdateText(fmt.Sprintf("%d records complete... (%.2f%%)", n, percent))
+		} else {
+			sp.UpdateText(fmt.Sprintf("%d records complete...", n))
+		}
 	}
 
 	err := m.Start(ctx, migration, cb)
