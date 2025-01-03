@@ -65,10 +65,15 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, error) {
 	var total int64
 	// Try and get estimated row count
-	row := conn.QueryRowContext(ctx, `
+	var currentSchema string
+	row := conn.QueryRowContext(ctx, "select current_schema()")
+	if err := row.Scan(&currentSchema); err != nil {
+		return 0, fmt.Errorf("getting current schema: %w", err)
+	}
+	row = conn.QueryRowContext(ctx, `
 	  SELECT n_live_tup AS estimate
 	  FROM pg_stat_user_tables
-	  WHERE relname = $1`, tableName)
+	  WHERE schemaname = $1 AND relname = $2`, currentSchema, tableName)
 	if err := row.Scan(&total); err != nil {
 		return 0, fmt.Errorf("scanning row count estimate for %q: %w", tableName, err)
 	}
