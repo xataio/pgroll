@@ -1,40 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package migrations
+package migrations_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 func TestMigrationsIsolated(t *testing.T) {
 	t.Parallel()
 
-	migration := Migration{
+	migration := migrations.Migration{
 		Name: "sql",
-		Operations: Operations{
-			&OpRawSQL{
+		Operations: migrations.Operations{
+			&migrations.OpRawSQL{
 				Up: `foo`,
 			},
-			&OpCreateTable{Name: "foo"},
+			&migrations.OpCreateTable{Name: "foo"},
 		},
 	}
 
 	err := migration.Validate(context.TODO(), schema.New())
-	var wantErr InvalidMigrationError
+	var wantErr migrations.InvalidMigrationError
 	assert.ErrorAs(t, err, &wantErr)
 }
 
 func TestMigrationsIsolatedValid(t *testing.T) {
 	t.Parallel()
 
-	migration := Migration{
+	migration := migrations.Migration{
 		Name: "sql",
-		Operations: Operations{
-			&OpRawSQL{
+		Operations: migrations.Operations{
+			&migrations.OpRawSQL{
 				Up: `foo`,
 			},
 		},
@@ -46,14 +47,14 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 func TestOnCompleteSQLMigrationsAreNotIsolated(t *testing.T) {
 	t.Parallel()
 
-	migration := Migration{
+	migration := migrations.Migration{
 		Name: "sql",
-		Operations: Operations{
-			&OpRawSQL{
+		Operations: migrations.Operations{
+			&migrations.OpRawSQL{
 				Up:         `foo`,
 				OnComplete: true,
 			},
-			&OpCreateTable{Name: "foo"},
+			&migrations.OpCreateTable{Name: "foo"},
 		},
 	}
 	err := migration.Validate(context.TODO(), schema.New())
