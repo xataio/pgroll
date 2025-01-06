@@ -11,6 +11,8 @@ import (
 )
 
 func TestMigrationsIsolated(t *testing.T) {
+	t.Parallel()
+
 	migration := Migration{
 		Name: "sql",
 		Operations: Operations{
@@ -27,6 +29,8 @@ func TestMigrationsIsolated(t *testing.T) {
 }
 
 func TestMigrationsIsolatedValid(t *testing.T) {
+	t.Parallel()
+
 	migration := Migration{
 		Name: "sql",
 		Operations: Operations{
@@ -40,6 +44,8 @@ func TestMigrationsIsolatedValid(t *testing.T) {
 }
 
 func TestOnCompleteSQLMigrationsAreNotIsolated(t *testing.T) {
+	t.Parallel()
+
 	migration := Migration{
 		Name: "sql",
 		Operations: Operations{
