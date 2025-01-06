@@ -40,5 +40,6 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return err
 	}
 
+	s.RenameTable(o.From, o.To)
 	return nil
 }
