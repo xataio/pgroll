@@ -62,3 +62,66 @@ func TestDropTable(t *testing.T) {
 		},
 	})
 }
+
+func TestDropTableInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "create table, rename table, drop table",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpDropTable{
+							Name: "products",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// OpDropTable drops tables on migration completion, so the table
+				// created by OpCreateTable is present after migration start.
+				TableMustExist(t, db, schema, "items")
+
+				// There is no view for the "items" table in the new schema
+				ViewMustNotExist(t, db, schema, "01_multi_operation", "items")
+
+				// There is no view for the "products" table in the new schema
+				ViewMustNotExist(t, db, schema, "01_multi_operation", "products")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table is not present
+				TableMustNotExist(t, db, schema, "items")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table is not present
+				TableMustNotExist(t, db, schema, "items")
+
+				// There is no view for the "items" table in the new schema
+				ViewMustNotExist(t, db, schema, "01_multi_operation", "items")
+
+				// There is no view for the "products" table in the new schema
+				ViewMustNotExist(t, db, schema, "01_multi_operation", "products")
+			},
+		},
+	})
+}
