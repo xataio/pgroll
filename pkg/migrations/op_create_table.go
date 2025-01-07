@@ -53,18 +53,13 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
-		pq.QuoteIdentifier(tempName),
-		pq.QuoteIdentifier(o.Name)))
-	return err
+	// No-op
+	return nil
 }
 
 func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Name)
-
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
-		pq.QuoteIdentifier(tempName)))
+		pq.QuoteIdentifier(o.Name)))
 	return err
 }
 
