@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/xataio/pgroll/internal/testutils"
@@ -57,6 +58,53 @@ func TestExecContextWhenContextCancelled(t *testing.T) {
 		go time.AfterFunc(500*time.Millisecond, cancel)
 
 		_, err := rdb.ExecContext(ctx, "INSERT INTO test(id) VALUES (1)")
+		require.Errorf(t, err, "context canceled")
+	})
+}
+
+func TestQueryContext(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
+		ctx := context.Background()
+		// create a table on which an exclusive lock is held for 2 seconds
+		setupTableLock(t, connStr, 2*time.Second)
+
+		// set the lock timeout to 100ms
+		ensureLockTimeout(t, conn, 100)
+
+		// execute a query that should retry until the lock is released
+		rdb := &db.RDB{DB: conn}
+		rows, err := rdb.QueryContext(ctx, "SELECT COUNT(*) FROM test")
+		require.NoError(t, err)
+
+		var count int
+		err = db.ScanFirstValue(rows, &count)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, count)
+	})
+}
+
+func TestQueryContextWhenContextCancelled(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithConnectionToContainer(t, func(conn *sql.DB, connStr string) {
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+
+		// create a table on which an exclusive lock is held for 2 seconds
+		setupTableLock(t, connStr, 2*time.Second)
+
+		// set the lock timeout to 100ms
+		ensureLockTimeout(t, conn, 100)
+
+		// execute a query that should retry until the lock is released
+		rdb := &db.RDB{DB: conn}
+
+		// Cancel the context before the lock times out
+		go time.AfterFunc(500*time.Millisecond, cancel)
+
+		_, err := rdb.QueryContext(ctx, "SELECT COUNT(*) FROM test")
 		require.Errorf(t, err, "context canceled")
 	})
 }
