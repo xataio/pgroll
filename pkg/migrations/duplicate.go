@@ -223,9 +223,9 @@ func (d *duplicatorStmtBuilder) duplicateIndexes(withoutConstraint []string, col
 		}
 
 		if duplicatedMember, columns := d.allConstraintColumns(idx.Columns, colNames...); duplicatedMember {
-			stmtFmt := "CREATE INDEX %s ON %s"
+			stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
 			if idx.Unique {
-				stmtFmt = "CREATE UNIQUE INDEX %s ON %s"
+				stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
 			}
 			stmt := fmt.Sprintf(stmtFmt, pq.QuoteIdentifier(DuplicationName(idx.Name)), pq.QuoteIdentifier(d.table.Name))
 			if idx.Method != "" {
@@ -234,8 +234,9 @@ func (d *duplicatorStmtBuilder) duplicateIndexes(withoutConstraint []string, col
 
 			stmt += fmt.Sprintf(" (%s)", strings.Join(quoteColumnNames(columns), ", "))
 
-			if idx.StorageParameters != "" {
-				stmt += fmt.Sprintf(" WITH (%s)", idx.StorageParameters)
+			if storageParamStart := strings.Index(idx.Definition, " WITH ("); storageParamStart != -1 {
+				end := strings.Index(idx.Definition[storageParamStart:], ")")
+				stmt += idx.Definition[storageParamStart : storageParamStart+end+1]
 			}
 
 			if idx.Predicate != nil {
