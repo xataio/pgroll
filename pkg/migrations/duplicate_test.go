@@ -218,7 +218,7 @@ func TestDuplicateStmtBuilderIndexes(t *testing.T) {
 			columns:       []string{"name", "description"},
 			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_name_city" ON "test_table" ("_pgroll_new_name", "city")`, `CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_no_kate" ON "test_table" USING hash ("_pgroll_new_name") WITH (fillfactor = 70) WHERE "_pgroll_new_name" != 'Kate'`},
 		},
-		"multi-column constraint with multiple columns": {
+		"multi-column index with multiple columns": {
 			columns:       []string{"name", "city"},
 			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_name_city" ON "test_table" ("_pgroll_new_name", "_pgroll_new_city")`, `CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_no_kate" ON "test_table" USING hash ("_pgroll_new_name") WITH (fillfactor = 70) WHERE "_pgroll_new_name" != 'Kate'`},
 		},
