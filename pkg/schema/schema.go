@@ -96,9 +96,6 @@ type Index struct {
 	// Method is the method for the index
 	Method string `json:"method,omitempty"`
 
-	// StorageParameters is the storage parameters for the index
-	StorageParameters string `json:"storageParameters,omitempty"`
-
 	// Definition is statement to construct the index
 	Definition string `json:"definition"`
 }
