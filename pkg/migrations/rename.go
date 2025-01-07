@@ -120,42 +120,42 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 		}
 	}
 
-	// Rename any `UNIQUE` indexes on the duplicated column and use them to
+	// Rename any indexes on the duplicated column and use unique indexes to
 	// create `UNIQUE` constraints.
-	for _, ui := range table.Indexes {
-		if !IsDuplicatedName(ui.Name) {
-			continue
-		}
-		if !ui.Unique {
+	for _, idx := range table.Indexes {
+		if !IsDuplicatedName(idx.Name) {
 			continue
 		}
 
-		if slices.Contains(ui.Columns, TemporaryName(column.Name)) {
-			// Rename the unique index to its original name
+		if slices.Contains(idx.Columns, TemporaryName(column.Name)) {
+			// Rename the index to its original name
 			renameIndexSQL := fmt.Sprintf(cRenameIndexSQL,
-				pq.QuoteIdentifier(ui.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(ui.Name)),
+				pq.QuoteIdentifier(idx.Name),
+				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 			)
 
 			_, err = conn.ExecContext(ctx, renameIndexSQL)
 			if err != nil {
-				return fmt.Errorf("failed to rename unique index %q: %w", ui.Name, err)
+				return fmt.Errorf("failed to rename index %q: %w", idx.Name, err)
 			}
+		}
 
+		if idx.Unique {
 			// Create a unique constraint using the unique index
 			createUniqueConstraintSQL := fmt.Sprintf(cCreateUniqueConstraintSQL,
 				pq.QuoteIdentifier(table.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(ui.Name)),
-				pq.QuoteIdentifier(StripDuplicationPrefix(ui.Name)),
+				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
+				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 			)
 
 			_, err = conn.ExecContext(ctx, createUniqueConstraintSQL)
 			if err != nil {
-				return fmt.Errorf("failed to create unique constraint from index %q: %w", ui.Name, err)
+				return fmt.Errorf("failed to create unique constraint from index %q: %w", idx.Name, err)
 			}
-			// Index no longer exists, remove it from the table
-			delete(table.Indexes, ui.Name)
 		}
+
+		// Index no longer exists, remove it from the table
+		delete(table.Indexes, idx.Name)
 	}
 
 	return nil
