@@ -46,4 +46,4 @@
 46_alter_column_drop_default.json
 47_add_table_foreign_key_constraint.json
 48_drop_tickets_check.json
-49_set_not_null_on_indexed_column.json
+49_unset_not_null_on_indexed_column.json
