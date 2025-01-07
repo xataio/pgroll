@@ -63,18 +63,25 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 // getRowCount will attempt to get the row count for the given table. It first attempts to get an
 // estimate and if that is zero, falls back to a full table scan.
 func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, error) {
-	var total int64
 	// Try and get estimated row count
 	var currentSchema string
-	row := conn.QueryRowContext(ctx, "select current_schema()")
-	if err := row.Scan(&currentSchema); err != nil {
+	rows, err := conn.QueryContext(ctx, "select current_schema()")
+	if err != nil {
 		return 0, fmt.Errorf("getting current schema: %w", err)
 	}
-	row = conn.QueryRowContext(ctx, `
+	if err := db.ScanFirstValue(rows, &currentSchema); err != nil {
+		return 0, fmt.Errorf("scanning current schema: %w", err)
+	}
+
+	var total int64
+	rows, err = conn.QueryContext(ctx, `
 	  SELECT n_live_tup AS estimate
 	  FROM pg_stat_user_tables
 	  WHERE schemaname = $1 AND relname = $2`, currentSchema, tableName)
-	if err := row.Scan(&total); err != nil {
+	if err != nil {
+		return 0, fmt.Errorf("getting row count estimate for %q: %w", tableName, err)
+	}
+	if err := db.ScanFirstValue(rows, &total); err != nil {
 		return 0, fmt.Errorf("scanning row count estimate for %q: %w", tableName, err)
 	}
 	if total > 0 {
@@ -82,10 +89,14 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	}
 
 	// If the estimate is zero, fall back to full count
-	row = conn.QueryRowContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, tableName))
-	if err := row.Scan(&total); err != nil {
+	rows, err = conn.QueryContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, tableName))
+	if err != nil {
+		return 0, fmt.Errorf("getting row count for %q: %w", tableName, err)
+	}
+	if err := db.ScanFirstValue(rows, &total); err != nil {
 		return 0, fmt.Errorf("scanning row count for %q: %w", tableName, err)
 	}
+
 	return total, nil
 }
 

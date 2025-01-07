@@ -20,7 +20,7 @@ const (
 
 type DB interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error
 	Close() error
 }
@@ -53,9 +53,26 @@ func (db *RDB) ExecContext(ctx context.Context, query string, args ...interface{
 	}
 }
 
-// QueryRowContext wraps sql.DB.QueryRowContext.
-func (db *RDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return db.DB.QueryRowContext(ctx, query, args...)
+// QueryContext wraps sql.DB.QueryContext, retrying queries on lock_timeout errors.
+func (db *RDB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	b := backoff.New(maxBackoffDuration, backoffInterval)
+
+	for {
+		rows, err := db.DB.QueryContext(ctx, query, args...)
+		if err == nil {
+			return rows, nil
+		}
+
+		pqErr := &pq.Error{}
+		if errors.As(err, &pqErr) && pqErr.Code == lockNotAvailableErrorCode {
+			if err := sleepCtx(ctx, b.Duration()); err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		return nil, err
+	}
 }
 
 // WithRetryableTransaction runs `f` in a transaction, retrying on lock_timeout errors.
@@ -100,4 +117,16 @@ func sleepCtx(ctx context.Context, d time.Duration) error {
 	case <-time.After(d):
 		return nil
 	}
+}
+
+// ScanFirstValue is a helper function to scan the first value with the assumption that Rows contains
+// a single row with a single value.
+func ScanFirstValue[T any](rows *sql.Rows, dest *T) error {
+	for rows.Next() {
+		if err := rows.Scan(dest); err != nil {
+			return err
+		}
+		break
+	}
+	return rows.Err()
 }
