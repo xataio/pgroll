@@ -122,11 +122,10 @@ func sleepCtx(ctx context.Context, d time.Duration) error {
 // ScanFirstValue is a helper function to scan the first value with the assumption that Rows contains
 // a single row with a single value.
 func ScanFirstValue[T any](rows *sql.Rows, dest *T) error {
-	for rows.Next() {
+	if rows.Next() {
 		if err := rows.Scan(dest); err != nil {
 			return err
 		}
-		break
 	}
 	return rows.Err()
 }
