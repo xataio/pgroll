@@ -140,7 +140,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 			}
 		}
 
-		if idx.Unique {
+		if _, ok := table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
 			createUniqueConstraintSQL := fmt.Sprintf(cCreateUniqueConstraintSQL,
 				pq.QuoteIdentifier(table.Name),
