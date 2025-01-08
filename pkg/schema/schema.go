@@ -42,7 +42,7 @@ type Table struct {
 	Comment string `json:"comment"`
 
 	// Columns is a map of virtual column name -> column mapping
-	Columns map[string]Column `json:"columns"`
+	Columns map[string]*Column `json:"columns"`
 
 	// Indexes is a map of the indexes defined on the table
 	Indexes map[string]Index `json:"indexes"`
@@ -189,7 +189,7 @@ func (t *Table) GetColumn(name string) *Column {
 	if !ok {
 		return nil
 	}
-	return &c
+	return c
 }
 
 // ConstraintExists returns true if a constraint with the given name exists
@@ -234,9 +234,9 @@ func (t *Table) GetPrimaryKey() (columns []*Column) {
 }
 
 // AddColumn adds a column to the table
-func (t *Table) AddColumn(name string, c Column) {
+func (t *Table) AddColumn(name string, c *Column) {
 	if t.Columns == nil {
-		t.Columns = make(map[string]Column)
+		t.Columns = make(map[string]*Column)
 	}
 
 	t.Columns[name] = c

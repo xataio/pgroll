@@ -388,7 +388,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name:              "table1",
-							Columns:           map[string]schema.Column{},
+							Columns:           map[string]*schema.Column{},
 							PrimaryKey:        []string{},
 							Indexes:           map[string]schema.Index{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
@@ -406,7 +406,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -430,7 +430,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -468,7 +468,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -505,7 +505,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -529,7 +529,7 @@ func TestReadSchema(t *testing.T) {
 						},
 						"table2": {
 							Name: "table2",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"fk": {
 									Name:     "fk",
 									Type:     "integer",
@@ -561,7 +561,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -585,7 +585,7 @@ func TestReadSchema(t *testing.T) {
 						},
 						"table2": {
 							Name: "table2",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"fk": {
 									Name:     "fk",
 									Type:     "integer",
@@ -617,7 +617,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -661,7 +661,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -712,7 +712,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -771,7 +771,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"products": {
 							Name: "products",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"customer_id": {
 									Name:     "customer_id",
 									Type:     "integer",
@@ -799,7 +799,7 @@ func TestReadSchema(t *testing.T) {
 						},
 						"orders": {
 							Name: "orders",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"customer_id": {
 									Name:     "customer_id",
 									Type:     "integer",
@@ -836,7 +836,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"a": {
 									Name:     "a",
 									Type:     "text",
@@ -873,7 +873,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"a": {
 									Name:     "a",
 									Type:     "public.email_type",
@@ -897,7 +897,7 @@ func TestReadSchema(t *testing.T) {
 					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"name": {
 									Name:     "name",
 									Type:     "text",

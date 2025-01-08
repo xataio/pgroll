@@ -13,7 +13,7 @@ import (
 
 var table = &schema.Table{
 	Name: "test_table",
-	Columns: map[string]schema.Column{
+	Columns: map[string]*schema.Column{
 		"id":          {Name: "id", Type: "serial"},
 		"name":        {Name: "name", Type: "text"},
 		"nick":        {Name: "nick", Type: "text"},

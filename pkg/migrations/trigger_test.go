@@ -20,7 +20,7 @@ func TestBuildFunction(t *testing.T) {
 			config: triggerConfig{
 				Name:      "triggerName",
 				Direction: TriggerDirectionUp,
-				Columns: map[string]schema.Column{
+				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
 					"product":  {Name: "product", Type: "text"},
@@ -61,7 +61,7 @@ func TestBuildFunction(t *testing.T) {
 			config: triggerConfig{
 				Name:      "triggerName",
 				Direction: TriggerDirectionUp,
-				Columns: map[string]schema.Column{
+				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
 					"product":  {Name: "product", Type: "text"},
@@ -106,7 +106,7 @@ func TestBuildFunction(t *testing.T) {
 			config: triggerConfig{
 				Name:      "triggerName",
 				Direction: TriggerDirectionDown,
-				Columns: map[string]schema.Column{
+				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
 					"product":  {Name: "product", Type: "text"},
@@ -147,7 +147,7 @@ func TestBuildFunction(t *testing.T) {
 			config: triggerConfig{
 				Name:      "triggerName",
 				Direction: TriggerDirectionDown,
-				Columns: map[string]schema.Column{
+				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
 					"product":  {Name: "product", Type: "text"},

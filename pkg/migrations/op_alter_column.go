@@ -55,7 +55,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
 		// a variable for the new column.
-		table.AddColumn(o.Column, schema.Column{
+		table.AddColumn(o.Column, &schema.Column{
 			Name: TemporaryName(o.Column),
 		})
 

@@ -45,7 +45,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
 	// a variable for the new column.
-	table.AddColumn(column.Name, schema.Column{
+	table.AddColumn(column.Name, &schema.Column{
 		Name: TemporaryName(column.Name),
 	})
 

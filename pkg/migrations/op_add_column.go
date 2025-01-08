@@ -59,7 +59,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		tableToBackfill = table
 	}
 
-	table.AddColumn(o.Column.Name, schema.Column{
+	table.AddColumn(o.Column.Name, &schema.Column{
 		Name: TemporaryName(o.Column.Name),
 	})
 
@@ -186,7 +186,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	// Update the schema to ensure that the new column is visible to validation of
 	// subsequent operations.
-	table.AddColumn(o.Column.Name, schema.Column{
+	table.AddColumn(o.Column.Name, &schema.Column{
 		Name: TemporaryName(o.Column.Name),
 	})
 
