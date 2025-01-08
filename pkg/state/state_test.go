@@ -390,7 +390,7 @@ func TestReadSchema(t *testing.T) {
 							Name:              "table1",
 							Columns:           map[string]*schema.Column{},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
+							Indexes:           map[string]*schema.Index{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 							ForeignKeys:       map[string]schema.ForeignKey{},
@@ -414,7 +414,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
+							Indexes:           map[string]*schema.Index{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 							ForeignKeys:       map[string]schema.ForeignKey{},
@@ -439,7 +439,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"id_unique": {
 									Name:       "id_unique",
 									Unique:     true,
@@ -481,7 +481,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"idx_name": {
 									Name:       "idx_name",
 									Unique:     false,
@@ -514,7 +514,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -537,7 +537,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
+							Indexes:    map[string]*schema.Index{},
 							ForeignKeys: map[string]schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
@@ -570,7 +570,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -593,7 +593,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
+							Indexes:    map[string]*schema.Index{},
 							ForeignKeys: map[string]schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
@@ -631,7 +631,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -676,7 +676,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -727,7 +727,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -784,7 +784,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"customer_id", "product_id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"products_pkey": {
 									Name:       "products_pkey",
 									Unique:     true,
@@ -812,7 +812,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
+							Indexes:    map[string]*schema.Index{},
 							ForeignKeys: map[string]schema.ForeignKey{
 								"fk_customer_product": {
 									Name:              "fk_customer_product",
@@ -849,7 +849,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"idx_ab": {
 									Name:       "idx_ab",
 									Unique:     false,
@@ -881,7 +881,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
+							Indexes:           map[string]*schema.Index{},
 							ForeignKeys:       map[string]schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
@@ -911,7 +911,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
+							Indexes:           map[string]*schema.Index{},
 							ForeignKeys:       map[string]schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},

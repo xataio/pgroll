@@ -45,7 +45,7 @@ type Table struct {
 	Columns map[string]*Column `json:"columns"`
 
 	// Indexes is a map of the indexes defined on the table
-	Indexes map[string]Index `json:"indexes"`
+	Indexes map[string]*Index `json:"indexes"`
 
 	// The columns that make up the primary key
 	PrimaryKey []string `json:"primaryKey"`

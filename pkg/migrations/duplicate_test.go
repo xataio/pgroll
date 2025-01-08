@@ -36,7 +36,7 @@ var table = &schema.Table{
 		"fk_city":      {Name: "fk_city", Columns: []string{"city"}, ReferencedTable: "cities", ReferencedColumns: []string{"id"}, OnDelete: "NO ACTION"},
 		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE"},
 	},
-	Indexes: map[string]schema.Index{
+	Indexes: map[string]*schema.Index{
 		"idx_no_kate": {
 			Name:       "idx_no_kate",
 			Columns:    []string{"name"},
