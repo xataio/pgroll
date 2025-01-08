@@ -138,6 +138,9 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 			if err != nil {
 				return fmt.Errorf("failed to rename index %q: %w", idx.Name, err)
 			}
+
+			// Index no longer exists, remove it from the table
+			delete(table.Indexes, idx.Name)
 		}
 
 		if _, ok := table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
@@ -154,8 +157,6 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 			}
 		}
 
-		// Index no longer exists, remove it from the table
-		delete(table.Indexes, idx.Name)
 	}
 
 	return nil
