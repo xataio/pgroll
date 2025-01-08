@@ -147,6 +147,13 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		}
 	}
 
+	// Generate SQL to duplicate any indexes on the columns.
+	for _, sql := range d.stmtBuilder.duplicateIndexes(d.withoutConstraint, colNames...) {
+		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -199,6 +206,45 @@ func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint
 				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "),
 				fk.OnDelete,
 			))
+		}
+	}
+	return stmts
+}
+
+func (d *duplicatorStmtBuilder) duplicateIndexes(withoutConstraint []string, colNames ...string) []string {
+	stmts := make([]string, 0, len(d.table.Indexes))
+	for _, idx := range d.table.Indexes {
+		if slices.Contains(withoutConstraint, idx.Name) {
+			continue
+		}
+		if _, ok := d.table.UniqueConstraints[idx.Name]; ok && idx.Unique {
+			// unique constraints are duplicated as unique indexes
+			continue
+		}
+
+		if duplicatedMember, columns := d.allConstraintColumns(idx.Columns, colNames...); duplicatedMember {
+			stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
+			if idx.Unique {
+				stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
+			}
+			stmt := fmt.Sprintf(stmtFmt, pq.QuoteIdentifier(DuplicationName(idx.Name)), pq.QuoteIdentifier(d.table.Name))
+			if idx.Method != "" {
+				stmt += fmt.Sprintf(" USING %s", string(idx.Method))
+			}
+
+			stmt += fmt.Sprintf(" (%s)", strings.Join(quoteColumnNames(columns), ", "))
+
+			if storageParamStart := strings.Index(idx.Definition, " WITH ("); storageParamStart != -1 {
+				end := strings.Index(idx.Definition[storageParamStart:], ")")
+				stmt += idx.Definition[storageParamStart : storageParamStart+end+1]
+			}
+
+			if idx.Predicate != nil {
+				pred := strings.Replace(*idx.Predicate, strings.Join(idx.Columns, ", "), strings.Join(quoteColumnNames(columns), ", "), 1)
+				stmt += fmt.Sprintf(" WHERE %s", pred)
+			}
+
+			stmts = append(stmts, stmt)
 		}
 	}
 	return stmts

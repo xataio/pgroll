@@ -36,6 +36,23 @@ var table = &schema.Table{
 		"fk_city":      {Name: "fk_city", Columns: []string{"city"}, ReferencedTable: "cities", ReferencedColumns: []string{"id"}, OnDelete: "NO ACTION"},
 		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE"},
 	},
+	Indexes: map[string]schema.Index{
+		"idx_no_kate": {
+			Name:       "idx_no_kate",
+			Columns:    []string{"name"},
+			Definition: `CREATE INDEX "idx_name" ON "test_table" USING hash ("name") WITH (fillfactor = 70) WHERE "name" != 'Kate'`,
+			Predicate:  ptr("name != 'Kate'"),
+			Method:     "hash",
+		},
+		"idx_email": {
+			Name:    "idx_email",
+			Columns: []string{"email"},
+		},
+		"idx_name_city": {
+			Name:    "idx_name_city",
+			Columns: []string{"name", "city"},
+		},
+	},
 }
 
 func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
@@ -174,3 +191,46 @@ func TestDuplicateStmtBuilderForeignKeyConstraints(t *testing.T) {
 		})
 	}
 }
+
+func TestDuplicateStmtBuilderIndexes(t *testing.T) {
+	d := &duplicatorStmtBuilder{table}
+	for name, testCases := range map[string]struct {
+		columns       []string
+		expectedStmts []string
+	}{
+		"single column duplicated": {
+			columns:       []string{"nick"},
+			expectedStmts: []string{},
+		},
+		"single-column index with single column duplicated": {
+			columns:       []string{"email"},
+			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_email" ON "test_table" ("_pgroll_new_email")`},
+		},
+		"single-column index with multiple column duplicated": {
+			columns:       []string{"email", "description"},
+			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_email" ON "test_table" ("_pgroll_new_email")`},
+		},
+		"multi-column index with single column duplicated": {
+			columns:       []string{"name"},
+			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_name_city" ON "test_table" ("_pgroll_new_name", "city")`, `CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_no_kate" ON "test_table" USING hash ("_pgroll_new_name") WITH (fillfactor = 70) WHERE "_pgroll_new_name" != 'Kate'`},
+		},
+		"multi-column index with multiple unrelated column duplicated": {
+			columns:       []string{"name", "description"},
+			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_name_city" ON "test_table" ("_pgroll_new_name", "city")`, `CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_no_kate" ON "test_table" USING hash ("_pgroll_new_name") WITH (fillfactor = 70) WHERE "_pgroll_new_name" != 'Kate'`},
+		},
+		"multi-column index with multiple columns": {
+			columns:       []string{"name", "city"},
+			expectedStmts: []string{`CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_name_city" ON "test_table" ("_pgroll_new_name", "_pgroll_new_city")`, `CREATE INDEX CONCURRENTLY "_pgroll_dup_idx_no_kate" ON "test_table" USING hash ("_pgroll_new_name") WITH (fillfactor = 70) WHERE "_pgroll_new_name" != 'Kate'`},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stmts := d.duplicateIndexes(nil, testCases.columns...)
+			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
+			for _, stmt := range stmts {
+				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
+			}
+		})
+	}
+}
+
+func ptr[T any](x T) *T { return &x }
