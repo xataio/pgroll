@@ -22,7 +22,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
-	// Create the table using the original name
+	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
 		pq.QuoteIdentifier(o.Name),
 		columnsSQL))
