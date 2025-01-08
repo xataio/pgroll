@@ -51,7 +51,7 @@ type Table struct {
 	PrimaryKey []string `json:"primaryKey"`
 
 	// ForeignKeys is a map of all foreign keys defined on the table
-	ForeignKeys map[string]ForeignKey `json:"foreignKeys"`
+	ForeignKeys map[string]*ForeignKey `json:"foreignKeys"`
 
 	// CheckConstraints is a map of all check constraints defined on the table
 	CheckConstraints map[string]CheckConstraint `json:"checkConstraints"`

@@ -393,7 +393,7 @@ func TestReadSchema(t *testing.T) {
 							Indexes:           map[string]*schema.Index{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -417,7 +417,7 @@ func TestReadSchema(t *testing.T) {
 							Indexes:           map[string]*schema.Index{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -455,7 +455,7 @@ func TestReadSchema(t *testing.T) {
 									Columns: []string{"id"},
 								},
 							},
-							ForeignKeys: map[string]schema.ForeignKey{},
+							ForeignKeys: map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -492,7 +492,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -525,7 +525,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 						"table2": {
 							Name: "table2",
@@ -538,7 +538,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							PrimaryKey: []string{},
 							Indexes:    map[string]*schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
 									Columns:           []string{"fk"},
@@ -581,7 +581,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 						"table2": {
 							Name: "table2",
@@ -594,7 +594,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							PrimaryKey: []string{},
 							Indexes:    map[string]*schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
 									Columns:           []string{"fk"},
@@ -640,7 +640,7 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
-							ForeignKeys: map[string]schema.ForeignKey{},
+							ForeignKeys: map[string]*schema.ForeignKey{},
 							CheckConstraints: map[string]schema.CheckConstraint{
 								"age_check": {
 									Name:       "age_check",
@@ -692,7 +692,7 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX name_unique ON public.table1 USING btree (name)",
 								},
 							},
-							ForeignKeys:      map[string]schema.ForeignKey{},
+							ForeignKeys:      map[string]*schema.ForeignKey{},
 							CheckConstraints: map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
 								"name_unique": {
@@ -743,7 +743,7 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX name_id_unique ON public.table1 USING btree (id, name)",
 								},
 							},
-							ForeignKeys:      map[string]schema.ForeignKey{},
+							ForeignKeys:      map[string]*schema.ForeignKey{},
 							CheckConstraints: map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{
 								"name_id_unique": {
@@ -793,7 +793,7 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (customer_id, product_id)",
 								},
 							},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
@@ -813,7 +813,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							PrimaryKey: []string{},
 							Indexes:    map[string]*schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_customer_product": {
 									Name:              "fk_customer_product",
 									Columns:           []string{"customer_id", "product_id"},
@@ -858,7 +858,7 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE INDEX idx_ab ON public.table1 USING btree (a, b)",
 								},
 							},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
@@ -882,7 +882,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							PrimaryKey:        []string{},
 							Indexes:           map[string]*schema.Index{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
@@ -912,7 +912,7 @@ func TestReadSchema(t *testing.T) {
 							},
 							PrimaryKey:        []string{},
 							Indexes:           map[string]*schema.Index{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 							CheckConstraints:  map[string]schema.CheckConstraint{},
 							UniqueConstraints: map[string]schema.UniqueConstraint{},
 						},
