@@ -377,7 +377,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "",
 				wantSchema: &schema.Schema{
 					Name:   "public",
-					Tables: map[string]schema.Table{},
+					Tables: map[string]*schema.Table{},
 				},
 			},
 			{
@@ -385,7 +385,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 ()",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name:              "table1",
 							Columns:           map[string]schema.Column{},
@@ -403,7 +403,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -427,7 +427,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int NOT NULL, CONSTRAINT id_unique UNIQUE(id))",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -465,7 +465,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int, name text); CREATE INDEX idx_name ON public.table1 (name)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -502,7 +502,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id))",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -558,7 +558,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) ON DELETE CASCADE)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -614,7 +614,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, age INTEGER, CONSTRAINT age_check CHECK (age > 18));",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -658,7 +658,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_unique UNIQUE(name) );",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -709,7 +709,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_id_unique UNIQUE(id, name));",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -768,7 +768,7 @@ func TestReadSchema(t *testing.T) {
             CONSTRAINT fk_customer_product FOREIGN KEY (customer_id, product_id) REFERENCES products (customer_id, product_id));`,
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"products": {
 							Name: "products",
 							Columns: map[string]schema.Column{
@@ -833,7 +833,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -870,7 +870,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE DOMAIN email_type AS varchar(255); CREATE TABLE public.table1 (a email_type);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{
@@ -894,7 +894,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TYPE review AS ENUM ('good', 'bad', 'ugly'); CREATE TABLE public.table1 (name text, review review);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
 							Columns: map[string]schema.Column{

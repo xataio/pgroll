@@ -118,7 +118,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Name: col.Name,
 		}
 	}
-	s.AddTable(o.Name, schema.Table{
+	s.AddTable(o.Name, &schema.Table{
 		Name:    o.Name,
 		Columns: columns,
 	})

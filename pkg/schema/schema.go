@@ -18,7 +18,7 @@ import (
 
 func New() *Schema {
 	return &Schema{
-		Tables: make(map[string]Table),
+		Tables: make(map[string]*Table),
 	}
 }
 
@@ -27,7 +27,7 @@ type Schema struct {
 	// Name is the name of the schema
 	Name string `json:"name"`
 	// Tables is a map of virtual table name -> table mapping
-	Tables map[string]Table `json:"tables"`
+	Tables map[string]*Table `json:"tables"`
 }
 
 // Table represents a table in the schema
@@ -148,13 +148,13 @@ func (s *Schema) GetTable(name string) *Table {
 	if !ok {
 		return nil
 	}
-	return &t
+	return t
 }
 
 // AddTable adds a table to the schema
-func (s *Schema) AddTable(name string, t Table) {
+func (s *Schema) AddTable(name string, t *Table) {
 	if s.Tables == nil {
-		s.Tables = make(map[string]Table)
+		s.Tables = make(map[string]*Table)
 	}
 
 	s.Tables[name] = t
