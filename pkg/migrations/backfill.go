@@ -29,13 +29,18 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 		return BackfillNotPossibleError{Table: table.Name}
 	}
 
+	total, err := getRowCount(ctx, conn, table.Name)
+	if err != nil {
+		return fmt.Errorf("get row count for %q: %w", table.Name, err)
+	}
+
 	// Create a batcher for the table.
 	b := newBatcher(table, batchSize)
 
 	// Update each batch of rows, invoking callbacks for each one.
 	for batch := 0; ; batch++ {
 		for _, cb := range cbs {
-			cb(int64(batch * batchSize))
+			cb(int64(batch*batchSize), total)
 		}
 
 		if err := b.updateBatch(ctx, conn); err != nil {
@@ -53,6 +58,46 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 	}
 
 	return nil
+}
+
+// getRowCount will attempt to get the row count for the given table. It first attempts to get an
+// estimate and if that is zero, falls back to a full table scan.
+func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, error) {
+	// Try and get estimated row count
+	var currentSchema string
+	rows, err := conn.QueryContext(ctx, "select current_schema()")
+	if err != nil {
+		return 0, fmt.Errorf("getting current schema: %w", err)
+	}
+	if err := db.ScanFirstValue(rows, &currentSchema); err != nil {
+		return 0, fmt.Errorf("scanning current schema: %w", err)
+	}
+
+	var total int64
+	rows, err = conn.QueryContext(ctx, `
+	  SELECT n_live_tup AS estimate
+	  FROM pg_stat_user_tables
+	  WHERE schemaname = $1 AND relname = $2`, currentSchema, tableName)
+	if err != nil {
+		return 0, fmt.Errorf("getting row count estimate for %q: %w", tableName, err)
+	}
+	if err := db.ScanFirstValue(rows, &total); err != nil {
+		return 0, fmt.Errorf("scanning row count estimate for %q: %w", tableName, err)
+	}
+	if total > 0 {
+		return total, nil
+	}
+
+	// If the estimate is zero, fall back to full count
+	rows, err = conn.QueryContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, tableName))
+	if err != nil {
+		return 0, fmt.Errorf("getting row count for %q: %w", tableName, err)
+	}
+	if err := db.ScanFirstValue(rows, &total); err != nil {
+		return 0, fmt.Errorf("scanning row count for %q: %w", tableName, err)
+	}
+
+	return total, nil
 }
 
 // checkBackfill will return an error if the backfill operation is not supported.
