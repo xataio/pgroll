@@ -27,7 +27,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 
 // StartDDLOperations performs the DDL operations for the migration. This does
 // not include running backfills for any modified tables.
-func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) ([]*schema.Table, error) {
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) (tablesToBackfill []*schema.Table, err error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -63,7 +63,11 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 
 	// defer execution of any AfterStartDDL hooks
 	if m.migrationHooks.AfterStartDDL != nil {
-		defer m.migrationHooks.AfterStartDDL(m)
+		defer func() {
+			if err == nil {
+				err = m.migrationHooks.AfterStartDDL(m)
+			}
+		}()
 	}
 
 	// Get the name of the latest version schema
@@ -83,7 +87,6 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// execute operations
-	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
 		table, err := op.Start(ctx, m.pgConn, latestSchema, m.sqlTransformer, newSchema, cbs...)
 		if err != nil {
@@ -142,7 +145,7 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 }
 
 // Complete will update the database schema to match the current version
-func (m *Roll) Complete(ctx context.Context) error {
+func (m *Roll) Complete(ctx context.Context) (err error) {
 	// get current ongoing migration
 	migration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
@@ -179,7 +182,11 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// defer execution of any AfterCompleteDDL hooks
 	if m.migrationHooks.AfterCompleteDDL != nil {
-		defer m.migrationHooks.AfterCompleteDDL(m)
+		defer func() {
+			if err == nil {
+				err = m.migrationHooks.AfterCompleteDDL(m)
+			}
+		}()
 	}
 
 	// execute operations
