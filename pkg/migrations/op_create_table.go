@@ -22,10 +22,9 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
-	// Create the table under a temporary name
-	tempName := TemporaryName(o.Name)
+	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
-		pq.QuoteIdentifier(tempName),
+		pq.QuoteIdentifier(o.Name),
 		columnsSQL))
 	if err != nil {
 		return nil, err
@@ -34,7 +33,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	// Add comments to any columns that have them
 	for _, col := range o.Columns {
 		if col.Comment != nil {
-			if err := addCommentToColumn(ctx, conn, tempName, col.Name, col.Comment); err != nil {
+			if err := addCommentToColumn(ctx, conn, o.Name, col.Name, col.Comment); err != nil {
 				return nil, fmt.Errorf("failed to add comment to column: %w", err)
 			}
 		}
@@ -42,7 +41,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// Add comment to the table itself
 	if o.Comment != nil {
-		if err := addCommentToTable(ctx, conn, tempName, o.Comment); err != nil {
+		if err := addCommentToTable(ctx, conn, o.Name, o.Comment); err != nil {
 			return nil, fmt.Errorf("failed to add comment to table: %w", err)
 		}
 	}
@@ -54,18 +53,13 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
-		pq.QuoteIdentifier(tempName),
-		pq.QuoteIdentifier(o.Name)))
-	return err
+	// No-op
+	return nil
 }
 
 func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Name)
-
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
-		pq.QuoteIdentifier(tempName)))
+		pq.QuoteIdentifier(o.Name)))
 	return err
 }
 
@@ -125,7 +119,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 		}
 	}
 	s.AddTable(o.Name, schema.Table{
-		Name:    TemporaryName(o.Name),
+		Name:    o.Name,
 		Columns: columns,
 	})
 

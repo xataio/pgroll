@@ -369,7 +369,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "users",
-							Name:  "_pgroll_new_users_name_key",
+							Name:  "users_name_key",
 							Up:    "name",
 							Down:  "name || '-' || (random()*1000000)::integer",
 						},
@@ -438,7 +438,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "users",
-							Name:  "_pgroll_new_users_name_key",
+							Name:  "users_name_key",
 							Up:    "name",
 							Down:  "name || '-' || (random()*1000000)::integer",
 						},
@@ -537,7 +537,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "employees",
-							Name:  "_pgroll_new_employees_department_id_key",
+							Name:  "employees_department_id_key",
 							Up:    "department_id",
 							Down:  "department_id",
 						},
@@ -599,7 +599,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "posts",
-							Name:  "_pgroll_new_posts_title_key",
+							Name:  "posts_title_key",
 							Up:    "title",
 							Down:  "title",
 						},
@@ -742,7 +742,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "posts",
-							Name:  "_pgroll_new_posts_title_key",
+							Name:  "posts_title_key",
 							Up:    "title",
 							Down:  "title",
 						},
@@ -794,7 +794,7 @@ func TestDropConstraint(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "posts",
-							Name:  "_pgroll_new_posts_title_key",
+							Name:  "posts_title_key",
 							Up:    "title",
 							Down:  "title",
 						},

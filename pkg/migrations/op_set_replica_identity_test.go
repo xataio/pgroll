@@ -120,7 +120,7 @@ func TestSetReplicaIdentity(t *testing.T) {
 							Table: "users",
 							Identity: migrations.ReplicaIdentity{
 								Type:  "index",
-								Index: "_pgroll_new_users_pkey",
+								Index: "users_pkey",
 							},
 						},
 					},
