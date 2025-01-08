@@ -22,7 +22,7 @@ var table = &schema.Table{
 		"city":        {Name: "city", Type: "text"},
 		"description": {Name: "description", Type: "text"},
 	},
-	UniqueConstraints: map[string]schema.UniqueConstraint{
+	UniqueConstraints: map[string]*schema.UniqueConstraint{
 		"unique_email":     {Name: "unique_email", Columns: []string{"email"}},
 		"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
 	},
