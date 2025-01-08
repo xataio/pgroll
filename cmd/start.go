@@ -5,6 +5,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math"
 	"os"
 
 	"github.com/pterm/pterm"
@@ -58,10 +59,8 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 	cb := func(n int64, total int64) {
 		if total > 0 {
 			percent := float64(n) / float64(total) * 100
-			if percent > 100 {
-				// This can happen if we're on the last batch
-				percent = 100
-			}
+			// Percent can be > 100 if we're on the last batch in which case we still want to display 100.
+			percent = math.Min(percent, 100)
 			sp.UpdateText(fmt.Sprintf("%d records complete... (%.2f%%)", n, percent))
 		} else {
 			sp.UpdateText(fmt.Sprintf("%d records complete...", n))
