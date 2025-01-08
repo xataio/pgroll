@@ -26,7 +26,7 @@ var table = &schema.Table{
 		"unique_email":     {Name: "unique_email", Columns: []string{"email"}},
 		"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
 	},
-	CheckConstraints: map[string]schema.CheckConstraint{
+	CheckConstraints: map[string]*schema.CheckConstraint{
 		"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`},
 		"adults":          {Name: "adults", Columns: []string{"age"}, Definition: `"age" > 18`},
 		"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
