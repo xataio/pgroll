@@ -349,7 +349,7 @@ func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been created on the underlying table.
-				IndexMustExist(t, db, schema, migrations.TemporaryName("users"), "idx_users_name")
+				IndexMustExist(t, db, schema, "users", "idx_users_name")
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.

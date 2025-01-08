@@ -6,7 +6,7 @@
         "table": "fruits",
         "identity": {
           "type": "index",
-          "index": "_pgroll_new_fruits_pkey"
+          "index": "fruits_pkey"
         }
       }
     }

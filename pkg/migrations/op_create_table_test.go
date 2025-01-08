@@ -214,7 +214,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id")
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id")
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -322,7 +322,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, schema, migrations.TemporaryName("orders"), "fk_users_id", withOnDeleteCascade())
+				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -412,7 +412,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint exists on the new table.
-				CheckConstraintMustExist(t, db, schema, migrations.TemporaryName("users"), "check_name_length")
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
 
 				// Inserting a row into the table succeeds when the check constraint is satisfied.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -469,11 +469,10 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				tableName := migrations.TemporaryName("users")
 				// The comment has been added to the underlying table.
-				TableMustHaveComment(t, db, schema, tableName, "the users table")
+				TableMustHaveComment(t, db, schema, "users", "the users table")
 				// The comment has been added to the underlying column.
-				ColumnMustHaveComment(t, db, schema, tableName, "name", "the username")
+				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
