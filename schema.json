@@ -116,7 +116,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check", "foreign_key"]
+          "enum": ["unique", "check", "primary_key", "foreign_key", "exclude"]
         },
         "check": {
           "description": "Check constraint expression",
@@ -143,6 +143,62 @@
               "description": "On delete behavior of the foreign key constraint",
               "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
               "default": "NO ACTION"
+            },
+            "on_update": {
+              "description": "On update behavior of the foreign key constraint",
+              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+              "default": "NO ACTION"
+            },
+            "match_type": {
+              "description": "Match type of the foreign key constraint",
+              "type": "string"
+            }
+          }
+        },
+        "defferable": {
+          "description": "Defferable constraint",
+          "type": "boolean"
+        },
+        "initially_deferred": {
+          "description": "Initially deferred constraint",
+          "type": "boolean"
+        },
+        "no_inherit": {
+          "description": "No inherit constraint",
+          "type": "boolean"
+        },
+        "nulls_not_distinct": {
+          "description": "Nulls not distinct constraint",
+          "type": "boolean"
+        },
+        "exclude": {
+          "description": "Exclude constraint",
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "elements": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "index_method": {
+              "type": "string"
+            },
+            "include_columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "storage_parameters": {
+              "type": "string"
+            },
+            "predicate": {
+              "type": "string"
+            },
+            "tablespace": {
+              "type": "string"
             }
           }
         }
