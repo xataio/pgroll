@@ -25,6 +25,9 @@ func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 }
 
 func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	// Mark the table as no longer deleted so that it is visible to preceding
+	// Rollbacks in the same migration
+	s.UnRemoveTable(o.Name)
 	return nil
 }
 
