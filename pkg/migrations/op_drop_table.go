@@ -37,5 +37,7 @@ func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Name}
 	}
+
+	s.RemoveTable(table.Name)
 	return nil
 }
