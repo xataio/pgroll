@@ -125,3 +125,47 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 		},
 	})
 }
+
+func TestDropTableValidationInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "drop table, rename table fails to validate",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpDropTable{
+							Name: "items",
+						},
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "items"},
+		},
+	})
+}
