@@ -45,7 +45,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
 		}
 
-		table.AddColumn(colName, schema.Column{
+		table.AddColumn(colName, &schema.Column{
 			Name: physicalColumnName,
 		})
 

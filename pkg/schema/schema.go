@@ -18,7 +18,7 @@ import (
 
 func New() *Schema {
 	return &Schema{
-		Tables: make(map[string]Table),
+		Tables: make(map[string]*Table),
 	}
 }
 
@@ -27,7 +27,7 @@ type Schema struct {
 	// Name is the name of the schema
 	Name string `json:"name"`
 	// Tables is a map of virtual table name -> table mapping
-	Tables map[string]Table `json:"tables"`
+	Tables map[string]*Table `json:"tables"`
 }
 
 // Table represents a table in the schema
@@ -42,22 +42,22 @@ type Table struct {
 	Comment string `json:"comment"`
 
 	// Columns is a map of virtual column name -> column mapping
-	Columns map[string]Column `json:"columns"`
+	Columns map[string]*Column `json:"columns"`
 
 	// Indexes is a map of the indexes defined on the table
-	Indexes map[string]Index `json:"indexes"`
+	Indexes map[string]*Index `json:"indexes"`
 
 	// The columns that make up the primary key
 	PrimaryKey []string `json:"primaryKey"`
 
 	// ForeignKeys is a map of all foreign keys defined on the table
-	ForeignKeys map[string]ForeignKey `json:"foreignKeys"`
+	ForeignKeys map[string]*ForeignKey `json:"foreignKeys"`
 
 	// CheckConstraints is a map of all check constraints defined on the table
-	CheckConstraints map[string]CheckConstraint `json:"checkConstraints"`
+	CheckConstraints map[string]*CheckConstraint `json:"checkConstraints"`
 
 	// UniqueConstraints is a map of all unique constraints defined on the table
-	UniqueConstraints map[string]UniqueConstraint `json:"uniqueConstraints"`
+	UniqueConstraints map[string]*UniqueConstraint `json:"uniqueConstraints"`
 }
 
 // Column represents a column in a table
@@ -148,13 +148,13 @@ func (s *Schema) GetTable(name string) *Table {
 	if !ok {
 		return nil
 	}
-	return &t
+	return t
 }
 
 // AddTable adds a table to the schema
-func (s *Schema) AddTable(name string, t Table) {
+func (s *Schema) AddTable(name string, t *Table) {
 	if s.Tables == nil {
-		s.Tables = make(map[string]Table)
+		s.Tables = make(map[string]*Table)
 	}
 
 	s.Tables[name] = t
@@ -189,7 +189,7 @@ func (t *Table) GetColumn(name string) *Column {
 	if !ok {
 		return nil
 	}
-	return &c
+	return c
 }
 
 // ConstraintExists returns true if a constraint with the given name exists
@@ -234,9 +234,9 @@ func (t *Table) GetPrimaryKey() (columns []*Column) {
 }
 
 // AddColumn adds a column to the table
-func (t *Table) AddColumn(name string, c Column) {
+func (t *Table) AddColumn(name string, c *Column) {
 	if t.Columns == nil {
-		t.Columns = make(map[string]Column)
+		t.Columns = make(map[string]*Column)
 	}
 
 	t.Columns[name] = c

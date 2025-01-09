@@ -112,13 +112,13 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 // updateSchema updates the in-memory schema representation with the details of
 // the new table.
 func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
-	columns := make(map[string]schema.Column, len(o.Columns))
+	columns := make(map[string]*schema.Column, len(o.Columns))
 	for _, col := range o.Columns {
-		columns[col.Name] = schema.Column{
+		columns[col.Name] = &schema.Column{
 			Name: col.Name,
 		}
 	}
-	s.AddTable(o.Name, schema.Table{
+	s.AddTable(o.Name, &schema.Table{
 		Name:    o.Name,
 		Columns: columns,
 	})

@@ -13,7 +13,7 @@ import (
 
 var table = &schema.Table{
 	Name: "test_table",
-	Columns: map[string]schema.Column{
+	Columns: map[string]*schema.Column{
 		"id":          {Name: "id", Type: "serial"},
 		"name":        {Name: "name", Type: "text"},
 		"nick":        {Name: "nick", Type: "text"},
@@ -22,21 +22,21 @@ var table = &schema.Table{
 		"city":        {Name: "city", Type: "text"},
 		"description": {Name: "description", Type: "text"},
 	},
-	UniqueConstraints: map[string]schema.UniqueConstraint{
+	UniqueConstraints: map[string]*schema.UniqueConstraint{
 		"unique_email":     {Name: "unique_email", Columns: []string{"email"}},
 		"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
 	},
-	CheckConstraints: map[string]schema.CheckConstraint{
+	CheckConstraints: map[string]*schema.CheckConstraint{
 		"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`},
 		"adults":          {Name: "adults", Columns: []string{"age"}, Definition: `"age" > 18`},
 		"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
 		"different_nick":  {Name: "different_nick", Columns: []string{"name", "nick"}, Definition: `"name" != "nick"`},
 	},
-	ForeignKeys: map[string]schema.ForeignKey{
+	ForeignKeys: map[string]*schema.ForeignKey{
 		"fk_city":      {Name: "fk_city", Columns: []string{"city"}, ReferencedTable: "cities", ReferencedColumns: []string{"id"}, OnDelete: "NO ACTION"},
 		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE"},
 	},
-	Indexes: map[string]schema.Index{
+	Indexes: map[string]*schema.Index{
 		"idx_no_kate": {
 			Name:       "idx_no_kate",
 			Columns:    []string{"name"},

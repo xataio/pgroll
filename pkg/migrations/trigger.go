@@ -24,7 +24,7 @@ const (
 type triggerConfig struct {
 	Name           string
 	Direction      TriggerDirection
-	Columns        map[string]schema.Column
+	Columns        map[string]*schema.Column
 	SchemaName     string
 	TableName      string
 	PhysicalColumn string

@@ -377,7 +377,7 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "",
 				wantSchema: &schema.Schema{
 					Name:   "public",
-					Tables: map[string]schema.Table{},
+					Tables: map[string]*schema.Table{},
 				},
 			},
 			{
@@ -385,15 +385,15 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 ()",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name:              "table1",
-							Columns:           map[string]schema.Column{},
+							Columns:           map[string]*schema.Column{},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							Indexes:           map[string]*schema.Index{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -403,10 +403,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -414,10 +414,10 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							Indexes:           map[string]*schema.Index{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -427,10 +427,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int NOT NULL, CONSTRAINT id_unique UNIQUE(id))",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -439,7 +439,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"id_unique": {
 									Name:       "id_unique",
 									Unique:     true,
@@ -448,14 +448,14 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX id_unique ON public.table1 USING btree (id)",
 								},
 							},
-							CheckConstraints: map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{
+							CheckConstraints: map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{
 								"id_unique": {
 									Name:    "id_unique",
 									Columns: []string{"id"},
 								},
 							},
-							ForeignKeys: map[string]schema.ForeignKey{},
+							ForeignKeys: map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -465,10 +465,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int, name text); CREATE INDEX idx_name ON public.table1 (name)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -481,7 +481,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"idx_name": {
 									Name:       "idx_name",
 									Unique:     false,
@@ -490,9 +490,9 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE INDEX idx_name ON public.table1 USING btree (name)",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 					},
 				},
@@ -502,10 +502,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id))",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -514,7 +514,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -523,13 +523,13 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 						"table2": {
 							Name: "table2",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"fk": {
 									Name:     "fk",
 									Type:     "integer",
@@ -537,8 +537,8 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
 									Columns:           []string{"fk"},
@@ -547,8 +547,8 @@ func TestReadSchema(t *testing.T) {
 									OnDelete:          "NO ACTION",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -558,10 +558,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) ON DELETE CASCADE)",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -570,7 +570,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -579,13 +579,13 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
 						},
 						"table2": {
 							Name: "table2",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"fk": {
 									Name:     "fk",
 									Type:     "integer",
@@ -593,8 +593,8 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_fkey": {
 									Name:              "fk_fkey",
 									Columns:           []string{"fk"},
@@ -603,8 +603,8 @@ func TestReadSchema(t *testing.T) {
 									OnDelete:          "CASCADE",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -614,10 +614,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, age INTEGER, CONSTRAINT age_check CHECK (age > 18));",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -631,7 +631,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -640,15 +640,15 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
 								},
 							},
-							ForeignKeys: map[string]schema.ForeignKey{},
-							CheckConstraints: map[string]schema.CheckConstraint{
+							ForeignKeys: map[string]*schema.ForeignKey{},
+							CheckConstraints: map[string]*schema.CheckConstraint{
 								"age_check": {
 									Name:       "age_check",
 									Columns:    []string{"age"},
 									Definition: "CHECK ((age > 18))",
 								},
 							},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -658,10 +658,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_unique UNIQUE(name) );",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -676,7 +676,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -692,9 +692,9 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX name_unique ON public.table1 USING btree (name)",
 								},
 							},
-							ForeignKeys:      map[string]schema.ForeignKey{},
-							CheckConstraints: map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{
+							ForeignKeys:      map[string]*schema.ForeignKey{},
+							CheckConstraints: map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{
 								"name_unique": {
 									Name:    "name_unique",
 									Columns: []string{"name"},
@@ -709,10 +709,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, name TEXT, CONSTRAINT name_id_unique UNIQUE(id, name));",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"id": {
 									Name:     "id",
 									Type:     "integer",
@@ -727,7 +727,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"table1_pkey": {
 									Name:       "table1_pkey",
 									Unique:     true,
@@ -743,9 +743,9 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX name_id_unique ON public.table1 USING btree (id, name)",
 								},
 							},
-							ForeignKeys:      map[string]schema.ForeignKey{},
-							CheckConstraints: map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{
+							ForeignKeys:      map[string]*schema.ForeignKey{},
+							CheckConstraints: map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{
 								"name_id_unique": {
 									Name:    "name_id_unique",
 									Columns: []string{"id", "name"},
@@ -768,10 +768,10 @@ func TestReadSchema(t *testing.T) {
             CONSTRAINT fk_customer_product FOREIGN KEY (customer_id, product_id) REFERENCES products (customer_id, product_id));`,
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"products": {
 							Name: "products",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"customer_id": {
 									Name:     "customer_id",
 									Type:     "integer",
@@ -784,7 +784,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{"customer_id", "product_id"},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"products_pkey": {
 									Name:       "products_pkey",
 									Unique:     true,
@@ -793,13 +793,13 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (customer_id, product_id)",
 								},
 							},
-							ForeignKeys:       map[string]schema.ForeignKey{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 						"orders": {
 							Name: "orders",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"customer_id": {
 									Name:     "customer_id",
 									Type:     "integer",
@@ -812,8 +812,8 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes:    map[string]schema.Index{},
-							ForeignKeys: map[string]schema.ForeignKey{
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
 								"fk_customer_product": {
 									Name:              "fk_customer_product",
 									Columns:           []string{"customer_id", "product_id"},
@@ -822,8 +822,8 @@ func TestReadSchema(t *testing.T) {
 									OnDelete:          "NO ACTION",
 								},
 							},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -833,10 +833,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TABLE public.table1 (a text, b text); CREATE INDEX idx_ab ON public.table1 (a, b);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"a": {
 									Name:     "a",
 									Type:     "text",
@@ -849,7 +849,7 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey: []string{},
-							Indexes: map[string]schema.Index{
+							Indexes: map[string]*schema.Index{
 								"idx_ab": {
 									Name:       "idx_ab",
 									Unique:     false,
@@ -858,9 +858,9 @@ func TestReadSchema(t *testing.T) {
 									Definition: "CREATE INDEX idx_ab ON public.table1 USING btree (a, b)",
 								},
 							},
-							ForeignKeys:       map[string]schema.ForeignKey{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -870,10 +870,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE DOMAIN email_type AS varchar(255); CREATE TABLE public.table1 (a email_type);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"a": {
 									Name:     "a",
 									Type:     "public.email_type",
@@ -881,10 +881,10 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							Indexes:           map[string]*schema.Index{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
@@ -894,10 +894,10 @@ func TestReadSchema(t *testing.T) {
 				createStmt: "CREATE TYPE review AS ENUM ('good', 'bad', 'ugly'); CREATE TABLE public.table1 (name text, review review);",
 				wantSchema: &schema.Schema{
 					Name: "public",
-					Tables: map[string]schema.Table{
+					Tables: map[string]*schema.Table{
 						"table1": {
 							Name: "table1",
-							Columns: map[string]schema.Column{
+							Columns: map[string]*schema.Column{
 								"name": {
 									Name:     "name",
 									Type:     "text",
@@ -911,10 +911,10 @@ func TestReadSchema(t *testing.T) {
 								},
 							},
 							PrimaryKey:        []string{},
-							Indexes:           map[string]schema.Index{},
-							ForeignKeys:       map[string]schema.ForeignKey{},
-							CheckConstraints:  map[string]schema.CheckConstraint{},
-							UniqueConstraints: map[string]schema.UniqueConstraint{},
+							Indexes:           map[string]*schema.Index{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
 						},
 					},
 				},
