@@ -123,25 +123,23 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 	// Rename any indexes on the duplicated column and use unique indexes to
 	// create `UNIQUE` constraints.
 	for _, idx := range table.Indexes {
-		if !IsDuplicatedName(idx.Name) {
+		if !IsDuplicatedName(idx.Name) || !slices.Contains(idx.Columns, TemporaryName(column.Name)) {
 			continue
 		}
 
-		if slices.Contains(idx.Columns, TemporaryName(column.Name)) {
-			// Rename the index to its original name
-			renameIndexSQL := fmt.Sprintf(cRenameIndexSQL,
-				pq.QuoteIdentifier(idx.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
-			)
+		// Rename the index to its original name
+		renameIndexSQL := fmt.Sprintf(cRenameIndexSQL,
+			pq.QuoteIdentifier(idx.Name),
+			pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
+		)
 
-			_, err = conn.ExecContext(ctx, renameIndexSQL)
-			if err != nil {
-				return fmt.Errorf("failed to rename index %q: %w", idx.Name, err)
-			}
-
-			// Index no longer exists, remove it from the table
-			delete(table.Indexes, idx.Name)
+		_, err = conn.ExecContext(ctx, renameIndexSQL)
+		if err != nil {
+			return fmt.Errorf("failed to rename index %q: %w", idx.Name, err)
 		}
+
+		// Index no longer exists, remove it from the table
+		delete(table.Indexes, idx.Name)
 
 		if _, ok := table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
@@ -156,7 +154,6 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 				return fmt.Errorf("failed to create unique constraint from index %q: %w", idx.Name, err)
 			}
 		}
-
 	}
 
 	return nil

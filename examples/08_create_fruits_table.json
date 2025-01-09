@@ -18,6 +18,10 @@
           {
             "name": "price",
             "type": "decimal(10,2)"
+          },
+          {
+            "name": "producer",
+            "type": "varchar(255)"
           }
         ]
       }
