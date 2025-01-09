@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -38,10 +39,20 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 		}
 	}
 
+	var constraints []migrations.Constraint
+	for _, c := range stmt.Constraints {
+		constraint, err := convertConstraint(c.GetConstraint())
+		if err != nil {
+			return nil, fmt.Errorf("error converting table constraint: %w", err)
+		}
+		constraints = append(constraints, *constraint)
+	}
+
 	return migrations.Operations{
 		&migrations.OpCreateTable{
-			Name:    getQualifiedRelationName(stmt.GetRelation()),
-			Columns: columns,
+			Name:        getQualifiedRelationName(stmt.GetRelation()),
+			Columns:     columns,
+			Constraints: constraints,
 		},
 	}, nil
 }
@@ -186,6 +197,85 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		References: foreignKey,
 		Default:    defaultValue,
 		Unique:     unique,
+	}, nil
+}
+
+func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
+	var constraintType migrations.ConstraintType
+	var nullsNotDistinct *bool
+	var exclude *migrations.ConstraintExclude
+
+	switch c.Contype {
+	case pgq.ConstrType_CONSTR_UNIQUE:
+		constraintType = migrations.ConstraintTypeUnique
+		nullsNotDistinct = ptr(c.NullsNotDistinct)
+	case pgq.ConstrType_CONSTR_EXCLUSION:
+		exclusionElemens := make([]string, len(c.Exclusions))
+		for i, ex := range c.Exclusions {
+			if len(ex.GetList().Items) != 2 {
+				return nil, fmt.Errorf("unexpected number of elements in exclusion constraint: %d", len(ex.GetList().Items))
+			}
+			colName := ex.GetList().Items[0].GetIndexElem().Name
+			opName := ex.GetList().Items[1].GetString_().Sval
+			exclusionElemens[i] = fmt.Sprintf("%s WITH %s", colName, opName)
+		}
+		exclude = &migrations.ConstraintExclude{
+			Elements:    strings.Join(exclusionElemens, ", "),
+			IndexMethod: c.AccessMethod,
+		}
+	case pgq.ConstrType_CONSTR_PRIMARY:
+		constraintType = migrations.ConstraintTypePrimaryKey
+	case pgq.ConstrType_CONSTR_FOREIGN:
+		constraintType = migrations.ConstraintTypeForeignKey
+	case pgq.ConstrType_CONSTR_CHECK:
+		constraintType = migrations.ConstraintTypeCheck
+	default:
+		return nil, fmt.Errorf("unsupported constraint type: %s", c.Contype)
+	}
+
+	including := make([]string, len(c.Including))
+	for i, include := range c.Including {
+		including[i] = include.GetString_().Sval
+	}
+
+	options := make([]string, len(c.Options))
+	for i, option := range c.Options {
+		var val string
+		switch v := option.GetDefElem().Arg.GetNode().(type) {
+		case *pgq.Node_Float:
+			val = v.Float.GetFval()
+		case *pgq.Node_Integer:
+			val = fmt.Sprintf("%d", v.Integer.GetIval())
+		case *pgq.Node_String_:
+			val = v.String_.GetSval()
+		case *pgq.Node_Boolean:
+			val = v.Boolean.String()
+		default:
+			return nil, fmt.Errorf("unsupported storage parameter type: %T", v)
+		}
+		options[i] = fmt.Sprintf("%s = '%s'", option.GetDefElem().Defname, val)
+	}
+	var storageParameters *string
+	if len(options) != 0 {
+		storageParameters = ptr(strings.Join(options, ", "))
+	}
+
+	var tablespace *string
+	if c.Indexspace != "" {
+		tablespace = ptr(c.Indexspace)
+	}
+
+	return &migrations.Constraint{
+		Name:              c.Conname,
+		Type:              constraintType,
+		NullsNotDistinct:  nullsNotDistinct,
+		Deferable:         ptr(c.Deferrable),
+		InitiallyDeferred: ptr(c.Initdeferred),
+		NoInherit:         ptr(c.IsNoInherit),
+		StorageParameters: storageParameters,
+		Tablespace:        tablespace,
+		IncludeColumns:    including,
+		Exclude:           exclude,
 	}, nil
 }
 

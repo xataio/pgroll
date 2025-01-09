@@ -22,10 +22,16 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
+	constraintsSQL, err := constraintsToSQL(o.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
+	}
+
 	// Create the table
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
 		pq.QuoteIdentifier(o.Name),
-		columnsSQL))
+		columnsSQL,
+		constraintsSQL))
 	if err != nil {
 		return nil, err
 	}
@@ -149,4 +155,91 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 		sql += fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
 	}
 	return sql, nil
+}
+
+func constraintsToSQL(constraints []Constraint) (string, error) {
+	constraintsSQL := make([]string, len(constraints))
+	for i, c := range constraints {
+		switch c.Type {
+		case ConstraintTypeCheck:
+			constraintsSQL[i] = fmt.Sprintf("CONSTRAINT %s CHECK (%s)", c.Name, *c.Check)
+		case ConstraintTypeExclude:
+			writer := &ConstraintSQLWriter{
+				Name:              c.Name,
+				Columns:           c.Columns,
+				IncludeColumns:    c.IncludeColumns,
+				StorageParameters: *c.StorageParameters,
+				Tablespace:        *c.Tablespace,
+			}
+			constraintsSQL[i] = writer.WriteExclude(c.Exclude.IndexMethod, c.Exclude.Elements)
+		case ConstraintTypeForeignKey:
+			constraintsSQL[i] = fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s)", c.Name, c.Columns, c.References.Table, c.References.Columns)
+			// TODO foreign key options
+		case ConstraintTypePrimaryKey:
+			writer := &ConstraintSQLWriter{
+				Name:              c.Name,
+				Columns:           c.Columns,
+				IncludeColumns:    c.IncludeColumns,
+				StorageParameters: *c.StorageParameters,
+				Tablespace:        *c.Tablespace,
+			}
+			constraintsSQL[i] = writer.WritePrimaryKey()
+		case ConstraintTypeUnique:
+			writer := &ConstraintSQLWriter{
+				Name:              c.Name,
+				Columns:           c.Columns,
+				IncludeColumns:    c.IncludeColumns,
+				StorageParameters: *c.StorageParameters,
+				Tablespace:        *c.Tablespace,
+			}
+			constraintsSQL[i] = writer.WriteUnique(*c.NullsNotDistinct)
+		}
+	}
+	return strings.Join(constraintsSQL, ", "), nil
+}
+
+type ConstraintSQLWriter struct {
+	Name    string
+	Columns []string
+
+	// unique, exclude, primary key constraints support the following options
+	IncludeColumns    []string
+	StorageParameters string
+	Tablespace        string
+}
+
+func (w *ConstraintSQLWriter) WriteExclude(indexMethod, elements string) string {
+	constraint := fmt.Sprintf("EXCLUDE USING %s (%s)", indexMethod, elements)
+	constraint += w.addIndexParameters()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WritePrimaryKey() string {
+	constraint := fmt.Sprintf("CONSTRAINT %s PRIMARY KEY (%s)", w.Name, strings.Join(quoteColumnNames(w.Columns), ", "))
+	constraint += w.addIndexParameters()
+	return ""
+}
+
+func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
+	nullsDistinct := ""
+	if nullsNotDistinct {
+		nullsDistinct = "NULLS NOT DISTINCT"
+	}
+	constraint := fmt.Sprintf("CONSTRAINT %s UNIQUE %s (%s)", w.Name, nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
+	constraint += w.addIndexParameters()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) addIndexParameters() string {
+	constraint := ""
+	if len(w.IncludeColumns) != 0 {
+		constraint += fmt.Sprintf(" INCLUDE (%s)", strings.Join(quoteColumnNames(w.IncludeColumns), ", "))
+	}
+	if w.StorageParameters != "" {
+		constraint += fmt.Sprintf(" WITH (%s)", w.StorageParameters)
+	}
+	if w.Tablespace != "" {
+		constraint += fmt.Sprintf(" USING INDEX TABLESPACE %s", w.Tablespace)
+	}
+	return constraint
 }

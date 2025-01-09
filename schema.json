@@ -155,8 +155,8 @@
             }
           }
         },
-        "defferable": {
-          "description": "Defferable constraint",
+        "deferable": {
+          "description": "Deferable constraint",
           "type": "boolean"
         },
         "initially_deferred": {
@@ -171,36 +171,34 @@
           "description": "Nulls not distinct constraint",
           "type": "boolean"
         },
+        "tablespace": {
+          "type": "string"
+        },
+        "storage_parameters": {
+          "type": "string"
+        },
+        "include_columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "exclude": {
           "description": "Exclude constraint",
           "additionalProperties": false,
           "type": "object",
           "properties": {
             "elements": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "type": "string"
             },
             "index_method": {
               "type": "string"
             },
-            "include_columns": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "storage_parameters": {
-              "type": "string"
-            },
             "predicate": {
               "type": "string"
-            },
-            "tablespace": {
-              "type": "string"
             }
-          }
+          },
+          "required": ["index_method", "elements"]
         }
       },
       "required": ["name", "type"],

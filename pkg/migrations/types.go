@@ -52,11 +52,14 @@ type Constraint struct {
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
-	// Defferable constraint
-	Defferable *bool `json:"defferable,omitempty"`
+	// Deferable constraint
+	Deferable *bool `json:"deferable,omitempty"`
 
 	// Exclude constraint
 	Exclude *ConstraintExclude `json:"exclude,omitempty"`
+
+	// IncludeColumns corresponds to the JSON schema field "include_columns".
+	IncludeColumns []string `json:"include_columns,omitempty"`
 
 	// Initially deferred constraint
 	InitiallyDeferred *bool `json:"initially_deferred,omitempty"`
@@ -73,6 +76,12 @@ type Constraint struct {
 	// Reference to the foreign key
 	References *ConstraintReferences `json:"references,omitempty"`
 
+	// StorageParameters corresponds to the JSON schema field "storage_parameters".
+	StorageParameters *string `json:"storage_parameters,omitempty"`
+
+	// Tablespace corresponds to the JSON schema field "tablespace".
+	Tablespace *string `json:"tablespace,omitempty"`
+
 	// Type of the constraint
 	Type ConstraintType `json:"type"`
 }
@@ -80,22 +89,13 @@ type Constraint struct {
 // Exclude constraint
 type ConstraintExclude struct {
 	// Elements corresponds to the JSON schema field "elements".
-	Elements []string `json:"elements,omitempty"`
-
-	// IncludeColumns corresponds to the JSON schema field "include_columns".
-	IncludeColumns []string `json:"include_columns,omitempty"`
+	Elements string `json:"elements"`
 
 	// IndexMethod corresponds to the JSON schema field "index_method".
-	IndexMethod *string `json:"index_method,omitempty"`
+	IndexMethod string `json:"index_method"`
 
 	// Predicate corresponds to the JSON schema field "predicate".
 	Predicate *string `json:"predicate,omitempty"`
-
-	// StorageParameters corresponds to the JSON schema field "storage_parameters".
-	StorageParameters *string `json:"storage_parameters,omitempty"`
-
-	// Tablespace corresponds to the JSON schema field "tablespace".
-	Tablespace *string `json:"tablespace,omitempty"`
 }
 
 // Reference to the foreign key
