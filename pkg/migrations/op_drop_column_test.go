@@ -308,5 +308,101 @@ func TestDropColumnInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "description")
 			},
 		},
+		{
+			name: "add column, drop column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "varchar(255)",
+								Nullable: true,
+							},
+							Up: "'foo'",
+						},
+						&migrations.OpDropColumn{
+							Table:  "items",
+							Column: "description",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// OpDropColumn drops columns on completion, so the column is still
+				// present after start, under its temporary name.
+				ColumnMustExist(t, db, schema, "items", migrations.TemporaryName("description"))
+
+				// Can't insert into the dropped column when accessing through the new schema
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "apples",
+					"description": "green",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// Can insert into the table if the dropped column is not specified
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name": "apples",
+				})
+
+				// The table has the expected rows in the old schema
+				rows := MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+				}, rows)
+
+				// The table has the expected rows in the new schema
+				rows = MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The underlying table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "description")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the table if the dropped column is not specified
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name": "bananas",
+				})
+
+				// Can't insert into the dropped column
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "carrots",
+					"description": "crunchy",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// The table has the expected rows in the new schema
+				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+					{"id": 2, "name": "bananas"},
+				}, rows)
+
+				// The underlying table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "description")
+			},
+		},
 	})
 }
