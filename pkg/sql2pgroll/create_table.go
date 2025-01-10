@@ -39,13 +39,13 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 		}
 	}
 
-	var constraints []migrations.Constraint
-	for _, c := range stmt.Constraints {
+	constraints := make([]migrations.Constraint, len(stmt.Constraints))
+	for i, c := range stmt.Constraints {
 		constraint, err := convertConstraint(c.GetConstraint())
 		if err != nil {
 			return nil, fmt.Errorf("error converting table constraint: %w", err)
 		}
-		constraints = append(constraints, *constraint)
+		constraints[i] = *constraint
 	}
 
 	return migrations.Operations{
