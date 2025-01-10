@@ -22,10 +22,16 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
+	constraintsSQL, err := constraintsToSQL(o.Constraints)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
+	}
+
 	// Create the table
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s)",
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
 		pq.QuoteIdentifier(o.Name),
-		columnsSQL))
+		columnsSQL,
+		constraintsSQL))
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +108,22 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	for _, c := range o.Constraints {
+		if c.Name == "" {
+			return FieldRequiredError{Name: "name"}
+		}
+		if err := ValidateIdentifierLength(c.Name); err != nil {
+			return fmt.Errorf("invalid constraint: %w", err)
+		}
+
+		switch c.Type { //nolint:gocritic // more cases are coming soon
+		case ConstraintTypeUnique:
+			if len(c.Columns) == 0 {
+				return FieldRequiredError{Name: "columns"}
+			}
+		}
+	}
+
 	// Update the schema to ensure that the new table is visible to validation of
 	// subsequent operations.
 	o.updateSchema(s)
@@ -118,9 +140,23 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Name: col.Name,
 		}
 	}
+	var uniqueConstraints map[string]*schema.UniqueConstraint
+	for _, c := range o.Constraints {
+		switch c.Type { //nolint:gocritic // more cases are coming soon
+		case ConstraintTypeUnique:
+			if uniqueConstraints == nil {
+				uniqueConstraints = make(map[string]*schema.UniqueConstraint)
+			}
+			uniqueConstraints[c.Name] = &schema.UniqueConstraint{
+				Name:    c.Name,
+				Columns: c.Columns,
+			}
+		}
+	}
 	s.AddTable(o.Name, &schema.Table{
-		Name:    o.Name,
-		Columns: columns,
+		Name:              o.Name,
+		Columns:           columns,
+		UniqueConstraints: uniqueConstraints,
 	})
 
 	return s
@@ -149,4 +185,89 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 		sql += fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
 	}
 	return sql, nil
+}
+
+func constraintsToSQL(constraints []Constraint) (string, error) {
+	constraintsSQL := make([]string, len(constraints))
+	for i, c := range constraints {
+		writer := &ConstraintSQLWriter{
+			Name:              c.Name,
+			Columns:           c.Columns,
+			InitiallyDeferred: c.InitiallyDeferred,
+			Deferrable:        c.Deferrable,
+		}
+		if c.IndexParameters != nil {
+			writer.IncludeColumns = c.IndexParameters.IncludeColumns
+			writer.StorageParameters = c.IndexParameters.StorageParameters
+			writer.Tablespace = c.IndexParameters.Tablespace
+		}
+
+		switch c.Type { //nolint:gocritic // more cases are coming soon
+		case ConstraintTypeUnique:
+			constraintsSQL[i] = writer.WriteUnique(c.NullsNotDistinct)
+		}
+	}
+	if len(constraintsSQL) == 0 {
+		return "", nil
+	}
+	return ", " + strings.Join(constraintsSQL, ", "), nil
+}
+
+type ConstraintSQLWriter struct {
+	Name              string
+	Columns           []string
+	InitiallyDeferred bool
+	Deferrable        bool
+
+	// unique, exclude, primary key constraints support the following options
+	IncludeColumns    []string
+	StorageParameters string
+	Tablespace        string
+}
+
+func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
+	var constraint string
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	nullsDistinct := ""
+	if nullsNotDistinct {
+		nullsDistinct = "NULLS NOT DISTINCT"
+	}
+	constraint += fmt.Sprintf("UNIQUE %s (%s)", nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
+	constraint += w.addIndexParameters()
+	constraint += w.addDeferrable()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) addIndexParameters() string {
+	constraint := ""
+	if len(w.IncludeColumns) != 0 {
+		constraint += fmt.Sprintf(" INCLUDE (%s)", strings.Join(quoteColumnNames(w.IncludeColumns), ", "))
+	}
+	if w.StorageParameters != "" {
+		constraint += fmt.Sprintf(" WITH (%s)", w.StorageParameters)
+	}
+	if w.Tablespace != "" {
+		constraint += fmt.Sprintf(" USING INDEX TABLESPACE %s", w.Tablespace)
+	}
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) addDeferrable() string {
+	if !w.InitiallyDeferred && !w.Deferrable {
+		return ""
+	}
+	deferrable := ""
+	if w.Deferrable {
+		deferrable += " DEFERRABLE"
+	} else {
+		deferrable += " NOT DEFERRABLE"
+	}
+	if w.InitiallyDeferred {
+		deferrable += " INITIALLY DEFERRED"
+	} else {
+		deferrable += " INITIALLY IMMEDIATE"
+	}
+	return deferrable
 }

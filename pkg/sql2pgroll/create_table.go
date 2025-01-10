@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -14,14 +15,16 @@ import (
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
 	if !canConvertCreateStatement(stmt) {
+		fmt.Println("cannot convert create statement")
 		return nil, nil
 	}
 
 	// Convert the table elements - table elements can be:
 	// - Column definitions
-	// - Table constraints (not supported)
+	// - Table constraints
 	// - LIKE clauses (not supported)
 	var columns []migrations.Column
+	var constraints []migrations.Constraint
 	for _, elt := range stmt.TableElts {
 		switch elt.Node.(type) {
 		case *pgq.Node_ColumnDef:
@@ -33,6 +36,15 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 				return nil, nil
 			}
 			columns = append(columns, *column)
+		case *pgq.Node_Constraint:
+			constraint, err := convertConstraint(elt.GetConstraint())
+			if err != nil {
+				return nil, fmt.Errorf("error converting table constraint: %w", err)
+			}
+			if constraint == nil {
+				return nil, nil
+			}
+			constraints = append(constraints, *constraint)
 		default:
 			return nil, nil
 		}
@@ -40,8 +52,9 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	return migrations.Operations{
 		&migrations.OpCreateTable{
-			Name:    getQualifiedRelationName(stmt.GetRelation()),
-			Columns: columns,
+			Name:        getQualifiedRelationName(stmt.GetRelation()),
+			Columns:     columns,
+			Constraints: constraints,
 		},
 	}, nil
 }
@@ -186,6 +199,66 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		References: foreignKey,
 		Default:    defaultValue,
 		Unique:     unique,
+	}, nil
+}
+
+func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
+	var constraintType migrations.ConstraintType
+	var nullsNotDistinct bool
+
+	switch c.Contype {
+	case pgq.ConstrType_CONSTR_UNIQUE:
+		constraintType = migrations.ConstraintTypeUnique
+		nullsNotDistinct = c.NullsNotDistinct
+	default:
+		return nil, nil
+	}
+
+	columns := make([]string, len(c.Keys))
+	for i, key := range c.Keys {
+		columns[i] = key.GetString_().Sval
+	}
+
+	including := make([]string, len(c.Including))
+	for i, include := range c.Including {
+		including[i] = include.GetString_().Sval
+	}
+
+	options := make([]string, len(c.Options))
+	for i, option := range c.Options {
+		var val string
+		switch v := option.GetDefElem().Arg.GetNode().(type) {
+		case *pgq.Node_Float:
+			val = v.Float.GetFval()
+		case *pgq.Node_Integer:
+			val = fmt.Sprintf("%d", v.Integer.GetIval())
+		case *pgq.Node_String_:
+			val = v.String_.GetSval()
+		case *pgq.Node_Boolean:
+			val = v.Boolean.String()
+		default:
+			return nil, fmt.Errorf("unsupported storage parameter type: %T", v)
+		}
+		options[i] = fmt.Sprintf("%s = '%s'", option.GetDefElem().Defname, val)
+	}
+
+	var indexParameters *migrations.ConstraintIndexParameters
+	if len(options) != 0 || c.Indexspace != "" || len(including) != 0 {
+		indexParameters = &migrations.ConstraintIndexParameters{
+			StorageParameters: strings.Join(options, ", "),
+			Tablespace:        c.Indexspace,
+			IncludeColumns:    including,
+		}
+	}
+
+	return &migrations.Constraint{
+		Name:              c.Conname,
+		Type:              constraintType,
+		Columns:           columns,
+		NullsNotDistinct:  nullsNotDistinct,
+		Deferrable:        c.Deferrable,
+		InitiallyDeferred: c.Initdeferred,
+		IndexParameters:   indexParameters,
 	}, nil
 }
 

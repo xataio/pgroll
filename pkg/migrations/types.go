@@ -44,6 +44,45 @@ type Column struct {
 	Unique bool `json:"unique,omitempty"`
 }
 
+// Constraint definition
+type Constraint struct {
+	// Columns to add constraint to
+	Columns []string `json:"columns,omitempty"`
+
+	// Deferable constraint
+	Deferrable bool `json:"deferrable,omitempty"`
+
+	// IndexParameters corresponds to the JSON schema field "index_parameters".
+	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty"`
+
+	// Initially deferred constraint
+	InitiallyDeferred bool `json:"initially_deferred,omitempty"`
+
+	// Name of the constraint
+	Name string `json:"name"`
+
+	// Nulls not distinct constraint
+	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty"`
+
+	// Type of the constraint
+	Type ConstraintType `json:"type"`
+}
+
+type ConstraintIndexParameters struct {
+	// IncludeColumns corresponds to the JSON schema field "include_columns".
+	IncludeColumns []string `json:"include_columns,omitempty"`
+
+	// StorageParameters corresponds to the JSON schema field "storage_parameters".
+	StorageParameters string `json:"storage_parameters,omitempty"`
+
+	// Tablespace corresponds to the JSON schema field "tablespace".
+	Tablespace string `json:"tablespace,omitempty"`
+}
+
+type ConstraintType string
+
+const ConstraintTypeUnique ConstraintType = "unique"
+
 // Foreign key reference definition
 type ForeignKeyReference struct {
 	// Name of the referenced column
@@ -211,6 +250,9 @@ type OpCreateTable struct {
 
 	// Postgres comment for the table
 	Comment *string `json:"comment,omitempty"`
+
+	// Constraints corresponds to the JSON schema field "constraints".
+	Constraints []Constraint `json:"constraints,omitempty"`
 
 	// Name of the table
 	Name string `json:"name"`

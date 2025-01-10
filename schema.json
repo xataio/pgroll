@@ -98,6 +98,65 @@
       "type": "string",
       "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"]
     },
+    "Constraint": {
+      "additionalProperties": false,
+      "description": "Constraint definition",
+      "properties": {
+        "name": {
+          "description": "Name of the constraint",
+          "type": "string"
+        },
+        "columns": {
+          "description": "Columns to add constraint to",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Type of the constraint",
+          "type": "string",
+          "enum": ["unique"]
+        },
+        "deferrable": {
+          "description": "Deferable constraint",
+          "type": "boolean",
+          "default": false
+        },
+        "initially_deferred": {
+          "description": "Initially deferred constraint",
+          "type": "boolean",
+          "default": false
+        },
+        "nulls_not_distinct": {
+          "description": "Nulls not distinct constraint",
+          "type": "boolean",
+          "default": false
+        },
+        "index_parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tablespace": {
+              "type": "string",
+              "default": ""
+            },
+            "storage_parameters": {
+              "type": "string",
+              "default": ""
+            },
+            "include_columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "required": ["name", "type"],
+      "type": "object"
+    },
     "OpAddColumn": {
       "additionalProperties": false,
       "description": "Add column operation",
@@ -279,6 +338,13 @@
         "comment": {
           "description": "Postgres comment for the table",
           "type": "string"
+        },
+        "constraints": {
+          "items": {
+            "$ref": "#/$defs/Constraint",
+            "description": "Constraints to add to the table"
+          },
+          "type": "array"
         }
       },
       "required": ["columns", "name"],
