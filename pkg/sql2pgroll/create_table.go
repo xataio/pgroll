@@ -40,6 +40,9 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error converting table constraint: %w", err)
 			}
+			if constraint == nil {
+				return nil, nil
+			}
 			constraints = append(constraints, *constraint)
 		default:
 			return nil, nil
@@ -207,7 +210,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		constraintType = migrations.ConstraintTypeUnique
 		nullsNotDistinct = ptr(c.NullsNotDistinct)
 	default:
-		return nil, fmt.Errorf("unsupported constraint type: %s", c.Contype)
+		return nil, nil
 	}
 
 	columns := make([]string, len(c.Keys))
