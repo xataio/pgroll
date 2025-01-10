@@ -195,9 +195,11 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			Columns:           c.Columns,
 			InitiallyDeferred: c.InitiallyDeferred,
 			Deferrable:        c.Deferrable,
-			IncludeColumns:    c.IndexParameters.IncludeColumns,
-			StorageParameters: c.IndexParameters.StorageParameters,
-			Tablespace:        c.IndexParameters.Tablespace,
+		}
+		if c.IndexParameters != nil {
+			writer.IncludeColumns = c.IndexParameters.IncludeColumns
+			writer.StorageParameters = c.IndexParameters.StorageParameters
+			writer.Tablespace = c.IndexParameters.Tablespace
 		}
 
 		switch c.Type { //nolint:gocritic // more cases are coming soon

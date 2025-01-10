@@ -665,6 +665,38 @@ func TestCreateTableValidation(t *testing.T) {
 			},
 			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
+		{
+			name: "missing column list in unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "table1",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "unique_name",
+									Type: migrations.ConstraintTypeUnique,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "columns"},
+		},
 	})
 }
 
