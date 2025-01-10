@@ -1724,6 +1724,100 @@ func TestAddColumnInMultiOperationMigrations(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "rename table, add column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAddColumn{
+							Table: "products",
+							Column: migrations.Column{
+								Name: "description",
+								Type: "text",
+							},
+							Up: "UPPER(name)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the new table in the new schema using its new name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name":        "apples",
+					"description": "green",
+				})
+
+				// Can't insert into the new table in the new schema using its old name
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "yellow",
+				}, testutils.UndefinedTableErrorCode)
+
+				// The table has the expected rows in the old schema
+				rows := MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+				}, rows)
+
+				// The table has the expected rows in the new schema
+				rows = MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "description": "green"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the old table in the old schema using its old name
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "bananas",
+				})
+
+				// The temporary column, functions and triggers have been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "description")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the new table in the new schema using its new name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name":        "carrots",
+					"description": "crunchy",
+				})
+
+				// The table has the new name in the new schema and has the expected
+				// rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "description": "APPLES"},
+					{"id": 2, "name": "bananas", "description": "BANANAS"},
+					{"id": 3, "name": "carrots", "description": "crunchy"},
+				}, rows)
+
+				// The temporary column, functions and triggers have been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "description")
+			},
+		},
 	})
 }
 
