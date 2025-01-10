@@ -80,6 +80,9 @@ type Column struct {
 
 	// Will contain possible enum values if the type is an enum
 	EnumValues []string `json:"enumValues"`
+
+	// Whether or not the column has been deleted in the virtual schema
+	Deleted bool `json:"-"`
 }
 
 // Index represents an index on a table
@@ -199,7 +202,7 @@ func (t *Table) GetColumn(name string) *Column {
 		return nil
 	}
 	c, ok := t.Columns[name]
-	if !ok {
+	if !ok || c.Deleted {
 		return nil
 	}
 	return c
@@ -255,9 +258,19 @@ func (t *Table) AddColumn(name string, c *Column) {
 	t.Columns[name] = c
 }
 
-// RemoveColumn removes a column from the table
+// RemoveColumn removes a column from the table by marking it as deleted
 func (t *Table) RemoveColumn(column string) {
-	delete(t.Columns, column)
+	if col, ok := t.Columns[column]; ok {
+		col.Deleted = true
+	}
+}
+
+// UnRemoveColumn unremoves a previously removed column by marking it as not
+// deleted
+func (t *Table) UnRemoveColumn(column string) {
+	if col, ok := t.Columns[column]; ok {
+		col.Deleted = false
+	}
 }
 
 // RenameColumn renames a column in the table
