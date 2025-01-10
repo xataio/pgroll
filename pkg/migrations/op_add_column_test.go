@@ -1658,6 +1658,75 @@ func TestAddColumnDefaultTransformation(t *testing.T) {
 	}, roll.WithSQLTransformer(sqlTransformer))
 }
 
+func TestAddColumnInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "create table, add column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name: "description",
+								Type: "text",
+							},
+							Up: "UPPER(name)",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the view in the new schema (the only version schema)
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name":        "apples",
+					"description": "green",
+				})
+
+				// The table has the expected rows
+				rows := MustSelect(t, db, schema, "01_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "description": "green"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table no longer exists
+				TableMustNotExist(t, db, schema, "items")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the view in the new schema (the only version schema)
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "yellow",
+				})
+
+				// The table has the expected rows
+				rows := MustSelect(t, db, schema, "01_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "bananas", "description": "yellow"},
+				}, rows)
+			},
+		},
+	})
+}
+
 func TestAddColumnToATableCreatedInTheSameMigration(t *testing.T) {
 	t.Parallel()
 
