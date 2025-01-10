@@ -15,6 +15,7 @@ import (
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
 	if !canConvertCreateStatement(stmt) {
+		fmt.Println("cannot convert create statement")
 		return nil, nil
 	}
 
@@ -203,12 +204,12 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 
 func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var constraintType migrations.ConstraintType
-	var nullsNotDistinct *bool
+	var nullsNotDistinct bool
 
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		constraintType = migrations.ConstraintTypeUnique
-		nullsNotDistinct = ptr(c.NullsNotDistinct)
+		nullsNotDistinct = c.NullsNotDistinct
 	default:
 		return nil, nil
 	}
@@ -240,20 +241,12 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 		options[i] = fmt.Sprintf("%s = '%s'", option.GetDefElem().Defname, val)
 	}
-	var storageParameters *string
-	if len(options) != 0 {
-		storageParameters = ptr(strings.Join(options, ", "))
-	}
 
-	var tablespace *string
-	if c.Indexspace != "" {
-		tablespace = ptr(c.Indexspace)
-	}
 	var indexParameters *migrations.ConstraintIndexParameters
-	if storageParameters != nil || tablespace != nil || len(including) != 0 {
+	if len(options) != 0 || c.Indexspace != "" || len(including) != 0 {
 		indexParameters = &migrations.ConstraintIndexParameters{
-			StorageParameters: storageParameters,
-			Tablespace:        tablespace,
+			StorageParameters: strings.Join(options, ", "),
+			Tablespace:        c.Indexspace,
 			IncludeColumns:    including,
 		}
 	}
@@ -263,8 +256,8 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		Type:              constraintType,
 		Columns:           columns,
 		NullsNotDistinct:  nullsNotDistinct,
-		Deferrable:        ptr(c.Deferrable),
-		InitiallyDeferred: ptr(c.Initdeferred),
+		Deferrable:        c.Deferrable,
+		InitiallyDeferred: c.Initdeferred,
 		IndexParameters:   indexParameters,
 	}, nil
 }

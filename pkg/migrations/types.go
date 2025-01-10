@@ -50,19 +50,19 @@ type Constraint struct {
 	Columns []string `json:"columns,omitempty"`
 
 	// Deferable constraint
-	Deferrable *bool `json:"deferrable,omitempty"`
+	Deferrable bool `json:"deferrable,omitempty"`
 
 	// IndexParameters corresponds to the JSON schema field "index_parameters".
 	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty"`
 
 	// Initially deferred constraint
-	InitiallyDeferred *bool `json:"initially_deferred,omitempty"`
+	InitiallyDeferred bool `json:"initially_deferred,omitempty"`
 
 	// Name of the constraint
 	Name string `json:"name"`
 
 	// Nulls not distinct constraint
-	NullsNotDistinct *bool `json:"nulls_not_distinct,omitempty"`
+	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty"`
 
 	// Type of the constraint
 	Type ConstraintType `json:"type"`
@@ -73,10 +73,10 @@ type ConstraintIndexParameters struct {
 	IncludeColumns []string `json:"include_columns,omitempty"`
 
 	// StorageParameters corresponds to the JSON schema field "storage_parameters".
-	StorageParameters *string `json:"storage_parameters,omitempty"`
+	StorageParameters string `json:"storage_parameters,omitempty"`
 
 	// Tablespace corresponds to the JSON schema field "tablespace".
-	Tablespace *string `json:"tablespace,omitempty"`
+	Tablespace string `json:"tablespace,omitempty"`
 }
 
 type ConstraintType string

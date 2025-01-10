@@ -120,25 +120,30 @@
         },
         "deferrable": {
           "description": "Deferable constraint",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "initially_deferred": {
           "description": "Initially deferred constraint",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "nulls_not_distinct": {
           "description": "Nulls not distinct constraint",
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "index_parameters": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
             "tablespace": {
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "storage_parameters": {
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "include_columns": {
               "type": "array",

@@ -195,15 +195,9 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			Columns:           c.Columns,
 			InitiallyDeferred: c.InitiallyDeferred,
 			Deferrable:        c.Deferrable,
-		}
-		if c.IndexParameters != nil {
-			writer.IncludeColumns = c.IndexParameters.IncludeColumns
-			if c.IndexParameters.StorageParameters != nil {
-				writer.StorageParameters = *c.IndexParameters.StorageParameters
-			}
-			if c.IndexParameters.Tablespace != nil {
-				writer.Tablespace = *c.IndexParameters.Tablespace
-			}
+			IncludeColumns:    c.IndexParameters.IncludeColumns,
+			StorageParameters: c.IndexParameters.StorageParameters,
+			Tablespace:        c.IndexParameters.Tablespace,
 		}
 
 		switch c.Type { //nolint:gocritic // more cases are coming soon
@@ -220,8 +214,8 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 type ConstraintSQLWriter struct {
 	Name              string
 	Columns           []string
-	InitiallyDeferred *bool
-	Deferrable        *bool
+	InitiallyDeferred bool
+	Deferrable        bool
 
 	// unique, exclude, primary key constraints support the following options
 	IncludeColumns    []string
@@ -229,13 +223,13 @@ type ConstraintSQLWriter struct {
 	Tablespace        string
 }
 
-func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct *bool) string {
+func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
 	var constraint string
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
 	nullsDistinct := ""
-	if nullsNotDistinct != nil && *nullsNotDistinct {
+	if nullsNotDistinct {
 		nullsDistinct = "NULLS NOT DISTINCT"
 	}
 	constraint += fmt.Sprintf("UNIQUE %s (%s)", nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
@@ -259,23 +253,19 @@ func (w *ConstraintSQLWriter) addIndexParameters() string {
 }
 
 func (w *ConstraintSQLWriter) addDeferrable() string {
-	if w.InitiallyDeferred != nil && *w.Deferrable {
+	if !w.InitiallyDeferred && !w.Deferrable {
 		return ""
 	}
 	deferrable := ""
-	if w.Deferrable != nil {
-		if *w.Deferrable {
-			deferrable += " DEFERRABLE"
-		} else {
-			deferrable += " NOT DEFERRABLE"
-		}
+	if w.Deferrable {
+		deferrable += " DEFERRABLE"
+	} else {
+		deferrable += " NOT DEFERRABLE"
 	}
-	if w.InitiallyDeferred != nil {
-		if *w.InitiallyDeferred {
-			deferrable = " INITIALLY DEFERRED"
-		} else {
-			deferrable = " INITIALLY IMMEDIATE"
-		}
+	if w.InitiallyDeferred {
+		deferrable += " INITIALLY DEFERRED"
+	} else {
+		deferrable += " INITIALLY IMMEDIATE"
 	}
 	return deferrable
 }

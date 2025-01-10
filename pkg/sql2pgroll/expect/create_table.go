@@ -318,9 +318,9 @@ var CreateTableOp22 = &migrations.OpCreateTable{
 		{
 			Type:              migrations.ConstraintTypeUnique,
 			Columns:           []string{"b", "c"},
-			NullsNotDistinct:  ptr(false),
-			Deferrable:        ptr(false),
-			InitiallyDeferred: ptr(false),
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
 		},
 	},
 }
@@ -343,13 +343,13 @@ var CreateTableOp23 = &migrations.OpCreateTable{
 		{
 			Type:              migrations.ConstraintTypeUnique,
 			Columns:           []string{"b"},
-			NullsNotDistinct:  ptr(false),
-			Deferrable:        ptr(false),
-			InitiallyDeferred: ptr(false),
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
 			IndexParameters: &migrations.ConstraintIndexParameters{
 				IncludeColumns:    []string{"c"},
-				StorageParameters: ptr("fillfactor = '70'"),
-				Tablespace:        ptr("my_tablespace"),
+				StorageParameters: "fillfactor = '70'",
+				Tablespace:        "my_tablespace",
 			},
 		},
 	},
