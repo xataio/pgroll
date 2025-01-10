@@ -170,7 +170,7 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp22,
 		},
 		{
-			sql:        "CREATE TABLE foo(b text, c text, UNIQUE (b) include (c) with (fillfactor = 70) using index tablespace my_tablespace)",
+			sql:        "CREATE TABLE foo(b text, c text, UNIQUE (b) INCLUDE (c) WITH (fillfactor = 70) USING INDEX TABLESPACE my_tablespace)",
 			expectedOp: expect.CreateTableOp23,
 		},
 	}
