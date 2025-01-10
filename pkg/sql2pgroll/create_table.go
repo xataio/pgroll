@@ -20,9 +20,10 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	// Convert the table elements - table elements can be:
 	// - Column definitions
-	// - Table constraints (not supported)
+	// - Table constraints
 	// - LIKE clauses (not supported)
 	var columns []migrations.Column
+	var constraints []migrations.Constraint
 	for _, elt := range stmt.TableElts {
 		switch elt.Node.(type) {
 		case *pgq.Node_ColumnDef:
@@ -34,18 +35,15 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 				return nil, nil
 			}
 			columns = append(columns, *column)
+		case *pgq.Node_Constraint:
+			constraint, err := convertConstraint(elt.GetConstraint())
+			if err != nil {
+				return nil, fmt.Errorf("error converting table constraint: %w", err)
+			}
+			constraints = append(constraints, *constraint)
 		default:
 			return nil, nil
 		}
-	}
-
-	constraints := make([]migrations.Constraint, len(stmt.Constraints))
-	for i, c := range stmt.Constraints {
-		constraint, err := convertConstraint(c.GetConstraint())
-		if err != nil {
-			return nil, fmt.Errorf("error converting table constraint: %w", err)
-		}
-		constraints[i] = *constraint
 	}
 
 	return migrations.Operations{
@@ -212,6 +210,11 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		return nil, fmt.Errorf("unsupported constraint type: %s", c.Contype)
 	}
 
+	columns := make([]string, len(c.Keys))
+	for i, key := range c.Keys {
+		columns[i] = key.GetString_().Sval
+	}
+
 	including := make([]string, len(c.Including))
 	for i, include := range c.Including {
 		including[i] = include.GetString_().Sval
@@ -255,6 +258,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	return &migrations.Constraint{
 		Name:              c.Conname,
 		Type:              constraintType,
+		Columns:           columns,
 		NullsNotDistinct:  nullsNotDistinct,
 		Deferrable:        ptr(c.Deferrable),
 		InitiallyDeferred: ptr(c.Initdeferred),

@@ -230,11 +230,15 @@ type ConstraintSQLWriter struct {
 }
 
 func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct *bool) string {
+	var constraint string
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
 	nullsDistinct := ""
 	if nullsNotDistinct != nil && *nullsNotDistinct {
 		nullsDistinct = "NULLS NOT DISTINCT"
 	}
-	constraint := fmt.Sprintf("CONSTRAINT %s UNIQUE %s (%s)", pq.QuoteIdentifier(w.Name), nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
+	constraint += fmt.Sprintf("UNIQUE %s (%s)", nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
 	constraint += w.addIndexParameters()
 	constraint += w.addDeferrable()
 	return constraint
