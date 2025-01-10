@@ -52,6 +52,10 @@ func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransform
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
 
+	// Mark the column as no longer deleted so thats it's visible to preceding
+	// rollback operations in the same migration
+	s.GetTable(o.Table).UnRemoveColumn(o.Column)
+
 	return err
 }
 
