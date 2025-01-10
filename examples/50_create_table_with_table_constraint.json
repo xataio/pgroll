@@ -27,9 +27,13 @@
           {
             "name": "unique_numbers",
             "type": "unique",
-            "columns": ["phone"],
+            "columns": [
+              "phone"
+            ],
             "index_parameters": {
-              "include_columns": ["name"]
+              "include_columns": [
+                "name"
+              ]
             }
           }
         ]

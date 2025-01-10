@@ -304,18 +304,23 @@ var CreateTableOp22 = &migrations.OpCreateTable{
 			Pk:   true,
 		},
 		{
-			Name: "b",
-			Type: "text",
+			Name:     "b",
+			Type:     "text",
+			Nullable: true,
 		},
 		{
-			Name: "c",
-			Type: "text",
+			Name:     "c",
+			Type:     "text",
+			Nullable: true,
 		},
 	},
 	Constraints: []migrations.Constraint{
 		{
-			Type:    migrations.ConstraintTypeUnique,
-			Columns: []string{"b", "c"},
+			Type:              migrations.ConstraintTypeUnique,
+			Columns:           []string{"b", "c"},
+			NullsNotDistinct:  ptr(false),
+			Deferrable:        ptr(false),
+			InitiallyDeferred: ptr(false),
 		},
 	},
 }
@@ -324,21 +329,26 @@ var CreateTableOp23 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
-			Name: "b",
-			Type: "text",
+			Name:     "b",
+			Type:     "text",
+			Nullable: true,
 		},
 		{
-			Name: "c",
-			Type: "text",
+			Name:     "c",
+			Type:     "text",
+			Nullable: true,
 		},
 	},
 	Constraints: []migrations.Constraint{
 		{
-			Type:    migrations.ConstraintTypeUnique,
-			Columns: []string{"b"},
+			Type:              migrations.ConstraintTypeUnique,
+			Columns:           []string{"b"},
+			NullsNotDistinct:  ptr(false),
+			Deferrable:        ptr(false),
+			InitiallyDeferred: ptr(false),
 			IndexParameters: &migrations.ConstraintIndexParameters{
 				IncludeColumns:    []string{"c"},
-				StorageParameters: ptr("fillfactor=70"),
+				StorageParameters: ptr("fillfactor = '70'"),
 				Tablespace:        ptr("my_tablespace"),
 			},
 		},
