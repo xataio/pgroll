@@ -46,10 +46,10 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
-			Columns:        s.GetTable(o.Table).Columns,
+			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: TemporaryName(o.Column.Name),
 			SQL:            o.Up,
 		})
