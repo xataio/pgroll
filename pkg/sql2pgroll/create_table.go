@@ -203,32 +203,11 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var constraintType migrations.ConstraintType
 	var nullsNotDistinct *bool
-	var exclude *migrations.ConstraintExclude
 
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		constraintType = migrations.ConstraintTypeUnique
 		nullsNotDistinct = ptr(c.NullsNotDistinct)
-	case pgq.ConstrType_CONSTR_EXCLUSION:
-		exclusionElemens := make([]string, len(c.Exclusions))
-		for i, ex := range c.Exclusions {
-			if len(ex.GetList().Items) != 2 {
-				return nil, fmt.Errorf("unexpected number of elements in exclusion constraint: %d", len(ex.GetList().Items))
-			}
-			colName := ex.GetList().Items[0].GetIndexElem().Name
-			opName := ex.GetList().Items[1].GetString_().Sval
-			exclusionElemens[i] = fmt.Sprintf("%s WITH %s", colName, opName)
-		}
-		exclude = &migrations.ConstraintExclude{
-			Elements:    strings.Join(exclusionElemens, ", "),
-			IndexMethod: c.AccessMethod,
-		}
-	case pgq.ConstrType_CONSTR_PRIMARY:
-		constraintType = migrations.ConstraintTypePrimaryKey
-	case pgq.ConstrType_CONSTR_FOREIGN:
-		constraintType = migrations.ConstraintTypeForeignKey
-	case pgq.ConstrType_CONSTR_CHECK:
-		constraintType = migrations.ConstraintTypeCheck
 	default:
 		return nil, fmt.Errorf("unsupported constraint type: %s", c.Contype)
 	}
@@ -264,18 +243,22 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	if c.Indexspace != "" {
 		tablespace = ptr(c.Indexspace)
 	}
+	var indexParameters *migrations.ConstraintIndexParameters
+	if storageParameters != nil || tablespace != nil || len(including) != 0 {
+		indexParameters = &migrations.ConstraintIndexParameters{
+			StorageParameters: storageParameters,
+			Tablespace:        tablespace,
+			IncludeColumns:    including,
+		}
+	}
 
 	return &migrations.Constraint{
 		Name:              c.Conname,
 		Type:              constraintType,
 		NullsNotDistinct:  nullsNotDistinct,
-		Deferable:         ptr(c.Deferrable),
+		Deferrable:        ptr(c.Deferrable),
 		InitiallyDeferred: ptr(c.Initdeferred),
-		NoInherit:         ptr(c.IsNoInherit),
-		StorageParameters: storageParameters,
-		Tablespace:        tablespace,
-		IncludeColumns:    including,
-		Exclude:           exclude,
+		IndexParameters:   indexParameters,
 	}, nil
 }
 

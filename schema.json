@@ -116,46 +116,9 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check", "primary_key", "foreign_key", "exclude"]
+          "enum": ["unique"]
         },
-        "check": {
-          "description": "Check constraint expression",
-          "type": "string"
-        },
-        "references": {
-          "description": "Reference to the foreign key",
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["table", "columns"],
-          "properties": {
-            "table": {
-              "description": "Name of the table",
-              "type": "string"
-            },
-            "columns": {
-              "description": "Columns to reference",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "on_delete": {
-              "description": "On delete behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
-              "default": "NO ACTION"
-            },
-            "on_update": {
-              "description": "On update behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
-              "default": "NO ACTION"
-            },
-            "match_type": {
-              "description": "Match type of the foreign key constraint",
-              "type": "string"
-            }
-          }
-        },
-        "deferable": {
+        "deferrable": {
           "description": "Deferable constraint",
           "type": "boolean"
         },
@@ -163,42 +126,27 @@
           "description": "Initially deferred constraint",
           "type": "boolean"
         },
-        "no_inherit": {
-          "description": "No inherit constraint",
-          "type": "boolean"
-        },
         "nulls_not_distinct": {
           "description": "Nulls not distinct constraint",
           "type": "boolean"
         },
-        "tablespace": {
-          "type": "string"
-        },
-        "storage_parameters": {
-          "type": "string"
-        },
-        "include_columns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "exclude": {
-          "description": "Exclude constraint",
-          "additionalProperties": false,
+        "index_parameters": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
-            "elements": {
+            "tablespace": {
               "type": "string"
             },
-            "index_method": {
+            "storage_parameters": {
               "type": "string"
             },
-            "predicate": {
-              "type": "string"
+            "include_columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
-          },
-          "required": ["index_method", "elements"]
+          }
         }
       },
       "required": ["name", "type"],

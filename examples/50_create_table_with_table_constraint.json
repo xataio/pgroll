@@ -1,0 +1,39 @@
+{
+  "name": "50_create_table_with_table_constraint",
+  "operations": [
+    {
+      "create_table": {
+        "name": "phonebook",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "city",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "phone",
+            "type": "varchar(255)"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "unique_numbers",
+            "type": "unique",
+            "columns": ["phone"],
+            "index_parameters": {
+              "include_columns": ["name"]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -483,6 +483,70 @@ func TestCreateTable(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
 			},
 		},
+		{
+			name: "create table with a unique table constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "unique_name",
+									Type: migrations.ConstraintTypeUnique,
+									Columns: []string{
+										"name",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The unique constraint exists on the new table.
+				UniqueConstraintMustExist(t, db, schema, "users", "unique_name")
+
+				// Inserting a row into the table succeeds when the unique constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails when the unique constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the unique constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				UniqueConstraintMustExist(t, db, schema, "users", "unique_name")
+
+				// Inserting a row into the table succeeds when the unique constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the unique constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "bobby",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
 	})
 }
 

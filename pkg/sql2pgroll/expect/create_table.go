@@ -294,3 +294,53 @@ var CreateTableOp21 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp22 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name: "a",
+			Type: "serial",
+			Pk:   true,
+		},
+		{
+			Name: "b",
+			Type: "text",
+		},
+		{
+			Name: "c",
+			Type: "text",
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:    migrations.ConstraintTypeUnique,
+			Columns: []string{"b", "c"},
+		},
+	},
+}
+
+var CreateTableOp23 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name: "b",
+			Type: "text",
+		},
+		{
+			Name: "c",
+			Type: "text",
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:    migrations.ConstraintTypeUnique,
+			Columns: []string{"b"},
+			IndexParameters: &migrations.ConstraintIndexParameters{
+				IncludeColumns:    []string{"c"},
+				StorageParameters: ptr("fillfactor=70"),
+				Tablespace:        ptr("my_tablespace"),
+			},
+		},
+	},
+}

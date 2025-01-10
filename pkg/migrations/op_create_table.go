@@ -108,7 +108,6 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	primaryFound := false
 	for _, c := range o.Constraints {
 		if c.Name == "" {
 			return FieldRequiredError{Name: "name"}
@@ -117,33 +116,10 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			return fmt.Errorf("invalid constraint: %w", err)
 		}
 
-		switch c.Type {
-		case ConstraintTypePrimaryKey:
-			if primaryFound {
-				return fmt.Errorf("multiple primary key constraints defined for table %s", o.Name)
-			}
-			primaryFound = true
-			if len(c.Columns) == 0 {
-				return FieldRequiredError{Name: "columns"}
-			}
+		switch c.Type { //nolint:gocritic // more cases are coming soon
 		case ConstraintTypeUnique:
 			if len(c.Columns) == 0 {
 				return FieldRequiredError{Name: "columns"}
-			}
-		case ConstraintTypeCheck:
-			if c.Check == nil {
-				return FieldRequiredError{Name: "check"}
-			}
-		case ConstraintTypeForeignKey:
-			if c.References == nil {
-				return FieldRequiredError{Name: "references"}
-			}
-		case ConstraintTypeExclude:
-			if c.Exclude == nil {
-				return FieldRequiredError{Name: "exclude"}
-			}
-			if c.Exclude.Elements == "" {
-				return FieldRequiredError{Name: "exclude.elements"}
 			}
 		}
 	}
@@ -159,20 +135,14 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 // the new table.
 func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	columns := make(map[string]*schema.Column, len(o.Columns))
-	var primaryKeys []string
 	for _, col := range o.Columns {
 		columns[col.Name] = &schema.Column{
 			Name: col.Name,
 		}
-		if col.Pk {
-			primaryKeys = append(primaryKeys, col.Name)
-		}
 	}
 	var uniqueConstraints map[string]*schema.UniqueConstraint
-	var checkConstraints map[string]*schema.CheckConstraint
-	var foreignKeys map[string]schema.ForeignKey
 	for _, c := range o.Constraints {
-		switch c.Type {
+		switch c.Type { //nolint:gocritic // more cases are coming soon
 		case ConstraintTypeUnique:
 			if uniqueConstraints == nil {
 				uniqueConstraints = make(map[string]*schema.UniqueConstraint)
@@ -181,35 +151,11 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 				Name:    c.Name,
 				Columns: c.Columns,
 			}
-		case ConstraintTypeCheck:
-			if checkConstraints == nil {
-				checkConstraints = make(map[string]*schema.CheckConstraint)
-			}
-			checkConstraints[c.Name] = &schema.CheckConstraint{
-				Name:       c.Name,
-				Columns:    c.Columns,
-				Definition: *c.Check,
-			}
-		case ConstraintTypePrimaryKey:
-			primaryKeys = c.Columns
-		case ConstraintTypeForeignKey:
-			if foreignKeys == nil {
-				foreignKeys = make(map[string]schema.ForeignKey)
-			}
-			foreignKeys[c.Name] = schema.ForeignKey{
-				Name:              c.Name,
-				Columns:           c.Columns,
-				ReferencedTable:   c.References.Table,
-				ReferencedColumns: c.References.Columns,
-				OnDelete:          string(c.References.OnDelete),
-			}
 		}
 	}
 	s.AddTable(o.Name, &schema.Table{
 		Name:              o.Name,
 		Columns:           columns,
-		PrimaryKey:        primaryKeys,
-		CheckConstraints:  checkConstraints,
 		UniqueConstraints: uniqueConstraints,
 	})
 
@@ -247,30 +193,35 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		writer := &ConstraintSQLWriter{
 			Name:              c.Name,
 			Columns:           c.Columns,
-			IncludeColumns:    c.IncludeColumns,
-			StorageParameters: *c.StorageParameters,
-			Tablespace:        *c.Tablespace,
+			InitiallyDeferred: c.InitiallyDeferred,
+			Deferrable:        c.Deferrable,
+		}
+		if c.IndexParameters != nil {
+			writer.IncludeColumns = c.IndexParameters.IncludeColumns
+			if c.IndexParameters.StorageParameters != nil {
+				writer.StorageParameters = *c.IndexParameters.StorageParameters
+			}
+			if c.IndexParameters.Tablespace != nil {
+				writer.Tablespace = *c.IndexParameters.Tablespace
+			}
 		}
 
-		switch c.Type {
-		case ConstraintTypeCheck:
-			constraintsSQL[i] = writer.WriteCheck(*c.Check)
-		case ConstraintTypeExclude:
-			constraintsSQL[i] = writer.WriteExclude(c.Exclude.IndexMethod, c.Exclude.Elements)
-		case ConstraintTypeForeignKey:
-			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate)
-		case ConstraintTypePrimaryKey:
-			constraintsSQL[i] = writer.WritePrimaryKey()
+		switch c.Type { //nolint:gocritic // more cases are coming soon
 		case ConstraintTypeUnique:
-			constraintsSQL[i] = writer.WriteUnique(*c.NullsNotDistinct)
+			constraintsSQL[i] = writer.WriteUnique(c.NullsNotDistinct)
 		}
 	}
-	return strings.Join(constraintsSQL, ", "), nil
+	if len(constraintsSQL) == 0 {
+		return "", nil
+	}
+	return ", " + strings.Join(constraintsSQL, ", "), nil
 }
 
 type ConstraintSQLWriter struct {
-	Name    string
-	Columns []string
+	Name              string
+	Columns           []string
+	InitiallyDeferred *bool
+	Deferrable        *bool
 
 	// unique, exclude, primary key constraints support the following options
 	IncludeColumns    []string
@@ -278,50 +229,14 @@ type ConstraintSQLWriter struct {
 	Tablespace        string
 }
 
-func (w *ConstraintSQLWriter) WriteCheck(check string) string {
-	constraint := fmt.Sprintf("CONSTRAINT %s CHECK (%s)", pq.QuoteIdentifier(w.Name), check)
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteExclude(indexMethod, elements string) string {
-	constraint := fmt.Sprintf("CONSTRAINT %s EXCLUDE USING %s (%s)", pq.QuoteIdentifier(w.Name), indexMethod, elements)
-	constraint += w.addIndexParameters()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDeleteAction, onUpdateAction ForeignKeyReferenceOnDelete) string {
-	onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
-	if onDeleteAction != "" {
-		onDelete = strings.ToUpper(string(onDeleteAction))
-	}
-	onUpdate := string(ForeignKeyReferenceOnDeleteNOACTION)
-	if onUpdateAction != "" {
-		onUpdate = strings.ToUpper(string(onUpdateAction))
-	}
-	constraint := fmt.Sprintf("CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
-		pq.QuoteIdentifier(w.Name),
-		strings.Join(quoteColumnNames(w.Columns), ", "),
-		pq.QuoteIdentifier(referencedTable),
-		strings.Join(quoteColumnNames(referencedColumns), ", "),
-		onDelete,
-		onUpdate,
-	)
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WritePrimaryKey() string {
-	constraint := fmt.Sprintf("CONSTRAINT %s PRIMARY KEY (%s)", pq.QuoteIdentifier(w.Name), strings.Join(quoteColumnNames(w.Columns), ", "))
-	constraint += w.addIndexParameters()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
+func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct *bool) string {
 	nullsDistinct := ""
-	if nullsNotDistinct {
+	if nullsNotDistinct != nil && *nullsNotDistinct {
 		nullsDistinct = "NULLS NOT DISTINCT"
 	}
 	constraint := fmt.Sprintf("CONSTRAINT %s UNIQUE %s (%s)", pq.QuoteIdentifier(w.Name), nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
 	constraint += w.addIndexParameters()
+	constraint += w.addDeferrable()
 	return constraint
 }
 
@@ -337,4 +252,26 @@ func (w *ConstraintSQLWriter) addIndexParameters() string {
 		constraint += fmt.Sprintf(" USING INDEX TABLESPACE %s", w.Tablespace)
 	}
 	return constraint
+}
+
+func (w *ConstraintSQLWriter) addDeferrable() string {
+	if w.InitiallyDeferred != nil && *w.Deferrable {
+		return ""
+	}
+	deferrable := ""
+	if w.Deferrable != nil {
+		if *w.Deferrable {
+			deferrable += " DEFERRABLE"
+		} else {
+			deferrable += " NOT DEFERRABLE"
+		}
+	}
+	if w.InitiallyDeferred != nil {
+		if *w.InitiallyDeferred {
+			deferrable = " INITIALLY DEFERRED"
+		} else {
+			deferrable = " INITIALLY IMMEDIATE"
+		}
+	}
+	return deferrable
 }

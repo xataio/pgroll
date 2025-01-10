@@ -46,20 +46,14 @@ type Column struct {
 
 // Constraint definition
 type Constraint struct {
-	// Check constraint expression
-	Check *string `json:"check,omitempty"`
-
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
 	// Deferable constraint
-	Deferable *bool `json:"deferable,omitempty"`
+	Deferrable *bool `json:"deferrable,omitempty"`
 
-	// Exclude constraint
-	Exclude *ConstraintExclude `json:"exclude,omitempty"`
-
-	// IncludeColumns corresponds to the JSON schema field "include_columns".
-	IncludeColumns []string `json:"include_columns,omitempty"`
+	// IndexParameters corresponds to the JSON schema field "index_parameters".
+	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty"`
 
 	// Initially deferred constraint
 	InitiallyDeferred *bool `json:"initially_deferred,omitempty"`
@@ -67,61 +61,26 @@ type Constraint struct {
 	// Name of the constraint
 	Name string `json:"name"`
 
-	// No inherit constraint
-	NoInherit *bool `json:"no_inherit,omitempty"`
-
 	// Nulls not distinct constraint
 	NullsNotDistinct *bool `json:"nulls_not_distinct,omitempty"`
 
-	// Reference to the foreign key
-	References *ConstraintReferences `json:"references,omitempty"`
+	// Type of the constraint
+	Type ConstraintType `json:"type"`
+}
+
+type ConstraintIndexParameters struct {
+	// IncludeColumns corresponds to the JSON schema field "include_columns".
+	IncludeColumns []string `json:"include_columns,omitempty"`
 
 	// StorageParameters corresponds to the JSON schema field "storage_parameters".
 	StorageParameters *string `json:"storage_parameters,omitempty"`
 
 	// Tablespace corresponds to the JSON schema field "tablespace".
 	Tablespace *string `json:"tablespace,omitempty"`
-
-	// Type of the constraint
-	Type ConstraintType `json:"type"`
-}
-
-// Exclude constraint
-type ConstraintExclude struct {
-	// Elements corresponds to the JSON schema field "elements".
-	Elements string `json:"elements"`
-
-	// IndexMethod corresponds to the JSON schema field "index_method".
-	IndexMethod string `json:"index_method"`
-
-	// Predicate corresponds to the JSON schema field "predicate".
-	Predicate *string `json:"predicate,omitempty"`
-}
-
-// Reference to the foreign key
-type ConstraintReferences struct {
-	// Columns to reference
-	Columns []string `json:"columns"`
-
-	// Match type of the foreign key constraint
-	MatchType *string `json:"match_type,omitempty"`
-
-	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
-
-	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyReferenceOnDelete `json:"on_update,omitempty"`
-
-	// Name of the table
-	Table string `json:"table"`
 }
 
 type ConstraintType string
 
-const ConstraintTypeCheck ConstraintType = "check"
-const ConstraintTypeExclude ConstraintType = "exclude"
-const ConstraintTypeForeignKey ConstraintType = "foreign_key"
-const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
 
 // Foreign key reference definition

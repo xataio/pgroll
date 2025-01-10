@@ -164,6 +164,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(a serial PRIMARY KEY, b int DEFAULT 100 CHECK (b > 0), c text NOT NULL UNIQUE)",
 			expectedOp: expect.CreateTableOp21,
 		},
+		{
+			sql:        "CREATE TABLE foo(a serial PRIMARY KEY, b text, c text, UNIQUE (b, c)",
+			expectedOp: expect.CreateTableOp22,
+		},
+		{
+			sql:        "CREATE TABLE foo(b text, c text, UNIQUE (b) include (c) with (fillfactor = 70))",
+			expectedOp: expect.CreateTableOp23,
+		},
 	}
 
 	for _, tc := range tests {
@@ -232,11 +240,9 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Table constraints, named and unnamed, are not supported
 		"CREATE TABLE foo(a int, CONSTRAINT foo_check CHECK (a > 0))",
-		"CREATE TABLE foo(a int, CONSTRAINT foo_unique UNIQUE (a))",
 		"CREATE TABLE foo(a int, CONSTRAINT foo_pk PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
 		"CREATE TABLE foo(a int, CHECK (a > 0))",
-		"CREATE TABLE foo(a int, UNIQUE (a))",
 		"CREATE TABLE foo(a int, PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
