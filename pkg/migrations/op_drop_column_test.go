@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -187,6 +188,124 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The column has been deleted from the underlying table.
 				ColumnMustNotExist(t, db, schema, "users", "array")
+			},
+		},
+	})
+}
+
+func TestDropColumnInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, drop column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+								{
+									Name: "description",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpDropColumn{
+							Table:  "products",
+							Column: "description",
+							Down:   "'foo'",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert using the new table name in the new schema if the dropped
+				// column is not specified
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "apples",
+				})
+
+				// Can't insert using the new table name in the new schema if the
+				// dropped column is specified
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name":        "apples",
+					"description": "green",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// Can't insert into the dropped column in the new schema using the new table name
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name":        "bananas",
+					"description": "yellow",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// Can't insert into the dropped column in the new schema using the old table name
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "yellow",
+				}, testutils.UndefinedTableErrorCode)
+
+				// The table has the expected rows in the old schema
+				rows := MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "description": "foo"},
+				}, rows)
+
+				// The table has the expected rows in the new schema
+				rows = MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the dropped column in the old schema using the old table name
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name":        "bananas",
+					"description": "yellow",
+				})
+
+				// The down trigger has been removed from the underlying table
+				TableMustBeCleanedUp(t, db, schema, "items", "description")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The underlying table has been renamed
+				TableMustExist(t, db, schema, "products")
+
+				// Can insert into the table in the new schema if the dropped column is not specified
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "carrots",
+				})
+
+				// The table has the new name in the new schema and has the expected
+				// rows.
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples"},
+					{"id": 2, "name": "bananas"},
+					{"id": 3, "name": "carrots"},
+				}, rows)
+
+				// The down trigger has been removed from the underlying table
+				TableMustBeCleanedUp(t, db, schema, "products", "description")
 			},
 		},
 	})
