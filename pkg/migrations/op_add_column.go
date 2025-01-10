@@ -120,10 +120,11 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(table.Name),
 		pq.QuoteIdentifier(tempName)))
 	if err != nil {
 		return err
