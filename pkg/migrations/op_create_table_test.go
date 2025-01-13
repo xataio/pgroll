@@ -4,7 +4,6 @@ package migrations_test
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -465,6 +464,7 @@ func TestCreateTable(t *testing.T) {
 							Constraints: []migrations.Constraint{
 								{
 									Name:  "check_name_length",
+									Type:  "check",
 									Check: "length(name) > 3",
 								},
 							},
@@ -801,7 +801,7 @@ func TestCreateTableValidation(t *testing.T) {
 			wantStartErr: migrations.FieldRequiredError{Name: "columns"},
 		},
 		{
-			name: "check constraint is not deferrable",
+			name: "check constraint missing expression",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -822,17 +822,15 @@ func TestCreateTableValidation(t *testing.T) {
 							},
 							Constraints: []migrations.Constraint{
 								{
-									Name:       "check_name",
-									Type:       migrations.ConstraintTypeCheck,
-									Check:      "length(name) > 0",
-									Deferrable: true,
+									Name: "check_name",
+									Type: migrations.ConstraintTypeCheck,
 								},
 							},
 						},
 					},
 				},
 			},
-			wantStartErr: fmt.Errorf("migration is invalid: %w", migrations.CheckConstraintError{Table: "table1", Name: "check_name", Err: fmt.Errorf("CHECK constraints cannot be marked DEFERABLE")}),
+			wantStartErr: migrations.FieldRequiredError{Name: "check"},
 		},
 	})
 }

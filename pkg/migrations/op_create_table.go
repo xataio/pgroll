@@ -129,7 +129,7 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 				return CheckConstraintError{
 					Table: o.Name,
 					Name:  c.Name,
-					Err:   fmt.Errorf("CHECK constraints cannot be marked DEFERABLE"),
+					Err:   fmt.Errorf("CHECK constraints cannot be marked DEFERRABLE"),
 				}
 			}
 			if c.IndexParameters != nil {
@@ -287,7 +287,6 @@ func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
 	if noInherit {
 		constraint += " NO INHERIT"
 	}
-	constraint += w.addDeferrable()
 	return constraint
 }
 

@@ -144,7 +144,7 @@ func (e CheckConstraintError) Unwrap() error {
 
 func (e CheckConstraintError) Error() string {
 	if e.Column == "" {
-		return fmt.Sprintf("check constraint %s in table %q is invalid: %s",
+		return fmt.Sprintf("check constraint %q in table %q is invalid: %s",
 			e.Name,
 			e.Table,
 			e.Err.Error())
