@@ -236,15 +236,27 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		}
 	}
 
-	// read the current schema
-	currentSchema, err := m.state.ReadSchema(ctx, m.schema)
+	// get the name of the previous version of the schema
+	previousVersion, err := m.state.PreviousVersion(ctx, m.schema)
 	if err != nil {
-		return fmt.Errorf("unable to read schema: %w", err)
+		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
 
-	// execute operations
-	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.pgConn, m.sqlTransformer, currentSchema)
+	// get the schema after the previous migration was applied
+	schema := schema.New()
+	if previousVersion != nil {
+		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousVersion)
+		if err != nil {
+			return fmt.Errorf("unable to read schema: %w", err)
+		}
+	}
+
+	// update the in-memory schema with the results of applying the migration
+	migration.UpdateVirtualSchema(ctx, schema)
+
+	// roll back operations in reverse order
+	for i := len(migration.Operations) - 1; i >= 0; i-- {
+		err := migration.Operations[i].Rollback(ctx, m.pgConn, m.sqlTransformer, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
