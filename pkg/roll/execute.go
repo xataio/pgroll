@@ -132,6 +132,9 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 
 	// create views in the new schema
 	for name, table := range schema.Tables {
+		if table.Deleted {
+			continue
+		}
 		err = m.ensureView(ctx, version, name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
