@@ -203,6 +203,8 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var constraintType migrations.ConstraintType
 	var nullsNotDistinct bool
+	var checkExpr string
+	var err error
 
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
@@ -210,6 +212,10 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		nullsNotDistinct = c.NullsNotDistinct
 	case pgq.ConstrType_CONSTR_CHECK:
 		constraintType = migrations.ConstraintTypeCheck
+		checkExpr, err = pgq.DeparseExpr(c.GetRawExpr())
+		if err != nil {
+			return nil, fmt.Errorf("deparsing check expression: %w", err)
+		}
 	default:
 		return nil, nil
 	}
@@ -225,7 +231,6 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	}
 
 	var storageParams string
-	var err error
 	if len(c.GetOptions()) > 0 {
 		storageParams, err = pgq.DeparseRelOptions(c.GetOptions())
 		if err != nil {
@@ -243,8 +248,6 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 	}
 
-	// TODO deparse CHECK expression
-
 	return &migrations.Constraint{
 		Name:              c.Conname,
 		Type:              constraintType,
@@ -254,6 +257,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		Deferrable:        c.Deferrable,
 		InitiallyDeferred: c.Initdeferred,
 		IndexParameters:   indexParameters,
+		Check:             checkExpr,
 	}, nil
 }
 
