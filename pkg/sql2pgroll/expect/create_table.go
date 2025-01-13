@@ -348,7 +348,7 @@ var CreateTableOp23 = &migrations.OpCreateTable{
 			InitiallyDeferred: false,
 			IndexParameters: &migrations.ConstraintIndexParameters{
 				IncludeColumns:    []string{"c"},
-				StorageParameters: "fillfactor = '70'",
+				StorageParameters: "fillfactor=70",
 				Tablespace:        "my_tablespace",
 			},
 		},

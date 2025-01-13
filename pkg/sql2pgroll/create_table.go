@@ -4,7 +4,6 @@ package sql2pgroll
 
 import (
 	"fmt"
-	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -223,28 +222,20 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		including[i] = include.GetString_().Sval
 	}
 
-	options := make([]string, len(c.Options))
-	for i, option := range c.Options {
-		var val string
-		switch v := option.GetDefElem().Arg.GetNode().(type) {
-		case *pgq.Node_Float:
-			val = v.Float.GetFval()
-		case *pgq.Node_Integer:
-			val = fmt.Sprintf("%d", v.Integer.GetIval())
-		case *pgq.Node_String_:
-			val = v.String_.GetSval()
-		case *pgq.Node_Boolean:
-			val = v.Boolean.String()
-		default:
-			return nil, fmt.Errorf("unsupported storage parameter type: %T", v)
+	var storageParams string
+	var err error
+	if len(c.GetOptions()) > 0 {
+		storageParams, err = pgq.DeparseRelOptions(c.GetOptions())
+		if err != nil {
+			return nil, fmt.Errorf("parsing options: %w", err)
 		}
-		options[i] = fmt.Sprintf("%s = '%s'", option.GetDefElem().Defname, val)
+		storageParams = storageParams[1 : len(storageParams)-1]
 	}
 
 	var indexParameters *migrations.ConstraintIndexParameters
-	if len(options) != 0 || c.Indexspace != "" || len(including) != 0 {
+	if storageParams != "" || c.Indexspace != "" || len(including) != 0 {
 		indexParameters = &migrations.ConstraintIndexParameters{
-			StorageParameters: strings.Join(options, ", "),
+			StorageParameters: storageParams,
 			Tablespace:        c.Indexspace,
 			IncludeColumns:    including,
 		}
