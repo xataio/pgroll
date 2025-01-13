@@ -49,8 +49,8 @@ func TestDropTable(t *testing.T) {
 				// The view for the deleted table does not exist in the new version schema.
 				ViewMustNotExist(t, db, schema, "02_drop_table", "users")
 
-				// But the underlying table has not been deleted.
-				TableMustExist(t, db, schema, "users")
+				// The underlying table has been soft-deleted (renamed).
+				TableMustExist(t, db, schema, migrations.DeletionName("users"))
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Rollback is a no-op.
@@ -95,8 +95,9 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// OpDropTable drops tables on migration completion, so the table
-				// created by OpCreateTable is present after migration start.
-				TableMustExist(t, db, schema, "items")
+				// created by OpCreateTable is present after migration start but has
+				// been soft-deleted (renamed).
+				TableMustExist(t, db, schema, migrations.DeletionName("items"))
 
 				// There is no view for the "items" table in the new schema
 				ViewMustNotExist(t, db, schema, "01_multi_operation", "items")
@@ -145,8 +146,9 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// OpDropTable drops tables on migration completion, so the table
-				// created by OpCreateTable is present after migration start.
-				TableMustExist(t, db, schema, "items")
+				// created by OpCreateTable is present after migration start but has
+				// been soft-deleted (renamed).
+				TableMustExist(t, db, schema, migrations.DeletionName("items"))
 
 				// There is no view for the "items" table in the new schema
 				ViewMustNotExist(t, db, schema, "01_multi_operation", "items")
