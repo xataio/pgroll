@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -230,6 +231,87 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Can insert into the items table, and it has a description column
 				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "brilliant",
+				})
+			},
+		},
+		{
+			name: "drop table, create table",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpDropTable{
+							Name: "items",
+						},
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+								{
+									Name: "description",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the items table, and it has a description column
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "apples",
+					"description": "amazing",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table from the second migration has been dropped (the one
+				// without the description column)
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name":        "apples",
+					"description": "amazing",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// The table from the first migration remains (the one with the
+				// description column)
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "apples",
+				})
+
+				// There is no soft-deleted version of thte items table
+				TableMustNotExist(t, db, schema, migrations.DeletionName("items"))
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the items table, and it has a description column
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
 					"name":        "bananas",
 					"description": "brilliant",
 				})
