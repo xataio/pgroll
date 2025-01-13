@@ -1,5 +1,5 @@
 {
-  "name": "44_add_extra_unique_constraint_to_fruits",
+  "name": "50_add_extra_unique_constraint_to_fruits",
   "operations": [
     {
       "create_constraint": {
@@ -7,8 +7,8 @@
         "table": "fruits",
         "name": "unique_fruit_and_producer",
         "columns": [
-          "name",
-          "producer"
+          "producer",
+          "name"
         ],
         "up": {
           "name": "name",
