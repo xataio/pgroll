@@ -182,7 +182,6 @@ func TestConvertCreateTableStatements(t *testing.T) {
 
 			require.Len(t, ops, 1)
 
-			fmt.Println(ops[0])
 			createTableOp, ok := ops[0].(*migrations.OpCreateTable)
 			require.True(t, ok)
 

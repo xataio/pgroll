@@ -20,7 +20,6 @@ func Convert(sql string) (migrations.Operations, error) {
 	}
 
 	if ops == nil {
-		fmt.Println("ops is nil")
 		return makeRawSQLOperation(sql), nil
 	}
 

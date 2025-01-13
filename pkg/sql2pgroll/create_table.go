@@ -15,7 +15,6 @@ import (
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
 	if !canConvertCreateStatement(stmt) {
-		fmt.Println("cannot convert create statement")
 		return nil, nil
 	}
 
