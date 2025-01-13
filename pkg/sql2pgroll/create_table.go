@@ -19,9 +19,10 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	// Convert the table elements - table elements can be:
 	// - Column definitions
-	// - Table constraints (not supported)
+	// - Table constraints
 	// - LIKE clauses (not supported)
 	var columns []migrations.Column
+	var constraints []migrations.Constraint
 	for _, elt := range stmt.TableElts {
 		switch elt.Node.(type) {
 		case *pgq.Node_ColumnDef:
@@ -33,6 +34,15 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 				return nil, nil
 			}
 			columns = append(columns, *column)
+		case *pgq.Node_Constraint:
+			constraint, err := convertConstraint(elt.GetConstraint())
+			if err != nil {
+				return nil, fmt.Errorf("error converting table constraint: %w", err)
+			}
+			if constraint == nil {
+				return nil, nil
+			}
+			constraints = append(constraints, *constraint)
 		default:
 			return nil, nil
 		}
@@ -40,8 +50,9 @@ func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 
 	return migrations.Operations{
 		&migrations.OpCreateTable{
-			Name:    getQualifiedRelationName(stmt.GetRelation()),
-			Columns: columns,
+			Name:        getQualifiedRelationName(stmt.GetRelation()),
+			Columns:     columns,
+			Constraints: constraints,
 		},
 	}, nil
 }
@@ -186,6 +197,58 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		References: foreignKey,
 		Default:    defaultValue,
 		Unique:     unique,
+	}, nil
+}
+
+func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
+	var constraintType migrations.ConstraintType
+	var nullsNotDistinct bool
+
+	switch c.Contype {
+	case pgq.ConstrType_CONSTR_UNIQUE:
+		constraintType = migrations.ConstraintTypeUnique
+		nullsNotDistinct = c.NullsNotDistinct
+	default:
+		return nil, nil
+	}
+
+	columns := make([]string, len(c.Keys))
+	for i, key := range c.Keys {
+		columns[i] = key.GetString_().Sval
+	}
+
+	including := make([]string, len(c.Including))
+	for i, include := range c.Including {
+		including[i] = include.GetString_().Sval
+	}
+
+	var storageParams string
+	var err error
+	if len(c.GetOptions()) > 0 {
+		storageParams, err = pgq.DeparseRelOptions(c.GetOptions())
+		if err != nil {
+			return nil, fmt.Errorf("parsing options: %w", err)
+		}
+		storageParams = storageParams[1 : len(storageParams)-1]
+	}
+
+	var indexParameters *migrations.ConstraintIndexParameters
+	if storageParams != "" || c.Indexspace != "" || len(including) != 0 {
+		indexParameters = &migrations.ConstraintIndexParameters{
+			StorageParameters: storageParams,
+			Tablespace:        c.Indexspace,
+			IncludeColumns:    including,
+		}
+	}
+
+	return &migrations.Constraint{
+		Name:              c.Conname,
+		Type:              constraintType,
+		Columns:           columns,
+		NullsNotDistinct:  nullsNotDistinct,
+		Deferrable:        c.Deferrable,
+		InitiallyDeferred: c.Initdeferred,
+		IndexParameters:   indexParameters,
 	}, nil
 }
 

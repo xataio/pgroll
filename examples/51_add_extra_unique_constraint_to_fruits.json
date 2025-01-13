@@ -1,5 +1,5 @@
 {
-  "name": "50_add_extra_unique_constraint_to_fruits",
+  "name": "51_add_extra_unique_constraint_to_fruits",
   "operations": [
     {
       "create_constraint": {
