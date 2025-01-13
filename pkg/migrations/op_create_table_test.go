@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -384,7 +385,7 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with a check constraint",
+			name: "create table with a check constraint on column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -440,6 +441,108 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "c",
 				}, testutils.CheckViolationErrorCode)
+			},
+		},
+		{
+			name: "create table with a table check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:  "check_name_length",
+									Check: "length(name) > 3",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "b",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the check constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "c",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
+		{
+			name: "create table with column and table comments",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name:    "users",
+							Comment: ptr("the users table"),
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:    "name",
+									Type:    "varchar(255)",
+									Unique:  true,
+									Comment: ptr("the username"),
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment has been added to the underlying table.
+				TableMustHaveComment(t, db, schema, "users", "the users table")
+				// The comment has been added to the underlying column.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The comment is still present on the underlying table.
+				TableMustHaveComment(t, db, schema, "users", "the users table")
+				// The comment is still present on the underlying column.
+				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
 			},
 		},
 		{
@@ -696,6 +799,40 @@ func TestCreateTableValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "columns"},
+		},
+		{
+			name: "check constraint is not deferrable",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "table1",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:       "check_name",
+									Type:       migrations.ConstraintTypeCheck,
+									Check:      "length(name) > 0",
+									Deferrable: true,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.CheckConstraintError{Table: "table1", Err: fmt.Errorf("CHECK constraints cannot be marked DEFERABLE")},
 		},
 	})
 }

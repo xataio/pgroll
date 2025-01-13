@@ -172,6 +172,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(b text, c text, UNIQUE (b) INCLUDE (c) WITH (fillfactor = 70) USING INDEX TABLESPACE my_tablespace)",
 			expectedOp: expect.CreateTableOp23,
 		},
+		{
+			sql:        "CREATE TABLE foo(b text, c text, CHECK (b=c))",
+			expectedOp: expect.CreateTableOp24,
+		},
+		{
+			sql:        "CREATE TABLE foo(b text, c text, CHECK (b=c) NO INHERIT INITIALLY IMMEDIATE)",
+			expectedOp: expect.CreateTableOp25,
+		},
 	}
 
 	for _, tc := range tests {

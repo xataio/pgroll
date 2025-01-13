@@ -208,6 +208,8 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		constraintType = migrations.ConstraintTypeUnique
 		nullsNotDistinct = c.NullsNotDistinct
+	case pgq.ConstrType_CONSTR_CHECK:
+		constraintType = migrations.ConstraintTypeCheck
 	default:
 		return nil, nil
 	}
@@ -241,11 +243,14 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 	}
 
+	// TODO deparse CHECK expression
+
 	return &migrations.Constraint{
 		Name:              c.Conname,
 		Type:              constraintType,
 		Columns:           columns,
 		NullsNotDistinct:  nullsNotDistinct,
+		NoInherit:         c.IsNoInherit,
 		Deferrable:        c.Deferrable,
 		InitiallyDeferred: c.Initdeferred,
 		IndexParameters:   indexParameters,

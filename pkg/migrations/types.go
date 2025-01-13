@@ -46,6 +46,9 @@ type Column struct {
 
 // Constraint definition
 type Constraint struct {
+	// Check constraint expression
+	Check string `json:"check,omitempty"`
+
 	// Columns to add constraint to
 	Columns []string `json:"columns,omitempty"`
 
@@ -60,6 +63,9 @@ type Constraint struct {
 
 	// Name of the constraint
 	Name string `json:"name"`
+
+	// Do not propagate constraint to child tables
+	NoInherit bool `json:"no_inherit,omitempty"`
 
 	// Nulls not distinct constraint
 	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty"`
@@ -81,6 +87,7 @@ type ConstraintIndexParameters struct {
 
 type ConstraintType string
 
+const ConstraintTypeCheck ConstraintType = "check"
 const ConstraintTypeUnique ConstraintType = "unique"
 
 // Foreign key reference definition
