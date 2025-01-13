@@ -171,6 +171,70 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 				ViewMustNotExist(t, db, schema, "01_multi_operation", "products")
 			},
 		},
+		{
+			name: "create table, drop table, create table",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+						&migrations.OpDropTable{
+							Name: "items",
+						},
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+								{
+									Name: "description",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the items table, and it has a description column
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name":        "apples",
+					"description": "amazing",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// There are no tables, either original or soft-deleted
+				TableMustNotExist(t, db, schema, "items")
+				TableMustNotExist(t, db, schema, migrations.DeletionName("items"))
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the items table, and it has a description column
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "brilliant",
+				})
+			},
+		},
 	})
 }
 
