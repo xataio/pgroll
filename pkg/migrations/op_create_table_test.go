@@ -832,7 +832,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.CheckConstraintError{Table: "table1", Err: fmt.Errorf("CHECK constraints cannot be marked DEFERABLE")},
+			wantStartErr: fmt.Errorf("migration is invalid: %w", migrations.CheckConstraintError{Table: "table1", Name: "check_name", Err: fmt.Errorf("CHECK constraints cannot be marked DEFERABLE")}),
 		},
 	})
 }

@@ -128,18 +128,21 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			if c.Deferrable || c.InitiallyDeferred {
 				return CheckConstraintError{
 					Table: o.Name,
+					Name:  c.Name,
 					Err:   fmt.Errorf("CHECK constraints cannot be marked DEFERABLE"),
 				}
 			}
 			if c.IndexParameters != nil {
 				return CheckConstraintError{
 					Table: o.Name,
+					Name:  c.Name,
 					Err:   fmt.Errorf("CHECK constraints cannot have index parameters"),
 				}
 			}
 			if c.NullsNotDistinct {
 				return CheckConstraintError{
 					Table: o.Name,
+					Name:  c.Name,
 					Err:   fmt.Errorf("CHECK constraints cannot have NULLS NOT DISTINCT"),
 				}
 			}
@@ -280,7 +283,7 @@ func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("CHECK %s", check)
+	constraint += fmt.Sprintf("CHECK (%s)", check)
 	if noInherit {
 		constraint += " NO INHERIT"
 	}

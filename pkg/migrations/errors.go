@@ -134,6 +134,7 @@ func (e ColumnReferenceError) Error() string {
 type CheckConstraintError struct {
 	Table  string
 	Column string
+	Name   string
 	Err    error
 }
 
@@ -143,7 +144,8 @@ func (e CheckConstraintError) Unwrap() error {
 
 func (e CheckConstraintError) Error() string {
 	if e.Column == "" {
-		return fmt.Sprintf("check constraint in table %q is invalid: %s",
+		return fmt.Sprintf("check constraint %s in table %q is invalid: %s",
+			e.Name,
 			e.Table,
 			e.Err.Error())
 	}
