@@ -251,6 +251,12 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	// Rename the column in the virtual schema if required so that subsequent
+	// operations can validate using the new column name
+	if o.Name != nil {
+		table.RenameColumn(o.Column, *o.Name)
+	}
+
 	return nil
 }
 
