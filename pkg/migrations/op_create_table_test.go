@@ -609,6 +609,71 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table with primary key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "pk_users",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				PrimaryKeyConstraintMustExist(t, db, schema, "users", "pk_users")
+
+				// Inserting a row into the table succeeds when the PK constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "b",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the check constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				PrimaryKeyConstraintMustExist(t, db, schema, "users", "pk_users")
+
+				// Inserting a row into the table succeeds when the PK constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "2",
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "2",
+					"name": "c",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
 	})
 }
 
@@ -790,6 +855,39 @@ func TestCreateTableValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "check"},
+		},
+		{
+			name: "multiple primary key definitions",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "table1",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "my_pk",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.PrimaryKeysAreAlreadySetError{Table: "table1"},
 		},
 	})
 }

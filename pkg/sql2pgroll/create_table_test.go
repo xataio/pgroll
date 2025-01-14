@@ -180,6 +180,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(b text, c text, CHECK (b=c) NO INHERIT)",
 			expectedOp: expect.CreateTableOp25,
 		},
+		{
+			sql:        "CREATE TABLE foo(b text, c text, PRIMARY KEY (b) DEFERRABLE)",
+			expectedOp: expect.CreateTableOp26,
+		},
 	}
 
 	for _, tc := range tests {
@@ -247,9 +251,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a text COLLATE en_US)",
 
 		// Table constraints, named and unnamed, are not supported
-		"CREATE TABLE foo(a int, CONSTRAINT foo_pk PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
-		"CREATE TABLE foo(a int, PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
 		// Primary key constraint options are not supported

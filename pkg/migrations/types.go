@@ -88,6 +88,7 @@ type ConstraintIndexParameters struct {
 type ConstraintType string
 
 const ConstraintTypeCheck ConstraintType = "check"
+const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
 
 // Foreign key reference definition

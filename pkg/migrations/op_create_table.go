@@ -79,6 +79,7 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableAlreadyExistsError{Name: o.Name}
 	}
 
+	hasPrimaryKeyColumns := false
 	for _, col := range o.Columns {
 		if err := ValidateIdentifierLength(col.Name); err != nil {
 			return fmt.Errorf("invalid column: %w", err)
@@ -105,6 +106,10 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 					Err:    err,
 				}
 			}
+		}
+
+		if col.Pk {
+			hasPrimaryKeyColumns = true
 		}
 	}
 
@@ -146,6 +151,14 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 					Err:   fmt.Errorf("CHECK constraints cannot have NULLS NOT DISTINCT"),
 				}
 			}
+		case ConstraintTypePrimaryKey:
+			// users can only set primary keys either in columns list or in constraint list
+			if hasPrimaryKeyColumns {
+				return PrimaryKeysAreAlreadySetError{Table: o.Name}
+			}
+			if len(c.Columns) == 0 {
+				return FieldRequiredError{Name: "columns"}
+			}
 		}
 	}
 
@@ -160,9 +173,13 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 // the new table.
 func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	columns := make(map[string]*schema.Column, len(o.Columns))
+	primaryKeys := make([]string, 0)
 	for _, col := range o.Columns {
 		columns[col.Name] = &schema.Column{
 			Name: col.Name,
+		}
+		if col.Pk {
+			primaryKeys = append(primaryKeys, col.Name)
 		}
 	}
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
@@ -180,6 +197,8 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 				Columns:    c.Columns,
 				Definition: c.Check,
 			}
+		case ConstraintTypePrimaryKey:
+			primaryKeys = c.Columns
 		}
 	}
 	s.AddTable(o.Name, &schema.Table{
@@ -187,6 +206,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 		Columns:           columns,
 		UniqueConstraints: uniqueConstraints,
 		CheckConstraints:  checkConstraints,
+		PrimaryKey:        primaryKeys,
 	})
 
 	return s
@@ -207,12 +227,14 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 		sql += colSQL
 
 		if col.IsPrimaryKey() {
-			primaryKeys = append(primaryKeys, pq.QuoteIdentifier(col.Name))
+			primaryKeys = append(primaryKeys, col.Name)
 		}
 	}
 
+	// Add primary key constraint if there are primary key columns.
 	if len(primaryKeys) > 0 {
-		sql += fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(primaryKeys, ", "))
+		writer := &ConstraintSQLWriter{Columns: primaryKeys}
+		sql += ", " + writer.WritePrimaryKey()
 	}
 	return sql, nil
 }
@@ -237,6 +259,8 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			constraintsSQL[i] = writer.WriteUnique(c.NullsNotDistinct)
 		case ConstraintTypeCheck:
 			constraintsSQL[i] = writer.WriteCheck(c.Check, c.NoInherit)
+		case ConstraintTypePrimaryKey:
+			constraintsSQL[i] = writer.WritePrimaryKey()
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -281,6 +305,17 @@ func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
 	if noInherit {
 		constraint += " NO INHERIT"
 	}
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WritePrimaryKey() string {
+	constraint := ""
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	constraint += fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(quoteColumnNames(w.Columns), ", "))
+	constraint += w.addIndexParameters()
+	constraint += w.addDeferrable()
 	return constraint
 }
 

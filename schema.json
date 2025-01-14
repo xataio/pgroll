@@ -116,7 +116,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check"]
+          "enum": ["unique", "check", "primary_key"]
         },
         "deferrable": {
           "description": "Deferable constraint",
@@ -212,6 +212,29 @@
               }
             },
             "required": ["check"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "primary_key"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              },
+              "no_inherit": {
+                "const": false
+              },
+              "nulls_not_distinct": {
+                "const": false
+              }
+            },
+            "required": ["columns"]
           }
         }
       ],
