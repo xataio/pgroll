@@ -552,6 +552,7 @@ func TestCreateConstraint(t *testing.T) {
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been created on the underlying table.
 				IndexMustExist(t, db, schema, "users", "unique_name")
+				IndexMustExist(t, db, schema, "users", "unique_name_email")
 
 				// Inserting values into the old schema that violate uniqueness should succeed.
 				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
@@ -572,13 +573,14 @@ func TestCreateConstraint(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
 				IndexMustNotExist(t, db, schema, "users", "uniue_name")
+				IndexMustNotExist(t, db, schema, "users", "uniue_name_email")
 
 				// Functions, triggers and temporary columns are dropped.
-				TableMustBeCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name", "email")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Functions, triggers and temporary columns are dropped.
-				TableMustBeCleanedUp(t, db, schema, "users", "name")
+				TableMustBeCleanedUp(t, db, schema, "users", "name", "email")
 
 				// Inserting values into the new schema that violate uniqueness should fail.
 				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
