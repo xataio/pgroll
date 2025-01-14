@@ -577,8 +577,8 @@ func TestCreateConstraint(t *testing.T) {
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
-				IndexMustNotExist(t, db, schema, "users", "uniue_name")
-				IndexMustNotExist(t, db, schema, "users", "uniue_name_email")
+				IndexMustNotExist(t, db, schema, "users", "unique_name")
+				IndexMustNotExist(t, db, schema, "users", "unique_name_email")
 
 				// Functions, triggers and temporary columns are dropped.
 				TableMustBeCleanedUp(t, db, schema, "users", "name", "email")
