@@ -669,6 +669,68 @@ func TestAlterColumnInMultiOperationMigrations(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "rename column, drop column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "items",
+							Column: "name",
+							Name:   ptr("item_name"),
+						},
+						&migrations.OpDropColumn{
+							Table:  "items",
+							Column: "item_name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can't insert into the dropped column in the new schema
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"item_name": "apples",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// Can insert into the old column name in the old schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "apples",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the old column name in the old schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "bananas",
+				})
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can't insert into the dropped column in the new schema
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"item_name": "apples",
+				}, testutils.UndefinedColumnErrorCode)
+			},
+		},
 	})
 }
 
