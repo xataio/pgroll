@@ -134,13 +134,12 @@ func getIdentityColumns(table *schema.Table) []string {
 
 type batcher struct {
 	statementBuilder *batchStatementBuilder
-	lastValues       any
+	lastValues       []string
 }
 
 func newBatcher(table *schema.Table, batchSize int) *batcher {
 	return &batcher{
 		statementBuilder: newBatchStatementBuilder(table.Name, getIdentityColumns(table), batchSize),
-		lastValues:       nil,
 	}
 }
 
@@ -179,7 +178,7 @@ func newBatchStatementBuilder(tableName string, identityColumnNames []string, ba
 }
 
 // buildQuery builds the query used to update the next batch of rows.
-func (sb *batchStatementBuilder) buildQuery(lastValues any) string {
+func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
 	return fmt.Sprintf("WITH batch AS (%[1]s), update AS (%[2]s) %[3]s",
 		sb.buildBatchSubQuery(lastValues),
 		sb.buildUpdateBatchSubQuery(),
@@ -187,41 +186,28 @@ func (sb *batchStatementBuilder) buildQuery(lastValues any) string {
 }
 
 // fetch the next batch of PK of rows to update
-func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues any) string {
+func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string {
 	whereClause := ""
-	if lastValues != nil {
-		conditions := make([]string, len(sb.identityColumns))
-		switch lastVals := lastValues.(type) {
-		case []int64:
-			for i, col := range sb.identityColumns {
-				conditions[i] = fmt.Sprintf("%s > %d", col, lastVals[i])
-			}
-		case []string:
-			for i, col := range sb.identityColumns {
-				conditions[i] = fmt.Sprintf("%s > %s", col, pq.QuoteLiteral(lastVals[i]))
-			}
-		case []any:
-			for i, col := range sb.identityColumns {
-				if v, ok := lastVals[i].(int); ok {
-					conditions[i] = fmt.Sprintf("%s > %d", col, v)
-				} else if v, ok := lastVals[i].(string); ok {
-					conditions[i] = fmt.Sprintf("%s > %s", col, pq.QuoteLiteral(v))
-				} else {
-					panic("unsupported type")
-				}
-			}
-		case int64:
-			conditions[0] = fmt.Sprintf("%s > %d ", sb.identityColumns[0], lastVals)
-		case string:
-			conditions[0] = fmt.Sprintf("%s > %s ", sb.identityColumns[0], pq.QuoteLiteral(lastVals))
-		default:
-			panic("unsupported type")
+	if len(lastValues) != 0 {
+		whereClause = "WHERE "
+		if len(sb.identityColumns) > 1 {
+			whereClause += "(" + strings.Join(sb.identityColumns, ", ") + ") > " + "(" + strings.Join(quoteLiteralList(lastValues), ", ") + ")"
 		}
-		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+		if len(sb.identityColumns) == 1 {
+			whereClause += sb.identityColumns[0] + " > " + pq.QuoteLiteral(lastValues[0])
+		}
 	}
 
 	return fmt.Sprintf("SELECT %[1]s FROM %[2]s %[3]s ORDER BY %[1]s LIMIT %[4]d FOR NO KEY UPDATE",
 		strings.Join(sb.identityColumns, ", "), sb.tableName, whereClause, sb.batchSize)
+}
+
+func quoteLiteralList(l []string) []string {
+	quoted := make([]string, len(l))
+	for i, v := range l {
+		quoted[i] = pq.QuoteLiteral(v)
+	}
+	return quoted
 }
 
 // update the rows in the batch

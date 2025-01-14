@@ -13,7 +13,7 @@ func TestBatchStatementBuilder(t *testing.T) {
 		tableName       string
 		identityColumns []string
 		batchSize       int
-		lasValues       any
+		lasValues       []string
 		expected        string
 	}{
 		"single identity column no last value": {
@@ -32,29 +32,15 @@ func TestBatchStatementBuilder(t *testing.T) {
 			tableName:       "table_name",
 			identityColumns: []string{"id"},
 			batchSize:       10,
-			lasValues:       []int64{1},
-			expected:        `WITH batch AS (SELECT "id" FROM "table_name" WHERE "id" > 1 ORDER BY "id" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id" FROM batch WHERE "table_name"."id" = batch."id" RETURNING "table_name"."id") SELECT LAST_VALUE("id") OVER() FROM update`,
+			lasValues:       []string{"1"},
+			expected:        `WITH batch AS (SELECT "id" FROM "table_name" WHERE "id" > '1' ORDER BY "id" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id" FROM batch WHERE "table_name"."id" = batch."id" RETURNING "table_name"."id") SELECT LAST_VALUE("id") OVER() FROM update`,
 		},
 		"multiple identity columns with last value": {
 			tableName:       "table_name",
 			identityColumns: []string{"id", "zip"},
 			batchSize:       10,
-			lasValues:       []int64{1, 1234},
-			expected:        `WITH batch AS (SELECT "id", "zip" FROM "table_name" WHERE "id" > 1 AND "zip" > 1234 ORDER BY "id", "zip" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id", "zip" = "table_name"."zip" FROM batch WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip" RETURNING "table_name"."id", "table_name"."zip") SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER() FROM update`,
-		},
-		"multiple string identity columns with last value": {
-			tableName:       "table_name",
-			identityColumns: []string{"id", "zip"},
-			batchSize:       10,
 			lasValues:       []string{"1", "1234"},
-			expected:        `WITH batch AS (SELECT "id", "zip" FROM "table_name" WHERE "id" > '1' AND "zip" > '1234' ORDER BY "id", "zip" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id", "zip" = "table_name"."zip" FROM batch WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip" RETURNING "table_name"."id", "table_name"."zip") SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER() FROM update`,
-		},
-		"multiple different identity columns with last value": {
-			tableName:       "table_name",
-			identityColumns: []string{"id", "zip"},
-			batchSize:       10,
-			lasValues:       []any{1, "1234"},
-			expected:        `WITH batch AS (SELECT "id", "zip" FROM "table_name" WHERE "id" > 1 AND "zip" > '1234' ORDER BY "id", "zip" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id", "zip" = "table_name"."zip" FROM batch WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip" RETURNING "table_name"."id", "table_name"."zip") SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER() FROM update`,
+			expected:        `WITH batch AS (SELECT "id", "zip" FROM "table_name" WHERE ("id", "zip") > ('1', '1234') ORDER BY "id", "zip" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id", "zip" = "table_name"."zip" FROM batch WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip" RETURNING "table_name"."id", "table_name"."zip") SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER() FROM update`,
 		},
 	}
 
