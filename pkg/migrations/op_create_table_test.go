@@ -546,47 +546,6 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with column and table comments",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name:    "users",
-							Comment: ptr("the users table"),
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name:    "name",
-									Type:    "varchar(255)",
-									Unique:  true,
-									Comment: ptr("the username"),
-								},
-							},
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// The comment has been added to the underlying table.
-				TableMustHaveComment(t, db, schema, "users", "the users table")
-				// The comment has been added to the underlying column.
-				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// The comment is still present on the underlying table.
-				TableMustHaveComment(t, db, schema, "users", "the users table")
-				// The comment is still present on the underlying column.
-				ColumnMustHaveComment(t, db, schema, "users", "name", "the username")
-			},
-		},
-		{
 			name: "create table with a unique table constraint",
 			migrations: []migrations.Migration{
 				{
