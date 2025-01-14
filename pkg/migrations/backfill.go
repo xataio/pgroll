@@ -133,6 +133,7 @@ func getIdentityColumns(table *schema.Table) []string {
 }
 
 type batcher struct {
+	pkcount          int
 	statementBuilder *batchStatementBuilder
 	lastValues       []string
 }
@@ -140,6 +141,7 @@ type batcher struct {
 func newBatcher(table *schema.Table, batchSize int) *batcher {
 	return &batcher{
 		statementBuilder: newBatchStatementBuilder(table.Name, getIdentityColumns(table), batchSize),
+		pkcount:          len(getIdentityColumns(table)),
 	}
 }
 
@@ -150,9 +152,16 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
-		err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues)
-		if err != nil {
-			return err
+		if b.pkcount == 1 {
+			err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues[0])
+			if err != nil {
+				return err
+			}
+		} else {
+			err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues)
+			if err != nil {
+				return err
+			}
 		}
 
 		return nil
