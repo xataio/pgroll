@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/tools/txtar"
 )
@@ -23,7 +23,9 @@ const (
 func TestJSONSchemaValidation(t *testing.T) {
 	t.Parallel()
 
-	sch := jsonschema.MustCompile(schemaPath)
+	compiler := jsonschema.NewCompiler()
+	sch, err := compiler.Compile(schemaPath)
+	assert.NoError(t, err)
 
 	files, err := os.ReadDir(testDataDir)
 	assert.NoError(t, err)

@@ -165,22 +165,16 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Name: col.Name,
 		}
 	}
-	var uniqueConstraints map[string]*schema.UniqueConstraint
-	var checkConstraints map[string]*schema.CheckConstraint
+	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
+	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
 	for _, c := range o.Constraints {
 		switch c.Type {
 		case ConstraintTypeUnique:
-			if uniqueConstraints == nil {
-				uniqueConstraints = make(map[string]*schema.UniqueConstraint)
-			}
 			uniqueConstraints[c.Name] = &schema.UniqueConstraint{
 				Name:    c.Name,
 				Columns: c.Columns,
 			}
 		case ConstraintTypeCheck:
-			if checkConstraints == nil {
-				checkConstraints = make(map[string]*schema.CheckConstraint)
-			}
 			checkConstraints[c.Name] = &schema.CheckConstraint{
 				Name:       c.Name,
 				Columns:    c.Columns,
