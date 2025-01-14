@@ -142,6 +142,7 @@ func newBatcher(table *schema.Table, batchSize int) *batcher {
 	return &batcher{
 		statementBuilder: newBatchStatementBuilder(table.Name, getIdentityColumns(table), batchSize),
 		pkcount:          len(getIdentityColumns(table)),
+		lastValues:       make([]string, len(getIdentityColumns(table))),
 	}
 }
 
