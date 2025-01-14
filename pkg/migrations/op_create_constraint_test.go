@@ -517,12 +517,13 @@ func TestCreateConstraint(t *testing.T) {
 								{
 									Name:     "email",
 									Type:     "varchar(255)",
-									Nullable: false,
+									Nullable: true,
 								},
 							},
 							Constraints: []migrations.Constraint{
 								{
 									Name:    "unique_name",
+									Type:    "unique",
 									Columns: []string{"name"},
 								},
 							},
@@ -556,18 +557,22 @@ func TestCreateConstraint(t *testing.T) {
 
 				// Inserting values into the old schema that violate uniqueness should succeed.
 				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
-					"name": "alice",
+					"name":  "alice",
+					"email": "email",
 				})
 				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
-					"name": "alice",
+					"name":  "bob",
+					"email": "email",
 				})
 
 				// Inserting values into the new schema that violate uniqueness should fail.
 				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
-					"name": "bob",
+					"name":  "cat",
+					"email": "email",
 				})
 				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
-					"name": "bob",
+					"name":  "cat",
+					"email": "email",
 				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
