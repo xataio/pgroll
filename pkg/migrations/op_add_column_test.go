@@ -1821,6 +1821,59 @@ func TestAddColumnInMultiOperationMigrations(t *testing.T) {
 	})
 }
 
+func TestAddColumnValidationInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "adding a column with the same name twice fails to validate",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name: "description",
+								Type: "text",
+							},
+							Up: "UPPER(name)",
+						},
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name: "description",
+								Type: "varchar(255)",
+							},
+							Up: "UPPER(name)",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "items", Name: "description"},
+		},
+	})
+}
+
 func TestAddColumnInvalidNameLength(t *testing.T) {
 	t.Parallel()
 
