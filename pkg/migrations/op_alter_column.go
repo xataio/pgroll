@@ -153,6 +153,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	ops := o.subOperations()
+	table := s.GetTable(o.Table)
 
 	// Perform any operation specific rollback steps
 	for _, ops := range ops {
@@ -186,6 +187,12 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 		if err != nil {
 			return err
 		}
+	}
+
+	// Rename the column back to its original name in the virtual schema if
+	// required
+	if o.Name != nil {
+		table.RenameColumn(*o.Name, o.Column)
 	}
 
 	return nil
