@@ -495,6 +495,100 @@ func TestCreateConstraint(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "create unique constraint on a unique column and another column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: false,
+								},
+								{
+									Name:     "email",
+									Type:     "varchar(255)",
+									Nullable: false,
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "unique_name",
+									Columns: []string{"name"},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "unique_name_email",
+							Table:   "users",
+							Type:    "unique",
+							Columns: []string{"email", "name"},
+							Up: map[string]string{
+								"name":  "name || random()",
+								"email": "email || random()",
+							},
+							Down: map[string]string{
+								"name":  "name",
+								"email": "email",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "unique_name")
+
+				// Inserting values into the old schema that violate uniqueness should succeed.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "bob",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "bob",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "uniue_name")
+
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "carol",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "carol",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
 	})
 }
 

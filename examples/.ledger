@@ -48,4 +48,3 @@
 48_drop_tickets_check.json
 49_unset_not_null_on_indexed_column.json
 50_create_table_with_table_constraint.json
-51_add_extra_unique_constraint_to_fruits.json
