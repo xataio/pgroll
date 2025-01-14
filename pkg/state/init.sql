@@ -163,17 +163,21 @@ BEGIN
                                         array_agg(e.enumlabel ORDER BY e.enumsortorder)
                                     FROM pg_enum AS e
                                 WHERE
-                                    e.enumtypid = tp.oid) AS enumValues,
-                                CASE 
-                                    WHEN tp.typtype='b' THEN 'base'
-                                    WHEN tp.typtype='c' THEN 'composite'
-                                    WHEN tp.typtype='d' THEN 'domain'
-                                    WHEN tp.typtype='e' THEN 'enum'
-                                    WHEN tp.typtype='p' THEN 'pseudo'
-                                    WHEN tp.typtype='r' THEN 'range'
-                                    WHEN tp.typtype='m' THEN 'multirange'
-                                END AS postgresType
-                                FROM pg_attribute AS attr
+                                    e.enumtypid = tp.oid) AS enumValues, CASE WHEN tp.typtype = 'b' THEN
+                                    'base'
+                                WHEN tp.typtype = 'c' THEN
+                                    'composite'
+                                WHEN tp.typtype = 'd' THEN
+                                    'domain'
+                                WHEN tp.typtype = 'e' THEN
+                                    'enum'
+                                WHEN tp.typtype = 'p' THEN
+                                    'pseudo'
+                                WHEN tp.typtype = 'r' THEN
+                                    'range'
+                                WHEN tp.typtype = 'm' THEN
+                                    'multirange'
+                                END AS postgresType FROM pg_attribute AS attr
                                 INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
                                 LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
                                     AND attr.attnum = def.adnum
