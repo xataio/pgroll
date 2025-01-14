@@ -505,6 +505,92 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 	})
 }
 
+func TestAlterColumnInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "add column, rename column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "text",
+								Nullable: true,
+							},
+						},
+						&migrations.OpAlterColumn{
+							Table:  "items",
+							Column: "description",
+							Name:   ptr("item_description"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the new column under its new name
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":             "apples",
+					"item_description": "amazing",
+				})
+
+				// Can't insert into the new column under its old name
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":        "bananas",
+					"description": "brilliant",
+				}, testutils.UndefinedColumnErrorCode)
+
+				// The table has the expected rows in the new schema
+				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "item_description": "amazing"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "description")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert into the new column under its new name
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"name":             "bananas",
+					"item_description": "brilliant",
+				})
+
+				// The table has the expected rows in the new schema
+				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "item_description": nil},
+					{"id": 2, "name": "bananas", "item_description": "brilliant"},
+				}, rows)
+			},
+		},
+	})
+}
+
 func TestIsRenameOnly(t *testing.T) {
 	t.Parallel()
 
