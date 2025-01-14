@@ -588,6 +588,87 @@ func TestAlterColumnInMultiOperationMigrations(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "rename table, rename column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "products",
+							Column: "name",
+							Name:   ptr("item_name"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert using the old version schema (old table name, and old
+				// column name)
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "apples",
+				})
+
+				// Can insert using the new version schema (new table name, and new
+				// column name)
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"item_name": "bananas",
+				})
+
+				// The table has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apples"},
+					{"id": 2, "item_name": "bananas"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert using the old version schema (old table name, and old
+				// column name)
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "carrots",
+				})
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert using the new version schema (new table name, and new
+				// column name)
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"item_name": "durian",
+				})
+
+				// The table has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apples"},
+					{"id": 2, "item_name": "bananas"},
+					{"id": 3, "item_name": "carrots"},
+					{"id": 4, "item_name": "durian"},
+				}, rows)
+			},
+		},
 	})
 }
 
