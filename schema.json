@@ -176,7 +176,7 @@
           "then": {
             "properties": {
               "check": {
-                  "const": "",
+                "const": ""
               },
               "no_inherit": {
                 "const": false
