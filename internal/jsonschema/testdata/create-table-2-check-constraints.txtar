@@ -1,0 +1,39 @@
+This is a valid 'create_table' migration.
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_check",
+            "type": "check",
+            "check": "lenth(title) > 30"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+true
