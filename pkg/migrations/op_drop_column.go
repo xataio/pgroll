@@ -21,7 +21,7 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 			Columns:        s.GetTable(o.Table).Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      s.GetTable(o.Table).Name,
 			PhysicalColumn: o.Column,
 			SQL:            o.Down,
 		})
@@ -51,6 +51,10 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+
+	// Mark the column as no longer deleted so thats it's visible to preceding
+	// rollback operations in the same migration
+	s.GetTable(o.Table).UnRemoveColumn(o.Column)
 
 	return err
 }

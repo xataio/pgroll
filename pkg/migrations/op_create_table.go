@@ -162,7 +162,9 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	columns := make(map[string]*schema.Column, len(o.Columns))
 	for _, col := range o.Columns {
 		columns[col.Name] = &schema.Column{
-			Name: col.Name,
+			Name:     col.Name,
+			Unique:   col.Unique,
+			Nullable: col.Nullable,
 		}
 	}
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
@@ -182,11 +184,21 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		}
 	}
+
+	// Build the table's primary key from the columns that have the `Pk` flag set
+	var primaryKey []string
+	for _, col := range o.Columns {
+		if col.Pk {
+			primaryKey = append(primaryKey, col.Name)
+		}
+	}
+
 	s.AddTable(o.Name, &schema.Table{
 		Name:              o.Name,
 		Columns:           columns,
 		UniqueConstraints: uniqueConstraints,
 		CheckConstraints:  checkConstraints,
+		PrimaryKey:        primaryKey,
 	})
 
 	return s

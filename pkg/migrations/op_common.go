@@ -28,11 +28,19 @@ const (
 	OpCreateConstraintName          OpName = "create_constraint"
 )
 
-const temporaryPrefix = "_pgroll_new_"
+const (
+	temporaryPrefix = "_pgroll_new_"
+	deletedPrefix   = "_pgroll_del_"
+)
 
 // TemporaryName returns a temporary name for a given name.
 func TemporaryName(name string) string {
 	return temporaryPrefix + name
+}
+
+// DeletionName returns the deleted name for a given name.
+func DeletionName(name string) string {
+	return deletedPrefix + name
 }
 
 // ReadMigration reads a migration from an io.Reader, like a file.

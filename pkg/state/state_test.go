@@ -408,9 +408,10 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey:        []string{},
@@ -432,10 +433,11 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -470,14 +472,16 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 								"name": {
-									Name:     "name",
-									Type:     "text",
-									Nullable: true,
+									Name:         "name",
+									Type:         "text",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -507,10 +511,11 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"id"},
@@ -531,9 +536,10 @@ func TestReadSchema(t *testing.T) {
 							Name: "table2",
 							Columns: map[string]*schema.Column{
 								"fk": {
-									Name:     "fk",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "fk",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -563,10 +569,11 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"id"},
@@ -587,9 +594,10 @@ func TestReadSchema(t *testing.T) {
 							Name: "table2",
 							Columns: map[string]*schema.Column{
 								"fk": {
-									Name:     "fk",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "fk",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -619,15 +627,17 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 								"age": {
-									Name:     "age",
-									Type:     "integer",
-									Nullable: true,
+									Name:         "age",
+									Type:         "integer",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"id"},
@@ -663,16 +673,18 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 								"name": {
-									Name:     "name",
-									Type:     "text",
-									Unique:   true,
-									Nullable: true,
+									Name:         "name",
+									Type:         "text",
+									Unique:       true,
+									Nullable:     true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"id"},
@@ -714,16 +726,18 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"id": {
-									Name:     "id",
-									Type:     "integer",
-									Nullable: false,
-									Unique:   true,
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
 								},
 								"name": {
-									Name:     "name",
-									Type:     "text",
-									Nullable: true,
-									Unique:   false,
+									Name:         "name",
+									Type:         "text",
+									Nullable:     true,
+									Unique:       false,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"id"},
@@ -773,14 +787,16 @@ func TestReadSchema(t *testing.T) {
 							Name: "products",
 							Columns: map[string]*schema.Column{
 								"customer_id": {
-									Name:     "customer_id",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "customer_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 								"product_id": {
-									Name:     "product_id",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "product_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{"customer_id", "product_id"},
@@ -801,14 +817,16 @@ func TestReadSchema(t *testing.T) {
 							Name: "orders",
 							Columns: map[string]*schema.Column{
 								"customer_id": {
-									Name:     "customer_id",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "customer_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 								"product_id": {
-									Name:     "product_id",
-									Type:     "integer",
-									Nullable: false,
+									Name:         "product_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -838,14 +856,16 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"a": {
-									Name:     "a",
-									Type:     "text",
-									Nullable: true,
+									Name:         "a",
+									Type:         "text",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 								"b": {
-									Name:     "b",
-									Type:     "text",
-									Nullable: true,
+									Name:         "b",
+									Type:         "text",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 							},
 							PrimaryKey: []string{},
@@ -875,9 +895,10 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"a": {
-									Name:     "a",
-									Type:     "public.email_type",
-									Nullable: true,
+									Name:         "a",
+									Type:         "public.email_type",
+									Nullable:     true,
+									PostgresType: "domain",
 								},
 							},
 							PrimaryKey:        []string{},
@@ -899,15 +920,76 @@ func TestReadSchema(t *testing.T) {
 							Name: "table1",
 							Columns: map[string]*schema.Column{
 								"name": {
-									Name:     "name",
-									Type:     "text",
-									Nullable: true,
+									Name:         "name",
+									Type:         "text",
+									Nullable:     true,
+									PostgresType: "base",
 								},
 								"review": {
-									Name:       "review",
-									Type:       "public.review",
-									Nullable:   true,
-									EnumValues: []string{"good", "bad", "ugly"},
+									Name:         "review",
+									Type:         "public.review",
+									Nullable:     true,
+									EnumValues:   []string{"good", "bad", "ugly"},
+									PostgresType: "enum",
+								},
+							},
+							PrimaryKey:        []string{},
+							Indexes:           map[string]*schema.Index{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name: "postgres type types",
+				createStmt: `
+					CREATE TYPE comptype AS (f1 int, f2 text);
+					CREATE TYPE review AS ENUM ('good', 'bad', 'ugly');
+					CREATE TYPE float8_range AS RANGE (subtype = float8, subtype_diff = float8mi);
+					CREATE DOMAIN us_postal_code AS TEXT
+						CHECK(
+							VALUE ~ '^\d{5}$'
+							OR VALUE ~ '^\d{5}-\d{4}$'
+						);
+					CREATE TABLE public.table1 (id bigint, comp_col comptype, enum_col review, range_col float8_range, domain_col us_postal_code);`,
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"id": {
+									Name:         "id",
+									Type:         "bigint",
+									Nullable:     true,
+									PostgresType: "base",
+								},
+								"comp_col": {
+									Name:         "comp_col",
+									Type:         "public.comptype",
+									Nullable:     true,
+									PostgresType: "composite",
+								},
+								"enum_col": {
+									Name:         "enum_col",
+									Type:         "public.review",
+									Nullable:     true,
+									PostgresType: "enum",
+									EnumValues:   []string{"good", "bad", "ugly"},
+								},
+								"range_col": {
+									Name:         "range_col",
+									Type:         "public.float8_range",
+									Nullable:     true,
+									PostgresType: "range",
+								},
+								"domain_col": {
+									Name:         "domain_col",
+									Type:         "public.us_postal_code",
+									Nullable:     true,
+									PostgresType: "domain",
 								},
 							},
 							PrimaryKey:        []string{},
