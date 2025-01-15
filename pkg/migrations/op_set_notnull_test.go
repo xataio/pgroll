@@ -531,6 +531,112 @@ func TestSetNotNull(t *testing.T) {
 	})
 }
 
+func TestSetNotNullInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, set not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:    "products",
+							Column:   "name",
+							Nullable: ptr(false),
+							Up:       "SELECT CASE WHEN name IS NULL THEN 'unknown' ELSE name END",
+							Down:     "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "1",
+					"name": "apple",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "2",
+				}, testutils.CheckViolationErrorCode)
+
+				// Can insert a row into the old schema that violates the constraint
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id": "2",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": "unknown"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "3",
+					"name": "carrot",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "3",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": "unknown"},
+					{"id": 3, "name": "carrot"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
+	})
+}
+
 func TestSetNotNullValidation(t *testing.T) {
 	t.Parallel()
 
