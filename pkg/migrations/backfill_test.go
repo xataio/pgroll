@@ -33,7 +33,7 @@ func TestBatchStatementBuilder(t *testing.T) {
 			identityColumns: []string{"id"},
 			batchSize:       10,
 			lasValues:       []string{"1"},
-			expected:        `WITH batch AS (SELECT "id" FROM "table_name" WHERE "id" > '1' ORDER BY "id" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id" FROM batch WHERE "table_name"."id" = batch."id" RETURNING "table_name"."id") SELECT LAST_VALUE("id") OVER() FROM update`,
+			expected:        `WITH batch AS (SELECT "id" FROM "table_name" WHERE ("id") > ('1') ORDER BY "id" LIMIT 10 FOR NO KEY UPDATE), update AS (UPDATE "table_name" SET "id" = "table_name"."id" FROM batch WHERE "table_name"."id" = batch."id" RETURNING "table_name"."id") SELECT LAST_VALUE("id") OVER() FROM update`,
 		},
 		"multiple identity columns with last value": {
 			tableName:       "table_name",

@@ -133,7 +133,6 @@ func getIdentityColumns(table *schema.Table) []string {
 }
 
 type batcher struct {
-	pkcount          int
 	statementBuilder *batchStatementBuilder
 	lastValues       []string
 }
@@ -141,7 +140,6 @@ type batcher struct {
 func newBatcher(table *schema.Table, batchSize int) *batcher {
 	return &batcher{
 		statementBuilder: newBatchStatementBuilder(table.Name, getIdentityColumns(table), batchSize),
-		pkcount:          len(getIdentityColumns(table)),
 		lastValues:       make([]string, len(getIdentityColumns(table))),
 	}
 }
@@ -153,7 +151,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
-		if b.pkcount == 1 {
+		if len(b.lastValues) == 1 {
 			err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues[0])
 			if err != nil {
 				return err
@@ -198,14 +196,9 @@ func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
 // fetch the next batch of PK of rows to update
 func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string {
 	whereClause := ""
-	if len(lastValues) != 0 {
-		whereClause = "WHERE "
-		if len(sb.identityColumns) > 1 {
-			whereClause += "(" + strings.Join(sb.identityColumns, ", ") + ") > " + "(" + strings.Join(quoteLiteralList(lastValues), ", ") + ")"
-		}
-		if len(sb.identityColumns) == 1 {
-			whereClause += sb.identityColumns[0] + " > " + pq.QuoteLiteral(lastValues[0])
-		}
+	if len(lastValues) != 0 && lastValues[0] != "" {
+		whereClause = fmt.Sprintf("WHERE (%s) > (%s)",
+			strings.Join(sb.identityColumns, ", "), strings.Join(quoteLiteralList(lastValues), ", "))
 	}
 
 	return fmt.Sprintf("SELECT %[1]s FROM %[2]s %[3]s ORDER BY %[1]s LIMIT %[4]d FOR NO KEY UPDATE",
