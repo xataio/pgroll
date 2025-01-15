@@ -151,7 +151,7 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
-		wrapper := make([]interface{}, len(b.lastValues))
+		wrapper := make([]any, len(b.lastValues))
 		for i := range b.lastValues {
 			wrapper[i] = &b.lastValues[i]
 		}
