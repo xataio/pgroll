@@ -83,6 +83,9 @@ type Column struct {
 
 	// Whether or not the column has been deleted in the virtual schema
 	Deleted bool `json:"-"`
+
+	// Postgres type type, e.g enum, composite, range
+	PostgresType string `json:"postgresType"`
 }
 
 // Index represents an index on a table
