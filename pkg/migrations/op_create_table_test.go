@@ -547,6 +547,83 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table with composity primary key and migrate it to test backfilling",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+									Pk:   true,
+								},
+								{
+									Name:     "city",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "nowhere_forbidden",
+							Table:   "users",
+							Columns: []string{"city"},
+							Type:    migrations.OpCreateConstraintTypeCheck,
+							Check:   ptr("city != 'nowhere'"),
+							Up: migrations.MultiColumnUpSQL{
+								"city": "'chicago'",
+							},
+							Down: migrations.MultiColumnDownSQL{
+								"city": "city",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the table succeeds when the unique constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+					"city": "new york",
+				})
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "bob",
+					"city": "new york",
+				})
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "carol",
+				})
+				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "city": "new york"},
+					{"id": 2, "name": "bob", "city": "new york"},
+					{"id": 3, "name": "carol", "city": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				rows := MustSelect(t, db, schema, "02_add_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "city": "chicago"},
+					{"id": 2, "name": "bob", "city": "chicago"},
+					{"id": 3, "name": "carol", "city": "chicago"},
+				}, rows)
+			},
+		},
 	})
 }
 

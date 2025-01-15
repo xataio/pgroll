@@ -134,13 +134,13 @@ func getIdentityColumns(table *schema.Table) []string {
 
 type batcher struct {
 	statementBuilder *batchStatementBuilder
-	lastValues       []string
+	lastValues       []*string
 }
 
 func newBatcher(table *schema.Table, batchSize int) *batcher {
 	return &batcher{
 		statementBuilder: newBatchStatementBuilder(table.Name, getIdentityColumns(table), batchSize),
-		lastValues:       make([]string, len(getIdentityColumns(table))),
+		lastValues:       make([]*string, len(getIdentityColumns(table))),
 	}
 }
 
@@ -151,16 +151,13 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 
 		// Execute the query to update the next batch of rows and update the last PK
 		// value for the next batch
-		if len(b.lastValues) == 1 {
-			err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues[0])
-			if err != nil {
-				return err
-			}
-		} else {
-			err := tx.QueryRowContext(ctx, query).Scan(&b.lastValues)
-			if err != nil {
-				return err
-			}
+		wrapper := make([]interface{}, len(b.lastValues))
+		for i := range b.lastValues {
+			wrapper[i] = &b.lastValues[i]
+		}
+		err := tx.QueryRowContext(ctx, query).Scan(wrapper...)
+		if err != nil {
+			return err
 		}
 
 		return nil
@@ -186,7 +183,7 @@ func newBatchStatementBuilder(tableName string, identityColumnNames []string, ba
 }
 
 // buildQuery builds the query used to update the next batch of rows.
-func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
+func (sb *batchStatementBuilder) buildQuery(lastValues []*string) string {
 	return fmt.Sprintf("WITH batch AS (%[1]s), update AS (%[2]s) %[3]s",
 		sb.buildBatchSubQuery(lastValues),
 		sb.buildUpdateBatchSubQuery(),
@@ -194,9 +191,9 @@ func (sb *batchStatementBuilder) buildQuery(lastValues []string) string {
 }
 
 // fetch the next batch of PK of rows to update
-func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string {
+func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []*string) string {
 	whereClause := ""
-	if len(lastValues) != 0 && lastValues[0] != "" {
+	if len(lastValues) != 0 && lastValues[0] != nil {
 		whereClause = fmt.Sprintf("WHERE (%s) > (%s)",
 			strings.Join(sb.identityColumns, ", "), strings.Join(quoteLiteralList(lastValues), ", "))
 	}
@@ -205,10 +202,10 @@ func (sb *batchStatementBuilder) buildBatchSubQuery(lastValues []string) string 
 		strings.Join(sb.identityColumns, ", "), sb.tableName, whereClause, sb.batchSize)
 }
 
-func quoteLiteralList(l []string) []string {
+func quoteLiteralList(l []*string) []string {
 	quoted := make([]string, len(l))
 	for i, v := range l {
-		quoted[i] = pq.QuoteLiteral(v)
+		quoted[i] = pq.QuoteLiteral(*v)
 	}
 	return quoted
 }
