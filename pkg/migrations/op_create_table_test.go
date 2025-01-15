@@ -548,7 +548,7 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with composity primary key and migrate it to test backfilling",
+			name: "create table with composite primary key and migrate it to test backfilling",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
