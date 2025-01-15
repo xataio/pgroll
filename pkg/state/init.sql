@@ -163,7 +163,17 @@ BEGIN
                                         array_agg(e.enumlabel ORDER BY e.enumsortorder)
                                     FROM pg_enum AS e
                                 WHERE
-                                    e.enumtypid = tp.oid) AS enumValues FROM pg_attribute AS attr
+                                    e.enumtypid = tp.oid) AS enumValues, (
+                                    SELECT COALESCE(json_object_agg(col_constraint.conname, col_constraint.constraint_def), '{}'::json)
+                                        FROM (
+                                            SELECT
+                                                pg_constraint.conname,
+                                                pg_get_constraintdef(pg_constraint.oid) AS constraint_def
+                                            FROM pg_constraint
+                                            WHERE pg_constraint.conrelid = attr.attrelid AND attr.attnum = ANY (pg_constraint.conkey)
+                                            GROUP BY pg_constraint.oid, pg_constraint.conname
+                                        ) AS col_constraint
+                                    ) AS checkConstraints FROM pg_attribute AS attr
                                 INNER JOIN pg_type AS tp ON attr.atttypid = tp.oid
                                 LEFT JOIN pg_attrdef AS def ON attr.attrelid = def.adrelid
                                     AND attr.attnum = def.adnum
