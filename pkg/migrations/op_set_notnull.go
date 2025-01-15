@@ -24,7 +24,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema strin
 	table := s.GetTable(o.Table)
 
 	// Add an unchecked NOT NULL constraint to the new column.
-	if err := addNotNullConstraint(ctx, conn, o.Table, o.Column, TemporaryName(o.Column)); err != nil {
+	if err := addNotNullConstraint(ctx, conn, table.Name, o.Column, TemporaryName(o.Column)); err != nil {
 		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
