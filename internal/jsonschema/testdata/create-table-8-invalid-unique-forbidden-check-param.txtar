@@ -1,0 +1,36 @@
+This is an invalid 'create_table' migration.
+Unique constraint cannot have a check expression
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_invalid_unique",
+            "type": "unique",
+            "columns": ["title"],
+            "check": "length(title) > 10"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+false
