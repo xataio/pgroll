@@ -788,3 +788,54 @@ func TestCreateTableColumnDefaultTransformation(t *testing.T) {
 		},
 	}, roll.WithSQLTransformer(sqlTransformer))
 }
+
+func TestCreateTableValidationInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "create table with a name matching a name used in a previous operation",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpCreateTable{
+							Name: "products",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.TableAlreadyExistsError{Name: "products"},
+		},
+	})
+}
