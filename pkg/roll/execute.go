@@ -132,6 +132,9 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 
 	// create views in the new schema
 	for name, table := range schema.Tables {
+		if table.Deleted {
+			continue
+		}
 		err = m.ensureView(ctx, version, name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
@@ -236,15 +239,27 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		}
 	}
 
-	// read the current schema
-	currentSchema, err := m.state.ReadSchema(ctx, m.schema)
+	// get the name of the previous version of the schema
+	previousVersion, err := m.state.PreviousVersion(ctx, m.schema)
 	if err != nil {
-		return fmt.Errorf("unable to read schema: %w", err)
+		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
 
-	// execute operations
-	for _, op := range migration.Operations {
-		err := op.Rollback(ctx, m.pgConn, m.sqlTransformer, currentSchema)
+	// get the schema after the previous migration was applied
+	schema := schema.New()
+	if previousVersion != nil {
+		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousVersion)
+		if err != nil {
+			return fmt.Errorf("unable to read schema: %w", err)
+		}
+	}
+
+	// update the in-memory schema with the results of applying the migration
+	migration.UpdateVirtualSchema(ctx, schema)
+
+	// roll back operations in reverse order
+	for i := len(migration.Operations) - 1; i >= 0; i-- {
+		err := migration.Operations[i].Rollback(ctx, m.pgConn, m.sqlTransformer, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
@@ -263,7 +278,9 @@ func (m *Roll) Rollback(ctx context.Context) error {
 func (m *Roll) ensureView(ctx context.Context, version, name string, table *schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
-		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
+		if !v.Deleted {
+			columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
+		}
 	}
 
 	// Create view with security_invoker option for PG 15+

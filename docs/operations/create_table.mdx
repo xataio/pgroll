@@ -9,7 +9,8 @@ description: A create table operation creates a new table in the database.
 {
   "create_table": {
     "name": "name of new table",
-    "columns": [...]
+    "columns": [...],
+    "constraints": [...]
   }
 }
 ```
@@ -39,6 +40,26 @@ Each `column` is defined as:
 ```
 
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
+
+Each `constraint` is defined as:
+
+```json
+{
+  "name": "constraint name",
+  "type": "constraint type",
+  "columns": ["list", "of", "columns"],
+  "nulls_not_distinct": true|false,
+  "deferrable": true|false,
+  "initially_deferred": true|false,
+  "index_parameters": {
+    "tablespace": "index_tablespace",
+    "storage_parameters": "parameter=value",
+    "include_columns": ["list", "of", "columns", "included in index"]
+  },
+},
+```
+
+Supported constraint types: `unique`.
 
 ## Examples
 
@@ -98,3 +119,9 @@ Create a table with a `CHECK` constraint on one column:
 Create a table with different `DEFAULT` values:
 
 <ExampleSnippet example="28_different_defaults.json" language="json" />
+
+### Create a table with table level unique constraint
+
+Create a table with table level constraints:
+
+<ExampleSnippet example="50_create_table_with_table_constraint.json" language="json" />

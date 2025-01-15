@@ -46,10 +46,10 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
-			Columns:        s.GetTable(o.Table).Columns,
+			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: TemporaryName(o.Column.Name),
 			SQL:            o.Up,
 		})
@@ -120,11 +120,12 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Column.Name)
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(tempName)))
+		pq.QuoteIdentifier(table.Name),
+		pq.QuoteIdentifier(column.Name)))
 	if err != nil {
 		return err
 	}
