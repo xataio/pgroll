@@ -30,10 +30,10 @@ func convertRenameStmt(stmt *pgq.RenameStmt) (migrations.Operations, error) {
 // to an OpAlterColumn operation.
 func convertRenameColumn(stmt *pgq.RenameStmt) (migrations.Operations, error) {
 	return migrations.Operations{
-		&migrations.OpAlterColumn{
-			Table:  stmt.GetRelation().GetRelname(),
-			Column: stmt.GetSubname(),
-			Name:   ptr(stmt.GetNewname()),
+		&migrations.OpRenameColumn{
+			Table: stmt.GetRelation().GetRelname(),
+			From:  stmt.GetSubname(),
+			To:    stmt.GetNewname(),
 		},
 	}, nil
 }
