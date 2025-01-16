@@ -7,8 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
+	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -30,7 +29,7 @@ func TestRenameConstraint(t *testing.T) {
 						Name:     "username",
 						Type:     "text",
 						Nullable: false,
-						Check:    &migrations.CheckConstraint{Constraint: `LENGTH("username") <= 2048`, Name: "users_text_length_username"},
+						Check:    &migrations.CheckConstraint{Constraint: `LENGTH("username") > 2`, Name: "users_check"},
 					},
 				},
 			},
@@ -44,61 +43,41 @@ func TestRenameConstraint(t *testing.T) {
 			{
 				Name: "02_rename_constraint",
 				Operations: migrations.Operations{
-					&migrations.OpAlterColumn{
-						Table:  "users",
-						Column: "username",
-						Name:   ptr("name"),
-					},
 					&migrations.OpRenameConstraint{
 						Table: "users",
-						From:  "users_text_length_username",
-						To:    "users_text_length_name",
+						From:  "users_check",
+						To:    "users_check_username_length",
 					},
 				},
 			},
 		},
 		afterStart: func(t *testing.T, db *sql.DB, schema string) {
-			// The column in the underlying table has not been renamed.
-			ColumnMustExist(t, db, schema, "users", "username")
-
-			// Insertions to the new column name in the new version schema should work.
-			MustInsert(t, db, schema, "02_rename_constraint", "users", map[string]string{"name": "alice"})
-
-			// Insertions to the old column name in the old version schema should work.
-			MustInsert(t, db, schema, "01_add_table", "users", map[string]string{"username": "bob"})
-
 			// The check constraint in the underlying table has not been renamed.
-			CheckConstraintMustExist(t, db, schema, "users", "users_text_length_username")
+			CheckConstraintMustExist(t, db, schema, "users", "users_check")
 
 			// The new check constraint in the underlying table has not been created.
-			CheckConstraintMustNotExist(t, db, schema, "users", "users_text_length_name")
+			CheckConstraintMustNotExist(t, db, schema, "users", "users_check_username_length")
 
-			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, schema, "02_rename_constraint", "users")
-			assert.Equal(t, []map[string]any{
-				{"id": 1, "name": "alice"},
-				{"id": 2, "name": "bob"},
-			}, rows)
+			// Inserting a row that violates the check constraint should fail.
+			MustNotInsert(t, db, schema, "02_rename_constraint", "users", map[string]string{
+				"username": "a",
+			}, testutils.CheckViolationErrorCode)
 		},
 		afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			// no-op
+			// // The check constraint in the underlying table has not been renamed.
+			CheckConstraintMustExist(t, db, schema, "users", "users_check")
 		},
 		afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-			// The column in the underlying table has been renamed.
-			ColumnMustExist(t, db, schema, "users", "name")
-
 			// The check constraint in the underlying table has been renamed.
-			CheckConstraintMustExist(t, db, schema, "users", "users_text_length_name")
+			CheckConstraintMustExist(t, db, schema, "users", "users_check_username_length")
 
 			// The old check constraint in the underlying table has been dropped.
-			CheckConstraintMustNotExist(t, db, schema, "users", "users_text_length_username")
+			CheckConstraintMustNotExist(t, db, schema, "users", "users_check")
 
-			// Data can be read from the view in the new version schema.
-			rows := MustSelect(t, db, schema, "02_rename_constraint", "users")
-			assert.Equal(t, []map[string]any{
-				{"id": 1, "name": "alice"},
-				{"id": 2, "name": "bob"},
-			}, rows)
+			// Inserting a row that violates the check constraint should fail.
+			MustNotInsert(t, db, schema, "02_rename_constraint", "users", map[string]string{
+				"username": "a",
+			}, testutils.CheckViolationErrorCode)
 		},
 	}})
 }
