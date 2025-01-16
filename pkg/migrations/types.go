@@ -331,6 +331,18 @@ type OpRawSQL struct {
 	Up string `json:"up"`
 }
 
+// Rename column operation
+type OpRenameColumn struct {
+	// Old name of the column
+	From string `json:"from"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New name of the column
+	To string `json:"to"`
+}
+
 // Rename constraint operation
 type OpRenameConstraint struct {
 	// Name of the constraint
