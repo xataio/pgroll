@@ -39,7 +39,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 		Columns:        table.Columns,
 		SchemaName:     s.Name,
 		LatestSchema:   latestSchema,
-		TableName:      o.Table,
+		TableName:      table.Name,
 		PhysicalColumn: TemporaryName(o.Column),
 		SQL:            o.upSQLForOperations(ops),
 	})
@@ -61,7 +61,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 		Columns:        table.Columns,
 		LatestSchema:   latestSchema,
 		SchemaName:     s.Name,
-		TableName:      o.Table,
+		TableName:      table.Name,
 		PhysicalColumn: o.Column,
 		SQL:            o.downSQLForOperations(ops),
 	})
