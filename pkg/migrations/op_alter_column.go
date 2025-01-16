@@ -115,9 +115,10 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	ops := o.subOperations()
+	table := s.GetTable(o.Table)
 
 	// Perform any operation specific rollback steps
+	ops := o.subOperations()
 	for _, ops := range ops {
 		if err := ops.Rollback(ctx, conn, tr, nil); err != nil {
 			return err
@@ -126,7 +127,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(table.Name),
 		pq.QuoteIdentifier(TemporaryName(o.Column)),
 	))
 	if err != nil {
