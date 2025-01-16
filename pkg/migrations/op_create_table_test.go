@@ -761,6 +761,105 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table with foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "owners",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+								{
+									Name: "city",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "pk_owners",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_referencing_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "pets",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "owner_id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "fk_users",
+									Type:    migrations.ConstraintTypeForeignKey,
+									Columns: []string{"owner_id"},
+									References: migrations.ConstraintReferences{
+										Table:    "owners",
+										Columns:  []string{"id"},
+										OnDelete: migrations.ReferenceOptionCascade,
+										OnUpdate: migrations.ReferenceOptionCascade,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The PK constraint exists on the new table.
+				PrimaryKeyConstraintMustExist(t, db, schema, "owners", "pk_owners")
+				ValidatedForeignKeyMustExist(t, db, schema, "pets", "fk_owners")
+
+				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
+					"id":   "1",
+					"name": "alice",
+					"city": "new york",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the FK constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				ValidatedForeignKeyMustExist(t, db, schema, "pets", "fk_owners")
+
+				// Inserting a row into the table succeeds when the PK constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "2",
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "2",
+					"owner_id": "1",
+					"name":     "cutie pie",
+				})
+			},
+		},
 	})
 }
 
