@@ -26,6 +26,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
+	fmt.Println("constraintsSQL", constraintsSQL)
 
 	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
@@ -346,11 +347,11 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete) string {
 	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
 	if onDelete != "" {
-		onDeleteAction = strings.ToUpper(string(onDeleteAction))
+		onDeleteAction = strings.ToUpper(string(onDelete))
 	}
 	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
 	if onUpdate != "" {
-		onUpdateAction = strings.ToUpper(string(onUpdateAction))
+		onUpdateAction = strings.ToUpper(string(onUpdate))
 	}
 
 	constraint := ""

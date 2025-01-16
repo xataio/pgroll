@@ -814,14 +814,13 @@ func TestCreateTable(t *testing.T) {
 							},
 							Constraints: []migrations.Constraint{
 								{
-									Name:    "fk_users",
+									Name:    "fk_owners",
 									Type:    migrations.ConstraintTypeForeignKey,
 									Columns: []string{"owner_id"},
-									References: migrations.ConstraintReferences{
+									References: &migrations.ConstraintReferences{
 										Table:    "owners",
 										Columns:  []string{"id"},
-										OnDelete: migrations.ReferenceOptionCascade,
-										OnUpdate: migrations.ReferenceOptionCascade,
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
 									},
 								},
 							},
@@ -830,10 +829,6 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// The PK constraint exists on the new table.
-				PrimaryKeyConstraintMustExist(t, db, schema, "owners", "pk_owners")
-				ValidatedForeignKeyMustExist(t, db, schema, "pets", "fk_owners")
-
 				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
 					"id":   "1",
 					"name": "alice",
@@ -844,20 +839,27 @@ func TestCreateTable(t *testing.T) {
 				// The table has been dropped, so the FK constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				ValidatedForeignKeyMustExist(t, db, schema, "pets", "fk_owners")
-
 				// Inserting a row into the table succeeds when the PK constraint is satisfied.
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
-					"id":   "2",
-					"name": "bobby",
-				})
-
-				// Inserting a row into the table fails when the PK constraint is not satisfied.
 				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
-					"id":       "2",
+					"id":       "1",
 					"owner_id": "1",
 					"name":     "cutie pie",
 				})
+
+				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "2",
+					"owner_id": "0",
+					"name":     "bobby",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting the row from the referenced table cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_referencing_table", "owners", map[string]string{
+					"id": "1",
+				})
+
+				rows := MustSelect(t, db, schema, "02_create_referencing_table", "pets")
+				assert.Equal(t, []map[string]any{}, rows)
 			},
 		},
 	})
