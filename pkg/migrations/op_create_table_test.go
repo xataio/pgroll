@@ -726,7 +726,7 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// The check constraint exists on the new table.
+				// The PK constraint exists on the new table.
 				PrimaryKeyConstraintMustExist(t, db, schema, "users", "pk_users")
 
 				// Inserting a row into the table succeeds when the PK constraint is satisfied.
@@ -742,10 +742,10 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The table has been dropped, so the check constraint is gone.
+				// The table has been dropped, so the PK constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// The check constraint exists on the new table.
+				// The PK constraint exists on the new table.
 				PrimaryKeyConstraintMustExist(t, db, schema, "users", "pk_users")
 
 				// Inserting a row into the table succeeds when the PK constraint is satisfied.
