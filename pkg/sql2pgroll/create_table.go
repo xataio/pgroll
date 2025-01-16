@@ -215,6 +215,11 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var err error
 	var references *migrations.ConstraintReferences
 
+	columns := make([]string, len(c.Keys))
+	for i, key := range c.Keys {
+		columns[i] = key.GetString_().Sval
+	}
+
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
 		constraintType = migrations.ConstraintTypeUnique
@@ -230,7 +235,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	case pgq.ConstrType_CONSTR_FOREIGN:
 		constraintType = migrations.ConstraintTypeForeignKey
 		referencedTable := c.Pktable.Relname
-		referencedColumns := make([]string, len(c.FkAttrs))
+		referencedColumns := make([]string, len(c.PkAttrs))
 		for i, node := range c.PkAttrs {
 			referencedColumns[i] = node.GetString_().Sval
 		}
@@ -251,6 +256,10 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		if c.FkUpdAction != "" {
 			onUpdate = referentialAction[c.FkUpdAction]
 		}
+		columns = make([]string, len(c.FkAttrs))
+		for i, node := range c.FkAttrs {
+			columns[i] = node.GetString_().Sval
+		}
 
 		references = &migrations.ConstraintReferences{
 			Table:     referencedTable,
@@ -261,11 +270,6 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 	default:
 		return nil, nil
-	}
-
-	columns := make([]string, len(c.Keys))
-	for i, key := range c.Keys {
-		columns[i] = key.GetString_().Sval
 	}
 
 	including := make([]string, len(c.Including))
