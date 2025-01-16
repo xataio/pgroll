@@ -69,6 +69,7 @@ func Prepare() *cobra.Command {
 	rootCmd.AddCommand(pullCmd())
 	rootCmd.AddCommand(latestCmd())
 	rootCmd.AddCommand(sqlCmd())
+	rootCmd.AddCommand(convertCmd())
 
 	return rootCmd
 }
