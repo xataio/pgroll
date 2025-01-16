@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
@@ -545,6 +546,92 @@ func TestCreateTable(t *testing.T) {
 				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
 					"name": "bobby",
 				}, testutils.UniqueViolationErrorCode)
+			},
+		},
+		{
+			name: "create table with composite primary key and migrate it to test backfilling",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "uuid",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+									Pk:   true,
+								},
+								{
+									Name:     "city",
+									Type:     "text",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "nowhere_forbidden",
+							Table:   "users",
+							Columns: []string{"city"},
+							Type:    migrations.OpCreateConstraintTypeCheck,
+							Check:   ptr("city != 'nowhere'"),
+							Up: migrations.MultiColumnUpSQL{
+								"city": "'chicago'",
+							},
+							Down: migrations.MultiColumnDownSQL{
+								"city": "city",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the table succeeds when the unique constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "00000000-0000-0000-0000-000000000001",
+					"name": "alice",
+					"city": "new york",
+				})
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "00000000-0000-0000-0000-000000000002",
+					"name": "bob",
+					"city": "new york",
+				})
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "00000000-0000-0000-0000-000000000003",
+					"name": "carol",
+				})
+				id1, _ := uuid.MustParse("00000000-0000-0000-0000-000000000001").MarshalText()
+				id2, _ := uuid.MustParse("00000000-0000-0000-0000-000000000002").MarshalText()
+				id3, _ := uuid.MustParse("00000000-0000-0000-0000-000000000003").MarshalText()
+				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": id1, "name": "alice", "city": "new york"},
+					{"id": id2, "name": "bob", "city": "new york"},
+					{"id": id3, "name": "carol", "city": nil},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				id1, _ := uuid.MustParse("00000000-0000-0000-0000-000000000001").MarshalText()
+				id2, _ := uuid.MustParse("00000000-0000-0000-0000-000000000002").MarshalText()
+				id3, _ := uuid.MustParse("00000000-0000-0000-0000-000000000003").MarshalText()
+				rows := MustSelect(t, db, schema, "02_add_constraint", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": id1, "name": "alice", "city": "chicago"},
+					{"id": id2, "name": "bob", "city": "chicago"},
+					{"id": id3, "name": "carol", "city": "chicago"},
+				}, rows)
 			},
 		},
 	})
