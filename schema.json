@@ -116,7 +116,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique"]
+          "enum": ["unique", "check"]
         },
         "deferrable": {
           "description": "Deferable constraint",
@@ -132,6 +132,16 @@
           "description": "Nulls not distinct constraint",
           "type": "boolean",
           "default": false
+        },
+        "no_inherit": {
+          "description": "Do not propagate constraint to child tables",
+          "type": "boolean",
+          "default": false
+        },
+        "check": {
+          "description": "Check constraint expression",
+          "type": "string",
+          "default": ""
         },
         "index_parameters": {
           "type": "object",
@@ -154,6 +164,57 @@
           }
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "unique"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              },
+              "no_inherit": {
+                "const": false
+              }
+            },
+            "required": ["columns"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "check"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "type": "string"
+              },
+              "index_parameters": {
+                "const": {}
+              },
+              "deferrable": {
+                "const": false
+              },
+              "initially_deferred": {
+                "const": false
+              },
+              "nulls_not_distinct": {
+                "const": false
+              }
+            },
+            "required": ["check"]
+          }
+        }
+      ],
       "required": ["name", "type"],
       "type": "object"
     },

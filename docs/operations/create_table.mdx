@@ -48,9 +48,11 @@ Each `constraint` is defined as:
   "name": "constraint name",
   "type": "constraint type",
   "columns": ["list", "of", "columns"],
+  "check": "condition of CHECK constraint",
   "nulls_not_distinct": true|false,
   "deferrable": true|false,
   "initially_deferred": true|false,
+  "no_inherit": true|false,
   "index_parameters": {
     "tablespace": "index_tablespace",
     "storage_parameters": "parameter=value",
@@ -59,7 +61,7 @@ Each `constraint` is defined as:
 },
 ```
 
-Supported constraint types: `unique`.
+Supported constraint types: `unique`, `check`.
 
 ## Examples
 
@@ -120,7 +122,7 @@ Create a table with different `DEFAULT` values:
 
 <ExampleSnippet example="28_different_defaults.json" language="json" />
 
-### Create a table with table level unique constraint
+### Create a table with multiple table level constraints
 
 Create a table with table level constraints:
 

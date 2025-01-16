@@ -116,10 +116,35 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			return fmt.Errorf("invalid constraint: %w", err)
 		}
 
-		switch c.Type { //nolint:gocritic // more cases are coming soon
+		switch c.Type {
 		case ConstraintTypeUnique:
 			if len(c.Columns) == 0 {
 				return FieldRequiredError{Name: "columns"}
+			}
+		case ConstraintTypeCheck:
+			if c.Check == "" {
+				return FieldRequiredError{Name: "check"}
+			}
+			if c.Deferrable || c.InitiallyDeferred {
+				return CheckConstraintError{
+					Table: o.Name,
+					Name:  c.Name,
+					Err:   fmt.Errorf("CHECK constraints cannot be marked DEFERRABLE"),
+				}
+			}
+			if c.IndexParameters != nil {
+				return CheckConstraintError{
+					Table: o.Name,
+					Name:  c.Name,
+					Err:   fmt.Errorf("CHECK constraints cannot have index parameters"),
+				}
+			}
+			if c.NullsNotDistinct {
+				return CheckConstraintError{
+					Table: o.Name,
+					Name:  c.Name,
+					Err:   fmt.Errorf("CHECK constraints cannot have NULLS NOT DISTINCT"),
+				}
 			}
 		}
 	}
@@ -142,16 +167,20 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Nullable: col.Nullable,
 		}
 	}
-	var uniqueConstraints map[string]*schema.UniqueConstraint
+	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
+	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
 	for _, c := range o.Constraints {
-		switch c.Type { //nolint:gocritic // more cases are coming soon
+		switch c.Type {
 		case ConstraintTypeUnique:
-			if uniqueConstraints == nil {
-				uniqueConstraints = make(map[string]*schema.UniqueConstraint)
-			}
 			uniqueConstraints[c.Name] = &schema.UniqueConstraint{
 				Name:    c.Name,
 				Columns: c.Columns,
+			}
+		case ConstraintTypeCheck:
+			checkConstraints[c.Name] = &schema.CheckConstraint{
+				Name:       c.Name,
+				Columns:    c.Columns,
+				Definition: c.Check,
 			}
 		}
 	}
@@ -168,6 +197,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 		Name:              o.Name,
 		Columns:           columns,
 		UniqueConstraints: uniqueConstraints,
+		CheckConstraints:  checkConstraints,
 		PrimaryKey:        primaryKey,
 	})
 
@@ -214,9 +244,11 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			writer.Tablespace = c.IndexParameters.Tablespace
 		}
 
-		switch c.Type { //nolint:gocritic // more cases are coming soon
+		switch c.Type {
 		case ConstraintTypeUnique:
 			constraintsSQL[i] = writer.WriteUnique(c.NullsNotDistinct)
+		case ConstraintTypeCheck:
+			constraintsSQL[i] = writer.WriteCheck(c.Check, c.NoInherit)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -249,6 +281,18 @@ func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
 	constraint += fmt.Sprintf("UNIQUE %s (%s)", nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
 	constraint += w.addIndexParameters()
 	constraint += w.addDeferrable()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
+	constraint := ""
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	constraint += fmt.Sprintf("CHECK (%s)", check)
+	if noInherit {
+		constraint += " NO INHERIT"
+	}
 	return constraint
 }
 

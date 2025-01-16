@@ -385,7 +385,7 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with a check constraint",
+			name: "create table with a check constraint on column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -405,6 +405,68 @@ func TestCreateTable(t *testing.T) {
 										Name:       "check_name_length",
 										Constraint: "length(name) > 3",
 									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "b",
+				}, testutils.CheckViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the check constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The check constraint exists on the new table.
+				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+
+				// Inserting a row into the table succeeds when the check constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "bobby",
+				})
+
+				// Inserting a row into the table fails when the check constraint is not satisfied.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"name": "c",
+				}, testutils.CheckViolationErrorCode)
+			},
+		},
+		{
+			name: "create table with a table check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:  "check_name_length",
+									Type:  "check",
+									Check: "length(name) > 3",
 								},
 							},
 						},
@@ -783,6 +845,38 @@ func TestCreateTableValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.FieldRequiredError{Name: "columns"},
+		},
+		{
+			name: "check constraint missing expression",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "table1",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "check_name",
+									Type: migrations.ConstraintTypeCheck,
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "check"},
 		},
 	})
 }

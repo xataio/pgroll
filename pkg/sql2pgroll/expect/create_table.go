@@ -354,3 +354,52 @@ var CreateTableOp23 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp24 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeCheck,
+			Check:             "a > 0",
+			Columns:           []string{},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+		},
+	},
+}
+
+var CreateTableOp25 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "b",
+			Type:     "text",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "text",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeCheck,
+			Check:             "b = c",
+			Columns:           []string{},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         true,
+		},
+	},
+}

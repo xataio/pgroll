@@ -172,6 +172,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(b text, c text, UNIQUE (b) INCLUDE (c) WITH (fillfactor = 70) USING INDEX TABLESPACE my_tablespace)",
 			expectedOp: expect.CreateTableOp23,
 		},
+		{
+			sql:        "CREATE TABLE foo(a int, CHECK (a>0))",
+			expectedOp: expect.CreateTableOp24,
+		},
+		{
+			sql:        "CREATE TABLE foo(b text, c text, CHECK (b=c) NO INHERIT)",
+			expectedOp: expect.CreateTableOp25,
+		},
 	}
 
 	for _, tc := range tests {
@@ -239,10 +247,8 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a text COLLATE en_US)",
 
 		// Table constraints, named and unnamed, are not supported
-		"CREATE TABLE foo(a int, CONSTRAINT foo_check CHECK (a > 0))",
 		"CREATE TABLE foo(a int, CONSTRAINT foo_pk PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
-		"CREATE TABLE foo(a int, CHECK (a > 0))",
 		"CREATE TABLE foo(a int, PRIMARY KEY (a))",
 		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
