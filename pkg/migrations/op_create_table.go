@@ -176,7 +176,9 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	primaryKeys := make([]string, 0)
 	for _, col := range o.Columns {
 		columns[col.Name] = &schema.Column{
-			Name: col.Name,
+			Name:     col.Name,
+			Unique:   col.Unique,
+			Nullable: col.Nullable,
 		}
 		if col.Pk {
 			primaryKeys = append(primaryKeys, col.Name)
@@ -201,6 +203,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			primaryKeys = c.Columns
 		}
 	}
+
 	s.AddTable(o.Name, &schema.Table{
 		Name:              o.Name,
 		Columns:           columns,

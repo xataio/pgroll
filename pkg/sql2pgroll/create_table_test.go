@@ -252,6 +252,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Table constraints, named and unnamed, are not supported
 		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
+		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
 		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
 		// Primary key constraint options are not supported

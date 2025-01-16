@@ -132,6 +132,9 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 
 	// create views in the new schema
 	for name, table := range schema.Tables {
+		if table.Deleted {
+			continue
+		}
 		err = m.ensureView(ctx, version, name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
@@ -275,7 +278,9 @@ func (m *Roll) Rollback(ctx context.Context) error {
 func (m *Roll) ensureView(ctx context.Context, version, name string, table *schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
 	for k, v := range table.Columns {
-		columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
+		if !v.Deleted {
+			columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
+		}
 	}
 
 	// Create view with security_invoker option for PG 15+
