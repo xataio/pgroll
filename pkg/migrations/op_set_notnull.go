@@ -22,9 +22,10 @@ var _ Operation = (*OpSetNotNull)(nil)
 
 func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
 
 	// Add an unchecked NOT NULL constraint to the new column.
-	if err := addNotNullConstraint(ctx, conn, table.Name, o.Column, TemporaryName(o.Column)); err != nil {
+	if err := addNotNullConstraint(ctx, conn, table.Name, o.Column, column.Name); err != nil {
 		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
