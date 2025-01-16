@@ -116,6 +116,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
 
 	// Perform any operation specific rollback steps
 	ops := o.subOperations()
@@ -128,7 +129,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
+		pq.QuoteIdentifier(column.Name),
 	))
 	if err != nil {
 		return err
