@@ -125,6 +125,9 @@ type ForeignKey struct {
 
 	// The ON DELETE behavior of the foreign key
 	OnDelete string `json:"onDelete"`
+
+	// The ON UPDATE behavior of the foreign key
+	OnUpdate string `json:"onUpdate"`
 }
 
 // CheckConstraint represents a check constraint on a table

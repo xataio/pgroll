@@ -10,6 +10,14 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
+var referentialAction = map[string]migrations.ForeignKeyReferenceOnDelete{
+	"a": migrations.ForeignKeyReferenceOnDeleteNOACTION,
+	"c": migrations.ForeignKeyReferenceOnDeleteCASCADE,
+	"d": migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+	"n": migrations.ForeignKeyReferenceOnDeleteSETNULL,
+	"r": migrations.ForeignKeyReferenceOnDeleteRESTRICT,
+}
+
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
@@ -205,6 +213,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var nullsNotDistinct bool
 	var checkExpr string
 	var err error
+	var references *migrations.ConstraintReferences
 
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
@@ -218,6 +227,38 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 	case pgq.ConstrType_CONSTR_PRIMARY:
 		constraintType = migrations.ConstraintTypePrimaryKey
+	case pgq.ConstrType_CONSTR_FOREIGN:
+		constraintType = migrations.ConstraintTypeForeignKey
+		referencedTable := c.Pktable.Relname
+		referencedColumns := make([]string, len(c.FkAttrs))
+		for i, node := range c.PkAttrs {
+			referencedColumns[i] = node.GetString_().Sval
+		}
+		matchType := migrations.ConstraintReferencesMatchTypeSIMPLE
+		switch c.FkMatchtype {
+		case "p":
+			matchType = migrations.ConstraintReferencesMatchTypePARTIAL
+		case "f":
+			matchType = migrations.ConstraintReferencesMatchTypeFULL
+		case "s":
+			matchType = migrations.ConstraintReferencesMatchTypeSIMPLE
+		}
+		onDelete := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		if c.FkDelAction != "" {
+			onDelete = referentialAction[c.FkDelAction]
+		}
+		onUpdate := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		if c.FkUpdAction != "" {
+			onUpdate = referentialAction[c.FkUpdAction]
+		}
+
+		references = &migrations.ConstraintReferences{
+			Table:     referencedTable,
+			Columns:   referencedColumns,
+			MatchType: matchType,
+			OnDelete:  onDelete,
+			OnUpdate:  onUpdate,
+		}
 	default:
 		return nil, nil
 	}
@@ -260,6 +301,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		InitiallyDeferred: c.Initdeferred,
 		IndexParameters:   indexParameters,
 		Check:             checkExpr,
+		References:        references,
 	}, nil
 }
 

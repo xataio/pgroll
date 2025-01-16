@@ -159,6 +159,13 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			if len(c.Columns) == 0 {
 				return FieldRequiredError{Name: "columns"}
 			}
+		case ConstraintTypeForeignKey:
+			if len(c.Columns) == 0 {
+				return FieldRequiredError{Name: "columns"}
+			}
+			if c.References == nil {
+				return FieldRequiredError{Name: "references"}
+			}
 		}
 	}
 
@@ -186,6 +193,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	}
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
 	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
+	foreignKeys := make(map[string]*schema.ForeignKey, 0)
 	for _, c := range o.Constraints {
 		switch c.Type {
 		case ConstraintTypeUnique:
@@ -201,6 +209,16 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		case ConstraintTypePrimaryKey:
 			primaryKeys = c.Columns
+		case ConstraintTypeForeignKey:
+			foreignKeys[c.Name] = &schema.ForeignKey{
+				Name:              c.Name,
+				Columns:           c.Columns,
+				ReferencedTable:   c.References.Table,
+				ReferencedColumns: c.References.Columns,
+				OnDelete:          string(c.References.OnDelete),
+				OnUpdate:          string(c.References.OnUpdate),
+			}
+
 		}
 	}
 
@@ -210,6 +228,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 		UniqueConstraints: uniqueConstraints,
 		CheckConstraints:  checkConstraints,
 		PrimaryKey:        primaryKeys,
+		ForeignKeys:       foreignKeys,
 	})
 
 	return s
@@ -264,6 +283,8 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			constraintsSQL[i] = writer.WriteCheck(c.Check, c.NoInherit)
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
+		case ConstraintTypeForeignKey:
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -318,6 +339,31 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	}
 	constraint += fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(quoteColumnNames(w.Columns), ", "))
 	constraint += w.addIndexParameters()
+	constraint += w.addDeferrable()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete) string {
+	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	if onDelete != "" {
+		onDeleteAction = strings.ToUpper(string(onDeleteAction))
+	}
+	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	if onUpdate != "" {
+		onUpdateAction = strings.ToUpper(string(onUpdateAction))
+	}
+
+	constraint := ""
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
+		strings.Join(quoteColumnNames(w.Columns), ", "),
+		pq.QuoteIdentifier(referencedTable),
+		strings.Join(quoteColumnNames(referencedColumns), ", "),
+		onDeleteAction,
+		onUpdateAction,
+	)
 	constraint += w.addDeferrable()
 	return constraint
 }
