@@ -49,39 +49,58 @@ func sqlFolderCmd() *cobra.Command {
 }
 
 func readSQLFromFolder(folder string) ([]string, error) {
-	sqlStatements := make([]string, 0)
 	files, err := os.ReadDir(folder)
 	if err != nil {
 		return nil, err
 	}
 
+	sqlStatements := make([]string, 0)
 	for _, file := range files {
 		if file.IsDir() {
-			continue
-		}
-		// open file reader
-		reader, err := os.Open(filepath.Join(folder, file.Name()))
-		if err != nil {
-			return nil, err
-		}
-
-		// read file and remove sql comments from lines
-		contentsWithoutComments := ""
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			if strings.HasPrefix(scanner.Text(), "--") {
-				continue
+			migrations, err := os.ReadDir(filepath.Join(folder, file.Name()))
+			if err != nil {
+				return nil, err
 			}
-			contentsWithoutComments += scanner.Text()
-		}
-
-		for _, sqlStatement := range strings.Split(contentsWithoutComments, ";") {
-			if sqlStatement == "" {
-				continue
+			for _, migration := range migrations {
+				stmts, err := readSQLFromFile(filepath.Join(folder, file.Name(), migration.Name()))
+				if err != nil {
+					return nil, err
+				}
+				sqlStatements = append(sqlStatements, stmts...)
 			}
-			sqlStatements = append(sqlStatements, sqlStatement)
+		} else {
+			stmts, err := readSQLFromFile(filepath.Join(folder, file.Name()))
+			if err != nil {
+				return nil, err
+			}
+			sqlStatements = append(sqlStatements, stmts...)
 		}
 	}
 	return sqlStatements, nil
 
+}
+
+func readSQLFromFile(path string) ([]string, error) {
+	reader, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	contentsWithoutComments := ""
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		if strings.HasPrefix(scanner.Text(), "--") {
+			continue
+		}
+		contentsWithoutComments += scanner.Text()
+	}
+
+	sqlStatements := make([]string, 0)
+	for _, sqlStatement := range strings.Split(contentsWithoutComments, ";") {
+		if sqlStatement == "" {
+			continue
+		}
+		sqlStatements = append(sqlStatements, sqlStatement)
+	}
+	return sqlStatements, nil
 }
