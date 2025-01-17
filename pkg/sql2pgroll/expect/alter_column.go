@@ -33,12 +33,6 @@ var AlterColumnOp3 = &migrations.OpAlterColumn{
 	Down:   sql2pgroll.PlaceHolderSQL,
 }
 
-var AlterColumnOp4 = &migrations.OpAlterColumn{
-	Table:  "foo",
-	Column: "a",
-	Name:   ptr("b"),
-}
-
 var AlterColumnOp5 = &migrations.OpAlterColumn{
 	Table:   "foo",
 	Column:  "bar",

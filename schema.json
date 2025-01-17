@@ -323,6 +323,26 @@
       "required": ["column", "table"],
       "type": "object"
     },
+    "OpRenameColumn": {
+      "additionalProperties": false,
+      "description": "Rename column operation",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "from": {
+          "description": "Old name of the column",
+          "type": "string"
+        },
+        "to": {
+          "description": "New name of the column",
+          "type": "string"
+        }
+      },
+      "required": ["table", "from", "to"],
+      "type": "object"
+    },
     "OpAlterColumn": {
       "additionalProperties": false,
       "description": "Alter column operation",
@@ -338,10 +358,6 @@
         "down": {
           "default": "",
           "description": "SQL expression for down migration",
-          "type": "string"
-        },
-        "name": {
-          "description": "New name of the column (for rename column operation)",
           "type": "string"
         },
         "default": {
@@ -388,36 +404,15 @@
           "type": "string"
         }
       },
-      "required": ["table", "column"],
-      "oneOf": [
-        {
-          "anyOf": [
-            { "required": ["check"] },
-            { "required": ["type"] },
-            { "required": ["nullable"] },
-            { "required": ["default"] },
-            { "required": ["comment"] },
-            { "required": ["unique"] },
-            { "required": ["references"] }
-          ],
-          "required": ["up", "down"]
-        },
-        {
-          "required": ["name"],
-          "not": {
-            "anyOf": [
-              { "required": ["check"] },
-              { "required": ["type"] },
-              { "required": ["nullable"] },
-              { "required": ["default"] },
-              { "required": ["comment"] },
-              { "required": ["unique"] },
-              { "required": ["references"] },
-              { "required": ["up"] },
-              { "required": ["down"] }
-            ]
-          }
-        }
+      "required": ["table", "column", "up", "down"],
+      "anyOf": [
+        { "required": ["check"] },
+        { "required": ["type"] },
+        { "required": ["nullable"] },
+        { "required": ["default"] },
+        { "required": ["comment"] },
+        { "required": ["unique"] },
+        { "required": ["references"] }
       ],
       "type": "object"
     },
@@ -770,6 +765,17 @@
             }
           },
           "required": ["alter_column"]
+        },
+        {
+          "type": "object",
+          "description": "Rename column operation",
+          "additionalProperties": false,
+          "properties": {
+            "rename_column": {
+              "$ref": "#/$defs/OpRenameColumn"
+            }
+          },
+          "required": ["rename_column"]
         },
         {
           "type": "object",

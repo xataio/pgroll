@@ -14,6 +14,7 @@ type OpName string
 const (
 	OpNameCreateTable               OpName = "create_table"
 	OpNameRenameTable               OpName = "rename_table"
+	OpNameRenameColumn              OpName = "rename_column"
 	OpNameDropTable                 OpName = "drop_table"
 	OpNameAddColumn                 OpName = "add_column"
 	OpNameDropColumn                OpName = "drop_column"
@@ -98,6 +99,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 
 		case OpNameAddColumn:
 			item = &OpAddColumn{}
+
+		case OpNameRenameColumn:
+			item = &OpRenameColumn{}
 
 		case OpNameDropColumn:
 			item = &OpDropColumn{}
@@ -190,6 +194,9 @@ func OperationName(op Operation) OpName {
 
 	case *OpDropColumn:
 		return OpNameDropColumn
+
+	case *OpRenameColumn:
+		return OpNameRenameColumn
 
 	case *OpRenameConstraint:
 		return OpNameRenameConstraint
