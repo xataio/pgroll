@@ -7,7 +7,7 @@
         "columns": [
           {
             "name": "id",
-            "type": "serial",
+            "type": "serial"
           },
           {
             "name": "name",
