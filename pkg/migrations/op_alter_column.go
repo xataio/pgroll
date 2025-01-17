@@ -20,7 +20,8 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	ops := o.subOperations()
 
 	// Duplicate the column on the underlying table.
-	d := duplicatorForOperations(ops, conn, table, column)
+	d := duplicatorForOperations(ops, conn, table, column).
+		WithName(column.Name, TemporaryName(o.Column))
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
