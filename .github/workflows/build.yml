@@ -14,7 +14,7 @@ jobs:
     name: cross-platform build
     runs-on: ubuntu-24.04
     container:
-      image: surjection/goreleaser-cross:v1.23-v2.4.8
+      image: goreleaser/goreleaser-cross:v1.24
     steps:
       - uses: actions/checkout@v4
 
