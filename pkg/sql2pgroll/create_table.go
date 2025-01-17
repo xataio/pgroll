@@ -202,8 +202,8 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 					return nil, fmt.Errorf("parsing sequence options: %w", err)
 				}
 				// transform the options into the proper format
-				sequenceOptions = strings.Replace(sequenceOptions, "=", " ", -1)
-				sequenceOptions = strings.Replace(sequenceOptions, ",", "", -1)
+				sequenceOptions = strings.ReplaceAll(sequenceOptions, "=", " ")
+				sequenceOptions = strings.ReplaceAll(sequenceOptions, ",", "")
 				sequenceOptions = sequenceOptions[1 : len(sequenceOptions)-1]
 			}
 			generated = &migrations.ColumnGenerated{
