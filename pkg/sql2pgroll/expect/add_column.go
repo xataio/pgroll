@@ -109,6 +109,32 @@ var AddColumnOp8 = &migrations.OpAddColumn{
 	},
 }
 
+var AddColumnOp9 = &migrations.OpAddColumn{
+	Table: "foo",
+	Up:    sql2pgroll.PlaceHolderSQL,
+	Column: migrations.Column{
+		Name: "bar",
+		Type: "int",
+		Generated: &migrations.ColumnGenerated{
+			Identity: &migrations.ColumnGeneratedIdentity{
+				UserSpecifiedValues: migrations.ColumnGeneratedIdentityUserSpecifiedValuesBYDEFAULT,
+			},
+		},
+	},
+}
+
+var AddColumnOp10 = &migrations.OpAddColumn{
+	Table: "foo",
+	Up:    sql2pgroll.PlaceHolderSQL,
+	Column: migrations.Column{
+		Name: "bar",
+		Type: "int",
+		Generated: &migrations.ColumnGenerated{
+			Expression: "123",
+		},
+	},
+}
+
 func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyReferenceOnDelete) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: "foo",

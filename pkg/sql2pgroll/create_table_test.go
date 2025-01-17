@@ -3,6 +3,7 @@
 package sql2pgroll_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -180,6 +181,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(b text, c text, CHECK (b=c) NO INHERIT)",
 			expectedOp: expect.CreateTableOp25,
 		},
+		{
+			sql:        "CREATE TABLE foo(b bigint GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 1000 CYCLE CACHE 1) PRIMARY KEY)",
+			expectedOp: expect.CreateTableOp26,
+		},
+		{
+			sql:        "CREATE TABLE foo(a text, b text GENERATED ALWAYS AS (upper(a)) STORED)",
+			expectedOp: expect.CreateTableOp27,
+		},
 	}
 
 	for _, tc := range tests {
@@ -187,6 +196,7 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			ops, err := sql2pgroll.Convert(tc.sql)
 			require.NoError(t, err)
 
+			fmt.Printf("%+v\n", ops[0])
 			require.Len(t, ops, 1)
 
 			createTableOp, ok := ops[0].(*migrations.OpCreateTable)
@@ -278,10 +288,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int CONSTRAINT foo_notnull NOT NULL)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_unique UNIQUE)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_pk PRIMARY KEY)",
-
-		// Generated columns are not supported
-		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
-		"CREATE TABLE foo(a int GENERATED ALWAYS AS IDENTITY)",
 
 		// Deferrable constraints are not supported
 		"CREATE TABLE foo(a int UNIQUE DEFERRABLE)",

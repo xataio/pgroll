@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -102,6 +103,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	var check *migrations.CheckConstraint
 	var foreignKey *migrations.ForeignKeyReference
 	var defaultValue *string
+	var generated *migrations.ColumnGenerated
 	for _, c := range col.GetConstraints() {
 		switch c.GetConstraint().GetContype() {
 		case pgq.ConstrType_CONSTR_NULL:
@@ -171,11 +173,46 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			// are supported, but no extra annotation is needed
 			continue
 		case pgq.ConstrType_CONSTR_GENERATED:
-			// Generated columns are not supported
-			return nil, nil
+			if c.GetConstraint().GetRawExpr() != nil {
+				generatorExpr, err := pgq.DeparseExpr(c.GetConstraint().GetRawExpr())
+				if err != nil {
+					return nil, fmt.Errorf("deparsing generated expression: %w", err)
+				}
+				generated = &migrations.ColumnGenerated{
+					Expression: generatorExpr,
+				}
+			} else {
+				return nil, nil
+			}
+			notNull = true
 		case pgq.ConstrType_CONSTR_IDENTITY:
-			// Identity columns are not supported
-			return nil, nil
+			var when migrations.ColumnGeneratedIdentityUserSpecifiedValues
+			switch c.GetConstraint().GeneratedWhen {
+			case "a":
+				when = migrations.ColumnGeneratedIdentityUserSpecifiedValuesALWAYS
+			case "d":
+				when = migrations.ColumnGeneratedIdentityUserSpecifiedValuesBYDEFAULT
+			default:
+				return nil, nil
+			}
+			sequenceOptions := ""
+			if c.GetConstraint().GetOptions() != nil {
+				sequenceOptions, err = pgq.DeparseRelOptions(c.GetConstraint().GetOptions())
+				if err != nil {
+					return nil, fmt.Errorf("parsing sequence options: %w", err)
+				}
+				// transform the options into the proper format
+				sequenceOptions = strings.Replace(sequenceOptions, "=", " ", -1)
+				sequenceOptions = strings.Replace(sequenceOptions, ",", "", -1)
+				sequenceOptions = sequenceOptions[1 : len(sequenceOptions)-1]
+			}
+			generated = &migrations.ColumnGenerated{
+				Identity: &migrations.ColumnGeneratedIdentity{
+					UserSpecifiedValues: when,
+					SequenceOptions:     sequenceOptions,
+				},
+			}
+			notNull = true
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRABLE:
 			// Deferrable constraints are not supported
 			return nil, nil
@@ -197,6 +234,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 		References: foreignKey,
 		Default:    defaultValue,
 		Unique:     unique,
+		Generated:  generated,
 	}, nil
 }
 

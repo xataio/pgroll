@@ -68,25 +68,45 @@
           "description": "Generated column definition",
           "type": "object",
           "additionalProperties": false,
-          "expression": {
-            "type": "string",
-            "default": ""
-          },
-          "identity": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "sequence_options": {
-                "type": "string",
-                "default": ""
-              },
-              "user_specified_values": {
-                "type": "string",
-                "enum": ["ALWAYS", "BY DEFAULT"],
-                "default": "ALWAYS"
+          "properties": {
+            "expression": {
+              "type": "string",
+              "default": ""
+            },
+            "identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sequence_options": {
+                  "type": "string",
+                  "default": ""
+                },
+                "user_specified_values": {
+                  "type": "string",
+                  "enum": ["ALWAYS", "BY DEFAULT"],
+                  "default": "ALWAYS"
+                }
               }
             }
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "generated": { "const": { "expression": { "const": { "not": "" } } } } }
+              },
+              "then": {
+                "properties": { "generated": { "const": { "identity": { "const": {} } } } }
+              }
+            },
+            {
+              "if": {
+                "properties": { "generated": { "const": { "identity": { "const": { "not": {} } } } } }
+              },
+              "then": {
+                "properties": { "generated": { "const": { "expression": { "const": "" } } } }
+              }
+            }
+          ]
         }
       },
       "required": ["name", "type"],

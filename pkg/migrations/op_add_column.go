@@ -177,7 +177,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() {
+	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() && o.Column.Generated == nil {
 		return FieldRequiredError{Name: "up"}
 	}
 
@@ -203,6 +203,11 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	//   on migration completion
 	// This is to avoid unnecessary exclusive table locks.
 	if !o.Column.IsNullable() && o.Column.Default == nil {
+		o.Column.Nullable = true
+	}
+
+	// Generated identity columns are marked not null automatically by PostgreSQL.
+	if o.Column.Generated != nil && o.Column.Generated.Identity != nil && !o.Column.IsNullable() {
 		o.Column.Nullable = true
 	}
 
@@ -285,6 +290,18 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		}
 		sql += fmt.Sprintf(" DEFAULT %s", d)
 	}
+
+	if col.Generated != nil {
+		if col.Generated.Expression != "" {
+			sql += fmt.Sprintf(" GENERATED ALWAYS AS (%s) STORED", col.Generated.Expression)
+		} else if col.Generated.Identity != nil {
+			sql += fmt.Sprintf(" GENERATED %s AS IDENTITY", col.Generated.Identity.UserSpecifiedValues)
+			if col.Generated.Identity.SequenceOptions != "" {
+				sql += fmt.Sprintf(" (%s)", col.Generated.Identity.SequenceOptions)
+			}
+		}
+	}
+
 	if col.References != nil {
 		onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
 		if col.References.OnDelete != "" {

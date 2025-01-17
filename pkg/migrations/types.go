@@ -26,7 +26,7 @@ type Column struct {
 	Default *string `json:"default,omitempty"`
 
 	// Generated column definition
-	Generated ColumnGenerated `json:"generated,omitempty"`
+	Generated *ColumnGenerated `json:"generated,omitempty"`
 
 	// Name of the column
 	Name string `json:"name"`
@@ -48,7 +48,27 @@ type Column struct {
 }
 
 // Generated column definition
-type ColumnGenerated map[string]interface{}
+type ColumnGenerated struct {
+	// Expression corresponds to the JSON schema field "expression".
+	Expression string `json:"expression,omitempty"`
+
+	// Identity corresponds to the JSON schema field "identity".
+	Identity *ColumnGeneratedIdentity `json:"identity,omitempty"`
+}
+
+type ColumnGeneratedIdentity struct {
+	// SequenceOptions corresponds to the JSON schema field "sequence_options".
+	SequenceOptions string `json:"sequence_options,omitempty"`
+
+	// UserSpecifiedValues corresponds to the JSON schema field
+	// "user_specified_values".
+	UserSpecifiedValues ColumnGeneratedIdentityUserSpecifiedValues `json:"user_specified_values,omitempty"`
+}
+
+type ColumnGeneratedIdentityUserSpecifiedValues string
+
+const ColumnGeneratedIdentityUserSpecifiedValuesALWAYS ColumnGeneratedIdentityUserSpecifiedValues = "ALWAYS"
+const ColumnGeneratedIdentityUserSpecifiedValuesBYDEFAULT ColumnGeneratedIdentityUserSpecifiedValues = "BY DEFAULT"
 
 // Constraint definition
 type Constraint struct {

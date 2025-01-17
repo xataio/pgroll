@@ -152,7 +152,7 @@ func TestAddColumn(t *testing.T) {
 			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
 		},
 		{
-			name: "add serial columns",
+			name: "add serial columns with generated column",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -162,8 +162,13 @@ func TestAddColumn(t *testing.T) {
 							Columns: []migrations.Column{
 								{
 									Name: "id",
-									Type: "serial",
+									Type: "bigint",
 									Pk:   true,
+									Generated: &migrations.ColumnGenerated{
+										Identity: &migrations.ColumnGeneratedIdentity{
+											UserSpecifiedValues: "ALWAYS",
+										},
+									},
 								},
 								{
 									Name:   "name",
@@ -192,11 +197,23 @@ func TestAddColumn(t *testing.T) {
 								Type:     "serial",
 								Nullable: false,
 							},
-						}, &migrations.OpAddColumn{
+						},
+						&migrations.OpAddColumn{
 							Table: "users",
 							Column: migrations.Column{
 								Name:     "counter_bigserial",
 								Type:     "bigserial",
+								Nullable: false,
+							},
+						},
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name: "generated_upper",
+								Type: "varchar(255)",
+								Generated: &migrations.ColumnGenerated{
+									Expression: "upper(name)",
+								},
 								Nullable: false,
 							},
 						},
@@ -224,8 +241,8 @@ func TestAddColumn(t *testing.T) {
 				}, resOld)
 				resNew := MustSelect(t, db, schema, "02_add_column", "users")
 				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1},
-					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2},
+					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1, "generated_upper": "ALICE"},
+					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2, "generated_upper": "BOB"},
 				}, resNew)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
@@ -248,9 +265,9 @@ func TestAddColumn(t *testing.T) {
 				// Selecting from the new view still works
 				res := MustSelect(t, db, schema, "02_add_column", "users")
 				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1},
-					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2},
-					{"id": 3, "name": "Carl", "counter_smallserial": 3, "counter_serial": 3, "counter_bigserial": 3},
+					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1, "generated_upper": "ALICE"},
+					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2, "generated_upper": "BOB"},
+					{"id": 3, "name": "Carl", "counter_smallserial": 3, "counter_serial": 3, "counter_bigserial": 3, "generated_upper": "CARL"},
 				}, res)
 			},
 		},
