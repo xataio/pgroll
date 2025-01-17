@@ -23,7 +23,12 @@ Foreign key constraints must have references configured
           {
             "name": "my_invalid_fk",
             "type": "foreign_key",
-            "columns": ["title"]
+            "references": {
+              "columns": ["title"],
+              "table": "referenced",
+              "on_delete": "CASCADE",
+              "on_update": "SET NULL"
+            }
           }
         ]
       }
