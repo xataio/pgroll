@@ -42,7 +42,7 @@
             ],
             "deferrable": false,
             "references": {
-              "table": "provider",
+              "table": "telephone_providers",
               "columns": [
                 "id"
               ],
