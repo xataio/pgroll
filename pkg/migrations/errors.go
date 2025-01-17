@@ -174,18 +174,6 @@ func (e ConstraintAlreadyExistsError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q already exists", e.Constraint, e.Table)
 }
 
-type NoUpSQLAllowedError struct{}
-
-func (e NoUpSQLAllowedError) Error() string {
-	return "up SQL is not allowed for this operation"
-}
-
-type NoDownSQLAllowedError struct{}
-
-func (e NoDownSQLAllowedError) Error() string {
-	return "down SQL is not allowed for this operation"
-}
-
 type BackfillNotPossibleError struct {
 	Table string
 }
