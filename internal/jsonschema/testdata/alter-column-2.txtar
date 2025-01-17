@@ -1,5 +1,5 @@
 This is a valid 'alter_column' migration.
-It sets `name` and therefore does not specify `up` or `down`.
+It sets both `type` and `nullable`.
 
 -- alter_column.json --
 {
@@ -9,7 +9,10 @@ It sets `name` and therefore does not specify `up` or `down`.
       "alter_column": {
         "table": "reviews",
         "column": "review",
-        "name": "new_name"
+        "type": "integer",
+        "nullable": true,
+        "up": "foo",
+        "down": "foo"
       }
     }
   ]

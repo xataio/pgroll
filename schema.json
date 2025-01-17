@@ -299,10 +299,6 @@
           "description": "SQL expression for down migration",
           "type": "string"
         },
-        "name": {
-          "description": "New name of the column (for rename column operation)",
-          "type": "string"
-        },
         "default": {
           "description": "Default value of the column. Setting to null will drop the default if it was set previously.",
           "type": ["string", "null"],
@@ -347,36 +343,15 @@
           "type": "string"
         }
       },
-      "required": ["table", "column"],
-      "oneOf": [
-        {
-          "anyOf": [
-            { "required": ["check"] },
-            { "required": ["type"] },
-            { "required": ["nullable"] },
-            { "required": ["default"] },
-            { "required": ["comment"] },
-            { "required": ["unique"] },
-            { "required": ["references"] }
-          ],
-          "required": ["up", "down"]
-        },
-        {
-          "required": ["name"],
-          "not": {
-            "anyOf": [
-              { "required": ["check"] },
-              { "required": ["type"] },
-              { "required": ["nullable"] },
-              { "required": ["default"] },
-              { "required": ["comment"] },
-              { "required": ["unique"] },
-              { "required": ["references"] },
-              { "required": ["up"] },
-              { "required": ["down"] }
-            ]
-          }
-        }
+      "required": ["table", "column", "up", "down"],
+      "anyOf": [
+        { "required": ["check"] },
+        { "required": ["type"] },
+        { "required": ["nullable"] },
+        { "required": ["default"] },
+        { "required": ["comment"] },
+        { "required": ["unique"] },
+        { "required": ["references"] }
       ],
       "type": "object"
     },

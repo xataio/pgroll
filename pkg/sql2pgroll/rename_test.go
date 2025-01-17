@@ -22,11 +22,11 @@ func TestConvertRenameStatements(t *testing.T) {
 	}{
 		{
 			sql:        "ALTER TABLE foo RENAME COLUMN a TO b",
-			expectedOp: expect.AlterColumnOp4,
+			expectedOp: expect.RenameColumnOp1,
 		},
 		{
 			sql:        "ALTER TABLE foo RENAME a TO b",
-			expectedOp: expect.AlterColumnOp4,
+			expectedOp: expect.RenameColumnOp1,
 		},
 		{
 			sql:        "ALTER TABLE foo RENAME TO bar",

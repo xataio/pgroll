@@ -4,7 +4,6 @@ package migrations_test
 
 import (
 	"database/sql"
-	"strings"
 	"testing"
 
 	"github.com/oapi-codegen/nullable"
@@ -19,7 +18,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "can alter a column: set not null, change type, change comment, rename and add check constraint",
+			name: "can alter a column: set not null, change type, change comment, and add check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -48,13 +47,12 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Table:    "events",
 							Column:   "name",
 							Up:       "SELECT CASE WHEN name IS NULL OR LENGTH(name) <= 3 THEN 'placeholder' ELSE name END",
-							Down:     "event_name",
-							Name:     ptr("event_name"),
+							Down:     "name",
 							Type:     ptr("text"),
 							Comment:  nullable.NewNullableWithValue("the name of the event"),
 							Nullable: ptr(false),
 							Check: &migrations.CheckConstraint{
-								Name:       "event_name_length",
+								Name:       "name_length",
 								Constraint: "length(name) > 3",
 							},
 						},
@@ -62,60 +60,60 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Inserting a NULL into the new `event_name` column should fail
+				// Inserting a NULL into the new column should fail
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
 					"id": "1",
 				}, testutils.CheckViolationErrorCode)
 
-				// Inserting a non-NULL value into the new `event_name` column should succeed
+				// Inserting a non-NULL value into the new column should succeed
 				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "2",
-					"event_name": "apples",
+					"id":   "2",
+					"name": "apples",
 				})
 
-				// The value inserted into the new `event_name` column has been backfilled into the
-				// old `name` column.
+				// The value inserted into the new column has been backfilled into the
+				// old column.
 				rows := MustSelect(t, db, schema, "01_create_table", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 				}, rows)
 
-				// Inserting a NULL value into the old `name` column should succeed
+				// Inserting a NULL value into the old column should succeed
 				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
 					"id": "3",
 				})
 
-				// The NULL value inserted into the old `name` column has been written into
-				// the new `event_name` column using the `up` SQL.
+				// The NULL value inserted into the old column has been written into
+				// the new column using the `up` SQL.
 				rows = MustSelect(t, db, schema, "02_alter_column", "events")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "event_name": "apples"},
-					{"id": 3, "event_name": "placeholder"},
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
 				}, rows)
 
-				// Inserting a non-NULL value into the old `name` column should succeed
+				// Inserting a non-NULL value into the old column should succeed
 				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
 					"id":   "4",
 					"name": "bananas",
 				})
 
-				// The non-NULL value inserted into the old `name` column has been copied
-				// unchanged into the new `event_name` column.
+				// The non-NULL value inserted into the old column has been copied
+				// unchanged into the new column.
 				rows = MustSelect(t, db, schema, "02_alter_column", "events")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "event_name": "apples"},
-					{"id": 3, "event_name": "placeholder"},
-					{"id": 4, "event_name": "bananas"},
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
 				}, rows)
 
-				// Inserting a row into the new `event_name` column that violates the
+				// Inserting a row into the new column that violates the
 				// check constraint should fail
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "5",
-					"event_name": "x",
+					"id":   "5",
+					"name": "x",
 				}, testutils.CheckViolationErrorCode)
 
-				// Inserting a row into the old `name` column that violates the
+				// Inserting a row into the old column that violates the
 				// check constraint should succeed.
 				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
 					"id":   "5",
@@ -123,13 +121,13 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				})
 
 				// The value that didn't meet the check constraint has been rewritten
-				// into the new `event_name` column using the `up` SQL.
+				// into the new column using the `up` SQL.
 				rows = MustSelect(t, db, schema, "02_alter_column", "events")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "event_name": "apples"},
-					{"id": 3, "event_name": "placeholder"},
-					{"id": 4, "event_name": "bananas"},
-					{"id": 5, "event_name": "placeholder"},
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
+					{"id": 5, "name": "placeholder"},
 				}, rows)
 
 				// The type of the new column in the underlying table should be `text`
@@ -139,38 +137,35 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "events", migrations.TemporaryName("name"), "the name of the event")
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new (temporary) `name` column should not exist on the underlying table.
+				// The new (temporary) column should not exist on the underlying table.
 				ColumnMustNotExist(t, db, schema, "events", migrations.TemporaryName("name"))
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Inserting a NULL into the new `event_name` column should fail
+				// Inserting a NULL into the new column should fail
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
 					"id": "6",
 				}, testutils.NotNullViolationErrorCode)
 
-				// Inserting a row into the new `event_name` column that violates the
+				// Inserting a row into the new column that violates the
 				// check constraint should fail
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "6",
-					"event_name": "x",
+					"id":   "6",
+					"name": "x",
 				}, testutils.CheckViolationErrorCode)
 
 				// The type of the new column in the underlying table should be `text`
-				ColumnMustHaveType(t, db, schema, "events", "event_name", "text")
+				ColumnMustHaveType(t, db, schema, "events", "name", "text")
 
 				// The new column should have the new comment.
-				ColumnMustHaveComment(t, db, schema, "events", "event_name", "the name of the event")
-
-				// The column in the underlying table should be `event_name`
-				ColumnMustExist(t, db, schema, "events", "event_name")
+				ColumnMustHaveComment(t, db, schema, "events", "name", "the name of the event")
 
 				// The table contains the expected rows
 				rows := MustSelect(t, db, schema, "02_alter_column", "events")
 				assert.Equal(t, []map[string]any{
-					{"id": 2, "event_name": "apples"},
-					{"id": 3, "event_name": "placeholder"},
-					{"id": 4, "event_name": "bananas"},
-					{"id": 5, "event_name": "placeholder"},
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
+					{"id": 5, "name": "placeholder"},
 				}, rows)
 			},
 		},
@@ -321,29 +316,28 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 							Table:  "events",
 							Column: "name",
 							Up:     "name || '-' || random()*999::int",
-							Down:   "event_name",
-							Name:   ptr("event_name"),
+							Down:   "name",
 							Unique: &migrations.UniqueConstraint{
-								Name: "events_event_name_unique",
+								Name: "events_name_unique",
 							},
 						},
 					},
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert a row into the new `event_name` column
+				// Can insert a row into the new column
 				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "1",
-					"event_name": "apples",
+					"id":   "1",
+					"name": "apples",
 				})
 
-				// Inserting a row with the same value into the new `event_name` column fails
+				// Inserting a row with the same value into the new column fails
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "2",
-					"event_name": "apples",
+					"id":   "2",
+					"name": "apples",
 				}, testutils.UniqueViolationErrorCode)
 
-				// Inserting a row with a duplicate value into the old `name` column succeeds
+				// Inserting a row with a duplicate value into the old column succeeds
 				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
 					"id":   "2",
 					"name": "apples",
@@ -352,14 +346,11 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Inserting a row with the same value into the new `event_name` column fails
+				// Inserting a row with the same value into the new column fails
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
-					"id":         "2",
-					"event_name": "apples",
+					"id":   "2",
+					"name": "apples",
 				}, testutils.UniqueViolationErrorCode)
-
-				// The column in the underlying table has been renamed to `event_name`
-				ColumnMustExist(t, db, schema, "events", "event_name")
 			},
 		},
 		{
@@ -505,284 +496,8 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 	})
 }
 
-func TestAlterColumnInMultiOperationMigrations(t *testing.T) {
-	t.Parallel()
-
-	ExecuteTests(t, TestCases{
-		{
-			name: "add column, rename column",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "items",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name: "name",
-									Type: "varchar(255)",
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "02_multi_operation",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "items",
-							Column: migrations.Column{
-								Name:     "description",
-								Type:     "text",
-								Nullable: true,
-							},
-						},
-						&migrations.OpAlterColumn{
-							Table:  "items",
-							Column: "description",
-							Name:   ptr("item_description"),
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert into the new column under its new name
-				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
-					"name":             "apples",
-					"item_description": "amazing",
-				})
-
-				// Can't insert into the new column under its old name
-				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
-					"name":        "bananas",
-					"description": "brilliant",
-				}, testutils.UndefinedColumnErrorCode)
-
-				// The table has the expected rows in the new schema
-				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "apples", "item_description": "amazing"},
-				}, rows)
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The table has been cleaned up
-				TableMustBeCleanedUp(t, db, schema, "items", "description")
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert into the new column under its new name
-				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
-					"name":             "bananas",
-					"item_description": "brilliant",
-				})
-
-				// The table has the expected rows in the new schema
-				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "apples", "item_description": nil},
-					{"id": 2, "name": "bananas", "item_description": "brilliant"},
-				}, rows)
-			},
-		},
-		{
-			name: "rename table, rename column",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "items",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name: "name",
-									Type: "varchar(255)",
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "02_multi_operation",
-					Operations: migrations.Operations{
-						&migrations.OpRenameTable{
-							From: "items",
-							To:   "products",
-						},
-						&migrations.OpAlterColumn{
-							Table:  "products",
-							Column: "name",
-							Name:   ptr("item_name"),
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert using the old version schema (old table name, and old
-				// column name)
-				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
-					"name": "apples",
-				})
-
-				// Can insert using the new version schema (new table name, and new
-				// column name)
-				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
-					"item_name": "bananas",
-				})
-
-				// The table has the expected rows
-				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "item_name": "apples"},
-					{"id": 2, "item_name": "bananas"},
-				}, rows)
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert using the old version schema (old table name, and old
-				// column name)
-				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
-					"name": "carrots",
-				})
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert using the new version schema (new table name, and new
-				// column name)
-				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
-					"item_name": "durian",
-				})
-
-				// The table has the expected rows
-				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "item_name": "apples"},
-					{"id": 2, "item_name": "bananas"},
-					{"id": 3, "item_name": "carrots"},
-					{"id": 4, "item_name": "durian"},
-				}, rows)
-			},
-		},
-		{
-			name: "rename column, drop column",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "items",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name:     "name",
-									Type:     "varchar(255)",
-									Nullable: true,
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "02_multi_operation",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "items",
-							Column: "name",
-							Name:   ptr("item_name"),
-						},
-						&migrations.OpDropColumn{
-							Table:  "items",
-							Column: "item_name",
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Can't insert into the dropped column in the new schema
-				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
-					"item_name": "apples",
-				}, testutils.UndefinedColumnErrorCode)
-
-				// Can insert into the old column name in the old schema
-				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
-					"name": "apples",
-				})
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// Can insert into the old column name in the old schema
-				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
-					"name": "bananas",
-				})
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Can't insert into the dropped column in the new schema
-				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
-					"item_name": "apples",
-				}, testutils.UndefinedColumnErrorCode)
-			},
-		},
-	})
-}
-
-func TestIsRenameOnly(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name     string
-		op       migrations.OpAlterColumn
-		expected bool
-	}{
-		{
-			name: "rename-only operation",
-			op: migrations.OpAlterColumn{
-				Table:  "events",
-				Column: "name",
-				Name:   ptr("event_name"),
-			},
-			expected: true,
-		},
-		{
-			name: "rename operation with other sub-operations",
-			op: migrations.OpAlterColumn{
-				Table:    "events",
-				Column:   "name",
-				Name:     ptr("event_name"),
-				Nullable: ptr(false),
-			},
-			expected: false,
-		},
-		{
-			name: "alter column with no rename",
-			op: migrations.OpAlterColumn{
-				Table:    "events",
-				Column:   "name",
-				Nullable: ptr(false),
-			},
-			expected: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, tc.op.IsRenameOnly())
-		})
-	}
-}
-
 func TestAlterColumnValidation(t *testing.T) {
 	t.Parallel()
-
-	invalidName := strings.Repeat("x", 64)
 
 	createTablesMigration := migrations.Migration{
 		Name: "01_add_tables",
@@ -831,9 +546,9 @@ func TestAlterColumnValidation(t *testing.T) {
 					Name: "01_alter_column",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:  "doesntexist",
-							Column: "title",
-							Name:   ptr("renamed_title"),
+							Table:    "doesntexist",
+							Column:   "title",
+							Nullable: ptr(false),
 						},
 					},
 				},
@@ -848,50 +563,14 @@ func TestAlterColumnValidation(t *testing.T) {
 					Name: "01_alter_column",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "doesntexist",
-							Name:   ptr("renamed_title"),
+							Table:    "posts",
+							Column:   "doesntexist",
+							Nullable: ptr(false),
 						},
 					},
 				},
 			},
 			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
-		},
-		{
-			name: "column rename: no up SQL allowed",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "01_alter_column",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "title",
-							Name:   ptr("renamed_title"),
-							Up:     "some up sql",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.NoUpSQLAllowedError{},
-		},
-		{
-			name: "column rename: no down SQL allowed",
-			migrations: []migrations.Migration{
-				createTablesMigration,
-				{
-					Name: "01_alter_column",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "posts",
-							Column: "title",
-							Name:   ptr("renamed_title"),
-							Down:   "some down sql",
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.NoDownSQLAllowedError{},
 		},
 		{
 			name: "cant make no changes",
@@ -934,56 +613,6 @@ func TestAlterColumnValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: nil,
-		},
-		{
-			name: "rename-only operations don't have primary key requirements",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_add_table",
-					Operations: migrations.Operations{
-						&migrations.OpRawSQL{
-							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer)",
-							Down: "DROP TABLE orders",
-						},
-					},
-				},
-				{
-					Name: "02_alter_column",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "orders",
-							Column: "quantity",
-							Name:   ptr("renamed_quantity"),
-						},
-					},
-				},
-			},
-			wantStartErr: nil,
-		},
-		{
-			name: "invalid name",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_add_table",
-					Operations: migrations.Operations{
-						&migrations.OpRawSQL{
-							Up:   "CREATE TABLE orders(id integer, order_id integer, quantity integer)",
-							Down: "DROP TABLE orders",
-						},
-					},
-				},
-				{
-					Name: "02_alter_column",
-					Operations: migrations.Operations{
-						&migrations.OpAlterColumn{
-							Table:  "orders",
-							Column: "quantity",
-							Name:   ptr(invalidName),
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.ValidateIdentifierLength(invalidName),
 		},
 	})
 }
