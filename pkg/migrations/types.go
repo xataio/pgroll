@@ -174,10 +174,7 @@ type OpAlterColumn struct {
 	Default nullable.Nullable[string] `json:"default,omitempty"`
 
 	// SQL expression for down migration
-	Down string `json:"down,omitempty"`
-
-	// New name of the column (for rename column operation)
-	Name *string `json:"name,omitempty"`
+	Down string `json:"down"`
 
 	// Indicates if the column is nullable (for add/remove not null constraint
 	// operation)
@@ -196,7 +193,7 @@ type OpAlterColumn struct {
 	Unique *UniqueConstraint `json:"unique,omitempty"`
 
 	// SQL expression for up migration
-	Up string `json:"up,omitempty"`
+	Up string `json:"up"`
 }
 
 // Add constraint to table operation
