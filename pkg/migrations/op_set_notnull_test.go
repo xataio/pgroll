@@ -634,6 +634,105 @@ func TestSetNotNullInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "name")
 			},
 		},
+		{
+			name: "rename table, rename column, set not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpAlterColumn{
+							Table:    "products",
+							Column:   "item_name",
+							Nullable: ptr(false),
+							Up:       "SELECT CASE WHEN item_name IS NULL THEN 'unknown' ELSE item_name END",
+							Down:     "item_name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row via the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "1",
+					"item_name": "apple",
+				})
+
+				// Can't insert a row that doesn't meet the constraint via the new schema.
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "2",
+				}, testutils.CheckViolationErrorCode)
+
+				// Can insert a row that doesn't meet the constraint via the old schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id": "2",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apple"},
+					{"id": 2, "item_name": "unknown"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+				TableMustBeCleanedUp(t, db, schema, "items", "item_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row via the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "3",
+					"item_name": "banana",
+				})
+
+				// Can't insert a row that doesn't meet the constraint via the new schema.
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "4",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apple"},
+					{"id": 2, "item_name": "unknown"},
+					{"id": 3, "item_name": "banana"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+				TableMustBeCleanedUp(t, db, schema, "products", "item_name")
+			},
+		},
 	})
 }
 

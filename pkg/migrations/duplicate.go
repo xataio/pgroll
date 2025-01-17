@@ -84,6 +84,12 @@ func (d *Duplicator) WithoutNotNull(columnName string) *Duplicator {
 	return d
 }
 
+// WithName sets the name of the new column.
+func (d *Duplicator) WithName(columnName, asName string) *Duplicator {
+	d.columns[columnName].asName = asName
+	return d
+}
+
 // Duplicate duplicates a column in the table, including all constraints and
 // comments.
 func (d *Duplicator) Duplicate(ctx context.Context) error {
