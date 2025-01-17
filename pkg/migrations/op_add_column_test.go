@@ -1441,6 +1441,31 @@ func TestAddColumnValidation(t *testing.T) {
 			},
 			wantStartErr: nil,
 		},
+		{
+			name: "generated column is either stored or identity",
+			migrations: []migrations.Migration{
+				addTableMigrationNoPKNullable,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name: "name_upper",
+								Type: "text",
+								Generated: &migrations.ColumnGenerated{
+									Expression: "upper(name)",
+									Identity: &migrations.ColumnGeneratedIdentity{
+										SequenceOptions: "start 2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.InvalidGeneratedColumnError{Table: "users", Column: "name_upper"},
+		},
 	})
 }
 

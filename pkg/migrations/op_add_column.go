@@ -177,6 +177,10 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
+	if o.Column.Generated != nil && o.Column.Generated.Expression != "" && o.Column.Generated.Identity != nil {
+		return InvalidGeneratedColumnError{Table: o.Table, Column: o.Column.Name}
+	}
+
 	if !o.Column.IsNullable() && o.Column.Default == nil && o.Up == "" && !o.Column.HasImplicitDefault() && o.Column.Generated == nil {
 		return FieldRequiredError{Name: "up"}
 	}

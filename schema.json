@@ -88,25 +88,7 @@
                 }
               }
             }
-          },
-          "allOf": [
-            {
-              "if": {
-                "properties": { "generated": { "const": { "expression": { "const": { "not": "" } } } } }
-              },
-              "then": {
-                "properties": { "generated": { "const": { "identity": { "const": {} } } } }
-              }
-            },
-            {
-              "if": {
-                "properties": { "generated": { "const": { "identity": { "const": { "not": {} } } } } }
-              },
-              "then": {
-                "properties": { "generated": { "const": { "expression": { "const": "" } } } }
-              }
-            }
-          ]
+          }
         }
       },
       "required": ["name", "type"],

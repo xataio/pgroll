@@ -258,3 +258,12 @@ type MultiColumnConstraintsNotSupportedError struct {
 func (e MultiColumnConstraintsNotSupportedError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q applies to multiple columns", e.Constraint, e.Table)
 }
+
+type InvalidGeneratedColumnError struct {
+	Table  string
+	Column string
+}
+
+func (e InvalidGeneratedColumnError) Error() string {
+	return fmt.Sprintf("column %q on table %q is invalid, please do not set both generated.expression and generated.identity", e.Column, e.Table)
+}
