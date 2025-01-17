@@ -25,6 +25,9 @@ type Column struct {
 	// Default value for the column
 	Default *string `json:"default,omitempty"`
 
+	// Generated column definition
+	Generated ColumnGenerated `json:"generated,omitempty"`
+
 	// Name of the column
 	Name string `json:"name"`
 
@@ -43,6 +46,9 @@ type Column struct {
 	// Indicates if the column values must be unique
 	Unique bool `json:"unique,omitempty"`
 }
+
+// Generated column definition
+type ColumnGenerated map[string]interface{}
 
 // Constraint definition
 type Constraint struct {
