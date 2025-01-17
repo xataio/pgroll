@@ -5,7 +5,6 @@
       "alter_column": {
         "table": "events",
         "column": "name",
-        "name": "event_name",
         "type": "text",
         "default": "'unknown event'",
         "nullable": false,

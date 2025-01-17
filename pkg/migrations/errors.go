@@ -259,6 +259,14 @@ func (e MultiColumnConstraintsNotSupportedError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q applies to multiple columns", e.Constraint, e.Table)
 }
 
+type PrimaryKeysAreAlreadySetError struct {
+	Table string
+}
+
+func (e PrimaryKeysAreAlreadySetError) Error() string {
+	return fmt.Sprintf("table %q already has a primary key configuration in columns list", e.Table)
+}
+
 type InvalidGeneratedColumnError struct {
 	Table  string
 	Column string

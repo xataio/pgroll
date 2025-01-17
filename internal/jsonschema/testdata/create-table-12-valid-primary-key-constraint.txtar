@@ -1,0 +1,36 @@
+This is a valid 'create_table' migration.
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_pk",
+            "type": "primary_key",
+            "columns": [
+              "title",
+              "user_id"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+true

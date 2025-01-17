@@ -114,6 +114,7 @@ type ConstraintIndexParameters struct {
 type ConstraintType string
 
 const ConstraintTypeCheck ConstraintType = "check"
+const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
 
 // Foreign key reference definition
@@ -355,6 +356,18 @@ type OpRawSQL struct {
 
 	// SQL expression for up migration
 	Up string `json:"up"`
+}
+
+// Rename column operation
+type OpRenameColumn struct {
+	// Old name of the column
+	From string `json:"from"`
+
+	// Name of the table
+	Table string `json:"table"`
+
+	// New name of the column
+	To string `json:"to"`
 }
 
 // Rename constraint operation

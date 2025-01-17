@@ -408,6 +408,32 @@ var CreateTableOp26 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
+			Name:     "b",
+			Type:     "text",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "text",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypePrimaryKey,
+			Columns:           []string{"b"},
+			NullsNotDistinct:  false,
+			Deferrable:        true,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+		},
+	},
+}
+
+var CreateTableOp27 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
 			Name: "b",
 			Type: "bigint",
 			Pk:   true,
@@ -421,7 +447,7 @@ var CreateTableOp26 = &migrations.OpCreateTable{
 	},
 }
 
-var CreateTableOp27 = &migrations.OpCreateTable{
+var CreateTableOp28 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{

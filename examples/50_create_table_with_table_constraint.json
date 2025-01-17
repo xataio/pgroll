@@ -7,8 +7,7 @@
         "columns": [
           {
             "name": "id",
-            "type": "serial",
-            "pk": true
+            "type": "serial"
           },
           {
             "name": "name",
@@ -24,6 +23,13 @@
           }
         ],
         "constraints": [
+          {
+            "name": "phonebook_pk",
+            "type": "primary_key",
+            "columns": [
+              "id"
+            ]
+          },
           {
             "name": "unique_numbers",
             "type": "unique",

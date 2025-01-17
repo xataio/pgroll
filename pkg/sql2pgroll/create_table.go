@@ -254,6 +254,8 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		if err != nil {
 			return nil, fmt.Errorf("deparsing check expression: %w", err)
 		}
+	case pgq.ConstrType_CONSTR_PRIMARY:
+		constraintType = migrations.ConstraintTypePrimaryKey
 	default:
 		return nil, nil
 	}
