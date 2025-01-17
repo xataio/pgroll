@@ -1,0 +1,34 @@
+This is an invalid 'create_table' migration.
+Primary key constraint must have columns set
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_invalid_pk",
+            "type": "primary_key"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+false
