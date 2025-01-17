@@ -30,6 +30,13 @@ Each `column` is defined as:
     "name": "name of check constraint",
     "constraint": "constraint expression"
   },
+  "generated": {
+    "expression": "expression for stored column",
+    "identity": {
+      "user_specified_values": "user specified values can be used, can be ALWAYS and BY DEFAULT. Default is ALWAYS",
+      "sequence_options": "sequence options for identity columns"
+    }
+  },
   "references": {
     "name": "name of foreign key constraint",
     "table": "name of referenced table",
@@ -40,6 +47,8 @@ Each `column` is defined as:
 ```
 
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
+
+Generated columns can either be stored or identity columns. Options `generated.expression` and `generated.identity` cannot be set at the same time.
 
 Each `constraint` is defined as:
 
@@ -82,7 +91,7 @@ Create one table:
 
 ### Create one table (2)
 
-Create one table:
+Create one table with generated identity column:
 
 <ExampleSnippet example="08_create_fruits_table.json" language="json" />
 

@@ -254,3 +254,12 @@ type PrimaryKeysAreAlreadySetError struct {
 func (e PrimaryKeysAreAlreadySetError) Error() string {
 	return fmt.Sprintf("table %q already has a primary key configuration in columns list", e.Table)
 }
+
+type InvalidGeneratedColumnError struct {
+	Table  string
+	Column string
+}
+
+func (e InvalidGeneratedColumnError) Error() string {
+	return fmt.Sprintf("column %q on table %q is invalid, please do not set both generated.expression and generated.identity", e.Column, e.Table)
+}
