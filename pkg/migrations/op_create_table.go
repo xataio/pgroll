@@ -26,7 +26,6 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
-	fmt.Println("constraintsSQL", constraintsSQL)
 
 	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
