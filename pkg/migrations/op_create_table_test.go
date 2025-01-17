@@ -761,6 +761,107 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table with foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "owners",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+								{
+									Name: "city",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "pk_owners",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_referencing_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "pets",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "owner_id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "fk_owners",
+									Type:    migrations.ConstraintTypeForeignKey,
+									Columns: []string{"owner_id"},
+									References: &migrations.ConstraintReferences{
+										Table:    "owners",
+										Columns:  []string{"id"},
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
+					"id":   "1",
+					"name": "alice",
+					"city": "new york",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the FK constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the table succeeds when the PK constraint is satisfied.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "1",
+					"name":     "cutie pie",
+				})
+
+				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "2",
+					"owner_id": "0",
+					"name":     "bobby",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting the row from the referenced table cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_referencing_table", "owners", map[string]string{
+					"id": "1",
+				})
+
+				rows := MustSelect(t, db, schema, "02_create_referencing_table", "pets")
+				assert.Equal(t, []map[string]any{}, rows)
+			},
+		},
 	})
 }
 

@@ -184,6 +184,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(b text, c text, PRIMARY KEY (b) DEFERRABLE)",
 			expectedOp: expect.CreateTableOp26,
 		},
+		{
+			sql:        "CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
+			expectedOp: expect.CreateTableOp27,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp28,
+		},
 	}
 
 	for _, tc := range tests {
@@ -249,10 +257,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Column collation is not supported
 		"CREATE TABLE foo(a text COLLATE en_US)",
-
-		// Table constraints, named and unnamed, are not supported
-		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
-		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
 		// Primary key constraint options are not supported
 		"CREATE TABLE foo(a int PRIMARY KEY USING INDEX TABLESPACE bar)",
