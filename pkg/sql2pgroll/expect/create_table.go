@@ -456,9 +456,8 @@ var CreateTableOp28 = &migrations.OpCreateTable{
 			Nullable: true,
 		},
 		{
-			Name:     "b",
-			Type:     "text",
-			Nullable: true,
+			Name: "b",
+			Type: "text",
 			Generated: &migrations.ColumnGenerated{
 				Expression: "upper(a)",
 			},
