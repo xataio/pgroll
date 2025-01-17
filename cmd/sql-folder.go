@@ -31,7 +31,9 @@ func sqlFolderCmd() *cobra.Command {
 			for _, sql := range sqls {
 				ops, err := sql2pgroll.Convert(sql)
 				if err != nil {
-					return fmt.Errorf("failed to convert SQL statement: %w", err)
+					fmt.Fprintf(os.Stderr, fmt.Errorf("failed to convert SQL statement: %w", err).Error())
+					fmt.Fprintf(os.Stderr, "%s", sql)
+					continue
 				}
 
 				enc := json.NewEncoder(os.Stdout)
