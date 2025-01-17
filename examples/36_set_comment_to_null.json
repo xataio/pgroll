@@ -4,10 +4,10 @@
     {
       "alter_column": {
         "table": "events",
-        "column": "event_name",
+        "column": "name",
         "comment": null,
-        "up": "event_name",
-        "down": "event_name"
+        "up": "name",
+        "down": "name"
       }
     }
   ]

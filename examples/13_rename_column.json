@@ -2,10 +2,10 @@
   "name": "13_rename_column",
   "operations": [
     {
-      "alter_column": {
+      "rename_column": {
         "table": "employees",
-        "column": "role",
-        "name": "job_title"
+        "from": "role",
+        "to": "job_title"
       }
     }
   ]
