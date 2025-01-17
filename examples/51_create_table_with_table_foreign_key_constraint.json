@@ -48,7 +48,7 @@
               ],
               "on_delete": "CASCADE",
               "on_update": "CASCADE",
-              "match": "SIMPLE"
+              "match_type": "SIMPLE"
             }
           },
           {
