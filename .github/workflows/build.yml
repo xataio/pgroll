@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - add-example-docs-check
     tags:
       - 'v*'
 permissions:
