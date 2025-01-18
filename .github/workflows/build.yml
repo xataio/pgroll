@@ -188,6 +188,23 @@ jobs:
         run: |
           npx -y ajv-cli --spec=draft2020 validate --strict-schema=false -s schema.json -d "./examples/*.json"
 
+  docs:
+    name: check examples
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check examples usage
+        run: |
+          diff <(grep -rh ExampleSnippet docs/* | grep -Eo "[0-9]+.*\.json" | sort | uniq) <(ls -1 examples)
+           if [ $? -ne 0 ]; then
+             echo -n "Some examples are not referenced in the docs"
+             echo -n "or some docs reference non-existent examples"
+             echo
+             echo "Review the above diff output and update the docs"
+             exit 1
+           fi
+
   examples:
     name: 'examples (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-24.04
@@ -233,7 +250,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: surjection/goreleaser-cross:v1.23-v2.4.8
-    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build]
+    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build, docs]
     if: startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
