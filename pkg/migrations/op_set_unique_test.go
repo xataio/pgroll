@@ -565,3 +565,84 @@ func TestSetColumnUnique(t *testing.T) {
 		},
 	})
 }
+
+func TestSetUniqueInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, set unique",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "products",
+							Column: "name",
+							Unique: &migrations.UniqueConstraint{
+								Name: "products_name_unique",
+							},
+							Up:   "name || '-' || floor(random()*100000)::text",
+							Down: "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row that meets the constraint into the new view
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "apple",
+				})
+
+				// Can't insert a row that violates the constraint into the new view
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "apple",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Can insert a row that violates the constraint into the old view
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"name": "apple",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row that meets the constraint into the new view
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "banana",
+				})
+
+				// Can't insert a row that violates the constraint into the new view
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"name": "banana",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
+	})
+}
