@@ -49,7 +49,7 @@ type Column struct {
 
 // Generated column definition
 type ColumnGenerated struct {
-	// Expression corresponds to the JSON schema field "expression".
+	// Generation expression of the column
 	Expression string `json:"expression,omitempty"`
 
 	// Identity corresponds to the JSON schema field "identity".
@@ -57,11 +57,11 @@ type ColumnGenerated struct {
 }
 
 type ColumnGeneratedIdentity struct {
-	// SequenceOptions corresponds to the JSON schema field "sequence_options".
+	// Sequence options for identity column, same as in CREATE SEQUENCE
 	SequenceOptions string `json:"sequence_options,omitempty"`
 
-	// UserSpecifiedValues corresponds to the JSON schema field
-	// "user_specified_values".
+	// How to handle user specified values for identity column in INSERT and UPDATE
+	// statements
 	UserSpecifiedValues ColumnGeneratedIdentityUserSpecifiedValues `json:"user_specified_values,omitempty"`
 }
 

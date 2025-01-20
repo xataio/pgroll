@@ -162,13 +162,8 @@ func TestAddColumn(t *testing.T) {
 							Columns: []migrations.Column{
 								{
 									Name: "id",
-									Type: "bigint",
+									Type: "serial",
 									Pk:   true,
-									Generated: &migrations.ColumnGenerated{
-										Identity: &migrations.ColumnGeneratedIdentity{
-											UserSpecifiedValues: "ALWAYS",
-										},
-									},
 								},
 								{
 									Name:   "name",
@@ -197,8 +192,7 @@ func TestAddColumn(t *testing.T) {
 								Type:     "serial",
 								Nullable: false,
 							},
-						},
-						&migrations.OpAddColumn{
+						}, &migrations.OpAddColumn{
 							Table: "users",
 							Column: migrations.Column{
 								Name:     "counter_bigserial",
@@ -206,6 +200,90 @@ func TestAddColumn(t *testing.T) {
 								Nullable: false,
 							},
 						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// old and new views of the table should exist
+				ViewMustExist(t, db, schema, "01_add_table", "users")
+				ViewMustExist(t, db, schema, "02_add_column", "users")
+
+				// inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Alice",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "Bob",
+				})
+
+				// selecting from both the old and the new views works
+				resOld := MustSelect(t, db, schema, "01_add_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "Alice"},
+					{"id": 2, "name": "Bob"},
+				}, resOld)
+				resNew := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1},
+					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped from the underlying table
+				columnName := migrations.TemporaryName("age")
+				ColumnMustNotExist(t, db, schema, "users", columnName)
+
+				// The table's column count reflects the drop of the new column
+				TableMustHaveColumnCount(t, db, schema, "users", 2)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new view still exists
+				ViewMustExist(t, db, schema, "02_add_column", "users")
+
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "Carl",
+				})
+
+				// Selecting from the new view still works
+				res := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1},
+					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2},
+					{"id": 3, "name": "Carl", "counter_smallserial": 3, "counter_serial": 3, "counter_bigserial": 3},
+				}, res)
+			},
+		},
+		{
+			name: "add generated identity column and a regular stored column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "bigint",
+									Pk:   true,
+									Generated: &migrations.ColumnGenerated{
+										Identity: &migrations.ColumnGeneratedIdentity{
+											UserSpecifiedValues: "ALWAYS",
+										},
+									},
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
 							Column: migrations.Column{
@@ -241,13 +319,13 @@ func TestAddColumn(t *testing.T) {
 				}, resOld)
 				resNew := MustSelect(t, db, schema, "02_add_column", "users")
 				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1, "generated_upper": "ALICE"},
-					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2, "generated_upper": "BOB"},
+					{"id": 1, "name": "Alice", "generated_upper": "ALICE"},
+					{"id": 2, "name": "Bob", "generated_upper": "BOB"},
 				}, resNew)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The new column has been dropped from the underlying table
-				columnName := migrations.TemporaryName("age")
+				columnName := migrations.TemporaryName("generated_upper")
 				ColumnMustNotExist(t, db, schema, "users", columnName)
 
 				// The table's column count reflects the drop of the new column
@@ -265,9 +343,9 @@ func TestAddColumn(t *testing.T) {
 				// Selecting from the new view still works
 				res := MustSelect(t, db, schema, "02_add_column", "users")
 				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "counter_smallserial": 1, "counter_serial": 1, "counter_bigserial": 1, "generated_upper": "ALICE"},
-					{"id": 2, "name": "Bob", "counter_smallserial": 2, "counter_serial": 2, "counter_bigserial": 2, "generated_upper": "BOB"},
-					{"id": 3, "name": "Carl", "counter_smallserial": 3, "counter_serial": 3, "counter_bigserial": 3, "generated_upper": "CARL"},
+					{"id": 1, "name": "Alice", "generated_upper": "ALICE"},
+					{"id": 2, "name": "Bob", "generated_upper": "BOB"},
+					{"id": 3, "name": "Carl", "generated_upper": "CARL"},
 				}, res)
 			},
 		},
