@@ -217,6 +217,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 				ReferencedColumns: c.References.Columns,
 				OnDelete:          string(c.References.OnDelete),
 				OnUpdate:          string(c.References.OnUpdate),
+				MatchType:         string(c.References.MatchType),
 			}
 		}
 	}
