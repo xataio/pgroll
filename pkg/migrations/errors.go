@@ -273,5 +273,5 @@ type InvalidGeneratedColumnError struct {
 }
 
 func (e InvalidGeneratedColumnError) Error() string {
-	return fmt.Sprintf("column %q on table %q is invalid, please do not set both generated.expression and generated.identity", e.Column, e.Table)
+	return fmt.Sprintf("column %q on table %q is invalid: only one of generated.expression and generated.identity may be set", e.Column, e.Table)
 }
