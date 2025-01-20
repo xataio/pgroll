@@ -181,11 +181,13 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Name:     col.Name,
 			Unique:   col.Unique,
 			Nullable: col.Nullable,
+			Type:     col.Type,
 		}
 		if col.Pk {
 			primaryKeys = append(primaryKeys, col.Name)
 		}
 	}
+
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
 	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
 	for _, c := range o.Constraints {

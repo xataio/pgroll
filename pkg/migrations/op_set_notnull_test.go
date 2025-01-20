@@ -733,6 +733,73 @@ func TestSetNotNullInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "item_name")
 			},
 		},
+		{
+			name: "create table, set not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+						&migrations.OpAlterColumn{
+							Table:    "items",
+							Column:   "name",
+							Nullable: ptr(false),
+							Up:       "SELECT CASE WHEN name IS NULL THEN 'unknown' ELSE name END",
+							Down:     "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new (only) schema that meets the constraint
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"id":   "1",
+					"name": "apple",
+				})
+
+				// Can't insert a row into the new (only) schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"id": "2",
+				}, testutils.CheckViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "01_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Tht table has been dropped
+				TableMustNotExist(t, db, schema, "items")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new (only) schema that meets the constraint
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"id":   "1",
+					"name": "banana",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "01_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "banana"},
+				}, rows)
+			},
+		},
 	})
 }
 
