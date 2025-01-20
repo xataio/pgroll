@@ -152,7 +152,7 @@ func TestAddColumn(t *testing.T) {
 			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
 		},
 		{
-			name: "add serial columns with generated column",
+			name: "add serial columns",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
