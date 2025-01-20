@@ -723,5 +723,65 @@ func TestSetUniqueInMultiOperationMigrations(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table, set unique",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+						&migrations.OpAlterColumn{
+							Table:  "items",
+							Column: "name",
+							Unique: &migrations.UniqueConstraint{
+								Name: "items_name_unique",
+							},
+							Up:   "name || '-' || floor(random()*100000)::text",
+							Down: "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new (only) schema that meets the constraint
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name": "apple",
+				})
+
+				// Can't insert a row into the new (only) schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name": "apple",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped
+				TableMustNotExist(t, db, schema, "items")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new (only) schema that meets the constraint
+				MustInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name": "apple",
+				})
+
+				// Can't insert a row into the new (only) schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_multi_operation", "items", map[string]string{
+					"name": "apple",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
 	})
 }
