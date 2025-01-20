@@ -23,9 +23,10 @@ var _ Operation = (*OpSetUnique)(nil)
 
 func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
 
 	// Add a unique index to the new column
-	if err := o.addUniqueIndex(ctx, conn); err != nil {
+	if err := addUniqueIndex(ctx, conn, table.Name, column.Name, o.Name); err != nil {
 		return nil, fmt.Errorf("failed to add unique index: %w", err)
 	}
 
@@ -73,12 +74,12 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpSetUnique) addUniqueIndex(ctx context.Context, conn db.DB) error {
+func addUniqueIndex(ctx context.Context, conn db.DB, table, column, name string) error {
 	// create unique index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column))))
+		pq.QuoteIdentifier(name),
+		pq.QuoteIdentifier(table),
+		pq.QuoteIdentifier(column)))
 
 	return err
 }
