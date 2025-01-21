@@ -34,7 +34,7 @@ Each `column` is defined as:
     "name": "name of foreign key constraint",
     "table": "name of referenced table",
     "column": "name of referenced column",
-    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
   }
 },
 ```
@@ -57,8 +57,9 @@ Each `constraint` is defined as:
     "name": "name of foreign key constraint",
     "table": "name of referenced table",
     "columns": ["list", "of", "referenced", "columns"],
-    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
-    "on_update": "ON UPDATE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete_set_columns": ["list of FKs to set", "in on delete operation on SET NULL or SET DEFAULT"],
+    "on_update": "ON UPDATE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
     "match_type": "match type, can be SIMPLE, FULL or PARTIAL. Default is SIMPLE"
   },
   "index_parameters": {
