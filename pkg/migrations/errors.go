@@ -208,6 +208,18 @@ func (e InvalidOnDeleteSettingError) Error() string {
 	)
 }
 
+type InvalidOnDeleteSetColumnError struct {
+	Name string
+}
+
+func (e InvalidOnDeleteSetColumnError) Error() string {
+	return fmt.Sprintf("if on_delete_set_columns is set in foreign key %q, on_delete setting must be one of: %q, %q",
+		e.Name,
+		ForeignKeyReferenceOnDeleteSETDEFAULT,
+		ForeignKeyReferenceOnDeleteSETNULL,
+	)
+}
+
 type AlterColumnNoChangesError struct {
 	Table  string
 	Column string
