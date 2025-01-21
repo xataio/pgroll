@@ -59,7 +59,9 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	// No-op
+	// Update the in-memory schema representation with the new table
+	o.updateSchema(s)
+
 	return nil
 }
 
@@ -186,11 +188,13 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Name:     col.Name,
 			Unique:   col.Unique,
 			Nullable: col.Nullable,
+			Type:     col.Type,
 		}
 		if col.Pk {
 			primaryKeys = append(primaryKeys, col.Name)
 		}
 	}
+
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
 	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
 	foreignKeys := make(map[string]*schema.ForeignKey, 0)

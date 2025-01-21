@@ -27,6 +27,16 @@ func (o *OpRenameColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfo
 		pq.QuoteIdentifier(o.From),
 		pq.QuoteIdentifier(o.To)))
 
+	// Update the in-memory schema to reflect the column rename so that it is
+	// visible to subsequent operations' Complete steps.
+	table := s.GetTable(o.Table)
+	table.RenameColumn(o.From, o.To)
+
+	// Update the physical name of the column in the virtual schema now that it
+	// has really been renamed.
+	column := table.GetColumn(o.To)
+	column.Name = o.To
+
 	return err
 }
 

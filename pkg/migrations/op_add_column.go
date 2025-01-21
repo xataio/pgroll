@@ -116,6 +116,13 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 		}
 	}
 
+	// Add the column to the in-memory schema so that Complete steps in subsequent
+	// operations can see the new column.
+	table := s.GetTable(o.Table)
+	table.AddColumn(o.Column.Name, &schema.Column{
+		Name: o.Column.Name,
+	})
+
 	return err
 }
 
