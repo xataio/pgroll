@@ -168,6 +168,14 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			if c.References == nil {
 				return FieldRequiredError{Name: "references"}
 			}
+			if len(c.References.OnDeleteSetColumns) != 0 {
+				if c.References.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyReferenceOnDeleteSETNULL {
+					return InvalidOnDeleteSetColumnError{
+						Name: o.Name,
+					}
+				}
+			}
+
 		}
 	}
 
