@@ -167,7 +167,7 @@
               "default": "SIMPLE"
             },
             "on_update": {
-              "description": "On delete behavior of the foreign key constraint",
+              "description": "On update behavior of the foreign key constraint",
               "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
               "default": "NO ACTION"
             },
@@ -175,6 +175,13 @@
               "description": "On delete behavior of the foreign key constraint",
               "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
               "default": "NO ACTION"
+            },
+            "on_delete_set_columns": {
+              "description": "Columns to set to null or to default on delete",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           }
         },

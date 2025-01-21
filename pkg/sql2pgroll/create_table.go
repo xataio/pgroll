@@ -248,9 +248,13 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		case "s":
 			matchType = migrations.ConstraintReferencesMatchTypeSIMPLE
 		}
+		columnsToSet := make([]string, len(c.FkDelSetCols))
 		onDelete := migrations.ForeignKeyReferenceOnDeleteNOACTION
 		if c.FkDelAction != "" {
 			onDelete = referentialAction[c.FkDelAction]
+			for i, node := range c.FkDelSetCols {
+				columnsToSet[i] = node.GetString_().Sval
+			}
 		}
 		onUpdate := migrations.ForeignKeyReferenceOnDeleteNOACTION
 		if c.FkUpdAction != "" {
@@ -262,11 +266,12 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 
 		references = &migrations.ConstraintReferences{
-			Table:     referencedTable,
-			Columns:   referencedColumns,
-			MatchType: matchType,
-			OnDelete:  onDelete,
-			OnUpdate:  onUpdate,
+			Table:              referencedTable,
+			Columns:            referencedColumns,
+			MatchType:          matchType,
+			OnDelete:           onDelete,
+			OnDeleteSetColumns: columnsToSet,
+			OnUpdate:           onUpdate,
 		}
 	default:
 		return nil, nil

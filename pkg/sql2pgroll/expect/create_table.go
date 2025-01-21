@@ -486,3 +486,118 @@ var CreateTableOp28 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp29 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b", "c"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"b", "c", "d"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnDeleteSetColumns: []string{"b"},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				MatchType:          migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp30 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b", "c"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:     "bar",
+				Columns:   []string{"b", "c", "d"},
+				OnDelete:  migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnUpdate:  migrations.ForeignKeyReferenceOnDeleteCASCADE,
+				MatchType: migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp31 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b", "c"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:     "bar",
+				Columns:   []string{"b", "c", "d"},
+				OnDelete:  migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnUpdate:  migrations.ForeignKeyReferenceOnDeleteCASCADE,
+				MatchType: migrations.ConstraintReferencesMatchTypeFULL,
+			},
+		},
+	},
+}

@@ -192,6 +192,18 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b) ON DELETE SET NULL ON UPDATE CASCADE)",
 			expectedOp: expect.CreateTableOp28,
 		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, FOREIGN KEY (a, b) REFERENCES bar(c, d) ON DELETE SET NULL (b))",
+			expectedOp: expect.CreateTableOp29,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp30,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) MATCH FULL)",
+			expectedOp: expect.CreateTableOp31,
+		},
 	}
 
 	for _, tc := range tests {

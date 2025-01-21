@@ -99,7 +99,10 @@ type ConstraintReferences struct {
 	// On delete behavior of the foreign key constraint
 	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
 
-	// On delete behavior of the foreign key constraint
+	// Columns to set to null or to default on delete
+	OnDeleteSetColumns []string `json:"on_delete_set_columns,omitempty"`
+
+	// On update behavior of the foreign key constraint
 	OnUpdate ForeignKeyReferenceOnDelete `json:"on_update,omitempty"`
 
 	// Name of the table
