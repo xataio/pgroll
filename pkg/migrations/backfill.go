@@ -69,6 +69,8 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	if err != nil {
 		return 0, fmt.Errorf("getting current schema: %w", err)
 	}
+	defer rows.Close()
+
 	if err := db.ScanFirstValue(rows, &currentSchema); err != nil {
 		return 0, fmt.Errorf("scanning current schema: %w", err)
 	}
