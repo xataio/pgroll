@@ -829,24 +829,44 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", false, false)
+
 				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
 					"id":   "1",
 					"name": "alice",
 					"city": "new york",
 				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "1",
+					"name":     "good boy",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "0",
+					"name":     "spider pig",
+				}, testutils.FKViolationErrorCode)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The table has been dropped, so the FK constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Inserting a row into the table succeeds when the PK constraint is satisfied.
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", false, false)
+
+				// Inserting a row into the table succeeds when the FK constraint is satisfied.
 				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
 					"id":       "1",
 					"owner_id": "1",
 					"name":     "cutie pie",
 				})
 
-				// Inserting a row into the table fails when the PK constraint is not satisfied.
+				// Inserting a row into the table fails when the FK constraint is not satisfied.
 				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
 					"id":       "2",
 					"owner_id": "0",

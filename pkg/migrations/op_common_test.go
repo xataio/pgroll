@@ -250,6 +250,13 @@ func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, co
 	}
 }
 
+func TableForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string, deferrable, initiallyDeferred bool) {
+	t.Helper()
+	if !tableForeignKeyExists(t, db, schema, table, constraint, deferrable, initiallyDeferred) {
+		t.Fatalf("Expected table foreign key %q to exist", constraint)
+	}
+}
+
 func PrimaryKeyConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
 	if !primaryKeyConstraintExists(t, db, schema, table, constraint) {
@@ -403,6 +410,38 @@ func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string
       AND confdeltype = $4 
     )`,
 		fmt.Sprintf("%s.%s", schema, table), constraint, validated, confDelType).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func tableForeignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, deferrable, initiallyDeferred bool) bool {
+	t.Helper()
+
+	deferrableStr := "NO"
+	if deferrable {
+		deferrableStr = "YES"
+	}
+	initiallyDeferredStr := "NO"
+	if initiallyDeferred {
+		initiallyDeferredStr = "YES"
+	}
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.table_constraints
+      WHERE table_schema = $1
+      AND table_name = $2
+      AND constraint_name = $3
+      AND constraint_type = 'FOREIGN KEY'
+      AND is_deferrable = $4
+      AND initially_deferred = $5
+    )`,
+		schema, table, constraint, deferrableStr, initiallyDeferredStr).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}
