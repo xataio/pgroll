@@ -518,7 +518,7 @@ var CreateTableOp29 = &migrations.OpCreateTable{
 			NoInherit:         false,
 			References: &migrations.ConstraintReferences{
 				Table:              "bar",
-				Columns:            []string{"b", "c", "d"},
+				Columns:            []string{"a", "b"},
 				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
 				OnDeleteSetColumns: []string{"b"},
 				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
@@ -557,7 +557,7 @@ var CreateTableOp30 = &migrations.OpCreateTable{
 			NoInherit:         false,
 			References: &migrations.ConstraintReferences{
 				Table:              "bar",
-				Columns:            []string{"b", "c", "d"},
+				Columns:            []string{"d", "e", "f"},
 				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
 				OnDeleteSetColumns: []string{},
 				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteCASCADE,
@@ -596,10 +596,10 @@ var CreateTableOp31 = &migrations.OpCreateTable{
 			NoInherit:         false,
 			References: &migrations.ConstraintReferences{
 				Table:              "bar",
-				Columns:            []string{"b", "c", "d"},
-				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				Columns:            []string{"d", "e", "f"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
 				OnDeleteSetColumns: []string{},
-				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteCASCADE,
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
 				MatchType:          migrations.ConstraintReferencesMatchTypeFULL,
 			},
 		},
