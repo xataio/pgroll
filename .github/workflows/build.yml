@@ -231,7 +231,7 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     container:
-      image: surjection/goreleaser-cross:v1.23-v2.4.8
+      image: goreleaser/goreleaser-cross:v1.24
     needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
