@@ -30,7 +30,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: '~> v2'
+          version: 'v2.5.1'
           args: build --snapshot
 
       - uses: actions/upload-artifact@v4
@@ -265,7 +265,7 @@ jobs:
       uses: goreleaser/goreleaser-action@v6
       with:
         distribution: goreleaser
-        version: '~> v2'
+        version: 'v2.5.1'
         args: release --clean
       env:
         # We use two GitHub tokens here:
