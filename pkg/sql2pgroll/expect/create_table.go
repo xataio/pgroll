@@ -440,7 +440,7 @@ var CreateTableOp27 = &migrations.OpCreateTable{
 			Generated: &migrations.ColumnGenerated{
 				Identity: &migrations.ColumnGeneratedIdentity{
 					UserSpecifiedValues: migrations.ColumnGeneratedIdentityUserSpecifiedValuesALWAYS,
-					SequenceOptions:     "start 1 increment 1 minvalue 1 maxvalue 1000 cycle  cache 1",
+					SequenceOptions:     "START 1 INCREMENT 1 MINVALUE 1 MAXVALUE 1000 CYCLE CACHE 1 ",
 				},
 			},
 		},

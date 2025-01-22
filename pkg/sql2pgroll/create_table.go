@@ -4,7 +4,6 @@ package sql2pgroll
 
 import (
 	"fmt"
-	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -197,13 +196,10 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			}
 			sequenceOptions := ""
 			if c.GetConstraint().GetOptions() != nil {
-				sequenceOptions, err = pgq.DeparseRelOptions(c.GetConstraint().GetOptions())
+				sequenceOptions, err = pgq.DeparseParenthesizedSeqOptList(c.GetConstraint().GetOptions())
 				if err != nil {
 					return nil, fmt.Errorf("parsing sequence options: %w", err)
 				}
-				// transform the options into the proper format
-				sequenceOptions = strings.ReplaceAll(sequenceOptions, "=", " ")
-				sequenceOptions = strings.ReplaceAll(sequenceOptions, ",", "")
 				sequenceOptions = sequenceOptions[1 : len(sequenceOptions)-1]
 			}
 			generated = &migrations.ColumnGenerated{
