@@ -215,6 +215,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
 	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
 	foreignKeys := make(map[string]*schema.ForeignKey, 0)
+	excludeConstraints := make(map[string]*schema.ExcludeConstraint, 0)
 	for _, c := range o.Constraints {
 		switch c.Type {
 		case ConstraintTypeUnique:
@@ -240,16 +241,24 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 				OnUpdate:          string(c.References.OnUpdate),
 				MatchType:         string(c.References.MatchType),
 			}
+		case ConstraintTypeExclude:
+			excludeConstraints[c.Name] = &schema.ExcludeConstraint{
+				Name:        c.Name,
+				IndexMethod: c.Exclude.IndexMethod,
+				Elements:    c.Exclude.Elements,
+				Predicate:   c.Exclude.Predicate,
+			}
 		}
 	}
 
 	s.AddTable(o.Name, &schema.Table{
-		Name:              o.Name,
-		Columns:           columns,
-		UniqueConstraints: uniqueConstraints,
-		CheckConstraints:  checkConstraints,
-		PrimaryKey:        primaryKeys,
-		ForeignKeys:       foreignKeys,
+		Name:               o.Name,
+		Columns:            columns,
+		UniqueConstraints:  uniqueConstraints,
+		CheckConstraints:   checkConstraints,
+		PrimaryKey:         primaryKeys,
+		ForeignKeys:        foreignKeys,
+		ExcludeConstraints: excludeConstraints,
 	})
 
 	return s
@@ -306,6 +315,8 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
 			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
+		case ConstraintTypeExclude:
+			constraintsSQL[i] = writer.WriteExclude(c.Exclude.IndexMethod, c.Exclude.Elements, c.Exclude.Predicate)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -388,6 +399,20 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 		onDeleteAction,
 		onUpdateAction,
 	)
+	constraint += w.addDeferrable()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WriteExclude(indexMethod, elements, predicate string) string {
+	constraint := ""
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	constraint += fmt.Sprintf("EXCLUDE USING %s (%s)", pq.QuoteIdentifier(w.Name), indexMethod, elements)
+	constraint += w.addIndexParameters()
+	if predicate != "" {
+		constraint += fmt.Sprintf(" WHERE (%s)", predicate)
+	}
 	constraint += w.addDeferrable()
 	return constraint
 }

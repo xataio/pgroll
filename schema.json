@@ -116,7 +116,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check", "primary_key", "foreign_key"]
+          "enum": ["unique", "check", "primary_key", "foreign_key", "exclude"]
         },
         "deferrable": {
           "description": "Deferable constraint",
@@ -182,6 +182,27 @@
               "items": {
                 "type": "string"
               }
+            }
+          }
+        },
+        "exclude": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "index_method": {
+              "description": "Index method",
+              "type": "string",
+              "default": ""
+            },
+            "elements": {
+              "type": "string",
+              "default": "",
+              "description": "Columns of the exclude constraint"
+            },
+            "predicate": {
+              "type": "string",
+              "description": "Predicate for the exclusion constraint",
+              "default": ""
             }
           }
         },

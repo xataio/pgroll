@@ -59,6 +59,9 @@ type Table struct {
 	// UniqueConstraints is a map of all unique constraints defined on the table
 	UniqueConstraints map[string]*UniqueConstraint `json:"uniqueConstraints"`
 
+	// ExcludeConstraints is a map of all exclude constraints defined on the table
+	ExcludeConstraints map[string]*ExcludeConstraint `json:"excludeConstraints"`
+
 	// Whether or not the table has been deleted in the virtual schema
 	Deleted bool `json:"-"`
 }
@@ -152,6 +155,21 @@ type UniqueConstraint struct {
 
 	// The columns that the unique constraint is defined on
 	Columns []string `json:"columns"`
+}
+
+// UniqueConstraint represents a unique constraint on a table
+type ExcludeConstraint struct {
+	// Name is the name of the exclude constraint in postgres
+	Name string `json:"name"`
+
+	// IndexMethod is the index method of the exclude constraint
+	IndexMethod string `json:"indexMethod"`
+
+	// Elements is the elements of the exclude constraint
+	Elements string `json:"elements"`
+
+	// Predicate is the predicate of the index
+	Predicate string `json:"predicate"`
 }
 
 // GetTable returns a table by name

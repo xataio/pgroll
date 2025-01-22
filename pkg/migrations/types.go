@@ -55,6 +55,9 @@ type Constraint struct {
 	// Deferable constraint
 	Deferrable bool `json:"deferrable,omitempty"`
 
+	// Exclude corresponds to the JSON schema field "exclude".
+	Exclude *ConstraintExclude `json:"exclude,omitempty"`
+
 	// IndexParameters corresponds to the JSON schema field "index_parameters".
 	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty"`
 
@@ -75,6 +78,17 @@ type Constraint struct {
 
 	// Type of the constraint
 	Type ConstraintType `json:"type"`
+}
+
+type ConstraintExclude struct {
+	// Columns of the exclude constraint
+	Elements string `json:"elements,omitempty"`
+
+	// Index method
+	IndexMethod string `json:"index_method,omitempty"`
+
+	// Predicate for the exclusion constraint
+	Predicate string `json:"predicate,omitempty"`
 }
 
 type ConstraintIndexParameters struct {
@@ -118,6 +132,7 @@ const ConstraintReferencesMatchTypeSIMPLE ConstraintReferencesMatchType = "SIMPL
 type ConstraintType string
 
 const ConstraintTypeCheck ConstraintType = "check"
+const ConstraintTypeExclude ConstraintType = "exclude"
 const ConstraintTypeForeignKey ConstraintType = "foreign_key"
 const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
