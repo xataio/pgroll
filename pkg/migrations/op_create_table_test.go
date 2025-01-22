@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"os"
 	"strings"
 	"testing"
 
@@ -959,6 +960,10 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				if strings.HasPrefix(os.Getenv("POSTGRES_VERSION"), "14.") {
+					t.Skip("ON DELETE SET DEFAULT is not supported in PostgreSQL 14")
+				}
+
 				// Table level FK exists on the new table.
 				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", true, false)
 
@@ -988,6 +993,10 @@ func TestCreateTable(t *testing.T) {
 				// The table has been dropped, so the FK constraint is gone.
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				if strings.HasPrefix(os.Getenv("POSTGRES_VERSION"), "14.") {
+					t.Skip("ON DELETE SET DEFAULT is not supported in PostgreSQL 14")
+				}
+
 				// Table level FK exists on the new table.
 				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", true, false)
 
