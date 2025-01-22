@@ -33,7 +33,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 
 		// Make sure Postgres is done creating the index
-		var isInProgress bool = true
+		isInProgress := true
 		for isInProgress {
 			var err error
 			isInProgress, err = isIndexInProgress(ctx, conn, s.Name, o.Name)
