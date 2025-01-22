@@ -426,3 +426,97 @@ func TestSetDefault(t *testing.T) {
 		},
 	})
 }
+
+func TestSetDefaultInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, set default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:   "products",
+							Column:  "name",
+							Default: nullable.NewNullableWithValue("'unknown'"),
+							Up:      "name",
+							Down:    "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that uses the default
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "1",
+				})
+
+				// Can insert a row into the old schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "2",
+					"name": "apple",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that uses the default
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "3",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+					{"id": 3, "name": "unknown"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
+	})
+}
