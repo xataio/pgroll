@@ -20,16 +20,10 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	ops := o.subOperations()
 
 	// Duplicate the column on the underlying table.
-	d := duplicatorForOperations(ops, conn, table, column)
+	d := duplicatorForOperations(ops, conn, table, column).
+		WithName(column.Name, TemporaryName(o.Column))
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
-	}
-
-	// perform any operation specific start steps
-	for _, op := range ops {
-		if _, err := op.Start(ctx, conn, latestSchema, tr, s, cbs...); err != nil {
-			return nil, err
-		}
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
@@ -39,7 +33,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 		Columns:        table.Columns,
 		SchemaName:     s.Name,
 		LatestSchema:   latestSchema,
-		TableName:      o.Table,
+		TableName:      table.Name,
 		PhysicalColumn: TemporaryName(o.Column),
 		SQL:            o.upSQLForOperations(ops),
 	})
@@ -49,7 +43,9 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
-	// a variable for the new column.
+	// a variable for the new column. Save the old column name for use as the
+	// physical column name. in the down trigger first.
+	oldPhysicalColumn := column.Name
 	table.AddColumn(o.Column, &schema.Column{
 		Name: TemporaryName(o.Column),
 	})
@@ -61,12 +57,19 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 		Columns:        table.Columns,
 		LatestSchema:   latestSchema,
 		SchemaName:     s.Name,
-		TableName:      o.Table,
-		PhysicalColumn: o.Column,
+		TableName:      table.Name,
+		PhysicalColumn: oldPhysicalColumn,
 		SQL:            o.downSQLForOperations(ops),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
+	}
+
+	// perform any operation specific start steps
+	for _, op := range ops {
+		if _, err := op.Start(ctx, conn, latestSchema, tr, s, cbs...); err != nil {
+			return nil, err
+		}
 	}
 
 	return table, nil
@@ -115,9 +118,11 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	ops := o.subOperations()
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
 
 	// Perform any operation specific rollback steps
+	ops := o.subOperations()
 	for _, ops := range ops {
 		if err := ops.Rollback(ctx, conn, tr, nil); err != nil {
 			return err
@@ -126,8 +131,8 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 
 	// Drop the new column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column)),
+		pq.QuoteIdentifier(table.Name),
+		pq.QuoteIdentifier(column.Name),
 	))
 	if err != nil {
 		return err
