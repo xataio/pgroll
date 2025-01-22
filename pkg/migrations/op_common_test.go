@@ -8,7 +8,10 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"os"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/lib/pq"
@@ -20,14 +23,15 @@ import (
 )
 
 type TestCase struct {
-	name            string
-	migrations      []migrations.Migration
-	wantStartErr    error
-	wantRollbackErr error
-	wantCompleteErr error
-	afterStart      func(t *testing.T, db *sql.DB, schema string)
-	afterComplete   func(t *testing.T, db *sql.DB, schema string)
-	afterRollback   func(t *testing.T, db *sql.DB, schema string)
+	name              string
+	minPgMajorVersion int
+	migrations        []migrations.Migration
+	wantStartErr      error
+	wantRollbackErr   error
+	wantCompleteErr   error
+	afterStart        func(t *testing.T, db *sql.DB, schema string)
+	afterComplete     func(t *testing.T, db *sql.DB, schema string)
+	afterRollback     func(t *testing.T, db *sql.DB, schema string)
 }
 
 type TestCases []TestCase
@@ -40,6 +44,14 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 	testSchema := testutils.TestSchema()
 
 	for _, tt := range tests {
+		if tt.minPgMajorVersion != 0 && os.Getenv("POSTGRES_VERSION") != "" {
+			pgMajorVersion := strings.Split(os.Getenv("POSTGRES_VERSION"), ".")[0]
+			version, _ := strconv.Atoi(pgMajorVersion)
+			if version < tt.minPgMajorVersion {
+				t.Skipf("Skipping test %q for PostgreSQL version %s", tt.name, os.Getenv("POSTGRES_VERSION"))
+			}
+		}
+
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
