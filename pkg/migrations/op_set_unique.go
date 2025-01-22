@@ -51,7 +51,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 
 		if isValid {
-			break
+			return table, nil
 		}
 
 		// If not valid, since Postgres has already given up validating the index,
@@ -62,7 +62,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 	}
 
-	return table, nil
+	return nil, fmt.Errorf("failed to create unique index: %q", o.Name)
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
