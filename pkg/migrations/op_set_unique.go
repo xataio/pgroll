@@ -26,23 +26,27 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
-	for retryCount := 5; retryCount > 0; retryCount-- {
+	for retryCount := 0; retryCount < 5; retryCount++ {
 		// Add a unique index to the new column
 		if err := addUniqueIndex(ctx, conn, table.Name, column.Name, o.Name); err != nil {
 			return nil, fmt.Errorf("failed to add unique index: %w", err)
 		}
 
 		// Make sure Postgres is done creating the index
-		isInProgress := true
+		isInProgress, err := isIndexInProgress(ctx, conn, s.Name, o.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		ticker := time.NewTicker(500 * time.Millisecond)
 		for isInProgress {
-			var err error
+			<-ticker.C
 			isInProgress, err = isIndexInProgress(ctx, conn, s.Name, o.Name)
 			if err != nil {
 				return nil, err
 			}
-			// Still in progress, sleep for 0.5 seconds and check again
-			time.Sleep(500 * time.Millisecond)
 		}
+		ticker.Stop()
 
 		// Check pg_index to see if it's valid or not. Break if it's valid.
 		isValid, err := isIndexValid(ctx, conn, s.Name, o.Name)
@@ -117,7 +121,6 @@ func addUniqueIndex(ctx context.Context, conn db.DB, table, column, name string)
 }
 
 func isIndexInProgress(ctx context.Context, conn db.DB, schemaname string, indexname string) (bool, error) {
-	var isInProgress bool
 	rows, err := conn.QueryContext(ctx, `
 		SELECT EXISTS(
 			SELECT * FROM pg_catalog.pg_stat_progress_create_index
@@ -128,10 +131,11 @@ func isIndexInProgress(ctx context.Context, conn db.DB, schemaname string, index
 		return false, fmt.Errorf("getting index in progress with name %q: %w", indexname, err)
 	}
 	if rows == nil {
-		// if rows == nil && err != nil, then it means we have queried a fake db.
+		// if rows == nil && err != nil, then it means we have queried a `FakeDB`.
 		// In that case, we can safely return false.
 		return false, nil
 	}
+	var isInProgress bool
 	if err := db.ScanFirstValue(rows, &isInProgress); err != nil {
 		return false, fmt.Errorf("scanning index in progress with name %q: %w", indexname, err)
 	}
@@ -140,7 +144,6 @@ func isIndexInProgress(ctx context.Context, conn db.DB, schemaname string, index
 }
 
 func isIndexValid(ctx context.Context, conn db.DB, schemaname string, indexname string) (bool, error) {
-	var isValid bool
 	rows, err := conn.QueryContext(ctx, `
 		SELECT indisvalid
 		FROM pg_catalog.pg_index
@@ -154,6 +157,7 @@ func isIndexValid(ctx context.Context, conn db.DB, schemaname string, indexname 
 		// In that case, we can safely return true.
 		return true, nil
 	}
+	var isValid bool
 	if err := db.ScanFirstValue(rows, &isValid); err != nil {
 		return false, fmt.Errorf("scanning index with name %q: %w", indexname, err)
 	}
