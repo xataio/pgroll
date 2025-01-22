@@ -4,6 +4,7 @@ package migrations_test
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -960,6 +961,7 @@ func TestCreateTable(t *testing.T) {
 				},
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				fmt.Println(os.Getenv("POSTGRES_VERSION"))
 				if strings.HasPrefix(os.Getenv("POSTGRES_VERSION"), "14.") {
 					t.Skip("ON DELETE SET DEFAULT is not supported in PostgreSQL 14")
 				}
