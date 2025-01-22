@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/lib/pq"
@@ -170,8 +171,16 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			}
 			if len(c.References.OnDeleteSetColumns) != 0 {
 				if c.References.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyReferenceOnDeleteSETNULL {
-					return InvalidOnDeleteSetColumnError{
+					return UnexpectedOnDeleteSetColumnError{
 						Name: o.Name,
+					}
+				}
+				for _, col := range c.References.OnDeleteSetColumns {
+					if !slices.Contains(c.Columns, col) {
+						return InvalidOnDeleteSetColumnError{
+							Name:   o.Name,
+							Column: col,
+						}
 					}
 				}
 			}
@@ -296,7 +305,7 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
-			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate)
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -355,10 +364,13 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete) string {
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete, setColumns []string) string {
 	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
+		if len(setColumns) != 0 {
+			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
+		}
 	}
 	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
 	if onUpdate != "" {
