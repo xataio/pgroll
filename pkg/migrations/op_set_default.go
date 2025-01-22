@@ -24,16 +24,17 @@ var _ Operation = (*OpSetDefault)(nil)
 
 func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
 
 	var err error
 	if o.Default == nil {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT`,
 			pq.QuoteIdentifier(table.Name),
-			pq.QuoteIdentifier(TemporaryName(o.Column))))
+			pq.QuoteIdentifier(column.Name)))
 	} else {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
 			pq.QuoteIdentifier(table.Name),
-			pq.QuoteIdentifier(TemporaryName(o.Column)),
+			pq.QuoteIdentifier(column.Name),
 			*o.Default))
 	}
 	if err != nil {
