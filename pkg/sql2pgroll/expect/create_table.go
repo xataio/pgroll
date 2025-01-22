@@ -429,3 +429,38 @@ var CreateTableOp26 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp27 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name: "b",
+			Type: "bigint",
+			Pk:   true,
+			Generated: &migrations.ColumnGenerated{
+				Identity: &migrations.ColumnGeneratedIdentity{
+					UserSpecifiedValues: migrations.ColumnGeneratedIdentityUserSpecifiedValuesALWAYS,
+					SequenceOptions:     "START 1 INCREMENT 1 MINVALUE 1 MAXVALUE 1000 CYCLE CACHE 1 ",
+				},
+			},
+		},
+	},
+}
+
+var CreateTableOp28 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "text",
+			Nullable: true,
+		},
+		{
+			Name: "b",
+			Type: "text",
+			Generated: &migrations.ColumnGenerated{
+				Expression: "upper(a)",
+			},
+		},
+	},
+}

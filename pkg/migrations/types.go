@@ -25,6 +25,9 @@ type Column struct {
 	// Default value for the column
 	Default *string `json:"default,omitempty"`
 
+	// Generated column definition
+	Generated *ColumnGenerated `json:"generated,omitempty"`
+
 	// Name of the column
 	Name string `json:"name"`
 
@@ -43,6 +46,29 @@ type Column struct {
 	// Indicates if the column values must be unique
 	Unique bool `json:"unique,omitempty"`
 }
+
+// Generated column definition
+type ColumnGenerated struct {
+	// Generation expression of the column
+	Expression string `json:"expression,omitempty"`
+
+	// Identity corresponds to the JSON schema field "identity".
+	Identity *ColumnGeneratedIdentity `json:"identity,omitempty"`
+}
+
+type ColumnGeneratedIdentity struct {
+	// Sequence options for identity column, same as in CREATE SEQUENCE
+	SequenceOptions string `json:"sequence_options,omitempty"`
+
+	// How to handle user specified values for identity column in INSERT and UPDATE
+	// statements
+	UserSpecifiedValues ColumnGeneratedIdentityUserSpecifiedValues `json:"user_specified_values,omitempty"`
+}
+
+type ColumnGeneratedIdentityUserSpecifiedValues string
+
+const ColumnGeneratedIdentityUserSpecifiedValuesALWAYS ColumnGeneratedIdentityUserSpecifiedValues = "ALWAYS"
+const ColumnGeneratedIdentityUserSpecifiedValuesBYDEFAULT ColumnGeneratedIdentityUserSpecifiedValues = "BY DEFAULT"
 
 // Constraint definition
 type Constraint struct {
