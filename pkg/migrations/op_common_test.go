@@ -857,7 +857,7 @@ func mustSetSearchPath(t *testing.T, db *sql.DB, schema string) {
 }
 
 func isTestSkipped(t *testing.T, minPgMajorVersion int) bool {
-	if minPgMajorVersion != 0 || os.Getenv("POSTGRES_VERSION") == "" || os.Getenv("POSTGRES_VERSION") == "latest" {
+	if minPgMajorVersion == 0 || os.Getenv("POSTGRES_VERSION") == "" || os.Getenv("POSTGRES_VERSION") == "latest" {
 		return false
 	}
 	pgMajorVersion := strings.Split(os.Getenv("POSTGRES_VERSION"), ".")[0]
