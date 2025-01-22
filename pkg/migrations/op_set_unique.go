@@ -54,7 +54,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 			break
 		}
 
-		// If not valid, since we have already waited for the index to be created,
+		// If not valid, since Postgres has already given up validating the index,
 		// it will remain invalid forever. Drop it and try again.
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX IF EXISTS %s.%s", pq.QuoteIdentifier(s.Name), pq.QuoteIdentifier(o.Name)))
 		if err != nil {
@@ -127,6 +127,11 @@ func isIndexInProgress(ctx context.Context, conn db.DB, schemaname string, index
 	if err != nil {
 		return false, fmt.Errorf("getting index in progress with name %q: %w", indexname, err)
 	}
+	if rows == nil {
+		// if rows == nil && err != nil, then it means we have queried a fake db.
+		// In that case, we can safely return false.
+		return false, nil
+	}
 	if err := db.ScanFirstValue(rows, &isInProgress); err != nil {
 		return false, fmt.Errorf("scanning index in progress with name %q: %w", indexname, err)
 	}
@@ -143,6 +148,11 @@ func isIndexValid(ctx context.Context, conn db.DB, schemaname string, indexname 
 		fmt.Sprintf("%s.%s", pq.QuoteIdentifier(schemaname), pq.QuoteIdentifier(indexname)))
 	if err != nil {
 		return false, fmt.Errorf("getting index with name %q: %w", indexname, err)
+	}
+	if rows == nil {
+		// if rows == nil && err != nil, then it means we have queried a fake db.
+		// In that case, we can safely return true.
+		return true, nil
 	}
 	if err := db.ScanFirstValue(rows, &isValid); err != nil {
 		return false, fmt.Errorf("scanning index with name %q: %w", indexname, err)
