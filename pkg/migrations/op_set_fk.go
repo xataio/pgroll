@@ -85,6 +85,7 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
+	referencedTable := s.GetTable(o.References.Table)
 
 	onDelete := "NO ACTION"
 	if o.References.OnDelete != "" {
@@ -96,7 +97,7 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(column.Name),
-			pq.QuoteIdentifier(o.References.Table),
+			pq.QuoteIdentifier(referencedTable.Name),
 			pq.QuoteIdentifier(o.References.Column),
 			onDelete,
 		))
