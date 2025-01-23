@@ -343,6 +343,38 @@ func TestOpRenameColumnValidation(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
+			name: "from field must be specified",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "users",
+							To:    "name",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "from"},
+		},
+		{
+			name: "to field must be specified",
+			migrations: []migrations.Migration{
+				createTableMigration,
+				{
+					Name: "02_rename_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "users",
+							From:  "username",
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.FieldRequiredError{Name: "to"},
+		},
+		{
 			name: "table must exist",
 			migrations: []migrations.Migration{
 				createTableMigration,

@@ -44,12 +44,8 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 	testSchema := testutils.TestSchema()
 
 	for _, tt := range tests {
-		if tt.minPgMajorVersion != 0 && os.Getenv("POSTGRES_VERSION") != "" {
-			pgMajorVersion := strings.Split(os.Getenv("POSTGRES_VERSION"), ".")[0]
-			version, _ := strconv.Atoi(pgMajorVersion)
-			if version < tt.minPgMajorVersion {
-				t.Skipf("Skipping test %q for PostgreSQL version %s", tt.name, os.Getenv("POSTGRES_VERSION"))
-			}
+		if isTestSkipped(t, tt.minPgMajorVersion) {
+			t.Skipf("Skipping test %q for PostgreSQL version %s", tt.name, os.Getenv("POSTGRES_VERSION"))
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -858,6 +854,18 @@ func mustSetSearchPath(t *testing.T, db *sql.DB, schema string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func isTestSkipped(t *testing.T, minPgMajorVersion int) bool {
+	if minPgMajorVersion == 0 || os.Getenv("POSTGRES_VERSION") == "" || os.Getenv("POSTGRES_VERSION") == "latest" {
+		return false
+	}
+	pgMajorVersion := strings.Split(os.Getenv("POSTGRES_VERSION"), ".")[0]
+	version, err := strconv.Atoi(pgMajorVersion)
+	if err != nil {
+		return false
+	}
+	return version < minPgMajorVersion
 }
 
 func ptr[T any](x T) *T { return &x }

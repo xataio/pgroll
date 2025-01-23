@@ -272,6 +272,11 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 		if i > 0 {
 			sql += ", "
 		}
+
+		// Generated identity columns are marked not null automatically by PostgreSQL.
+		if col.Generated != nil && col.Generated.Identity != nil && !col.IsNullable() {
+			col.Nullable = true
+		}
 		colSQL, err := columnWriter.Write(col)
 		if err != nil {
 			return "", err

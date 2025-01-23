@@ -3,6 +3,7 @@
 package sql2pgroll_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -185,24 +186,32 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp26,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
+			sql:        "CREATE TABLE foo(b bigint GENERATED ALWAYS AS IDENTITY (START WITH 1 INCREMENT BY 1 MINVALUE 1 MAXVALUE 1000 CYCLE CACHE 1) PRIMARY KEY)",
 			expectedOp: expect.CreateTableOp27,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b) ON DELETE SET NULL ON UPDATE CASCADE)",
+			sql:        "CREATE TABLE foo(a text, b text GENERATED ALWAYS AS (upper(a)) STORED)",
 			expectedOp: expect.CreateTableOp28,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int, b int, FOREIGN KEY (a, b) REFERENCES bar(c, d) ON DELETE SET NULL (b))",
+			sql:        "CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
 			expectedOp: expect.CreateTableOp29,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) ON DELETE SET NULL ON UPDATE CASCADE)",
+			sql:        "CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b) ON DELETE SET NULL ON UPDATE CASCADE)",
 			expectedOp: expect.CreateTableOp30,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) MATCH FULL)",
+			sql:        "CREATE TABLE foo(a int, b int, FOREIGN KEY (a, b) REFERENCES bar(c, d) ON DELETE SET NULL (b))",
 			expectedOp: expect.CreateTableOp31,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp32,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) MATCH FULL)",
+			expectedOp: expect.CreateTableOp33,
 		},
 	}
 
@@ -211,6 +220,7 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			ops, err := sql2pgroll.Convert(tc.sql)
 			require.NoError(t, err)
 
+			fmt.Printf("%+v\n", ops[0])
 			require.Len(t, ops, 1)
 
 			createTableOp, ok := ops[0].(*migrations.OpCreateTable)
@@ -296,10 +306,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int CONSTRAINT foo_notnull NOT NULL)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_unique UNIQUE)",
 		"CREATE TABLE foo(a int CONSTRAINT foo_pk PRIMARY KEY)",
-
-		// Generated columns are not supported
-		"CREATE TABLE foo(a int GENERATED ALWAYS AS (1) STORED)",
-		"CREATE TABLE foo(a int GENERATED ALWAYS AS IDENTITY)",
 
 		// Deferrable constraints are not supported
 		"CREATE TABLE foo(a int UNIQUE DEFERRABLE)",
