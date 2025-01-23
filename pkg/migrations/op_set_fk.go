@@ -86,6 +86,7 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 	referencedTable := s.GetTable(o.References.Table)
+	referencedColumn := referencedTable.GetColumn(o.References.Column)
 
 	onDelete := "NO ACTION"
 	if o.References.OnDelete != "" {
@@ -98,7 +99,7 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(column.Name),
 			pq.QuoteIdentifier(referencedTable.Name),
-			pq.QuoteIdentifier(o.References.Column),
+			pq.QuoteIdentifier(referencedColumn.Name),
 			onDelete,
 		))
 
