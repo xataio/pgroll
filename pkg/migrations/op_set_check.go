@@ -27,7 +27,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSche
 	table := s.GetTable(o.Table)
 
 	// Add the check constraint to the new column as NOT VALID.
-	if err := o.addCheckConstraint(ctx, conn); err != nil {
+	if err := o.addCheckConstraint(ctx, conn, s); err != nil {
 		return nil, fmt.Errorf("failed to add check constraint: %w", err)
 	}
 
@@ -82,9 +82,11 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	return nil
 }
 
-func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
+func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(table.Name),
 		pq.QuoteIdentifier(o.Check.Name),
 		rewriteCheckExpression(o.Check.Constraint, o.Column),
 	))
