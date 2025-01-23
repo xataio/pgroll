@@ -464,3 +464,174 @@ var CreateTableOp28 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp29 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a"},
+			Name:              "foo_fk",
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"b"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
+				OnDeleteSetColumns: []string{},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
+				MatchType:          migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp30 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"b"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnDeleteSetColumns: []string{},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteCASCADE,
+				MatchType:          migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp31 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"c", "d"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnDeleteSetColumns: []string{"b"},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
+				MatchType:          migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp32 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b", "c"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"d", "e", "f"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETNULL,
+				OnDeleteSetColumns: []string{},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteCASCADE,
+				MatchType:          migrations.ConstraintReferencesMatchTypeSIMPLE,
+			},
+		},
+	},
+}
+
+var CreateTableOp33 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "c",
+			Type:     "int",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeForeignKey,
+			Columns:           []string{"a", "b", "c"},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			References: &migrations.ConstraintReferences{
+				Table:              "bar",
+				Columns:            []string{"d", "e", "f"},
+				OnDelete:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
+				OnDeleteSetColumns: []string{},
+				OnUpdate:           migrations.ForeignKeyReferenceOnDeleteNOACTION,
+				MatchType:          migrations.ConstraintReferencesMatchTypeFULL,
+			},
+		},
+	},
+}

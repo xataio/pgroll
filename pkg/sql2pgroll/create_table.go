@@ -10,6 +10,14 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
+var referentialAction = map[string]migrations.ForeignKeyReferenceOnDelete{
+	"a": migrations.ForeignKeyReferenceOnDeleteNOACTION,
+	"c": migrations.ForeignKeyReferenceOnDeleteCASCADE,
+	"d": migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+	"n": migrations.ForeignKeyReferenceOnDeleteSETNULL,
+	"r": migrations.ForeignKeyReferenceOnDeleteRESTRICT,
+}
+
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
@@ -239,6 +247,12 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var nullsNotDistinct bool
 	var checkExpr string
 	var err error
+	var references *migrations.ConstraintReferences
+
+	columns := make([]string, len(c.Keys))
+	for i, key := range c.Keys {
+		columns[i] = key.GetString_().Sval
+	}
 
 	switch c.Contype {
 	case pgq.ConstrType_CONSTR_UNIQUE:
@@ -252,13 +266,49 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		}
 	case pgq.ConstrType_CONSTR_PRIMARY:
 		constraintType = migrations.ConstraintTypePrimaryKey
+	case pgq.ConstrType_CONSTR_FOREIGN:
+		constraintType = migrations.ConstraintTypeForeignKey
+		referencedTable := c.Pktable.Relname
+		referencedColumns := make([]string, len(c.PkAttrs))
+		for i, node := range c.PkAttrs {
+			referencedColumns[i] = node.GetString_().Sval
+		}
+		matchType := migrations.ConstraintReferencesMatchTypeSIMPLE
+		switch c.FkMatchtype {
+		case "p":
+			matchType = migrations.ConstraintReferencesMatchTypePARTIAL
+		case "f":
+			matchType = migrations.ConstraintReferencesMatchTypeFULL
+		case "s":
+			matchType = migrations.ConstraintReferencesMatchTypeSIMPLE
+		}
+		columnsToSet := make([]string, len(c.FkDelSetCols))
+		onDelete := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		if c.FkDelAction != "" {
+			onDelete = referentialAction[c.FkDelAction]
+			for i, node := range c.FkDelSetCols {
+				columnsToSet[i] = node.GetString_().Sval
+			}
+		}
+		onUpdate := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		if c.FkUpdAction != "" {
+			onUpdate = referentialAction[c.FkUpdAction]
+		}
+		columns = make([]string, len(c.FkAttrs))
+		for i, node := range c.FkAttrs {
+			columns[i] = node.GetString_().Sval
+		}
+
+		references = &migrations.ConstraintReferences{
+			Table:              referencedTable,
+			Columns:            referencedColumns,
+			MatchType:          matchType,
+			OnDelete:           onDelete,
+			OnDeleteSetColumns: columnsToSet,
+			OnUpdate:           onUpdate,
+		}
 	default:
 		return nil, nil
-	}
-
-	columns := make([]string, len(c.Keys))
-	for i, key := range c.Keys {
-		columns[i] = key.GetString_().Sval
 	}
 
 	including := make([]string, len(c.Including))
@@ -294,6 +344,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		InitiallyDeferred: c.Initdeferred,
 		IndexParameters:   indexParameters,
 		Check:             checkExpr,
+		References:        references,
 	}, nil
 }
 

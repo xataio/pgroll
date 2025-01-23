@@ -1,0 +1,75 @@
+{
+  "name": "51_create_table_with_table_foreign_key_constraint",
+  "operations": [
+    {
+      "create_table": {
+        "name": "phonebook",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial"
+          },
+          {
+            "name": "provider_id",
+            "type": "serial"
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "city",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "phone",
+            "type": "varchar(255)"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "phonebook_pk",
+            "type": "primary_key",
+            "columns": [
+              "id"
+            ]
+          },
+          {
+            "name": "provider_fk",
+            "type": "foreign_key",
+            "columns": [
+              "provider_id"
+            ],
+            "deferrable": false,
+            "references": {
+              "table": "telephone_providers",
+              "columns": [
+                "id"
+              ],
+              "on_delete": "CASCADE",
+              "on_update": "CASCADE",
+              "match_type": "SIMPLE"
+            }
+          },
+          {
+            "name": "unique_numbers",
+            "type": "unique",
+            "columns": [
+              "phone"
+            ],
+            "index_parameters": {
+              "include_columns": [
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "name_must_be_present",
+            "type": "check",
+            "check": "length(name) > 0"
+          }
+        ]
+      }
+    }
+  ]
+}

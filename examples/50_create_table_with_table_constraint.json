@@ -3,7 +3,7 @@
   "operations": [
     {
       "create_table": {
-        "name": "phonebook",
+        "name": "telephone_providers",
         "columns": [
           {
             "name": "id",
@@ -14,33 +14,28 @@
             "type": "varchar(255)"
           },
           {
-            "name": "city",
+            "name": "tax_id",
             "type": "varchar(255)"
           },
           {
-            "name": "phone",
+            "name": "headquarters",
             "type": "varchar(255)"
           }
         ],
         "constraints": [
           {
-            "name": "phonebook_pk",
+            "name": "provider_pk",
             "type": "primary_key",
             "columns": [
               "id"
             ]
           },
           {
-            "name": "unique_numbers",
+            "name": "unique_tax_id",
             "type": "unique",
             "columns": [
-              "phone"
-            ],
-            "index_parameters": {
-              "include_columns": [
-                "name"
-              ]
-            }
+              "tax_id"
+            ]
           },
           {
             "name": "name_must_be_present",

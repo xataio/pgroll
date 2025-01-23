@@ -41,7 +41,7 @@ Each `column` is defined as:
     "name": "name of foreign key constraint",
     "table": "name of referenced table",
     "column": "name of referenced column",
-    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
   }
 },
 ```
@@ -62,6 +62,15 @@ Each `constraint` is defined as:
   "deferrable": true|false,
   "initially_deferred": true|false,
   "no_inherit": true|false,
+  "references": {
+    "name": "name of foreign key constraint",
+    "table": "name of referenced table",
+    "columns": ["list", "of", "referenced", "columns"],
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete_set_columns": ["list of FKs to set", "in on delete operation on SET NULL or SET DEFAULT"],
+    "on_update": "ON UPDATE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "match_type": "match type, can be SIMPLE, FULL or PARTIAL. Default is SIMPLE"
+  },
   "index_parameters": {
     "tablespace": "index_tablespace",
     "storage_parameters": "parameter=value",
@@ -70,7 +79,7 @@ Each `constraint` is defined as:
 },
 ```
 
-Supported constraint types: `unique`, `check`, `primary_key`.
+Supported constraint types: `unique`, `check`, `primary_key`, `foreign_key`.
 
 Please note that you can only configure primary keys in `columns` list or `constraints` list, but
 not in both places.
@@ -139,3 +148,9 @@ Create a table with different `DEFAULT` values:
 Create a table with table level constraints:
 
 <ExampleSnippet example="50_create_table_with_table_constraint.json" language="json" />
+
+### Create a table with table level foreign key constraints
+
+Create a table with table level foreign key constraints:
+
+<ExampleSnippet example="51_create_table_with_table_foreign_key_constraint.json" language="json" />

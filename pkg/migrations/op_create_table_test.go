@@ -761,6 +761,265 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create table with foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "owners",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+								{
+									Name: "city",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "pk_owners",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id"},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_referencing_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "pets",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "owner_id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "fk_owners",
+									Type:    migrations.ConstraintTypeForeignKey,
+									Columns: []string{"owner_id"},
+									References: &migrations.ConstraintReferences{
+										Table:    "owners",
+										Columns:  []string{"id"},
+										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", false, false)
+
+				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
+					"id":   "1",
+					"name": "alice",
+					"city": "new york",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "1",
+					"name":     "good boy",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "0",
+					"name":     "spider pig",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the FK constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", false, false)
+
+				// Inserting a row into the table succeeds when the FK constraint is satisfied.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "1",
+					"owner_id": "1",
+					"name":     "cutie pie",
+				})
+
+				// Inserting a row into the table fails when the FK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":       "2",
+					"owner_id": "0",
+					"name":     "bobby",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting the row from the referenced table cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_referencing_table", "owners", map[string]string{
+					"id": "1",
+				})
+
+				rows := MustSelect(t, db, schema, "02_create_referencing_table", "pets")
+				assert.Equal(t, []map[string]any{}, rows)
+			},
+		},
+		{
+			name:              "create table with multi-column foreign key constraint",
+			minPgMajorVersion: 15,
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_referenced_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "owners",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+								{
+									Name: "city",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:    "pk_owners",
+									Type:    migrations.ConstraintTypePrimaryKey,
+									Columns: []string{"id", "city"},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_referencing_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "pets",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "owner_id",
+									Nullable: true,
+									Type:     "int",
+								},
+								{
+									Name:    "owner_city_id",
+									Type:    "text",
+									Default: ptr("'chicago'"),
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name:       "fk_owners",
+									Type:       migrations.ConstraintTypeForeignKey,
+									Columns:    []string{"owner_id", "owner_city_id"},
+									Deferrable: true,
+									References: &migrations.ConstraintReferences{
+										Table:              "owners",
+										Columns:            []string{"id", "city"},
+										OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+										OnDeleteSetColumns: []string{"owner_id", "owner_city_id"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", true, false)
+
+				MustInsert(t, db, schema, "01_create_referenced_table", "owners", map[string]string{
+					"id":   "1",
+					"name": "alice",
+					"city": "new york",
+				})
+
+				// Inserting a row into the referencing table succeeds as the referenced row exists.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":            "1",
+					"owner_id":      "1",
+					"owner_city_id": "new york",
+					"name":          "good boy",
+				})
+
+				// Inserting a row into the referencing table fails as the referenced row does not exist.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":            "2",
+					"owner_id":      "0",
+					"owner_city_id": "sacramento",
+					"name":          "spider pig",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the FK constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Table level FK exists on the new table.
+				TableForeignKeyMustExist(t, db, schema, "pets", "fk_owners", true, false)
+
+				// Inserting a row into the table succeeds when the FK constraint is satisfied.
+				MustInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":            "1",
+					"owner_id":      "1",
+					"owner_city_id": "new york",
+					"name":          "cutie pie",
+				})
+
+				// Inserting a row into the table fails when the FK constraint is not satisfied.
+				MustNotInsert(t, db, schema, "02_create_referencing_table", "pets", map[string]string{
+					"id":            "2",
+					"owner_id":      "0",
+					"owner_city_id": "sacramento",
+					"name":          "bobby",
+				}, testutils.FKViolationErrorCode)
+
+				// Deleting the row from the referenced table cascades to the referencing table.
+				MustDelete(t, db, schema, "02_create_referencing_table", "owners", map[string]string{
+					"id": "1",
+				})
+
+				// deleting owner does not cascade to pets and default values are set.
+				rows := MustSelect(t, db, schema, "02_create_referencing_table", "pets")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "owner_id": nil, "owner_city_id": "chicago", "name": "cutie pie"},
+				}, rows)
+			},
+		},
 	})
 }
 

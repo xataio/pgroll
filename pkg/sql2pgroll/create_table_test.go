@@ -193,6 +193,26 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(a text, b text GENERATED ALWAYS AS (upper(a)) STORED)",
 			expectedOp: expect.CreateTableOp28,
 		},
+		{
+			sql:        "CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
+			expectedOp: expect.CreateTableOp29,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp30,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, FOREIGN KEY (a, b) REFERENCES bar(c, d) ON DELETE SET NULL (b))",
+			expectedOp: expect.CreateTableOp31,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp32,
+		},
+		{
+			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) MATCH FULL)",
+			expectedOp: expect.CreateTableOp33,
+		},
 	}
 
 	for _, tc := range tests {
@@ -259,10 +279,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 
 		// Column collation is not supported
 		"CREATE TABLE foo(a text COLLATE en_US)",
-
-		// Table constraints, named and unnamed, are not supported
-		"CREATE TABLE foo(a int, CONSTRAINT foo_fk FOREIGN KEY (a) REFERENCES bar(b))",
-		"CREATE TABLE foo(a int, FOREIGN KEY (a) REFERENCES bar(b))",
 
 		// Primary key constraint options are not supported
 		"CREATE TABLE foo(a int PRIMARY KEY USING INDEX TABLESPACE bar)",

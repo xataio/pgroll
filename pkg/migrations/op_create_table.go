@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/lib/pq"
@@ -161,6 +162,29 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			if len(c.Columns) == 0 {
 				return FieldRequiredError{Name: "columns"}
 			}
+		case ConstraintTypeForeignKey:
+			if len(c.Columns) == 0 {
+				return FieldRequiredError{Name: "columns"}
+			}
+			if c.References == nil {
+				return FieldRequiredError{Name: "references"}
+			}
+			if len(c.References.OnDeleteSetColumns) != 0 {
+				if c.References.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyReferenceOnDeleteSETNULL {
+					return UnexpectedOnDeleteSetColumnError{
+						Name: o.Name,
+					}
+				}
+				for _, col := range c.References.OnDeleteSetColumns {
+					if !slices.Contains(c.Columns, col) {
+						return InvalidOnDeleteSetColumnError{
+							Name:   o.Name,
+							Column: col,
+						}
+					}
+				}
+			}
+
 		}
 	}
 
@@ -190,6 +214,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 
 	uniqueConstraints := make(map[string]*schema.UniqueConstraint, 0)
 	checkConstraints := make(map[string]*schema.CheckConstraint, 0)
+	foreignKeys := make(map[string]*schema.ForeignKey, 0)
 	for _, c := range o.Constraints {
 		switch c.Type {
 		case ConstraintTypeUnique:
@@ -205,6 +230,16 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		case ConstraintTypePrimaryKey:
 			primaryKeys = c.Columns
+		case ConstraintTypeForeignKey:
+			foreignKeys[c.Name] = &schema.ForeignKey{
+				Name:              c.Name,
+				Columns:           c.Columns,
+				ReferencedTable:   c.References.Table,
+				ReferencedColumns: c.References.Columns,
+				OnDelete:          string(c.References.OnDelete),
+				OnUpdate:          string(c.References.OnUpdate),
+				MatchType:         string(c.References.MatchType),
+			}
 		}
 	}
 
@@ -214,6 +249,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 		UniqueConstraints: uniqueConstraints,
 		CheckConstraints:  checkConstraints,
 		PrimaryKey:        primaryKeys,
+		ForeignKeys:       foreignKeys,
 	})
 
 	return s
@@ -273,6 +309,8 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 			constraintsSQL[i] = writer.WriteCheck(c.Check, c.NoInherit)
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
+		case ConstraintTypeForeignKey:
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -327,6 +365,34 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	}
 	constraint += fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(quoteColumnNames(w.Columns), ", "))
 	constraint += w.addIndexParameters()
+	constraint += w.addDeferrable()
+	return constraint
+}
+
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete, setColumns []string) string {
+	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	if onDelete != "" {
+		onDeleteAction = strings.ToUpper(string(onDelete))
+		if len(setColumns) != 0 {
+			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
+		}
+	}
+	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	if onUpdate != "" {
+		onUpdateAction = strings.ToUpper(string(onUpdate))
+	}
+
+	constraint := ""
+	if w.Name != "" {
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+	}
+	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
+		strings.Join(quoteColumnNames(w.Columns), ", "),
+		pq.QuoteIdentifier(referencedTable),
+		strings.Join(quoteColumnNames(referencedColumns), ", "),
+		onDeleteAction,
+		onUpdateAction,
+	)
 	constraint += w.addDeferrable()
 	return constraint
 }

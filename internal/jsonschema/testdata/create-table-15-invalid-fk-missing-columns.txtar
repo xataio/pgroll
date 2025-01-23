@@ -1,0 +1,40 @@
+This is an invalid 'create_table' migration.
+Foreign key constraints must have columns configured
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_invalid_fk",
+            "type": "foreign_key",
+            "references": {
+              "columns": ["title"],
+              "table": "referenced",
+              "on_delete": "CASCADE",
+              "on_update": "SET NULL"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+false

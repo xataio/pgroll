@@ -145,7 +145,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check", "primary_key"]
+          "enum": ["unique", "check", "primary_key", "foreign_key"]
         },
         "deferrable": {
           "description": "Deferable constraint",
@@ -171,6 +171,48 @@
           "description": "Check constraint expression",
           "type": "string",
           "default": ""
+        },
+        "references": {
+          "description": "Reference to the foreign key",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["table", "columns"],
+          "properties": {
+            "table": {
+              "description": "Name of the table",
+              "type": "string"
+            },
+            "columns": {
+              "description": "Columns to reference",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "match_type": {
+              "description": "Match type of the foreign key constraint",
+              "type": "string",
+              "enum": ["SIMPLE", "FULL", "PARTIAL"],
+              "default": "SIMPLE"
+            },
+            "on_update": {
+              "description": "On update behavior of the foreign key constraint",
+              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+              "default": "NO ACTION"
+            },
+            "on_delete": {
+              "description": "On delete behavior of the foreign key constraint",
+              "$ref": "#/$defs/ForeignKeyReferenceOnDelete",
+              "default": "NO ACTION"
+            },
+            "on_delete_set_columns": {
+              "description": "Columns to set to null or to default on delete",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
         },
         "index_parameters": {
           "type": "object",
@@ -264,6 +306,32 @@
               }
             },
             "required": ["columns"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "foreign_key"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              },
+              "index_parameters": {
+                "const": {}
+              },
+              "no_inherit": {
+                "const": false
+              },
+              "nulls_not_distinct": {
+                "const": false
+              }
+            },
+            "required": ["columns", "references"]
           }
         }
       ],
