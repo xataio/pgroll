@@ -40,7 +40,6 @@ const (
 	dataTypeMismatchErrorCode  pq.ErrorCode = "42804"
 	undefinedFunctionErrorCode pq.ErrorCode = "42883"
 
-	cCreateUniqueIndexSQL            = `CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (%s)`
 	cSetDefaultSQL                   = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
 	cAlterTableAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
 	cAlterTableAddForeignKeySQL      = `ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
@@ -134,12 +133,16 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		}
 	}
 
-	// Generate SQL to duplicate any unique constraints on the columns
-	// The constraint is duplicated by adding a unique index on the column concurrently.
+	// Create indexes for unique constraints on the columns concurrently.
 	// The index is converted into a unique constraint on migration completion.
-	for _, sql := range d.stmtBuilder.duplicateUniqueConstraints(d.withoutConstraint, colNames...) {
-		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
-			return err
+	for _, uc := range d.stmtBuilder.table.UniqueConstraints {
+		if slices.Contains(d.withoutConstraint, uc.Name) {
+			continue
+		}
+		if duplicatedMember, constraintColumns := d.stmtBuilder.allConstraintColumns(uc.Columns, colNames...); duplicatedMember {
+			if err := createUniqueIndexConcurrently(ctx, d.conn, "", DuplicationName(uc.Name), d.stmtBuilder.table.Name, constraintColumns); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -174,23 +177,6 @@ func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []st
 				pq.QuoteIdentifier(d.table.Name),
 				pq.QuoteIdentifier(DuplicationName(cc.Name)),
 				rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...),
-			))
-		}
-	}
-	return stmts
-}
-
-func (d *duplicatorStmtBuilder) duplicateUniqueConstraints(withoutConstraint []string, colNames ...string) []string {
-	stmts := make([]string, 0, len(d.table.UniqueConstraints))
-	for _, uc := range d.table.UniqueConstraints {
-		if slices.Contains(withoutConstraint, uc.Name) {
-			continue
-		}
-		if duplicatedMember, constraintColumns := d.allConstraintColumns(uc.Columns, colNames...); duplicatedMember {
-			stmts = append(stmts, fmt.Sprintf(cCreateUniqueIndexSQL,
-				pq.QuoteIdentifier(DuplicationName(uc.Name)),
-				pq.QuoteIdentifier(d.table.Name),
-				strings.Join(quoteColumnNames(constraintColumns), ", "),
 			))
 		}
 	}

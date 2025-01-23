@@ -102,47 +102,6 @@ func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
 	}
 }
 
-func TestDuplicateStmtBuilderUniqueConstraints(t *testing.T) {
-	d := &duplicatorStmtBuilder{table}
-	for name, testCases := range map[string]struct {
-		columns       []string
-		expectedStmts []string
-	}{
-		"single column duplicated": {
-			columns:       []string{"city"},
-			expectedStmts: []string{},
-		},
-		"single-column constraint with single column duplicated": {
-			columns:       []string{"email"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_email" ON "test_table" ("_pgroll_new_email")`},
-		},
-		"single-column constraint with multiple column duplicated": {
-			columns:       []string{"email", "description"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_email" ON "test_table" ("_pgroll_new_email")`},
-		},
-		"multi-column constraint with single column duplicated": {
-			columns:       []string{"name"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "nick")`},
-		},
-		"multi-column constraint with multiple unrelated column duplicated": {
-			columns:       []string{"name", "description"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "nick")`},
-		},
-		"multi-column constraint with multiple columns": {
-			columns:       []string{"name", "nick"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "_pgroll_new_nick")`},
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			stmts := d.duplicateUniqueConstraints(nil, testCases.columns...)
-			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
-			for _, stmt := range stmts {
-				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
-			}
-		})
-	}
-}
-
 func TestDuplicateStmtBuilderForeignKeyConstraints(t *testing.T) {
 	d := &duplicatorStmtBuilder{table}
 	for name, testCases := range map[string]struct {

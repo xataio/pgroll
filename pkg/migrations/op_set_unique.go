@@ -5,7 +5,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
@@ -26,47 +25,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 
-	for retryCount := 0; retryCount < 5; retryCount++ {
-		// Add a unique index to the new column
-		if err := addUniqueIndex(ctx, conn, table.Name, column.Name, o.Name); err != nil {
-			return nil, fmt.Errorf("failed to add unique index: %w", err)
-		}
-
-		// Make sure Postgres is done creating the index
-		isInProgress, err := isIndexInProgress(ctx, conn, s.Name, o.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		ticker := time.NewTicker(500 * time.Millisecond)
-		for isInProgress {
-			<-ticker.C
-			isInProgress, err = isIndexInProgress(ctx, conn, s.Name, o.Name)
-			if err != nil {
-				return nil, err
-			}
-		}
-		ticker.Stop()
-
-		// Check pg_index to see if it's valid or not. Break if it's valid.
-		isValid, err := isIndexValid(ctx, conn, s.Name, o.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		if isValid {
-			return table, nil
-		}
-
-		// If not valid, since Postgres has already given up validating the index,
-		// it will remain invalid forever. Drop it and try again.
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX IF EXISTS %s.%s", pq.QuoteIdentifier(s.Name), pq.QuoteIdentifier(o.Name)))
-		if err != nil {
-			return nil, fmt.Errorf("failed to drop index: %w", err)
-		}
-	}
-
-	return nil, fmt.Errorf("failed to create unique index: %q", o.Name)
+	return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, []string{column.Name})
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
@@ -108,59 +67,4 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
-}
-
-func addUniqueIndex(ctx context.Context, conn db.DB, table, column, name string) error {
-	// create unique index concurrently
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		pq.QuoteIdentifier(name),
-		pq.QuoteIdentifier(table),
-		pq.QuoteIdentifier(column)))
-
-	return err
-}
-
-func isIndexInProgress(ctx context.Context, conn db.DB, schemaname string, indexname string) (bool, error) {
-	rows, err := conn.QueryContext(ctx, `
-		SELECT EXISTS(
-			SELECT * FROM pg_catalog.pg_stat_progress_create_index
-			WHERE index_relid = $1::regclass
-			)`,
-		fmt.Sprintf("%s.%s", pq.QuoteIdentifier(schemaname), pq.QuoteIdentifier(indexname)))
-	if err != nil {
-		return false, fmt.Errorf("getting index in progress with name %q: %w", indexname, err)
-	}
-	if rows == nil {
-		// if rows == nil && err != nil, then it means we have queried a `FakeDB`.
-		// In that case, we can safely return false.
-		return false, nil
-	}
-	var isInProgress bool
-	if err := db.ScanFirstValue(rows, &isInProgress); err != nil {
-		return false, fmt.Errorf("scanning index in progress with name %q: %w", indexname, err)
-	}
-
-	return isInProgress, nil
-}
-
-func isIndexValid(ctx context.Context, conn db.DB, schemaname string, indexname string) (bool, error) {
-	rows, err := conn.QueryContext(ctx, `
-		SELECT indisvalid
-		FROM pg_catalog.pg_index
-		WHERE indexrelid = $1::regclass`,
-		fmt.Sprintf("%s.%s", pq.QuoteIdentifier(schemaname), pq.QuoteIdentifier(indexname)))
-	if err != nil {
-		return false, fmt.Errorf("getting index with name %q: %w", indexname, err)
-	}
-	if rows == nil {
-		// if rows == nil && err != nil, then it means we have queried a fake db.
-		// In that case, we can safely return true.
-		return true, nil
-	}
-	var isValid bool
-	if err := db.ScanFirstValue(rows, &isValid); err != nil {
-		return false, fmt.Errorf("scanning index with name %q: %w", indexname, err)
-	}
-
-	return isValid, nil
 }
