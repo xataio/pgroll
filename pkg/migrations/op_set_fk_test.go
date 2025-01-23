@@ -1461,6 +1461,139 @@ func TestSetForeignKeyInMultiOperationMigrations(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "rename referenced table, set fk",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+								{
+									Name:     "supplier_id",
+									Type:     "int",
+									Nullable: true,
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "suppliers",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "suppliers",
+							To:   "producers",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "items",
+							Column: "supplier_id",
+							References: &migrations.ForeignKeyReference{
+								Name:   "fk_items_producers",
+								Table:  "producers",
+								Column: "id",
+							},
+							// Still have to refer to the renamed referenced table by its old name here which is not ideal
+							Up:   "SELECT CASE WHEN EXISTS (SELECT 1 FROM suppliers WHERE suppliers.id = supplier_id) THEN supplier_id ELSE NULL END",
+							Down: "supplier_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the suppliers table
+				MustInsert(t, db, schema, "02_multi_operation", "producers", map[string]string{
+					"id":   "1",
+					"name": "producer1",
+				})
+
+				// Can insert a row into the products table that meets the FK constraint
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"id":          "1",
+					"name":        "apples",
+					"supplier_id": "1",
+				})
+
+				// Can't insert a row into the products table that violates the FK constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"id":          "2",
+					"name":        "bananas",
+					"supplier_id": "999",
+				}, testutils.FKViolationErrorCode)
+
+				// Can insert a row into the old schema that violates the FK constraint
+				MustInsert(t, db, schema, "01_create_tables", "items", map[string]string{
+					"id":          "2",
+					"name":        "bananas",
+					"supplier_id": "999",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "supplier_id": 1},
+					{"id": 2, "name": "bananas", "supplier_id": nil},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_tables", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "supplier_id": 1},
+					{"id": 2, "name": "bananas", "supplier_id": 999},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the products table that meets the FK constraint
+				MustInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"id":          "3",
+					"name":        "carrots",
+					"supplier_id": "1",
+				})
+
+				// Can't insert a row into the products table that violates the FK constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "items", map[string]string{
+					"id":          "4",
+					"name":        "durian",
+					"supplier_id": "999",
+				}, testutils.FKViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apples", "supplier_id": 1},
+					{"id": 2, "name": "bananas", "supplier_id": nil},
+					{"id": 3, "name": "carrots", "supplier_id": 1},
+				}, rows)
+			},
+		},
 	})
 }
 
