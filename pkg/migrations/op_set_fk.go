@@ -27,7 +27,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema st
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.
-	if err := o.addForeignKeyConstraint(ctx, conn); err != nil {
+	if err := o.addForeignKeyConstraint(ctx, conn, s); err != nil {
 		return nil, fmt.Errorf("failed to add foreign key constraint: %w", err)
 	}
 
@@ -82,8 +82,11 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	return nil
 }
 
-func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
-	tempColumnName := TemporaryName(o.Column)
+func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+	column := table.GetColumn(o.Column)
+	referencedTable := s.GetTable(o.References.Table)
+	referencedColumn := referencedTable.GetColumn(o.References.Column)
 
 	onDelete := "NO ACTION"
 	if o.References.OnDelete != "" {
@@ -92,11 +95,11 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 
 	_, err := conn.ExecContext(ctx,
 		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
-			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(o.References.Name),
-			pq.QuoteIdentifier(tempColumnName),
-			pq.QuoteIdentifier(o.References.Table),
-			pq.QuoteIdentifier(o.References.Column),
+			pq.QuoteIdentifier(column.Name),
+			pq.QuoteIdentifier(referencedTable.Name),
+			pq.QuoteIdentifier(referencedColumn.Name),
 			onDelete,
 		))
 
