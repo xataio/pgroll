@@ -594,6 +594,115 @@ func TestSetCheckConstraint(t *testing.T) {
 	})
 }
 
+func TestSetCheckInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, set not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "products",
+							Column: "name",
+							Check: &migrations.CheckConstraint{
+								Name:       "check_name_length",
+								Constraint: "LENGTH(name) > 2",
+							},
+							Up:   "SELECT CASE WHEN length(name) > 2 THEN name ELSE name || '---' END",
+							Down: "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new view that meets the check constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "1",
+					"name": "abc",
+				})
+
+				// Can't insert a row into the new view that violates the check constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "2",
+					"name": "x",
+				}, testutils.CheckViolationErrorCode)
+
+				// Can insert a row into the old view that violates the check constraint
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "3",
+					"name": "x",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "abc"},
+					{"id": 3, "name": "x---"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "abc"},
+					{"id": 3, "name": "x"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new view that meets the check constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "4",
+					"name": "def",
+				})
+
+				// Can't insert a row into the new view that violates the check constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "5",
+					"name": "x",
+				}, testutils.CheckViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "abc"},
+					{"id": 3, "name": "x---"},
+					{"id": 4, "name": "def"},
+				}, rows)
+			},
+		},
+	})
+}
+
 func TestSetCheckConstraintValidation(t *testing.T) {
 	t.Parallel()
 
