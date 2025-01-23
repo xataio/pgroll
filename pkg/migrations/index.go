@@ -31,6 +31,7 @@ func createUniqueIndexConcurrently(ctx context.Context, conn db.DB, schemaName s
 		}
 
 		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
 		for isInProgress {
 			<-ticker.C
 			isInProgress, err = isIndexInProgress(ctx, conn, quotedQualifiedIndexName)
@@ -38,7 +39,6 @@ func createUniqueIndexConcurrently(ctx context.Context, conn db.DB, schemaName s
 				return err
 			}
 		}
-		ticker.Stop()
 
 		// Check pg_index to see if it's valid or not. Break if it's valid.
 		isValid, err := isIndexValid(ctx, conn, quotedQualifiedIndexName)
