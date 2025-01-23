@@ -434,6 +434,41 @@ var CreateTableOp27 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
+			Name: "b",
+			Type: "bigint",
+			Pk:   true,
+			Generated: &migrations.ColumnGenerated{
+				Identity: &migrations.ColumnGeneratedIdentity{
+					UserSpecifiedValues: migrations.ColumnGeneratedIdentityUserSpecifiedValuesALWAYS,
+					SequenceOptions:     "START 1 INCREMENT 1 MINVALUE 1 MAXVALUE 1000 CYCLE CACHE 1 ",
+				},
+			},
+		},
+	},
+}
+
+var CreateTableOp28 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "a",
+			Type:     "text",
+			Nullable: true,
+		},
+		{
+			Name: "b",
+			Type: "text",
+			Generated: &migrations.ColumnGenerated{
+				Expression: "upper(a)",
+			},
+		},
+	},
+}
+
+var CreateTableOp29 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
 			Name:     "a",
 			Type:     "int",
 			Nullable: true,
@@ -442,8 +477,8 @@ var CreateTableOp27 = &migrations.OpCreateTable{
 	Constraints: []migrations.Constraint{
 		{
 			Type:              migrations.ConstraintTypeForeignKey,
-			Name:              "foo_fk",
 			Columns:           []string{"a"},
+			Name:              "foo_fk",
 			NullsNotDistinct:  false,
 			Deferrable:        false,
 			InitiallyDeferred: false,
@@ -460,7 +495,7 @@ var CreateTableOp27 = &migrations.OpCreateTable{
 	},
 }
 
-var CreateTableOp28 = &migrations.OpCreateTable{
+var CreateTableOp30 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
@@ -489,7 +524,7 @@ var CreateTableOp28 = &migrations.OpCreateTable{
 	},
 }
 
-var CreateTableOp29 = &migrations.OpCreateTable{
+var CreateTableOp31 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
@@ -523,7 +558,7 @@ var CreateTableOp29 = &migrations.OpCreateTable{
 	},
 }
 
-var CreateTableOp30 = &migrations.OpCreateTable{
+var CreateTableOp32 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{
@@ -562,7 +597,7 @@ var CreateTableOp30 = &migrations.OpCreateTable{
 	},
 }
 
-var CreateTableOp31 = &migrations.OpCreateTable{
+var CreateTableOp33 = &migrations.OpCreateTable{
 	Name: "foo",
 	Columns: []migrations.Column{
 		{

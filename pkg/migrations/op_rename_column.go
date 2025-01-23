@@ -51,6 +51,16 @@ func (o *OpRenameColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfo
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
+	// Ensure that the `from` field is not empty
+	if o.From == "" {
+		return FieldRequiredError{Name: "from"}
+	}
+
+	// Ensure that the `to` field is not empty
+	if o.To == "" {
+		return FieldRequiredError{Name: "to"}
+	}
+
 	// Ensure that the table exists.
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

@@ -63,6 +63,35 @@
         "comment": {
           "description": "Postgres comment for the column",
           "type": "string"
+        },
+        "generated": {
+          "description": "Generated column definition",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expression": {
+              "description": "Generation expression of the column",
+              "type": "string",
+              "default": ""
+            },
+            "identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sequence_options": {
+                  "description": "Sequence options for identity column, same as in CREATE SEQUENCE",
+                  "type": "string",
+                  "default": ""
+                },
+                "user_specified_values": {
+                  "type": "string",
+                  "description": "How to handle user specified values for identity column in INSERT and UPDATE statements",
+                  "enum": ["ALWAYS", "BY DEFAULT"],
+                  "default": "ALWAYS"
+                }
+              }
+            }
+          }
         }
       },
       "required": ["name", "type"],
