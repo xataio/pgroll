@@ -188,10 +188,11 @@ func WithMigratorInSchemaAndConnectionToContainerWithOptions(t testing.TB, schem
 	}
 
 	// add extension for btree_gist
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION btree_gist SCHEMA %s", schema))
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS btree_gist SCHEMA %s", schema))
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("Created extension btree_gist")
 
 	fn(mig, db)
 }
