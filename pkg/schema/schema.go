@@ -157,7 +157,7 @@ type UniqueConstraint struct {
 	Columns []string `json:"columns"`
 }
 
-// UniqueConstraint represents a unique constraint on a table
+// ExcludeConstraint represents a unique constraint on a table
 type ExcludeConstraint struct {
 	// Name is the name of the exclude constraint in postgres
 	Name string `json:"name"`

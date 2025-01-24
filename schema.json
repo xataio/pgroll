@@ -217,6 +217,7 @@
         "exclude": {
           "type": "object",
           "additionalProperties": false,
+          "description": "Exclude constraint definition",
           "properties": {
             "index_method": {
               "description": "Index method",
@@ -226,7 +227,7 @@
             "elements": {
               "type": "string",
               "default": "",
-              "description": "Columns of the exclude constraint"
+              "description": "Expressions of the exclude constraint"
             },
             "predicate": {
               "type": "string",
