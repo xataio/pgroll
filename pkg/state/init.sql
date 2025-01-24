@@ -361,3 +361,13 @@ DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
 CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
     EXECUTE FUNCTION placeholder.raw_migration ();
 
+-- Determine if a comes before b in a circular sequence
+-- Used for wraparound-aware transaction id comparison in pgroll backfill
+-- operations.
+CREATE OR REPLACE FUNCTION placeholder.b_follows_a (a bigint, b bigint)
+    RETURNS boolean
+    LANGUAGE SQL
+    AS $$
+    SELECT
+        (b - a) & x'FFFFFFFF'::bit(32)::bigint < x'7FFFFFFF'::bit(32)::bigint
+$$;
