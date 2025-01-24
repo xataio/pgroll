@@ -239,7 +239,7 @@ func WithMigratorAndStateAndConnectionToContainerWithOptions(t *testing.T, opts 
 	}
 
 	// add extension for btree_gist
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION btree_gist SCHEMA %s", schema))
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION btree_gist SCHEMA %s", "public"))
 	if err != nil {
 		t.Fatal(err)
 	}
