@@ -228,7 +228,7 @@ func TestCreateIndexConcurrentlySqlGeneration(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			stmt := getCreateUniqueIndexConcurrentlySql(testCases.indexName, testCases.schemaName, testCases.tableName, testCases.columns)
+			stmt := getCreateUniqueIndexConcurrentlySQL(testCases.indexName, testCases.schemaName, testCases.tableName, testCases.columns)
 			assert.Equal(t, testCases.expectedStmt, stmt)
 		})
 	}
