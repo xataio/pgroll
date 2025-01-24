@@ -73,7 +73,7 @@ func getCreateUniqueIndexConcurrentlySql(indexName string, schemaName string, ta
 
 	indexQuery := fmt.Sprintf(
 		"CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		indexName,
+		pq.QuoteIdentifier(indexName),
 		qualifiedTableName,
 		strings.Join(quoteColumnNames(columnNames), ", "),
 	)
