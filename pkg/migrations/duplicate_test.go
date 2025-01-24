@@ -102,47 +102,6 @@ func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
 	}
 }
 
-func TestDuplicateStmtBuilderUniqueConstraints(t *testing.T) {
-	d := &duplicatorStmtBuilder{table}
-	for name, testCases := range map[string]struct {
-		columns       []string
-		expectedStmts []string
-	}{
-		"single column duplicated": {
-			columns:       []string{"city"},
-			expectedStmts: []string{},
-		},
-		"single-column constraint with single column duplicated": {
-			columns:       []string{"email"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_email" ON "test_table" ("_pgroll_new_email")`},
-		},
-		"single-column constraint with multiple column duplicated": {
-			columns:       []string{"email", "description"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_email" ON "test_table" ("_pgroll_new_email")`},
-		},
-		"multi-column constraint with single column duplicated": {
-			columns:       []string{"name"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "nick")`},
-		},
-		"multi-column constraint with multiple unrelated column duplicated": {
-			columns:       []string{"name", "description"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "nick")`},
-		},
-		"multi-column constraint with multiple columns": {
-			columns:       []string{"name", "nick"},
-			expectedStmts: []string{`CREATE UNIQUE INDEX CONCURRENTLY "_pgroll_dup_unique_name_nick" ON "test_table" ("_pgroll_new_name", "_pgroll_new_nick")`},
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			stmts := d.duplicateUniqueConstraints(nil, testCases.columns...)
-			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
-			for _, stmt := range stmts {
-				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
-			}
-		})
-	}
-}
-
 func TestDuplicateStmtBuilderForeignKeyConstraints(t *testing.T) {
 	d := &duplicatorStmtBuilder{table}
 	for name, testCases := range map[string]struct {
@@ -229,6 +188,48 @@ func TestDuplicateStmtBuilderIndexes(t *testing.T) {
 			for _, stmt := range stmts {
 				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
 			}
+		})
+	}
+}
+
+func TestCreateIndexConcurrentlySqlGeneration(t *testing.T) {
+	for name, testCases := range map[string]struct {
+		indexName    string
+		schemaName   string
+		tableName    string
+		columns      []string
+		expectedStmt string
+	}{
+		"single column with schemaname": {
+			indexName:    "idx_email",
+			schemaName:   "test_sch",
+			tableName:    "test_table",
+			columns:      []string{"email"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_sch"."test_table" ("email")`,
+		},
+		"single column with no schema name": {
+			indexName:    "idx_email",
+			tableName:    "test_table",
+			columns:      []string{"email"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_table" ("email")`,
+		},
+		"multi-column with no schema name": {
+			indexName:    "idx_name_city",
+			tableName:    "test_table",
+			columns:      []string{"name", "city"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_table" ("name", "city")`,
+		},
+		"multi-column with schema name": {
+			indexName:    "idx_name_city",
+			schemaName:   "test_sch",
+			tableName:    "test_table",
+			columns:      []string{"id", "name", "city"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_sch"."test_table" ("id", "name", "city")`,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stmt := getCreateUniqueIndexConcurrentlySQL(testCases.indexName, testCases.schemaName, testCases.tableName, testCases.columns)
+			assert.Equal(t, testCases.expectedStmt, stmt)
 		})
 	}
 }

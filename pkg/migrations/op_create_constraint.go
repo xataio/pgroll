@@ -67,7 +67,11 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
-		return table, o.addUniqueIndex(ctx, conn)
+		temporaryColumnNames := make([]string, len(o.Columns))
+		for i, col := range o.Columns {
+			temporaryColumnNames[i] = TemporaryName(col)
+		}
+		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryColumnNames)
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn)
 	case OpCreateConstraintTypeForeignKey:
@@ -230,16 +234,6 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	}
 
 	return nil
-}
-
-func (o *OpCreateConstraint) addUniqueIndex(ctx context.Context, conn db.DB) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS %s ON %s (%s)",
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Table),
-		strings.Join(quotedTemporaryNames(o.Columns), ", "),
-	))
-
-	return err
 }
 
 func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
