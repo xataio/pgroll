@@ -56,7 +56,11 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Run tests
-      run: go test ./...
+      run: |
+        psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE EXTENSION btree_gist SCHEMA $PGROLL_SCHEMA;"
+
+        go test ./...
+
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
         PGROLL_TEST_SCHEMA: ${{ matrix.testSchema }}
