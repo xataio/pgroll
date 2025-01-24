@@ -635,3 +635,75 @@ var CreateTableOp33 = &migrations.OpCreateTable{
 		},
 	},
 }
+
+var CreateTableOp34 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "id",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "s",
+			Type:     "timestamptz",
+			Nullable: true,
+		},
+		{
+			Name:     "e",
+			Type:     "timestamptz",
+			Nullable: true,
+		},
+		{
+			Name:     "canceled",
+			Type:     "boolean",
+			Nullable: true,
+			Default:  ptr("false"),
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeExclude,
+			Columns:           []string{},
+			NullsNotDistinct:  false,
+			Deferrable:        false,
+			InitiallyDeferred: false,
+			NoInherit:         false,
+			Exclude: &migrations.ConstraintExclude{
+				IndexMethod: "gist",
+				Predicate:   "NOT canceled",
+				Elements:    "id WITH =, tstzrange(s, e) WITH &&",
+			},
+		},
+	},
+}
+
+var CreateTableOp35 = &migrations.OpCreateTable{
+	Name: "foo",
+	Columns: []migrations.Column{
+		{
+			Name:     "id",
+			Type:     "int",
+			Nullable: true,
+		},
+		{
+			Name:     "b",
+			Type:     "text",
+			Nullable: true,
+		},
+	},
+	Constraints: []migrations.Constraint{
+		{
+			Type:              migrations.ConstraintTypeExclude,
+			Columns:           []string{},
+			NullsNotDistinct:  false,
+			Deferrable:        true,
+			InitiallyDeferred: true,
+			NoInherit:         false,
+			Exclude: &migrations.ConstraintExclude{
+				IndexMethod: "btree",
+				Elements:    "id WITH =",
+			},
+		},
+	},
+}

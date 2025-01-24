@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -248,6 +249,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var checkExpr string
 	var err error
 	var references *migrations.ConstraintReferences
+	var exclude *migrations.ConstraintExclude
 
 	columns := make([]string, len(c.Keys))
 	for i, key := range c.Keys {
@@ -307,6 +309,34 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 			OnDeleteSetColumns: columnsToSet,
 			OnUpdate:           onUpdate,
 		}
+	case pgq.ConstrType_CONSTR_EXCLUSION:
+		constraintType = migrations.ConstraintTypeExclude
+		exclude = &migrations.ConstraintExclude{
+			IndexMethod: c.AccessMethod,
+		}
+		if c.GetWhereClause() != nil {
+			whereClause, err := pgq.DeparseExpr(c.GetWhereClause())
+			if err != nil {
+				return nil, nil
+			}
+			exclude.Predicate = whereClause
+		}
+		exclusionElements := make([]string, len(c.Exclusions))
+		for i, elem := range c.Exclusions {
+			if elem.GetList() == nil && len(elem.GetList().Items) != 2 {
+				return nil, nil
+			}
+			indexElem, err := pgq.DeparseIndexElem(elem.GetList().Items[0])
+			if err != nil {
+				return nil, nil
+			}
+			anyOp, err := pgq.DeparseAnyOperator(elem.GetList().Items[1].GetList().Items)
+			if err != nil {
+				return nil, nil
+			}
+			exclusionElements[i] = fmt.Sprintf("%s WITH %s", indexElem, anyOp)
+		}
+		exclude.Elements = strings.Join(exclusionElements, ", ")
 	default:
 		return nil, nil
 	}
@@ -345,6 +375,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		IndexParameters:   indexParameters,
 		Check:             checkExpr,
 		References:        references,
+		Exclude:           exclude,
 	}, nil
 }
 

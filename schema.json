@@ -354,6 +354,32 @@
             },
             "required": ["columns", "references"]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "exclude"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              },
+              "no_inherit": {
+                "const": false
+              },
+              "nulls_not_distinct": {
+                "const": false
+              },
+              "columns": {
+                "const": []
+              }
+            },
+            "required": ["exclude"]
+          }
         }
       ],
       "required": ["name", "type"],

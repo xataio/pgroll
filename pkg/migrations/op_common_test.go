@@ -272,6 +272,13 @@ func PrimaryKeyConstraintMustExist(t *testing.T, db *sql.DB, schema, table, cons
 	}
 }
 
+func ExcludeConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !excludeConstraintExists(t, db, schema, table, constraint) {
+		t.Fatalf("Expected constraint %q to exist", constraint)
+	}
+}
+
 func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	t.Helper()
 	if !indexExists(t, db, schema, table, index) {
@@ -468,6 +475,26 @@ func primaryKeyConstraintExists(t *testing.T, db *sql.DB, schema, table, constra
       WHERE conrelid = $1::regclass
       AND conname = $2
       AND contype = 'p'
+    )`,
+		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func excludeConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_constraint
+      WHERE conrelid = $1::regclass
+      AND conname = $2
+      AND contype = 'x'
     )`,
 		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
 	if err != nil {

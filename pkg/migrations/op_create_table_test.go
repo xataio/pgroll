@@ -1020,6 +1020,190 @@ func TestCreateTable(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "create table with a simple exclude constraint mimicking unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "exclude_id",
+									Type: migrations.ConstraintTypeExclude,
+									Exclude: &migrations.ConstraintExclude{
+										IndexMethod: "btree",
+										Elements:    "id WITH =",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "users", "exclude_id")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails because there is already a row with id 1.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "b",
+				}, testutils.ExclusionViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "users", "exclude_id")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails because there is already a row with id 1.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "b",
+				}, testutils.ExclusionViolationErrorCode)
+			},
+		},
+		{
+			name: "create table with an exclude constraint to check overlap",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "reservations",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "start",
+									Type: "timestamp",
+								},
+								{
+									Name: "finish",
+									Type: "timestamp",
+								},
+								{
+									Name:    "canceled",
+									Type:    "bool",
+									Default: ptr("false"),
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "forbid_reservation_overlap",
+									Type: migrations.ConstraintTypeExclude,
+									Exclude: &migrations.ConstraintExclude{
+										IndexMethod: "gist",
+										Elements:    "id WITH =, tsrange(start, finish) WITH &&",
+										Predicate:   "NOT canceled",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "reservations", "forbid_reservation_overlap")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "1",
+					"start":  "2020-01-01T00:00:00Z",
+					"finish": "2020-01-02T00:00:00Z",
+				})
+
+				// Inserting a row into the table fails because there is a reservation that overlaps with the new one.
+				MustNotInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "1",
+					"start":  "2020-01-01T08:00:00Z",
+					"finish": "2020-01-02T08:00:00Z",
+				}, testutils.ExclusionViolationErrorCode)
+
+				// Insert a row that overlaps with the existing one, but is canceled.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":       "1",
+					"start":    "2020-01-01T08:00:00Z",
+					"finish":   "2020-01-02T08:00:00Z",
+					"canceled": "true",
+				})
+
+				// Insert a row that overlaps with the existing one, but with a different id.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "2",
+					"start":  "2020-01-01T08:00:00Z",
+					"finish": "2020-01-02T08:00:00Z",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "reservations", "forbid_reservation_overlap")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "1",
+					"start":  "2020-01-01T00:00:00Z",
+					"finish": "2020-01-02T00:00:00Z",
+				})
+
+				// Inserting a row into the table fails because there is a reservation that overlaps with the new one.
+				MustNotInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "1",
+					"start":  "2020-01-01T08:00:00Z",
+					"finish": "2020-01-02T08:00:00Z",
+				}, testutils.ExclusionViolationErrorCode)
+
+				// Insert a row that overlaps with the existing one, but is canceled.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":       "1",
+					"start":    "2020-01-01T08:00:00Z",
+					"finish":   "2020-01-02T08:00:00Z",
+					"canceled": "true",
+				})
+
+				// Insert a row that overlaps with the existing one, but with a different id.
+				MustInsert(t, db, schema, "01_create_table", "reservations", map[string]string{
+					"id":     "2",
+					"start":  "2020-01-01T08:00:00Z",
+					"finish": "2020-01-02T08:00:00Z",
+				})
+			},
+		},
 	})
 }
 

@@ -27,6 +27,8 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
+	fmt.Println(columnsSQL)
+	fmt.Println(constraintsSQL)
 
 	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
@@ -413,7 +415,7 @@ func (w *ConstraintSQLWriter) WriteExclude(indexMethod, elements, predicate stri
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("EXCLUDE USING %s (%s)", pq.QuoteIdentifier(w.Name), indexMethod, elements)
+	constraint += fmt.Sprintf("EXCLUDE USING %s (%s)", indexMethod, elements)
 	constraint += w.addIndexParameters()
 	if predicate != "" {
 		constraint += fmt.Sprintf(" WHERE (%s)", predicate)
