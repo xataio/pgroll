@@ -1,0 +1,56 @@
+{
+  "name": "52_create_table_with_table_exclusion_constraint",
+  "operations": [
+    {
+      "create_table": {
+        "name": "room_reservations",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial"
+          },
+          {
+            "name": "start",
+            "type": "timestamp"
+          },
+          {
+            "name": "name",
+            "type": "text"
+          },
+          {
+            "name": "end",
+            "type": "timestamp"
+          },
+          {
+            "name": "canceled",
+            "type": "boolean",
+            "default": "false"
+          }
+        ],
+        "constraints": [
+          {
+            "name": "rooms_pk",
+            "type": "primary_key",
+            "columns": [
+              "id"
+            ]
+          },
+          {
+            "name": "forbid_double_booking",
+            "type": "exclude",
+            "exclude": {
+              "index_method": "gist",
+              "elements": "id WITH =, tsrange(\"start\", \"end\") WITH &&",
+              "predicate": "NOT canceled"
+            }
+          },
+          {
+            "name": "name_must_be_present",
+            "type": "check",
+            "check": "length(name) > 0"
+          }
+        ]
+      }
+    }
+  ]
+}

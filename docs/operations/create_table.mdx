@@ -76,10 +76,15 @@ Each `constraint` is defined as:
     "storage_parameters": "parameter=value",
     "include_columns": ["list", "of", "columns", "included in index"]
   },
+  "exclude": {
+    "index_method": "name of the index method, e.g. btree",
+    "elements": "exclude elements",
+    "predicate": "WHERE clause of the exclude constraint"
+  }
 },
 ```
 
-Supported constraint types: `unique`, `check`, `primary_key`, `foreign_key`.
+Supported constraint types: `unique`, `check`, `primary_key`, `foreign_key`, `exclude`.
 
 Please note that you can only configure primary keys in `columns` list or `constraints` list, but
 not in both places.
@@ -154,3 +159,9 @@ Create a table with table level constraints:
 Create a table with table level foreign key constraints:
 
 <ExampleSnippet example="51_create_table_with_table_foreign_key_constraint.json" language="json" />
+
+### Create a table with exclusion constraint
+
+Create a table with an exclusion:
+
+<ExampleSnippet example="52_create_table_with_table_exclusion_constraint.json" language="json" />

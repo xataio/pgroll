@@ -1,0 +1,34 @@
+This is an invalid 'create_table' migration.
+Exclusion constraints must have exclude configured
+
+-- create_table.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_table": {
+        "name": "posts",
+        "columns": [
+          {
+            "name": "title",
+            "type": "varchar(255)"
+          },
+          {
+            "name": "user_id",
+            "type": "integer",
+            "nullable": true
+          }
+        ],
+        "constraints": [
+          {
+            "name": "my_invalid_fk",
+            "type": "exclude"
+          }
+        ]
+      }
+    }
+  ]
+}
+
+-- valid --
+false
