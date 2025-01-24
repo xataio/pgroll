@@ -218,8 +218,9 @@ jobs:
     - name: Run example migrations
       run: |
         if [ "$PGROLL_SCHEMA" != "public" ]; then
-          psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE SCHEMA $PGROLL_SCHEMA; CREATE EXTENSION btree_gist SCHEMA $PGROLL_SCHEMA;"
+          psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE SCHEMA $PGROLL_SCHEMA;"
         fi
+        psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -c "CREATE EXTENSION btree_gist SCHEMA $PGROLL_SCHEMA;"
 
         make examples
       env:
