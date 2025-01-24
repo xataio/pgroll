@@ -20,7 +20,8 @@ func createUniqueIndexConcurrently(ctx context.Context, conn db.DB, schemaName s
 	for retryCount := 0; retryCount < 5; retryCount++ {
 		// Add a unique index to the new column
 		// Indexes are created in the same schema with the table automatically. Instead of the qualified one, just pass the index name.
-		if err := executeCreateUniqueIndexConcurrently(ctx, conn, indexName, schemaName, tableName, columnNames); err != nil {
+		createIndexSql := getCreateUniqueIndexConcurrentlySql(indexName, schemaName, tableName, columnNames)
+		if _, err := conn.ExecContext(ctx, createIndexSql); err != nil {
 			return fmt.Errorf("failed to add unique index %q: %w", indexName, err)
 		}
 
@@ -63,7 +64,7 @@ func createUniqueIndexConcurrently(ctx context.Context, conn db.DB, schemaName s
 	return fmt.Errorf("failed to create unique index %q", indexName)
 }
 
-func executeCreateUniqueIndexConcurrently(ctx context.Context, conn db.DB, indexName string, schemaName string, tableName string, columnNames []string) error {
+func getCreateUniqueIndexConcurrentlySql(indexName string, schemaName string, tableName string, columnNames []string) string {
 	// create unique index concurrently
 	qualifiedTableName := pq.QuoteIdentifier(tableName)
 	if schemaName != "" {
@@ -77,9 +78,7 @@ func executeCreateUniqueIndexConcurrently(ctx context.Context, conn db.DB, index
 		strings.Join(quoteColumnNames(columnNames), ", "),
 	)
 
-	_, err := conn.ExecContext(ctx, indexQuery)
-
-	return err
+	return indexQuery
 }
 
 func isIndexInProgress(ctx context.Context, conn db.DB, quotedQualifiedIndexName string) (bool, error) {

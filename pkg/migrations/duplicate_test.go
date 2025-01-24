@@ -192,4 +192,46 @@ func TestDuplicateStmtBuilderIndexes(t *testing.T) {
 	}
 }
 
+func TestCreateIndexConcurrentlySqlGeneration(t *testing.T) {
+	for name, testCases := range map[string]struct {
+		indexName    string
+		schemaName   string
+		tableName    string
+		columns      []string
+		expectedStmt string
+	}{
+		"single column with schemaname": {
+			indexName:    "idx_email",
+			schemaName:   "test_sch",
+			tableName:    "test_table",
+			columns:      []string{"email"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_sch"."test_table" ("email")`,
+		},
+		"single column with no schema name": {
+			indexName:    "idx_email",
+			tableName:    "test_table",
+			columns:      []string{"email"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_table" ("email")`,
+		},
+		"multi-column with no schema name": {
+			indexName:    "idx_name_city",
+			tableName:    "test_table",
+			columns:      []string{"name", "city"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_table" ("name", "city")`,
+		},
+		"multi-column with schema name": {
+			indexName:    "idx_name_city",
+			schemaName:   "test_sch",
+			tableName:    "test_table",
+			columns:      []string{"id", "name", "city"},
+			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_sch"."test_table" ("id", "name", "city")`,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			stmt := getCreateUniqueIndexConcurrentlySql(testCases.indexName, testCases.schemaName, testCases.tableName, testCases.columns)
+			assert.Equal(t, testCases.expectedStmt, stmt)
+		})
+	}
+}
+
 func ptr[T any](x T) *T { return &x }
