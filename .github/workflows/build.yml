@@ -62,6 +62,9 @@ jobs:
         go test ./...
 
       env:
+        POSTGRES_PORT: 5432
+        POSTGRES_HOST: localhost
+        PGPASSWORD: postgres
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
         PGROLL_TEST_SCHEMA: ${{ matrix.testSchema }}
 
