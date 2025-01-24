@@ -1091,7 +1091,8 @@ func TestCreateTable(t *testing.T) {
 			},
 		},
 		{
-			name: "create table with an exclude constraint to check overlap",
+			name:         "create table with an exclude constraint to check overlap",
+			pgExtensions: []string{"btree_gist"},
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",

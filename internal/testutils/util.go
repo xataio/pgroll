@@ -187,12 +187,6 @@ func WithMigratorInSchemaAndConnectionToContainerWithOptions(t testing.TB, schem
 		t.Fatal(err)
 	}
 
-	// add extension for btree_gist
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS btree_gist SCHEMA %s", schema))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	fn(mig, db)
 }
 
@@ -234,12 +228,6 @@ func WithMigratorAndStateAndConnectionToContainerWithOptions(t *testing.T, opts 
 	}
 
 	_, err = db.ExecContext(ctx, fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO pgroll", dbName))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// add extension for btree_gist
-	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS btree_gist SCHEMA %s", "public"))
 	if err != nil {
 		t.Fatal(err)
 	}
