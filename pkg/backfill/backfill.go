@@ -26,7 +26,7 @@ type Backfill struct {
 type CallbackFn func(done int64, total int64)
 
 // New creates a new backfill operation with the given options. The backfill is
-// not started until Start is invoked.
+// not started until `Start` is invoked.
 func New(conn db.DB, opts ...OptionFn) *Backfill {
 	b := &Backfill{
 		conn:      conn,
