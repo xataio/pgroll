@@ -179,7 +179,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	// Ensure backfill is possible
 	if o.Up != "" {
-		err := checkBackfill(table)
+		err := backfill.IsPossible(table)
 		if err != nil {
 			return err
 		}

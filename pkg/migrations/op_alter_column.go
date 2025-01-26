@@ -170,7 +170,7 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 
 	// If the operation requires backfills (ie it isn't a rename-only operation),
 	// ensure that the column meets the requirements for backfilling.
-	if err := checkBackfill(table); err != nil {
+	if err := backfill.IsPossible(table); err != nil {
 		return err
 	}
 
