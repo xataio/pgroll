@@ -18,13 +18,13 @@ import (
 
 type CallbackFn func(done int64, total int64)
 
-// Backfill updates all rows in the given table, in batches, using the
+// Start updates all rows in the given table, in batches, using the
 // following algorithm:
 // 1. Get the primary key column for the table.
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
+func Start(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumns := getIdentityColumns(table)
 	if identityColumns == nil {
