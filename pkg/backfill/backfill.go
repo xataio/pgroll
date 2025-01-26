@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package migrations
+package backfill
 
 import (
 	"context"
@@ -16,6 +16,8 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+type CallbackFn func(done int64, total int64)
+
 // Backfill updates all rows in the given table, in batches, using the
 // following algorithm:
 // 1. Get the primary key column for the table.
@@ -26,7 +28,7 @@ func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize in
 	// get the backfill column
 	identityColumns := getIdentityColumns(table)
 	if identityColumns == nil {
-		return BackfillNotPossibleError{Table: table.Name}
+		return NotPossibleError{Table: table.Name}
 	}
 
 	total, err := getRowCount(ctx, conn, table.Name)

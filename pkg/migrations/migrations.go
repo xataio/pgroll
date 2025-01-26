@@ -12,8 +12,6 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-type CallbackFn func(done int64, total int64)
-
 // Operation is an operation that can be applied to a schema
 type Operation interface {
 	// Start will apply the required changes to enable supporting the new schema
