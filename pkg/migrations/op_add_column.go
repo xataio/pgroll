@@ -327,13 +327,13 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			match = strings.ToUpper(string(col.References.MatchType))
 		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s ON UPDATE %s MATCH %s",
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) MATCH %s ON DELETE %s ON UPDATE %s",
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
 			pq.QuoteIdentifier(col.References.Column),
+			match,
 			onDelete,
-			onUpdate,
-			match)
+			onUpdate)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

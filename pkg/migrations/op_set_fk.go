@@ -93,14 +93,26 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
+	onUpdate := "NO ACTION"
+	if o.References.OnUpdate != "" {
+		onUpdate = strings.ToUpper(string(o.References.OnUpdate))
+	}
+
+	matchType := "SIMPLE"
+	if o.References.MatchType != "" {
+		matchType = strings.ToUpper(string(o.References.MatchType))
+	}
+
 	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s NOT VALID",
 			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(o.References.Name),
 			pq.QuoteIdentifier(column.Name),
 			pq.QuoteIdentifier(referencedTable.Name),
 			pq.QuoteIdentifier(referencedColumn.Name),
+			matchType,
 			onDelete,
+			onUpdate,
 		))
 
 	return err
