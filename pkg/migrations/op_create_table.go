@@ -390,13 +390,13 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s MATCH %s",
+	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s",
 		strings.Join(quoteColumnNames(w.Columns), ", "),
 		pq.QuoteIdentifier(referencedTable),
 		strings.Join(quoteColumnNames(referencedColumns), ", "),
+		matchType,
 		onDeleteAction,
 		onUpdateAction,
-		matchType,
 	)
 	constraint += w.addDeferrable()
 	return constraint
