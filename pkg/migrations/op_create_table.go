@@ -170,7 +170,7 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 				return FieldRequiredError{Name: "references"}
 			}
 			if len(c.References.OnDeleteSetColumns) != 0 {
-				if c.References.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyReferenceOnDeleteSETNULL {
+				if c.References.OnDelete != ForeignKeyOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyOnDeleteSETNULL {
 					return UnexpectedOnDeleteSetColumnError{
 						Name: o.Name,
 					}
@@ -310,7 +310,7 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
-			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns, c.References.MatchType)
 		}
 	}
 	if len(constraintsSQL) == 0 {
@@ -369,29 +369,34 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete, setColumns []string) string {
-	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyOnDelete, setColumns []string, matchTypeStr ForeignKeyMatchType) string {
+	onDeleteAction := string(ForeignKeyOnDeleteNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
 		if len(setColumns) != 0 {
 			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
 		}
 	}
-	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	onUpdateAction := string(ForeignKeyOnDeleteNOACTION)
 	if onUpdate != "" {
 		onUpdateAction = strings.ToUpper(string(onUpdate))
+	}
+	matchType := string(ForeignKeyMatchTypeSIMPLE)
+	if matchTypeStr != "" {
+		matchType = strings.ToUpper(string(matchTypeStr))
 	}
 
 	constraint := ""
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
+	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s MATCH %s",
 		strings.Join(quoteColumnNames(w.Columns), ", "),
 		pq.QuoteIdentifier(referencedTable),
 		strings.Join(quoteColumnNames(referencedColumns), ", "),
 		onDeleteAction,
 		onUpdateAction,
+		matchType,
 	)
 	constraint += w.addDeferrable()
 	return constraint

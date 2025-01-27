@@ -29,11 +29,11 @@ func (f *ForeignKeyReference) Validate(s *schema.Schema) error {
 	}
 
 	switch strings.ToUpper(string(f.OnDelete)) {
-	case string(ForeignKeyReferenceOnDeleteNOACTION):
-	case string(ForeignKeyReferenceOnDeleteRESTRICT):
-	case string(ForeignKeyReferenceOnDeleteSETDEFAULT):
-	case string(ForeignKeyReferenceOnDeleteSETNULL):
-	case string(ForeignKeyReferenceOnDeleteCASCADE):
+	case string(ForeignKeyOnDeleteNOACTION):
+	case string(ForeignKeyOnDeleteRESTRICT):
+	case string(ForeignKeyOnDeleteSETDEFAULT):
+	case string(ForeignKeyOnDeleteSETNULL):
+	case string(ForeignKeyOnDeleteCASCADE):
 	case "":
 		break
 	default:

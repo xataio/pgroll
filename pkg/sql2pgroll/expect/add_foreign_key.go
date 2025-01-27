@@ -7,14 +7,16 @@ import (
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
 
-func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyReferenceOnDelete) *migrations.OpCreateConstraint {
+func AddForeignKeyOp1WithParams(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpCreateConstraint {
 	return &migrations.OpCreateConstraint{
 		Columns: []string{"a", "b"},
 		Name:    "fk_bar_cd",
-		References: &migrations.OpCreateConstraintReferences{
-			Columns:  []string{"c", "d"},
-			OnDelete: onDelete,
-			Table:    "bar",
+		References: &migrations.TableForeignKeyReference{
+			Columns:   []string{"c", "d"},
+			OnDelete:  onDelete,
+			OnUpdate:  onUpdate,
+			MatchType: matchType,
+			Table:     "bar",
 		},
 		Table: "foo",
 		Type:  migrations.OpCreateConstraintTypeForeignKey,
@@ -32,9 +34,9 @@ func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyReferenceOnDelet
 var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
-	References: &migrations.OpCreateConstraintReferences{
+	References: &migrations.TableForeignKeyReference{
 		Columns:  []string{"c"},
-		OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+		OnDelete: migrations.ForeignKeyOnDeleteNOACTION,
 		Table:    "bar",
 	},
 	Table: "foo",
@@ -50,9 +52,9 @@ var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 var AddForeignKeyOp3 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
-	References: &migrations.OpCreateConstraintReferences{
+	References: &migrations.TableForeignKeyReference{
 		Columns:  []string{"c"},
-		OnDelete: migrations.ForeignKeyReferenceOnDeleteNOACTION,
+		OnDelete: migrations.ForeignKeyOnDeleteNOACTION,
 		Table:    "schema_a.bar",
 	},
 	Table: "schema_a.foo",

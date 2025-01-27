@@ -314,16 +314,26 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 
 	if col.References != nil {
-		onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
+		onDelete := string(ForeignKeyOnDeleteNOACTION)
 		if col.References.OnDelete != "" {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}
+		onUpdate := string(ForeignKeyOnDeleteNOACTION)
+		if col.References.OnUpdate != "" {
+			onUpdate = strings.ToUpper(string(col.References.OnUpdate))
+		}
+		match := string(ForeignKeyMatchTypeSIMPLE)
+		if col.References.MatchType != "" {
+			match = strings.ToUpper(string(col.References.MatchType))
+		}
 
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
+		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s ON UPDATE %s MATCH %s",
 			pq.QuoteIdentifier(col.References.Name),
 			pq.QuoteIdentifier(col.References.Table),
 			pq.QuoteIdentifier(col.References.Column),
-			onDelete)
+			onDelete,
+			onUpdate,
+			match)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

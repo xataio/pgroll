@@ -309,7 +309,7 @@ func TestCreateTable(t *testing.T) {
 										Column:   "id",
 										Name:     "fk_users_id",
 										Table:    "users",
-										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+										OnDelete: migrations.ForeignKeyOnDeleteCASCADE,
 									},
 								},
 								{
@@ -817,10 +817,10 @@ func TestCreateTable(t *testing.T) {
 									Name:    "fk_owners",
 									Type:    migrations.ConstraintTypeForeignKey,
 									Columns: []string{"owner_id"},
-									References: &migrations.ConstraintReferences{
+									References: &migrations.TableForeignKeyReference{
 										Table:    "owners",
 										Columns:  []string{"id"},
-										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+										OnDelete: migrations.ForeignKeyOnDeleteCASCADE,
 									},
 								},
 							},
@@ -947,10 +947,10 @@ func TestCreateTable(t *testing.T) {
 									Type:       migrations.ConstraintTypeForeignKey,
 									Columns:    []string{"owner_id", "owner_city_id"},
 									Deferrable: true,
-									References: &migrations.ConstraintReferences{
+									References: &migrations.TableForeignKeyReference{
 										Table:              "owners",
 										Columns:            []string{"id", "city"},
-										OnDelete:           migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
+										OnDelete:           migrations.ForeignKeyOnDeleteSETDEFAULT,
 										OnDeleteSetColumns: []string{"owner_id", "owner_city_id"},
 									},
 								},

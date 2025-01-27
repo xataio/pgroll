@@ -90,23 +90,35 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d);",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE NO ACTION;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteRESTRICT),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteRESTRICT, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteSETDEFAULT),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteSETDEFAULT, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET NULL;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyReferenceOnDeleteSETNULL),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteSETNULL, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT ON UPDATE SET DEFAULT;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteRESTRICT, migrations.ForeignKeyOnDeleteSETDEFAULT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ON UPDATE RESTRICT;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteSETDEFAULT, migrations.ForeignKeyOnDeleteRESTRICT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL MATCH PARTIAL;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteSETNULL, migrations.ForeignKeyMatchTypePARTIAL),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);",
@@ -196,31 +208,31 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar)",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON UPDATE NO ACTION",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE NO ACTION",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteNOACTION),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE RESTRICT",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteRESTRICT),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteRESTRICT),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE SET NULL ",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteSETNULL),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteSETNULL),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE SET DEFAULT",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteSETDEFAULT),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteSETDEFAULT),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE CASCADE",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyReferenceOnDeleteCASCADE),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyOnDeleteCASCADE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int GENERATED BY DEFAULT AS IDENTITY ",

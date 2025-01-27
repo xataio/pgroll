@@ -319,7 +319,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 							Table:   "reports",
 							Type:    migrations.OpCreateConstraintTypeForeignKey,
 							Columns: []string{"user_id", "user_zip"},
-							References: &migrations.OpCreateConstraintReferences{
+							References: &migrations.TableForeignKeyReference{
 								Table:   "users",
 								Columns: []string{"id", "zip"},
 							},
