@@ -31,7 +31,7 @@
             ]
           },
           {
-            "name": "forbid_duplicated names",
+            "name": "forbid_duplicated_names",
             "type": "exclude",
             "exclude": {
               "index_method": "btree",
