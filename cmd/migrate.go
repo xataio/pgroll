@@ -13,10 +13,11 @@ func migrateCmd() *cobra.Command {
 	var complete bool
 
 	migrateCmd := &cobra.Command{
-		Use:     "migrate <directory>",
-		Short:   "Apply outstanding migrations from a directory to a database",
-		Example: "migrate ./migrations",
-		Args:    cobra.ExactArgs(1),
+		Use:       "migrate <directory>",
+		Short:     "Apply outstanding migrations from a directory to a database",
+		Example:   "migrate ./migrations",
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: []string{"directory"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			migrationsDir := args[0]
