@@ -31,12 +31,12 @@
             ]
           },
           {
-            "name": "forbid_duplicated_names",
+            "name": "forbid_duplicated_titles",
             "type": "exclude",
             "exclude": {
               "index_method": "btree",
-              "elements": "name WITH =",
-              "predicate": "name IS NOT NULL"
+              "elements": "title WITH =",
+              "predicate": "title IS NOT NULL"
             }
           }
         ]
