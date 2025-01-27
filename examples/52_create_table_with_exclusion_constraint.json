@@ -3,22 +3,22 @@
   "operations": [
     {
       "create_table": {
-        "name": "employees",
+        "name": "library",
         "columns": [
           {
             "name": "id",
             "type": "serial"
           },
           {
-            "name": "start_time",
+            "name": "returned",
             "type": "timestamp"
           },
           {
-            "name": "name",
+            "name": "title",
             "type": "text"
           },
           {
-            "name": "position",
+            "name": "summary",
             "type": "text"
           }
         ],
