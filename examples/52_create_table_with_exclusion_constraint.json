@@ -3,14 +3,14 @@
   "operations": [
     {
       "create_table": {
-        "name": "room_reservations",
+        "name": "employees",
         "columns": [
           {
             "name": "id",
             "type": "serial"
           },
           {
-            "name": "start",
+            "name": "start_time",
             "type": "timestamp"
           },
           {
@@ -18,13 +18,8 @@
             "type": "text"
           },
           {
-            "name": "end",
-            "type": "timestamp"
-          },
-          {
-            "name": "canceled",
-            "type": "boolean",
-            "default": "false"
+            "name": "position",
+            "type": "text"
           }
         ],
         "constraints": [
@@ -36,18 +31,13 @@
             ]
           },
           {
-            "name": "forbid_double_booking",
+            "name": "forbid_duplicated names",
             "type": "exclude",
             "exclude": {
-              "index_method": "gist",
-              "elements": "id WITH =, tsrange(\"start\", \"end\") WITH &&",
-              "predicate": "NOT canceled"
+              "index_method": "btree",
+              "elements": "name WITH =",
+              "predicate": "name IS NOT NULL"
             }
-          },
-          {
-            "name": "name_must_be_present",
-            "type": "check",
-            "check": "length(name) > 0"
           }
         ]
       }

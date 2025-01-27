@@ -25,7 +25,6 @@ import (
 type TestCase struct {
 	name              string
 	minPgMajorVersion int
-	pgExtensions      []string
 	migrations        []migrations.Migration
 	wantStartErr      error
 	wantRollbackErr   error
@@ -52,12 +51,6 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
-
-				if tt.pgExtensions != nil {
-					for _, ext := range tt.pgExtensions {
-						db.Exec(fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS %s SCHEMA %s", ext, testSchema))
-					}
-				}
 
 				// run all migrations except the last one
 				for i := 0; i < len(tt.migrations)-1; i++ {
