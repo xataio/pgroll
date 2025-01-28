@@ -18,7 +18,6 @@ type Result struct {
 	Flags    []Flag    `json:"flags"`
 }
 
-// Command represents the structure for a command with its flags and arguments
 type Command struct {
 	Name        string    `json:"name"`
 	Short       string    `json:"short"`
@@ -29,7 +28,6 @@ type Command struct {
 	Args        []string  `json:"args"`
 }
 
-// Flag represents the structure for a flag
 type Flag struct {
 	Name        string `json:"name"`
 	Shorthand   string `json:"shorthand,omitempty"`
@@ -40,20 +38,53 @@ type Flag struct {
 func main() {
 	fmt.Println("Generating CLI JSON schema...")
 
-	root := cmd.Prepare()
+	rootCmd := cmd.Prepare()
 
 	result := Result{
-		Name:     root.Name(),
-		Commands: make([]Command, 0),
-		Flags:    make([]Flag, 0),
+		Name:     rootCmd.Name(),
+		Commands: extractCommands(rootCmd.Commands()),
+		Flags:    extractFlags(rootCmd.PersistentFlags()),
 	}
 
-	for _, cmd := range root.Commands() {
-		processCommand(&result.Commands, cmd)
+	if err := writeJSONToFile("cli-definition.json", result); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
 	}
 
-	flags := make([]Flag, 0)
-	root.PersistentFlags().VisitAll(func(flag *pflag.Flag) {
+	fmt.Println("CLI JSON schema generated successfully")
+}
+
+func extractCommands(cmds []*cobra.Command) []Command {
+	if cmds == nil {
+		return []Command{}
+	}
+
+	var commands []Command
+	for _, cmd := range cmds {
+		commands = append(commands, processCommand(cmd))
+	}
+	return commands
+}
+
+func processCommand(cmd *cobra.Command) Command {
+	return Command{
+		Name:        cmd.Name(),
+		Short:       cmd.Short,
+		Use:         cmd.Use,
+		Example:     cmd.Example,
+		Args:        validateArgs(cmd),
+		Flags:       extractFlags(cmd.Flags()),
+		Subcommands: extractCommands(cmd.Commands()),
+	}
+}
+
+func extractFlags(flagSet *pflag.FlagSet) []Flag {
+	if flagSet == nil {
+		return []Flag{}
+	}
+
+	var flags []Flag = []Flag{}
+	flagSet.VisitAll(func(flag *pflag.Flag) {
 		flags = append(flags, Flag{
 			Name:        flag.Name,
 			Shorthand:   flag.Shorthand,
@@ -61,58 +92,49 @@ func main() {
 			Default:     flag.DefValue,
 		})
 	})
-	result.Flags = flags
+	return flags
+}
 
-	// Write the JSON schema to a file
-	file, err := os.Create("cli-definition.json")
+func validateArgs(cmd *cobra.Command) []string {
+	if cmd.Args == nil && cmd.ValidArgs == nil {
+		return []string{}
+	}
+
+	maxArgs := 0
+	for i := 0; i < 10; i++ {
+		args := make([]string, i)
+		for j := range args {
+			args[j] = fmt.Sprintf("arg%d", j)
+		}
+		if err := cmd.Args(cmd, args); err == nil {
+			maxArgs = i
+		}
+	}
+
+	if maxArgs != len(cmd.ValidArgs) {
+		panic(fmt.Sprintf("Mismatch between maxArgs and ValidArgs for command: %s", cmd.Name()))
+	}
+
+	if cmd.ValidArgs == nil {
+		return []string{}
+	}
+
+	return cmd.ValidArgs
+}
+
+func writeJSONToFile(filename string, data any) error {
+	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	encoder.SetEscapeHTML(false)
-	err = encoder.Encode(result)
-	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return
+
+	if err := encoder.Encode(data); err != nil {
+		return fmt.Errorf("failed to encode JSON: %w", err)
 	}
-
-	fmt.Println("CLI JSON schema generated successfully")
-}
-
-func processCommand(commands *[]Command, cmd *cobra.Command) {
-	command := Command{
-		Name:    cmd.Name(),
-		Short:   cmd.Short,
-		Use:     cmd.Use,
-		Example: cmd.Example,
-	}
-
-	if cmd.ValidArgs != nil {
-		command.Args = cmd.ValidArgs
-	} else {
-		command.Args = []string{}
-	}
-
-	flags := make([]Flag, 0)
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		flags = append(flags, Flag{
-			Name:        flag.Name,
-			Shorthand:   flag.Shorthand,
-			Description: flag.Usage,
-			Default:     flag.DefValue,
-		})
-	})
-	command.Flags = flags
-
-	subcommands := make([]Command, 0)
-	for _, subcmd := range cmd.Commands() {
-		processCommand(&subcommands, subcmd)
-	}
-	command.Subcommands = subcommands
-
-	*commands = append(*commands, command)
+	return nil
 }
