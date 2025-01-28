@@ -213,6 +213,14 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(a int, b int, c int, FOREIGN KEY (a, b, c) REFERENCES bar(d, e, f) MATCH FULL)",
 			expectedOp: expect.CreateTableOp33,
 		},
+		{
+			sql:        "CREATE TABLE foo(id integer, s timestamptz, e timestamptz, canceled boolean DEFAULT false, EXCLUDE USING gist (id WITH =, tstzrange(s, e) WITH &&) WHERE (not canceled))",
+			expectedOp: expect.CreateTableOp34,
+		},
+		{
+			sql:        "CREATE TABLE foo(id integer, b text, EXCLUDE USING btree (id WITH =) DEFERRABLE INITIALLY DEFERRED)",
+			expectedOp: expect.CreateTableOp35,
+		},
 	}
 
 	for _, tc := range tests {
