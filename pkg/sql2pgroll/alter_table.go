@@ -21,16 +21,13 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 	if stmt.Objtype != pgq.ObjectType_OBJECT_TABLE {
 		return nil, nil
 	}
-	fmt.Println("___________")
 
 	var ops migrations.Operations
 	for _, cmd := range stmt.Cmds {
-		fmt.Println("cmd")
 		alterTableCmd := cmd.GetAlterTableCmd()
 		if alterTableCmd == nil {
 			continue
 		}
-		fmt.Println("sdfsdfdsfs", alterTableCmd.GetSubtype())
 
 		var op migrations.Operation
 		var err error
@@ -42,7 +39,6 @@ func convertAlterTableStmt(stmt *pgq.AlterTableStmt) (migrations.Operations, err
 		case pgq.AlterTableType_AT_AlterColumnType:
 			op, err = convertAlterTableAlterColumnType(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_AddConstraint:
-			fmt.Println("----->>>>>>>")
 			op, err = convertAlterTableAddConstraint(stmt, alterTableCmd)
 		case pgq.AlterTableType_AT_DropColumn:
 			op, err = convertAlterTableDropColumn(stmt, alterTableCmd)
@@ -122,12 +118,10 @@ func convertAlterTableAlterColumnType(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTa
 //
 // An OpCreateConstraint operation is returned.
 func convertAlterTableAddConstraint(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd) (migrations.Operation, error) {
-	fmt.Println("-----WEQWEQWE")
 	node, ok := cmd.GetDef().Node.(*pgq.Node_Constraint)
 	if !ok {
 		return nil, fmt.Errorf("expected constraint definition, got %T", cmd.GetDef().Node)
 	}
-	fmt.Println("___________")
 
 	var op migrations.Operation
 	var err error
@@ -187,11 +181,9 @@ func convertAlterTableAddUniqueConstraint(stmt *pgq.AlterTableStmt, constraint *
 }
 
 func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constraint *pgq.Constraint) (migrations.Operation, error) {
-	fmt.Println("sdfsdfsdf")
 	if !canConvertForeignKeyConstraint(constraint) {
 		return nil, nil
 	}
-	fmt.Println(">>>>>")
 
 	tableName := getQualifiedRelationName(stmt.Relation)
 	columns, references := convertFkConstraint(constraint)
@@ -359,7 +351,6 @@ func convertAlterTableAddColumn(stmt *pgq.AlterTableStmt, cmd *pgq.AlterTableCmd
 	}
 
 	qualifiedName := getQualifiedRelationName(stmt.GetRelation())
-	fmt.Println("qualifiedName", qualifiedName)
 	column, err := convertColumnDef(qualifiedName, cmd.GetDef().GetColumnDef())
 	if err != nil {
 		return nil, fmt.Errorf("error converting column definition: %w", err)

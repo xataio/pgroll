@@ -22,13 +22,11 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
-	fmt.Println("columnsSQL", columnsSQL)
 
 	constraintsSQL, err := constraintsToSQL(o.Constraints)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
-	fmt.Println("constraintsSQL", constraintsSQL)
 
 	// Create the table
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
@@ -290,7 +288,6 @@ func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
 }
 
 func constraintsToSQL(constraints []Constraint) (string, error) {
-	fmt.Println("constraintsToSQL")
 	constraintsSQL := make([]string, len(constraints))
 	for i, c := range constraints {
 		writer := &ConstraintSQLWriter{
@@ -313,7 +310,6 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
-			fmt.Println("ConstraintTypeForeignKey")
 			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns, c.References.MatchType)
 		}
 	}
@@ -377,7 +373,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	onDeleteAction := string(ForeignKeyOnDeleteNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
-		if len(setColumns) != 0 {
+		if setColumns != nil && len(setColumns) != 0 {
 			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
 		}
 	}
@@ -402,7 +398,6 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 		onDeleteAction,
 		onUpdateAction,
 	)
-	fmt.Println(constraint)
 	constraint += w.addDeferrable()
 	return constraint
 }
