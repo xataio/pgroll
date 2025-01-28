@@ -127,6 +127,16 @@
           "description": "On update behavior of the foreign key constraint",
           "$ref": "#/$defs/ForeignKeyOnDelete",
           "default": "NO ACTION"
+        },
+        "deferrable": {
+          "description": "Deferable constraint",
+          "type": "boolean",
+          "default": false
+        },
+        "initially_deferred": {
+          "description": "Initially deferred constraint",
+          "type": "boolean",
+          "default": false
         }
       },
       "required": ["column", "name", "table"],

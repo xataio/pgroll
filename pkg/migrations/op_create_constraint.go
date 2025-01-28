@@ -247,19 +247,30 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB)
 }
 
 func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
-	onDelete := "NO ACTION"
+	onDelete := string(ForeignKeyOnDeleteNOACTION)
 	if o.References.OnDelete != "" {
 		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
+	onUpdate := string(ForeignKeyOnDeleteNOACTION)
+	if o.References.OnUpdate != "" {
+		onUpdate = strings.ToUpper(string(o.References.OnUpdate))
+	}
+
+	matchType := string(ForeignKeyMatchTypeSIMPLE)
+	if o.References.MatchType != "" {
+		matchType = strings.ToUpper(string(o.References.MatchType))
+	}
 	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
+		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s NOT VALID",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.Name),
 			strings.Join(quotedTemporaryNames(o.Columns), ","),
 			pq.QuoteIdentifier(o.References.Table),
 			strings.Join(quoteColumnNames(o.References.Columns), ","),
+			matchType,
 			onDelete,
+			onUpdate,
 		))
 
 	return err

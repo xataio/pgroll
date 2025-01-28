@@ -104,6 +104,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	if !canConvertColumnDef(col) {
 		return nil, nil
 	}
+	fmt.Println("~~~~~~~")
 
 	// Deparse the column type
 	typeString, err := pgq.DeparseTypeName(col.TypeName)
@@ -184,6 +185,7 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			pgq.ConstrType_CONSTR_ATTR_IMMEDIATE:
 			// NOT DEFERRABLE and INITIALLY IMMEDIATE constraints are the default and
 			// are supported, but no extra annotation is needed
+			fmt.Println("ez a baj")
 			continue
 		case pgq.ConstrType_CONSTR_GENERATED:
 			if c.GetConstraint().GetRawExpr() != nil {
@@ -225,9 +227,11 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			notNull = true
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRABLE:
 			// Deferrable constraints are not supported
+			fmt.Println("deferrable attribute")
 			return nil, nil
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRED:
 			// Initially deferred deferred constraints are not supported
+			fmt.Println("deferred attribute")
 			return nil, nil
 		default:
 			// Any other type of constraint is not supported
@@ -416,17 +420,17 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 	}
 
 	onDelete := migrations.ForeignKeyOnDeleteNOACTION
-	if constraint.FkDelAction != "" {
+	if constraint.GetFkDelAction() != "" {
 		onDelete = referentialAction[constraint.FkDelAction]
 	}
 
 	onUpdate := migrations.ForeignKeyOnDeleteNOACTION
-	if constraint.FkUpdAction != "" {
+	if constraint.GetFkUpdAction() != "" {
 		onUpdate = referentialAction[constraint.FkUpdAction]
 	}
 
 	matchType := migrations.ForeignKeyMatchTypeSIMPLE
-	if constraint.FkMatchtype != "" {
+	if constraint.GetFkMatchtype() != "" {
 		matchType = matchTypes[constraint.FkMatchtype]
 	}
 
@@ -436,12 +440,14 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 	}
 
 	return &migrations.ForeignKeyReference{
-		Name:      name,
-		OnDelete:  onDelete,
-		OnUpdate:  onUpdate,
-		MatchType: matchType,
-		Column:    constraint.GetPkAttrs()[0].GetString_().GetSval(),
-		Table:     getQualifiedRelationName(constraint.GetPktable()),
+		Name:              name,
+		OnDelete:          onDelete,
+		OnUpdate:          onUpdate,
+		MatchType:         matchType,
+		Column:            constraint.GetPkAttrs()[0].GetString_().GetSval(),
+		Table:             getQualifiedRelationName(constraint.GetPktable()),
+		Deferrable:        constraint.GetDeferrable(),
+		InitiallyDeferred: constraint.GetInitdeferred(),
 	}, nil
 }
 

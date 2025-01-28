@@ -7,16 +7,17 @@ import (
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
 
-func AddForeignKeyOp1WithParams(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpCreateConstraint {
+func AddForeignKeyOp1WithParams(matchType migrations.ForeignKeyMatchType, onDelete, onUpdate migrations.ForeignKeyOnDelete) *migrations.OpCreateConstraint {
 	return &migrations.OpCreateConstraint{
 		Columns: []string{"a", "b"},
 		Name:    "fk_bar_cd",
 		References: &migrations.TableForeignKeyReference{
-			Columns:   []string{"c", "d"},
-			OnDelete:  onDelete,
-			OnUpdate:  onUpdate,
-			MatchType: matchType,
-			Table:     "bar",
+			Columns:            []string{"c", "d"},
+			OnDelete:           onDelete,
+			OnDeleteSetColumns: []string{},
+			OnUpdate:           onUpdate,
+			MatchType:          matchType,
+			Table:              "bar",
 		},
 		Table: "foo",
 		Type:  migrations.OpCreateConstraintTypeForeignKey,
@@ -35,9 +36,12 @@ var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
 	References: &migrations.TableForeignKeyReference{
-		Columns:  []string{"c"},
-		OnDelete: migrations.ForeignKeyOnDeleteNOACTION,
-		Table:    "bar",
+		Columns:            []string{"c"},
+		OnDelete:           migrations.ForeignKeyOnDeleteNOACTION,
+		OnDeleteSetColumns: []string{},
+		OnUpdate:           migrations.ForeignKeyOnDeleteNOACTION,
+		MatchType:          migrations.ForeignKeyMatchTypeSIMPLE,
+		Table:              "bar",
 	},
 	Table: "foo",
 	Type:  migrations.OpCreateConstraintTypeForeignKey,
@@ -53,9 +57,12 @@ var AddForeignKeyOp3 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
 	References: &migrations.TableForeignKeyReference{
-		Columns:  []string{"c"},
-		OnDelete: migrations.ForeignKeyOnDeleteNOACTION,
-		Table:    "schema_a.bar",
+		Columns:            []string{"c"},
+		OnDelete:           migrations.ForeignKeyOnDeleteNOACTION,
+		OnDeleteSetColumns: []string{},
+		OnUpdate:           migrations.ForeignKeyOnDeleteNOACTION,
+		MatchType:          migrations.ForeignKeyMatchTypeSIMPLE,
+		Table:              "schema_a.bar",
 	},
 	Table: "schema_a.foo",
 	Type:  migrations.OpCreateConstraintTypeForeignKey,

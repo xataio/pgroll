@@ -140,6 +140,12 @@ type ForeignKeyReference struct {
 	// Name of the referenced column
 	Column string `json:"column"`
 
+	// Deferable constraint
+	Deferrable bool `json:"deferrable,omitempty"`
+
+	// Initially deferred constraint
+	InitiallyDeferred bool `json:"initially_deferred,omitempty"`
+
 	// Match type of the foreign key constraint
 	MatchType ForeignKeyMatchType `json:"match_type,omitempty"`
 

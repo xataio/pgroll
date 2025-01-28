@@ -135,7 +135,7 @@ var AddColumnOp10 = &migrations.OpAddColumn{
 	},
 }
 
-func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyOnDelete) *migrations.OpAddColumn {
+func AddColumnOp8WithOnDeleteAction(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,
@@ -144,11 +144,58 @@ func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyOnDelete) *migra
 			Type:     "int",
 			Nullable: true,
 			References: &migrations.ForeignKeyReference{
-				Column:   "bar",
-				Name:     "fk_baz",
-				OnDelete: action,
-				Table:    "baz",
+				Column:    "bar",
+				Name:      "fk_baz",
+				OnDelete:  onDelete,
+				OnUpdate:  onUpdate,
+				MatchType: matchType,
+				Table:     "baz",
 			},
+		},
+	}
+}
+
+func AddColumnOp9WithOnDeleteActionUnnamed(name string, onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
+	return &migrations.OpAddColumn{
+		Table: "foo",
+		Up:    sql2pgroll.PlaceHolderSQL,
+		Column: migrations.Column{
+			Name:     "bar",
+			Type:     "int",
+			Nullable: true,
+			References: &migrations.ForeignKeyReference{
+				Column:    "bar",
+				Name:      name,
+				OnDelete:  onDelete,
+				OnUpdate:  onUpdate,
+				MatchType: matchType,
+				Table:     "baz",
+			},
+		},
+	}
+}
+
+func AddConstraintOp10ForeignKey(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpCreateConstraint {
+	return &migrations.OpCreateConstraint{
+		Table:   "foo",
+		Columns: []string{"a", "b"},
+		Name:    "fk_baz",
+		Type:    migrations.OpCreateConstraintTypeForeignKey,
+		Up: migrations.MultiColumnUpSQL{
+			"a": sql2pgroll.PlaceHolderSQL,
+			"b": sql2pgroll.PlaceHolderSQL,
+		},
+		Down: migrations.MultiColumnDownSQL{
+			"a": sql2pgroll.PlaceHolderSQL,
+			"b": sql2pgroll.PlaceHolderSQL,
+		},
+		References: &migrations.TableForeignKeyReference{
+			Columns:            []string{"c", "d"},
+			Table:              "bar",
+			OnDelete:           onDelete,
+			OnDeleteSetColumns: []string{},
+			OnUpdate:           onUpdate,
+			MatchType:          matchType,
 		},
 	}
 }

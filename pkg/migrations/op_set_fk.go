@@ -88,17 +88,17 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	referencedTable := s.GetTable(o.References.Table)
 	referencedColumn := referencedTable.GetColumn(o.References.Column)
 
-	onDelete := "NO ACTION"
+	onDelete := string(ForeignKeyOnDeleteNOACTION)
 	if o.References.OnDelete != "" {
 		onDelete = strings.ToUpper(string(o.References.OnDelete))
 	}
 
-	onUpdate := "NO ACTION"
+	onUpdate := string(ForeignKeyOnDeleteNOACTION)
 	if o.References.OnUpdate != "" {
 		onUpdate = strings.ToUpper(string(o.References.OnUpdate))
 	}
 
-	matchType := "SIMPLE"
+	matchType := string(ForeignKeyMatchTypeSIMPLE)
 	if o.References.MatchType != "" {
 		matchType = strings.ToUpper(string(o.References.MatchType))
 	}
