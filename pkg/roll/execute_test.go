@@ -185,9 +185,15 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 		err = mig.Start(ctx, &migrations.Migration{Name: "03_create_table", Operations: migrations.Operations{createTableOp("table3")}})
 		require.NoError(t, err)
 
-		// The previous version is migration 02 but there is no version schema
+		// The previous version is migration 01 if raw SQL migrations are ignored
+		prevVersion, err := st.PreviousVersion(ctx, "public", false)
+		require.NoError(t, err)
+		require.NotNil(t, prevVersion)
+		assert.Equal(t, "01_create_table", *prevVersion)
+
+		// The previous version is migration 02 (inferred) but there is no version schema
 		// for migration 02 due to the `WithNoVersionSchemaForRawSQL` option
-		prevVersion, err := st.PreviousVersion(ctx, "public")
+		prevVersion, err = st.PreviousVersion(ctx, "public", true)
 		require.NoError(t, err)
 		require.NotNil(t, prevVersion)
 		assert.Equal(t, "02_create_table", *prevVersion)

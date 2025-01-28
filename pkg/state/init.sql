@@ -76,7 +76,7 @@ STABLE;
 -- Get the name of the previous version of the schema, or NULL if there is none.
 -- This ignores previous versions for which no version schema exists, such as
 -- versions corresponding to inferred migrations.
-CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name)
+CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includeInferred boolean)
     RETURNS text
     AS $$
     WITH RECURSIVE ancestors AS (
@@ -109,6 +109,11 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name)
             ancestors a
     WHERE
         a.depth > 0
+        AND (includeInferred OR 
+                (a.migration_type = 'pgroll' AND EXISTS (
+                    SELECT s.schema_name FROM information_schema.schemata s WHERE s.schema_name = schemaname || '_' || a.name
+                ))
+            )
     ORDER BY
         a.depth ASC
     LIMIT 1;

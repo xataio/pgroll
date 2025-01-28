@@ -136,11 +136,11 @@ func (s *State) LatestVersion(ctx context.Context, schema string) (*string, erro
 }
 
 // PreviousVersion returns the name of the previous version schema
-func (s *State) PreviousVersion(ctx context.Context, schema string) (*string, error) {
+func (s *State) PreviousVersion(ctx context.Context, schema string, includeInferred bool) (*string, error) {
 	var parent *string
 	err := s.pgConn.QueryRowContext(ctx,
-		fmt.Sprintf("SELECT %s.previous_version($1)", pq.QuoteIdentifier(s.schema)),
-		schema).Scan(&parent)
+		fmt.Sprintf("SELECT %s.previous_version($1, $2)", pq.QuoteIdentifier(s.schema)),
+		schema, includeInferred).Scan(&parent)
 	if err != nil {
 		return nil, err
 	}
