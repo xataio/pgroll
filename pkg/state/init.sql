@@ -107,10 +107,8 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name)
             a.name
         FROM
             ancestors a
-        JOIN information_schema.schemata s ON s.schema_name = schemaname || '_' || a.name
     WHERE
-        migration_type = 'pgroll'
-        AND a.depth > 0
+        a.depth > 0
     ORDER BY
         a.depth ASC
     LIMIT 1;
