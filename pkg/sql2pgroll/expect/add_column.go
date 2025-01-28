@@ -190,12 +190,11 @@ func AddConstraintOp10ForeignKey(onDelete, onUpdate migrations.ForeignKeyOnDelet
 			"b": sql2pgroll.PlaceHolderSQL,
 		},
 		References: &migrations.TableForeignKeyReference{
-			Columns:            []string{"c", "d"},
-			Table:              "bar",
-			OnDelete:           onDelete,
-			OnDeleteSetColumns: []string{},
-			OnUpdate:           onUpdate,
-			MatchType:          matchType,
+			Columns:   []string{"c", "d"},
+			Table:     "bar",
+			OnDelete:  onDelete,
+			OnUpdate:  onUpdate,
+			MatchType: matchType,
 		},
 	}
 }
