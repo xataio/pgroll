@@ -355,24 +355,30 @@ func convertFkConstraint(c *pgq.Constraint) ([]string, *migrations.TableForeignK
 		referencedColumns[i] = node.GetString_().Sval
 	}
 	matchType := migrations.ForeignKeyMatchTypeSIMPLE
-	if c.FkMatchtype != "" {
+	if c.GetFkMatchtype() != "" {
 		matchType = matchTypes[c.FkMatchtype]
 	}
-	columnsToSet := make([]string, len(c.FkDelSetCols))
+	var columnsToSet []string
 	onDelete := migrations.ForeignKeyOnDeleteNOACTION
-	if c.FkDelAction != "" {
-		onDelete = referentialAction[c.FkDelAction]
-		for i, node := range c.FkDelSetCols {
-			columnsToSet[i] = node.GetString_().Sval
+	if c.GetFkDelAction() != "" {
+		onDelete = referentialAction[c.GetFkDelAction()]
+		if c.GetFkDelSetCols() != nil {
+			columnsToSet = make([]string, len(c.FkDelSetCols))
+			for i, node := range c.FkDelSetCols {
+				columnsToSet[i] = node.GetString_().Sval
+			}
 		}
 	}
 	onUpdate := migrations.ForeignKeyOnDeleteNOACTION
-	if c.FkUpdAction != "" {
-		onUpdate = referentialAction[c.FkUpdAction]
+	if c.GetFkUpdAction() != "" {
+		onUpdate = referentialAction[c.GetFkUpdAction()]
 	}
-	columns := make([]string, len(c.FkAttrs))
-	for i, node := range c.FkAttrs {
-		columns[i] = node.GetString_().Sval
+	var columns []string
+	if c.GetFkAttrs() != nil {
+		columns = make([]string, len(c.GetFkAttrs()))
+		for i, node := range c.GetFkAttrs() {
+			columns[i] = node.GetString_().Sval
+		}
 	}
 
 	return columns, &migrations.TableForeignKeyReference{
