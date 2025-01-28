@@ -104,7 +104,6 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 	if !canConvertColumnDef(col) {
 		return nil, nil
 	}
-	fmt.Println("~~~~~~~")
 
 	// Deparse the column type
 	typeString, err := pgq.DeparseTypeName(col.TypeName)
@@ -185,7 +184,6 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			pgq.ConstrType_CONSTR_ATTR_IMMEDIATE:
 			// NOT DEFERRABLE and INITIALLY IMMEDIATE constraints are the default and
 			// are supported, but no extra annotation is needed
-			fmt.Println("ez a baj")
 			continue
 		case pgq.ConstrType_CONSTR_GENERATED:
 			if c.GetConstraint().GetRawExpr() != nil {
@@ -227,11 +225,9 @@ func convertColumnDef(tableName string, col *pgq.ColumnDef) (*migrations.Column,
 			notNull = true
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRABLE:
 			// Deferrable constraints are not supported
-			fmt.Println("deferrable attribute")
 			return nil, nil
 		case pgq.ConstrType_CONSTR_ATTR_DEFERRED:
 			// Initially deferred deferred constraints are not supported
-			fmt.Println("deferred attribute")
 			return nil, nil
 		default:
 			// Any other type of constraint is not supported
