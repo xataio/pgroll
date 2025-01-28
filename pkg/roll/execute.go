@@ -313,7 +313,9 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs
 	bf := backfill.New(m.pgConn,
 		backfill.WithBatchSize(m.backfillBatchSize),
 		backfill.WithBatchDelay(m.backfillBatchDelay),
-		backfill.WithCallbacks(cbs...))
+		backfill.WithCallbacks(cbs...),
+		backfill.WithStateSchema(m.state.Schema()),
+	)
 
 	for _, table := range tables {
 		if err := bf.Start(ctx, table); err != nil {
