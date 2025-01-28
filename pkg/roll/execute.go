@@ -314,6 +314,7 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs
 		backfill.WithBatchSize(m.backfillBatchSize),
 		backfill.WithBatchDelay(m.backfillBatchDelay),
 		backfill.WithCallbacks(cbs...),
+		backfill.WithSchema(m.schema),
 		backfill.WithStateSchema(m.state.Schema()),
 	)
 

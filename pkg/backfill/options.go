@@ -34,3 +34,10 @@ func WithStateSchema(schema string) OptionFn {
 		o.stateSchema = schema
 	}
 }
+
+// WithSchema sets the schema in which the table resides.
+func WithSchema(schema string) OptionFn {
+	return func(o *Backfill) {
+		o.schema = schema
+	}
+}

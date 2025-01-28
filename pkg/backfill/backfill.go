@@ -19,6 +19,7 @@ type Backfill struct {
 	batchSize   int
 	batchDelay  time.Duration
 	callbacks   []CallbackFn
+	schema      string
 	stateSchema string
 }
 
