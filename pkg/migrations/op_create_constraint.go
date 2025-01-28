@@ -250,8 +250,9 @@ func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn d
 	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(o.Table))
 
 	writer := &ConstraintSQLWriter{
-		Name:    o.Name,
-		Columns: o.Columns,
+		Name:           o.Name,
+		Columns:        o.Columns,
+		SkipValidation: true,
 	}
 	sql += writer.WriteForeignKey(
 		o.References.Table,

@@ -324,6 +324,7 @@ type ConstraintSQLWriter struct {
 	Columns           []string
 	InitiallyDeferred bool
 	Deferrable        bool
+	SkipValidation    bool
 
 	// unique, exclude, primary key constraints support the following options
 	IncludeColumns    []string
@@ -399,6 +400,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 		onUpdateAction,
 	)
 	constraint += w.addDeferrable()
+	constraint += w.skipValidation()
 	return constraint
 }
 
@@ -432,4 +434,11 @@ func (w *ConstraintSQLWriter) addDeferrable() string {
 		deferrable += " INITIALLY IMMEDIATE"
 	}
 	return deferrable
+}
+
+func (w *ConstraintSQLWriter) skipValidation() string {
+	if w.SkipValidation {
+		return " NOT VALID"
+	}
+	return ""
 }
