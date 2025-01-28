@@ -386,7 +386,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	onDeleteAction := string(ForeignKeyOnDeleteNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
-		if setColumns != nil && len(setColumns) != 0 {
+		if len(setColumns) != 0 {
 			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
 		}
 	}
