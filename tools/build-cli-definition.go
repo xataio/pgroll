@@ -5,6 +5,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -47,8 +48,7 @@ func main() {
 	}
 
 	if err := writeJSONToFile("cli-definition.json", result); err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("failed to write JSON to file: %v", err)
 	}
 
 	fmt.Println("CLI JSON schema generated successfully")
@@ -112,7 +112,7 @@ func validateArgs(cmd *cobra.Command) []string {
 	}
 
 	if maxArgs != len(cmd.ValidArgs) {
-		panic(fmt.Sprintf("Mismatch between maxArgs and ValidArgs for command: %s", cmd.Name()))
+		log.Fatalf("Mismatch between maxArgs and ValidArgs for command: %s", cmd.Name())
 	}
 
 	if cmd.ValidArgs == nil {
