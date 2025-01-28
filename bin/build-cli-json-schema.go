@@ -59,7 +59,7 @@ func extractCommands(cmds []*cobra.Command) []Command {
 		return []Command{}
 	}
 
-	var commands []Command
+	commands := make([]Command, 0, len(cmds))
 	for _, cmd := range cmds {
 		commands = append(commands, processCommand(cmd))
 	}
@@ -83,7 +83,7 @@ func extractFlags(flagSet *pflag.FlagSet) []Flag {
 		return []Flag{}
 	}
 
-	var flags []Flag = []Flag{}
+	flags := make([]Flag, 0, flagSet.NFlag())
 	flagSet.VisitAll(func(flag *pflag.Flag) {
 		flags = append(flags, Flag{
 			Name:        flag.Name,
