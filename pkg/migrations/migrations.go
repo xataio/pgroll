@@ -8,11 +8,10 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
-
-type CallbackFn func(done int64, total int64)
 
 // Operation is an operation that can be applied to a schema
 type Operation interface {
@@ -20,7 +19,7 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error)
+	Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
