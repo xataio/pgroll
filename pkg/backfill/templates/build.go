@@ -11,10 +11,11 @@ import (
 )
 
 type BatchConfig struct {
-	TableName  string
-	PrimaryKey []string
-	LastValue  []string
-	BatchSize  int
+	TableName     string
+	PrimaryKey    []string
+	LastValue     []string
+	BatchSize     int
+	TransactionID int64
 }
 
 func BuildSQL(cfg BatchConfig) (string, error) {

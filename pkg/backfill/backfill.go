@@ -56,12 +56,18 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 		return fmt.Errorf("get row count for %q: %w", table.Name, err)
 	}
 
+	xid, err := getTransactionID(ctx, bf.conn)
+	if err != nil {
+		return fmt.Errorf("get transaction id: %w", err)
+	}
+
 	// Create a batcher for the table.
 	b := batcher{
 		BatchConfig: templates.BatchConfig{
-			TableName:  table.Name,
-			PrimaryKey: identityColumns,
-			BatchSize:  bf.batchSize,
+			TableName:     table.Name,
+			PrimaryKey:    identityColumns,
+			BatchSize:     bf.batchSize,
+			TransactionID: xid,
 		},
 	}
 
@@ -86,6 +92,24 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 	}
 
 	return nil
+}
+
+// getTransactionID returns the current transaction ID. The transaction ID is
+// used to ensure that the backfill operation ignores rows that were
+// inserted/updated after the backfill process started.
+func getTransactionID(ctx context.Context, conn db.DB) (int64, error) {
+	var txid int64
+
+	rows, err := conn.QueryContext(ctx, "SELECT txid_current()")
+	if err != nil {
+		return 0, fmt.Errorf("getting transaction id: %w", err)
+	}
+	defer rows.Close()
+
+	if err := db.ScanFirstValue(rows, &txid); err != nil {
+		return 0, fmt.Errorf("scanning transaction id: %w", err)
+	}
+	return txid, nil
 }
 
 // getRowCount will attempt to get the row count for the given table. It first attempts to get an
