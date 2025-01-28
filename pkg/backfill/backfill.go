@@ -71,6 +71,7 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 			PrimaryKey:    identityColumns,
 			BatchSize:     bf.batchSize,
 			TransactionID: xid,
+			Schema:        bf.schema,
 			StateSchema:   bf.stateSchema,
 		},
 	}

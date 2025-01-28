@@ -16,6 +16,7 @@ type BatchConfig struct {
 	LastValue     []string
 	BatchSize     int
 	TransactionID int64
+	Schema        string
 	StateSchema   string
 }
 
