@@ -14,7 +14,7 @@ func latestCmd() *cobra.Command {
 	var migrationsDir string
 
 	latestCmd := &cobra.Command{
-		Use:     "latest <directory>",
+		Use:     "latest",
 		Short:   "Print the name of the latest schema version, either in the target database or a local directory",
 		Example: "latest --local ./migrations",
 		Args:    cobra.NoArgs,

@@ -16,33 +16,6 @@ import (
 // Version is the pgroll version
 var Version = "development"
 
-func init() {
-	viper.SetEnvPrefix("PGROLL")
-	viper.AutomaticEnv()
-
-	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
-	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
-	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
-	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")
-	rootCmd.PersistentFlags().Int("backfill-batch-size", roll.DefaultBackfillBatchSize, "Number of rows backfilled in each batch")
-	rootCmd.PersistentFlags().Duration("backfill-batch-delay", roll.DefaultBackfillDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
-	rootCmd.PersistentFlags().String("role", "", "Optional postgres role to set when executing migrations")
-
-	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
-	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
-	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
-	viper.BindPFlag("LOCK_TIMEOUT", rootCmd.PersistentFlags().Lookup("lock-timeout"))
-	viper.BindPFlag("BACKFILL_BATCH_SIZE", rootCmd.PersistentFlags().Lookup("backfill-batch-size"))
-	viper.BindPFlag("BACKFILL_BATCH_DELAY", rootCmd.PersistentFlags().Lookup("backfill-batch-delay"))
-	viper.BindPFlag("ROLE", rootCmd.PersistentFlags().Lookup("role"))
-}
-
-var rootCmd = &cobra.Command{
-	Use:          "pgroll",
-	SilenceUsage: true,
-	Version:      Version,
-}
-
 func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	pgURL := flags.PostgresURL()
 	schema := flags.Schema()
@@ -67,8 +40,32 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	)
 }
 
-// Execute executes the root command.
-func Execute() error {
+func Prepare() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:          "pgroll",
+		SilenceUsage: true,
+		Version:      Version,
+	}
+
+	viper.SetEnvPrefix("PGROLL")
+	viper.AutomaticEnv()
+
+	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
+	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
+	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
+	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")
+	rootCmd.PersistentFlags().Int("backfill-batch-size", roll.DefaultBackfillBatchSize, "Number of rows backfilled in each batch")
+	rootCmd.PersistentFlags().Duration("backfill-batch-delay", roll.DefaultBackfillDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	rootCmd.PersistentFlags().String("role", "", "Optional postgres role to set when executing migrations")
+
+	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
+	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
+	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
+	viper.BindPFlag("LOCK_TIMEOUT", rootCmd.PersistentFlags().Lookup("lock-timeout"))
+	viper.BindPFlag("BACKFILL_BATCH_SIZE", rootCmd.PersistentFlags().Lookup("backfill-batch-size"))
+	viper.BindPFlag("BACKFILL_BATCH_DELAY", rootCmd.PersistentFlags().Lookup("backfill-batch-delay"))
+	viper.BindPFlag("ROLE", rootCmd.PersistentFlags().Lookup("role"))
+
 	// register subcommands
 	rootCmd.AddCommand(startCmd())
 	rootCmd.AddCommand(completeCmd)
@@ -81,5 +78,11 @@ func Execute() error {
 	rootCmd.AddCommand(latestCmd())
 	rootCmd.AddCommand(sqlCmd())
 
-	return rootCmd.Execute()
+	return rootCmd
+}
+
+// Execute executes the root command.
+func Execute() error {
+	cmd := Prepare()
+	return cmd.Execute()
 }
