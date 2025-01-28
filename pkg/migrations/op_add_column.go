@@ -319,7 +319,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			Name:    col.References.Name,
 			Columns: []string{col.References.Column},
 		}
-		sql += writer.WriteForeignKey(
+		sql += " " + writer.WriteForeignKey(
 			col.References.Table,
 			[]string{col.References.Column},
 			col.References.OnDelete,
