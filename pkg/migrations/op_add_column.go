@@ -315,10 +315,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 
 	if col.References != nil {
-		writer := &ConstraintSQLWriter{
-			Name:    col.References.Name,
-			Columns: []string{col.References.Column},
-		}
+		writer := &ConstraintSQLWriter{}
 		sql += " " + writer.WriteForeignKey(
 			col.References.Table,
 			[]string{col.References.Column},
@@ -332,5 +329,6 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			pq.QuoteIdentifier(col.Check.Name),
 			col.Check.Constraint)
 	}
+	fmt.Println("ColumnSQLWriter sql:", sql)
 	return sql, nil
 }
