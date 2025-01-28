@@ -15,35 +15,43 @@ func TestBatchStatementBuilder(t *testing.T) {
 	}{
 		"single identity column no last value": {
 			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id"},
-				BatchSize:  10,
+				TableName:     "table_name",
+				PrimaryKey:    []string{"id"},
+				BatchSize:     10,
+				StateSchema:   "pgroll",
+				TransactionID: 1234,
 			},
 			expected: expectSingleIDColumnNoLastValue,
 		},
 		"multiple identity columns no last value": {
 			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id", "zip"},
-				BatchSize:  10,
+				TableName:     "table_name",
+				PrimaryKey:    []string{"id", "zip"},
+				BatchSize:     10,
+				StateSchema:   "pgroll",
+				TransactionID: 1234,
 			},
 			expected: multipleIDColumnsNoLastValue,
 		},
 		"single identity column with last value": {
 			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id"},
-				LastValue:  []string{"1"},
-				BatchSize:  10,
+				TableName:     "table_name",
+				PrimaryKey:    []string{"id"},
+				LastValue:     []string{"1"},
+				BatchSize:     10,
+				StateSchema:   "pgroll",
+				TransactionID: 1234,
 			},
 			expected: singleIDColumnWithLastValue,
 		},
 		"multiple identity columns with last value": {
 			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id", "zip"},
-				LastValue:  []string{"1", "1234"},
-				BatchSize:  10,
+				TableName:     "table_name",
+				PrimaryKey:    []string{"id", "zip"},
+				LastValue:     []string{"1", "1234"},
+				BatchSize:     10,
+				StateSchema:   "pgroll",
+				TransactionID: 1234,
 			},
 			expected: multipleIDColumnsWithLastValue,
 		},
@@ -63,6 +71,7 @@ const expectSingleIDColumnNoLastValue = `WITH batch AS
 (
   SELECT "id"
   FROM "table_name"
+  WHERE "pgroll".b_follows_a(xmin::text::bigint, 1234)
   ORDER BY "id"
   LIMIT 10
   FOR NO KEY UPDATE
@@ -83,6 +92,7 @@ const multipleIDColumnsNoLastValue = `WITH batch AS
 (
   SELECT "id", "zip"
   FROM "table_name"
+  WHERE "pgroll".b_follows_a(xmin::text::bigint, 1234)
   ORDER BY "id", "zip"
   LIMIT 10
   FOR NO KEY UPDATE
@@ -103,7 +113,8 @@ const singleIDColumnWithLastValue = `WITH batch AS
 (
   SELECT "id"
   FROM "table_name"
-  WHERE ("id") > ('1')
+  WHERE "pgroll".b_follows_a(xmin::text::bigint, 1234)
+  AND ("id") > ('1')
   ORDER BY "id"
   LIMIT 10
   FOR NO KEY UPDATE
@@ -124,7 +135,8 @@ const multipleIDColumnsWithLastValue = `WITH batch AS
 (
   SELECT "id", "zip"
   FROM "table_name"
-  WHERE ("id", "zip") > ('1', '1234')
+  WHERE "pgroll".b_follows_a(xmin::text::bigint, 1234)
+  AND ("id", "zip") > ('1', '1234')
   ORDER BY "id", "zip"
   LIMIT 10
   FOR NO KEY UPDATE
