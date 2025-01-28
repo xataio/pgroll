@@ -1020,6 +1020,76 @@ func TestCreateTable(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "create table with a simple exclude constraint mimicking unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+							Constraints: []migrations.Constraint{
+								{
+									Name: "exclude_id",
+									Type: migrations.ConstraintTypeExclude,
+									Exclude: &migrations.ConstraintExclude{
+										IndexMethod: "btree",
+										Elements:    "id WITH =",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "users", "exclude_id")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails because there is already a row with id 1.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "b",
+				}, testutils.ExclusionViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been dropped, so the constraint is gone.
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The exclusion constraint exists on the new table.
+				ExcludeConstraintMustExist(t, db, schema, "users", "exclude_id")
+
+				// Inserting a row into the table succeeds when the exclude constraint is satisfied.
+				// This is the first row, so the constraint is satisfied.
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Inserting a row into the table fails because there is already a row with id 1.
+				MustNotInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "b",
+				}, testutils.ExclusionViolationErrorCode)
+			},
+		},
 	})
 }
 

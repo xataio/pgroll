@@ -525,6 +525,218 @@ func TestDropNotNull(t *testing.T) {
 	})
 }
 
+func TestDropNotNullInMultiOperationMigrations(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, drop not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpAlterColumn{
+							Table:    "products",
+							Column:   "name",
+							Nullable: ptr(true),
+							Down:     "SELECT CASE WHEN name IS NULL THEN 'unknown' ELSE name END",
+							Up:       "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema with a NULL name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "1",
+				})
+
+				// Can insert a row into the new schema with a non-NULL name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "2",
+					"name": "apple",
+				})
+
+				// Can't insert a row into the old schema with a NULL name
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id": "3",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": nil},
+					{"id": 2, "name": "apple"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema with a NULL name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "3",
+				})
+
+				// Can't insert a row into the new schema with a non-NULL name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":   "4",
+					"name": "banana",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+					{"id": 3, "name": nil},
+					{"id": 4, "name": "banana"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
+		{
+			name: "rename table, rename column, drop not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpAlterColumn{
+							Table:    "products",
+							Column:   "item_name",
+							Nullable: ptr(true),
+							Down:     "SELECT CASE WHEN item_name IS NULL THEN 'unknown' ELSE item_name END",
+							Up:       "item_name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row via the new schema with a NULL item_name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "1",
+				})
+
+				// Can insert a row via the new schema with a non-NULL item_name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "2",
+					"item_name": "apple",
+				})
+
+				// Can't insert a row with a NULL name via the old schema
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id": "2",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": nil},
+					{"id": 2, "item_name": "apple"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "unknown"},
+					{"id": 2, "name": "apple"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+				TableMustBeCleanedUp(t, db, schema, "items", "item_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row via the new schema with a NULL item_name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id": "3",
+				})
+
+				// Can insert a row via the new schema with a non-NULL item_name
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "4",
+					"item_name": "banana",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "unknown"},
+					{"id": 2, "item_name": "apple"},
+					{"id": 3, "item_name": nil},
+					{"id": 4, "item_name": "banana"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+				TableMustBeCleanedUp(t, db, schema, "products", "item_name")
+			},
+		},
+	})
+}
+
 func TestDropNotNullValidation(t *testing.T) {
 	t.Parallel()
 

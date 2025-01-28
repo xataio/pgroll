@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -149,7 +150,7 @@ func TestAddColumn(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
+			wantStartErr: backfill.NotPossibleError{Table: "users"},
 		},
 		{
 			name: "add serial columns",
@@ -1496,7 +1497,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.BackfillNotPossibleError{Table: "users"},
+			wantStartErr: backfill.NotPossibleError{Table: "users"},
 		},
 		{
 			name: "table with a unique not null column can be backfilled",

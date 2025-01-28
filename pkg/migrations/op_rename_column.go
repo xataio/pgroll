@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRenameColumn)(nil)
 
-func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
 	// Rename the table in the in-memory schema.
 	table := s.GetTable(o.Table)
 	table.RenameColumn(o.From, o.To)

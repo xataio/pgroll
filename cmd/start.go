@@ -21,9 +21,10 @@ func startCmd() *cobra.Command {
 	var complete bool
 
 	startCmd := &cobra.Command{
-		Use:   "start <file>",
-		Short: "Start a migration for the operations present in the given file",
-		Args:  cobra.ExactArgs(1),
+		Use:       "start <file>",
+		Short:     "Start a migration for the operations present in the given file",
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: []string{"file"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fileName := args[0]
 

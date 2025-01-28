@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package migrations
+package backfill
 
 import (
 	"context"
@@ -16,17 +16,19 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-// Backfill updates all rows in the given table, in batches, using the
+type CallbackFn func(done int64, total int64)
+
+// Start updates all rows in the given table, in batches, using the
 // following algorithm:
 // 1. Get the primary key column for the table.
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Backfill(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
+func Start(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
 	// get the backfill column
 	identityColumns := getIdentityColumns(table)
 	if identityColumns == nil {
-		return BackfillNotPossibleError{Table: table.Name}
+		return NotPossibleError{Table: table.Name}
 	}
 
 	total, err := getRowCount(ctx, conn, table.Name)
@@ -102,11 +104,11 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	return total, nil
 }
 
-// checkBackfill will return an error if the backfill operation is not supported.
-func checkBackfill(table *schema.Table) error {
+// IsPossible will return an error if the backfill operation is not supported.
+func IsPossible(table *schema.Table) error {
 	cols := getIdentityColumns(table)
 	if cols == nil {
-		return BackfillNotPossibleError{Table: table.Name}
+		return NotPossibleError{Table: table.Name}
 	}
 
 	return nil

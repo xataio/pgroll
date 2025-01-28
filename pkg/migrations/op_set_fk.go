@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -22,7 +23,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...CallbackFn) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.

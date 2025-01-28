@@ -18,9 +18,10 @@ func pullCmd() *cobra.Command {
 	var withPrefixes bool
 
 	pullCmd := &cobra.Command{
-		Use:   "pull <target directory>",
-		Short: "Pull migration history from the target database and write it to disk",
-		Args:  cobra.ExactArgs(1),
+		Use:       "pull <target directory>",
+		Short:     "Pull migration history from the target database and write it to disk",
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: []string{"directory"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			targetDir := args[0]

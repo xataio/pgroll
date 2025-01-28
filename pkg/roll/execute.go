@@ -10,12 +10,13 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 // Start will apply the required changes to enable supporting the new schema version
-func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) error {
+func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs ...backfill.CallbackFn) error {
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration, cbs...)
 	if err != nil {
 		return err
@@ -27,7 +28,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cbs .
 
 // StartDDLOperations performs the DDL operations for the migration. This does
 // not include running backfills for any modified tables.
-func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...migrations.CallbackFn) ([]*schema.Table, error) {
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...backfill.CallbackFn) ([]*schema.Table, error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -308,9 +309,9 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 	return nil
 }
 
-func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs ...migrations.CallbackFn) error {
+func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs ...backfill.CallbackFn) error {
 	for _, table := range tables {
-		if err := migrations.Backfill(ctx, m.pgConn, table, m.backfillBatchSize, m.backfillBatchDelay, cbs...); err != nil {
+		if err := backfill.Start(ctx, m.pgConn, table, m.backfillBatchSize, m.backfillBatchDelay, cbs...); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(

@@ -174,14 +174,6 @@ func (e ConstraintAlreadyExistsError) Error() string {
 	return fmt.Sprintf("constraint %q on table %q already exists", e.Constraint, e.Table)
 }
 
-type BackfillNotPossibleError struct {
-	Table string
-}
-
-func (e BackfillNotPossibleError) Error() string {
-	return fmt.Sprintf("a backfill is required but table %q doesn't have a single column primary key or a UNIQUE, NOT NULL column", e.Table)
-}
-
 type InvalidReplicaIdentityError struct {
 	Table    string
 	Identity string

@@ -244,6 +244,12 @@ func TestConvertCreateTableStatements(t *testing.T) {
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT)",
 			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyOnDeleteSETDEFAULT, migrations.ForeignKeyOnDeleteSETDEFAULT),
+			sql:        "CREATE TABLE foo(id integer, s timestamptz, e timestamptz, canceled boolean DEFAULT false, EXCLUDE USING gist (id WITH =, tstzrange(s, e) WITH &&) WHERE (not canceled))",
+			expectedOp: expect.CreateTableOp35,
+		},
+		{
+			sql:        "CREATE TABLE foo(id integer, b text, EXCLUDE USING btree (id WITH =) DEFERRABLE INITIALLY DEFERRED)",
+			expectedOp: expect.CreateTableOp36,
 		},
 	}
 
