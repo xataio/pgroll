@@ -22,6 +22,7 @@ type DB interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error
+	RawConn() *sql.DB
 	Close() error
 }
 
@@ -104,6 +105,11 @@ func (db *RDB) WithRetryableTransaction(ctx context.Context, f func(context.Cont
 
 		return err
 	}
+}
+
+// RawConn returns the underlying *sql.DB.
+func (db *RDB) RawConn() *sql.DB {
+	return db.DB
 }
 
 func (db *RDB) Close() error {

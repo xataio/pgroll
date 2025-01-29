@@ -23,6 +23,10 @@ func (db *FakeDB) WithRetryableTransaction(ctx context.Context, f func(context.C
 	return nil
 }
 
+func (db *FakeDB) RawConn() *sql.DB {
+	return nil
+}
+
 func (db *FakeDB) Close() error {
 	return nil
 }
