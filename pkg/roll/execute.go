@@ -310,8 +310,13 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 }
 
 func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cbs ...backfill.CallbackFn) error {
+	bf := backfill.New(m.pgConn,
+		backfill.WithBatchSize(m.backfillBatchSize),
+		backfill.WithBatchDelay(m.backfillBatchDelay),
+		backfill.WithCallbacks(cbs...))
+
 	for _, table := range tables {
-		if err := backfill.Start(ctx, m.pgConn, table, m.backfillBatchSize, m.backfillBatchDelay, cbs...); err != nil {
+		if err := bf.Start(ctx, table); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(

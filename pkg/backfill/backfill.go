@@ -16,7 +16,29 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+type Backfill struct {
+	conn       db.DB
+	batchSize  int
+	batchDelay time.Duration
+	callbacks  []CallbackFn
+}
+
 type CallbackFn func(done int64, total int64)
+
+// New creates a new backfill operation with the given options. The backfill is
+// not started until `Start` is invoked.
+func New(conn db.DB, opts ...OptionFn) *Backfill {
+	b := &Backfill{
+		conn:      conn,
+		batchSize: 1000,
+	}
+
+	for _, opt := range opts {
+		opt(b)
+	}
+
+	return b
+}
 
 // Start updates all rows in the given table, in batches, using the
 // following algorithm:
@@ -24,28 +46,28 @@ type CallbackFn func(done int64, total int64)
 // 2. Get the first batch of rows from the table, ordered by the primary key.
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
-func Start(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, batchDelay time.Duration, cbs ...CallbackFn) error {
+func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 	// get the backfill column
 	identityColumns := getIdentityColumns(table)
 	if identityColumns == nil {
 		return NotPossibleError{Table: table.Name}
 	}
 
-	total, err := getRowCount(ctx, conn, table.Name)
+	total, err := getRowCount(ctx, bf.conn, table.Name)
 	if err != nil {
 		return fmt.Errorf("get row count for %q: %w", table.Name, err)
 	}
 
 	// Create a batcher for the table.
-	b := newBatcher(table, batchSize)
+	b := newBatcher(table, bf.batchSize)
 
 	// Update each batch of rows, invoking callbacks for each one.
 	for batch := 0; ; batch++ {
-		for _, cb := range cbs {
-			cb(int64(batch*batchSize), total)
+		for _, cb := range bf.callbacks {
+			cb(int64(batch*bf.batchSize), total)
 		}
 
-		if err := b.updateBatch(ctx, conn); err != nil {
+		if err := b.updateBatch(ctx, bf.conn); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				break
 			}
@@ -55,7 +77,7 @@ func Start(ctx context.Context, conn db.DB, table *schema.Table, batchSize int, 
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(batchDelay):
+		case <-time.After(bf.batchDelay):
 		}
 	}
 
