@@ -135,7 +135,7 @@ var AddColumnOp10 = &migrations.OpAddColumn{
 	},
 }
 
-func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyReferenceOnDelete) *migrations.OpAddColumn {
+func AddColumnOp8WithOnDeleteAction(action migrations.ForeignKeyAction) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,

@@ -249,7 +249,7 @@ func TestSetCheckConstraint(t *testing.T) {
 										Name:     "fk_employee_department",
 										Table:    "departments",
 										Column:   "id",
-										OnDelete: migrations.ForeignKeyReferenceOnDeleteCASCADE,
+										OnDelete: migrations.ForeignKeyActionCASCADE,
 									},
 								},
 							},

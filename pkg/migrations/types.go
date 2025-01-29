@@ -138,13 +138,13 @@ type ConstraintReferences struct {
 	MatchType ConstraintReferencesMatchType `json:"match_type,omitempty"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
 
 	// Columns to set to null or to default on delete
 	OnDeleteSetColumns []string `json:"on_delete_set_columns,omitempty"`
 
 	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyReferenceOnDelete `json:"on_update,omitempty"`
+	OnUpdate ForeignKeyAction `json:"on_update,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`
@@ -164,6 +164,14 @@ const ConstraintTypeForeignKey ConstraintType = "foreign_key"
 const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
 
+type ForeignKeyAction string
+
+const ForeignKeyActionCASCADE ForeignKeyAction = "CASCADE"
+const ForeignKeyActionNOACTION ForeignKeyAction = "NO ACTION"
+const ForeignKeyActionRESTRICT ForeignKeyAction = "RESTRICT"
+const ForeignKeyActionSETDEFAULT ForeignKeyAction = "SET DEFAULT"
+const ForeignKeyActionSETNULL ForeignKeyAction = "SET NULL"
+
 // Foreign key reference definition
 type ForeignKeyReference struct {
 	// Name of the referenced column
@@ -173,19 +181,11 @@ type ForeignKeyReference struct {
 	Name string `json:"name"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
 
 	// Name of the referenced table
 	Table string `json:"table"`
 }
-
-type ForeignKeyReferenceOnDelete string
-
-const ForeignKeyReferenceOnDeleteCASCADE ForeignKeyReferenceOnDelete = "CASCADE"
-const ForeignKeyReferenceOnDeleteNOACTION ForeignKeyReferenceOnDelete = "NO ACTION"
-const ForeignKeyReferenceOnDeleteRESTRICT ForeignKeyReferenceOnDelete = "RESTRICT"
-const ForeignKeyReferenceOnDeleteSETDEFAULT ForeignKeyReferenceOnDelete = "SET DEFAULT"
-const ForeignKeyReferenceOnDeleteSETNULL ForeignKeyReferenceOnDelete = "SET NULL"
 
 // Map of column names to down SQL expressions
 type MultiColumnDownSQL map[string]string
@@ -276,7 +276,7 @@ type OpCreateConstraintReferences struct {
 	Columns []string `json:"columns"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyReferenceOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`

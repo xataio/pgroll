@@ -171,7 +171,7 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 				return FieldRequiredError{Name: "references"}
 			}
 			if len(c.References.OnDeleteSetColumns) != 0 {
-				if c.References.OnDelete != ForeignKeyReferenceOnDeleteSETDEFAULT && c.References.OnDelete != ForeignKeyReferenceOnDeleteSETNULL {
+				if c.References.OnDelete != ForeignKeyActionSETDEFAULT && c.References.OnDelete != ForeignKeyActionSETNULL {
 					return UnexpectedOnDeleteSetColumnError{
 						Name: o.Name,
 					}
@@ -381,15 +381,15 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyReferenceOnDelete, setColumns []string) string {
-	onDeleteAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string) string {
+	onDeleteAction := string(ForeignKeyActionNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
 		if len(setColumns) != 0 {
 			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
 		}
 	}
-	onUpdateAction := string(ForeignKeyReferenceOnDeleteNOACTION)
+	onUpdateAction := string(ForeignKeyActionNOACTION)
 	if onUpdate != "" {
 		onUpdateAction = strings.ToUpper(string(onUpdate))
 	}

@@ -191,11 +191,11 @@ type InvalidOnDeleteSettingError struct {
 func (e InvalidOnDeleteSettingError) Error() string {
 	return fmt.Sprintf("foreign key %q on_delete setting must be one of: %q, %q, %q, %q or %q, not %q",
 		e.Name,
-		ForeignKeyReferenceOnDeleteNOACTION,
-		ForeignKeyReferenceOnDeleteRESTRICT,
-		ForeignKeyReferenceOnDeleteSETDEFAULT,
-		ForeignKeyReferenceOnDeleteSETNULL,
-		ForeignKeyReferenceOnDeleteCASCADE,
+		ForeignKeyActionNOACTION,
+		ForeignKeyActionRESTRICT,
+		ForeignKeyActionSETDEFAULT,
+		ForeignKeyActionSETNULL,
+		ForeignKeyActionCASCADE,
 		e.Setting,
 	)
 }
@@ -207,8 +207,8 @@ type UnexpectedOnDeleteSetColumnError struct {
 func (e UnexpectedOnDeleteSetColumnError) Error() string {
 	return fmt.Sprintf("if on_delete_set_columns is set in foreign key %q, on_delete setting must be one of: %q, %q",
 		e.Name,
-		ForeignKeyReferenceOnDeleteSETDEFAULT,
-		ForeignKeyReferenceOnDeleteSETNULL,
+		ForeignKeyActionSETDEFAULT,
+		ForeignKeyActionSETNULL,
 	)
 }
 
