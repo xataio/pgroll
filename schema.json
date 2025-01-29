@@ -113,19 +113,85 @@
           "description": "Name of the referenced table",
           "type": "string"
         },
+        "match_type": {
+          "description": "Match type of the foreign key constraint",
+          "$ref": "#/$defs/ForeignKeyMatchType",
+          "default": "SIMPLE"
+        },
         "on_delete": {
           "description": "On delete behavior of the foreign key constraint",
           "$ref": "#/$defs/ForeignKeyAction",
           "default": "NO ACTION"
+        },
+        "on_update": {
+          "description": "On update behavior of the foreign key constraint",
+          "$ref": "#/$defs/ForeignKeyAction",
+          "default": "NO ACTION"
+        },
+        "deferrable": {
+          "description": "Deferable constraint",
+          "type": "boolean",
+          "default": false
+        },
+        "initially_deferred": {
+          "description": "Initially deferred constraint",
+          "type": "boolean",
+          "default": false
         }
       },
       "required": ["column", "name", "table"],
+      "type": "object"
+    },
+    "TableForeignKeyReference": {
+      "additionalProperties": false,
+      "description": "Table level foreign key reference definition",
+      "properties": {
+        "table": {
+          "description": "Name of the table",
+          "type": "string"
+        },
+        "columns": {
+          "description": "Columns to reference",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "match_type": {
+          "description": "Match type of the foreign key constraint",
+          "$ref": "#/$defs/ForeignKeyMatchType",
+          "default": "SIMPLE"
+        },
+        "on_update": {
+          "description": "On update behavior of the foreign key constraint",
+          "$ref": "#/$defs/ForeignKeyAction",
+          "default": "NO ACTION"
+        },
+        "on_delete": {
+          "description": "On delete behavior of the foreign key constraint",
+          "$ref": "#/$defs/ForeignKeyAction",
+          "default": "NO ACTION"
+        },
+        "on_delete_set_columns": {
+          "description": "Columns to set to null or to default on delete",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["table", "columns"],
       "type": "object"
     },
     "ForeignKeyAction": {
       "description": "On delete behavior of the foreign key constraint",
       "type": "string",
       "enum": ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT"]
+    },
+    "ForeignKeyMatchType": {
+      "description": "Match type of the foreign key constraint",
+      "type": "string",
+      "enum": ["SIMPLE", "FULL", "PARTIAL"]
     },
     "Constraint": {
       "additionalProperties": false,
@@ -174,45 +240,7 @@
         },
         "references": {
           "description": "Reference to the foreign key",
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["table", "columns"],
-          "properties": {
-            "table": {
-              "description": "Name of the table",
-              "type": "string"
-            },
-            "columns": {
-              "description": "Columns to reference",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "match_type": {
-              "description": "Match type of the foreign key constraint",
-              "type": "string",
-              "enum": ["SIMPLE", "FULL", "PARTIAL"],
-              "default": "SIMPLE"
-            },
-            "on_update": {
-              "description": "On update behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyAction",
-              "default": "NO ACTION"
-            },
-            "on_delete": {
-              "description": "On delete behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyAction",
-              "default": "NO ACTION"
-            },
-            "on_delete_set_columns": {
-              "description": "Columns to set to null or to default on delete",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
+          "$ref": "#/$defs/TableForeignKeyReference"
         },
         "exclude": {
           "type": "object",
@@ -768,27 +796,7 @@
         },
         "references": {
           "description": "Reference to the foreign key",
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["table", "columns"],
-          "properties": {
-            "table": {
-              "description": "Name of the table",
-              "type": "string"
-            },
-            "columns": {
-              "description": "Columns to reference",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "on_delete": {
-              "description": "On delete behavior of the foreign key constraint",
-              "$ref": "#/$defs/ForeignKeyAction",
-              "default": "NO ACTION"
-            }
-          }
+          "$ref": "#/$defs/TableForeignKeyReference"
         },
         "up": {
           "description": "SQL expressions for up migrations",
@@ -799,6 +807,25 @@
           "$ref": "#/$defs/MultiColumnDownSQL"
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "foreign_key"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              }
+            },
+            "required": ["columns", "references"]
+          }
+        }
+      ],
       "required": ["name", "table", "type", "up", "down"],
       "type": "object"
     },

@@ -213,7 +213,7 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		Up:      migs,
 		Down:    migs,
 		Name:    constraint.GetConname(),
-		References: &migrations.OpCreateConstraintReferences{
+		References: &migrations.TableForeignKeyReference{
 			Columns:  foreignColumns,
 			OnDelete: onDelete,
 			Table:    foreignTable,
