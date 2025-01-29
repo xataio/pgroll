@@ -155,7 +155,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// Drop the old schema
 	if !m.disableVersionSchemas && (!migration.ContainsRawSQLOperation() || !m.noVersionSchemaForRawSQL) {
-		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
+		prevVersion, err := m.state.PreviousVersion(ctx, m.schema, false)
 		if err != nil {
 			return fmt.Errorf("unable to get name of previous version: %w", err)
 		}
@@ -241,7 +241,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	// get the name of the previous version of the schema
-	previousVersion, err := m.state.PreviousVersion(ctx, m.schema)
+	previousVersion, err := m.state.PreviousVersion(ctx, m.schema, true)
 	if err != nil {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
