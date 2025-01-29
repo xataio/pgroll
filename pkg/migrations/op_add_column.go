@@ -315,7 +315,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 
 	if col.References != nil {
-		onDelete := string(ForeignKeyReferenceOnDeleteNOACTION)
+		onDelete := string(ForeignKeyActionNOACTION)
 		if col.References.OnDelete != "" {
 			onDelete = strings.ToUpper(string(col.References.OnDelete))
 		}

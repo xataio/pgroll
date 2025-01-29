@@ -11,12 +11,12 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
-var referentialAction = map[string]migrations.ForeignKeyReferenceOnDelete{
-	"a": migrations.ForeignKeyReferenceOnDeleteNOACTION,
-	"c": migrations.ForeignKeyReferenceOnDeleteCASCADE,
-	"d": migrations.ForeignKeyReferenceOnDeleteSETDEFAULT,
-	"n": migrations.ForeignKeyReferenceOnDeleteSETNULL,
-	"r": migrations.ForeignKeyReferenceOnDeleteRESTRICT,
+var referentialAction = map[string]migrations.ForeignKeyAction{
+	"a": migrations.ForeignKeyActionNOACTION,
+	"c": migrations.ForeignKeyActionCASCADE,
+	"d": migrations.ForeignKeyActionSETDEFAULT,
+	"n": migrations.ForeignKeyActionSETNULL,
+	"r": migrations.ForeignKeyActionRESTRICT,
 }
 
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
@@ -285,14 +285,14 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 			matchType = migrations.ConstraintReferencesMatchTypeSIMPLE
 		}
 		columnsToSet := make([]string, len(c.FkDelSetCols))
-		onDelete := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		onDelete := migrations.ForeignKeyActionNOACTION
 		if c.FkDelAction != "" {
 			onDelete = referentialAction[c.FkDelAction]
 			for i, node := range c.FkDelSetCols {
 				columnsToSet[i] = node.GetString_().Sval
 			}
 		}
-		onUpdate := migrations.ForeignKeyReferenceOnDeleteNOACTION
+		onUpdate := migrations.ForeignKeyActionNOACTION
 		if c.FkUpdAction != "" {
 			onUpdate = referentialAction[c.FkUpdAction]
 		}

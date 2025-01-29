@@ -223,20 +223,20 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 	}, nil
 }
 
-func parseOnDeleteAction(action string) (migrations.ForeignKeyReferenceOnDelete, error) {
+func parseOnDeleteAction(action string) (migrations.ForeignKeyAction, error) {
 	switch action {
 	case "a":
-		return migrations.ForeignKeyReferenceOnDeleteNOACTION, nil
+		return migrations.ForeignKeyActionNOACTION, nil
 	case "c":
-		return migrations.ForeignKeyReferenceOnDeleteCASCADE, nil
+		return migrations.ForeignKeyActionCASCADE, nil
 	case "r":
-		return migrations.ForeignKeyReferenceOnDeleteRESTRICT, nil
+		return migrations.ForeignKeyActionRESTRICT, nil
 	case "d":
-		return migrations.ForeignKeyReferenceOnDeleteSETDEFAULT, nil
+		return migrations.ForeignKeyActionSETDEFAULT, nil
 	case "n":
-		return migrations.ForeignKeyReferenceOnDeleteSETNULL, nil
+		return migrations.ForeignKeyActionSETNULL, nil
 	default:
-		return migrations.ForeignKeyReferenceOnDeleteNOACTION, fmt.Errorf("unknown delete action: %q", action)
+		return migrations.ForeignKeyActionNOACTION, fmt.Errorf("unknown delete action: %q", action)
 	}
 }
 
