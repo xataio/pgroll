@@ -15,10 +15,11 @@ import (
 )
 
 type Backfill struct {
-	conn       db.DB
-	batchSize  int
-	batchDelay time.Duration
-	callbacks  []CallbackFn
+	conn        db.DB
+	stateSchema string
+	batchSize   int
+	batchDelay  time.Duration
+	callbacks   []CallbackFn
 }
 
 type CallbackFn func(done int64, total int64)
@@ -27,8 +28,9 @@ type CallbackFn func(done int64, total int64)
 // not started until `Start` is invoked.
 func New(conn db.DB, opts ...OptionFn) *Backfill {
 	b := &Backfill{
-		conn:      conn,
-		batchSize: 1000,
+		conn:        conn,
+		batchSize:   1000,
+		stateSchema: "pgroll",
 	}
 
 	for _, opt := range opts {
