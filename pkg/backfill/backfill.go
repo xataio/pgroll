@@ -45,15 +45,19 @@ func New(conn db.DB, opts ...OptionFn) *Backfill {
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
 func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
+	total, err := getRowCount(ctx, bf.conn, table.Name)
+	if err != nil {
+		return fmt.Errorf("get row count for %q: %w", table.Name, err)
+	}
+	if total == 0 {
+		// No need to backfill an empty table.
+		return nil
+	}
+
 	// get the backfill column
 	identityColumns := getIdentityColumns(table)
 	if identityColumns == nil {
 		return NotPossibleError{Table: table.Name}
-	}
-
-	total, err := getRowCount(ctx, bf.conn, table.Name)
-	if err != nil {
-		return fmt.Errorf("get row count for %q: %w", table.Name, err)
 	}
 
 	// Create a batcher for the table.
