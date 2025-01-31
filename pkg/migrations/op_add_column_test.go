@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -212,6 +213,58 @@ func TestAddColumn(t *testing.T) {
 					{"id": 3, "name": "Carl", "counter_smallserial": 3, "counter_serial": 3, "counter_bigserial": 3},
 				}, res)
 			},
+		},
+		{
+			name: "add column to non-empty table without primary key",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: true,
+							},
+							Up: "1",
+						},
+					},
+				},
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped from the underlying table
+				columnName := migrations.TemporaryName("age")
+				ColumnMustNotExist(t, db, schema, "users", columnName)
+
+				// The table's column count reflects the drop of the new column
+				TableMustHaveColumnCount(t, db, schema, "users", 1)
+
+				// Insert a row to make sure we get a not possible error because there's no identity column
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Carl",
+				})
+
+				rows := MustSelect(t, db, schema, "01_add_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"name": "Carl"},
+				}, rows)
+			},
+			wantStartAfterRollbackErr: backfill.NotPossibleError{Table: "users"},
 		},
 	})
 }
@@ -1330,6 +1383,27 @@ func TestAddColumnValidation(t *testing.T) {
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "orders",
+							Column: migrations.Column{
+								Default: ptr("'foo'"),
+								Name:    "description",
+								Type:    "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: nil,
+		},
+		{
+			name: "table without a primary key does not cause backfill error, because it is empty",
+			migrations: []migrations.Migration{
+				addTableMigrationNoPKNullable,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Up:    "UPPER(name)",
 							Column: migrations.Column{
 								Default: ptr("'foo'"),
 								Name:    "description",
