@@ -112,6 +112,65 @@ func TestAddColumn(t *testing.T) {
 			},
 		},
 		{
+			name: "a newly added column can't be used as the identity column for a backfill",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					// This column is NOT NULL and UNIQUE and is added to a table without
+					// a PK, so it could in theory be used as the identity column for a
+					// backfill. However, it shouldn't be used as the identity column for
+					// a backfill because it's a newly added column whose temporary
+					// `_pgroll_new_description` column will be full of NULLs for any
+					// existing rows in the table.
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "description",
+								Type:     "integer",
+								Nullable: false,
+								Unique:   true,
+							},
+							Up: "'this is a description'",
+						},
+					},
+				},
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped from the underlying table
+				columnName := migrations.TemporaryName("age")
+				ColumnMustNotExist(t, db, schema, "users", columnName)
+
+				// The table's column count reflects the drop of the new column
+				TableMustHaveColumnCount(t, db, schema, "users", 1)
+
+				// Insert a row to make sure we get a not possible error because there's no identity column
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Carl",
+				})
+
+				rows := MustSelect(t, db, schema, "01_add_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"name": "Carl"},
+				}, rows)
+			},
+			wantStartAfterRollbackErr: backfill.NotPossibleError{Table: "users"},
+		},
+		{
 			name: "add serial columns",
 			migrations: []migrations.Migration{
 				{
