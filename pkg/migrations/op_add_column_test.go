@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -110,47 +109,6 @@ func TestAddColumn(t *testing.T) {
 					{"id": 3, "name": "Carl", "age": 31},
 				}, res)
 			},
-		},
-		{
-			name: "a newly added column can't be used as the identity column for a backfill",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_add_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "users",
-							Columns: []migrations.Column{
-								{
-									Name: "name",
-									Type: "varchar(255)",
-								},
-							},
-						},
-					},
-				},
-				{
-					// This column is NOT NULL and UNIQUE and is added to a table without
-					// a PK, so it could in theory be used as the identity column for a
-					// backfill. However, it shouldn't be used as the identity column for
-					// a backfill because it's a newly added column whose temporary
-					// `_pgroll_new_description` column will be full of NULLs for any
-					// existing rows in the table.
-					Name: "02_add_column",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "users",
-							Column: migrations.Column{
-								Name:     "description",
-								Type:     "integer",
-								Nullable: false,
-								Unique:   true,
-							},
-							Up: "'this is a description'",
-						},
-					},
-				},
-			},
-			wantStartErr: backfill.NotPossibleError{Table: "users"},
 		},
 		{
 			name: "add serial columns",
@@ -1382,27 +1340,6 @@ func TestAddColumnValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: nil,
-		},
-		{
-			name: "table must have a primary key on exactly one column or a unique not null if up is defined",
-			migrations: []migrations.Migration{
-				addTableMigrationNoPKNullable,
-				{
-					Name: "02_add_column",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "users",
-							Up:    "UPPER(name)",
-							Column: migrations.Column{
-								Default: ptr("'foo'"),
-								Name:    "description",
-								Type:    "text",
-							},
-						},
-					},
-				},
-			},
-			wantStartErr: backfill.NotPossibleError{Table: "users"},
 		},
 		{
 			name: "table with a unique not null column can be backfilled",

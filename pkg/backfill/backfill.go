@@ -134,16 +134,6 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	return total, nil
 }
 
-// IsPossible will return an error if the backfill operation is not supported.
-func IsPossible(table *schema.Table) error {
-	cols := getIdentityColumns(table)
-	if cols == nil {
-		return NotPossibleError{Table: table.Name}
-	}
-
-	return nil
-}
-
 // getIdentityColumn will return a column suitable for use in a backfill operation.
 func getIdentityColumns(table *schema.Table) []string {
 	pks := table.GetPrimaryKey()
