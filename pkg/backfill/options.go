@@ -27,3 +27,17 @@ func WithCallbacks(cbs ...CallbackFn) OptionFn {
 		o.callbacks = cbs
 	}
 }
+
+// WithStateSchema sets in which `pgroll` stores its internal state.
+func WithStateSchema(schema string) OptionFn {
+	return func(o *Backfill) {
+		o.stateSchema = schema
+	}
+}
+
+// WithSchema sets the schema in which the table resides.
+func WithSchema(schema string) OptionFn {
+	return func(o *Backfill) {
+		o.schema = schema
+	}
+}

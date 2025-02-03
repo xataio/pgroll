@@ -6,8 +6,12 @@ const SQL = `WITH batch AS
 (
   SELECT {{ commaSeparate (quoteIdentifiers .PrimaryKey) }}
   FROM {{ .TableName | qi}}
+  WHERE (
+    {{ .StateSchema | qi }}.b_follows_a(xmin::text::bigint, {{ .TransactionID }}) OR
+    {{ .StateSchema | qi }}.b_follows_a(xmin::text::bigint, {{ .StateSchema | qi }}.frozen_xid({{ .Schema | ql }}, {{ .TableName | ql }})::text::bigint)
+  )
   {{ if .LastValue -}}
-  WHERE ({{ commaSeparate (quoteIdentifiers .PrimaryKey) }}) > ({{ commaSeparate (quoteLiterals .LastValue) }})
+  AND ({{ commaSeparate (quoteIdentifiers .PrimaryKey) }}) > ({{ commaSeparate (quoteLiterals .LastValue) }})
   {{ end -}}
   ORDER BY {{ commaSeparate (quoteIdentifiers .PrimaryKey) }}
   LIMIT {{ .BatchSize }}
