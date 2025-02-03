@@ -320,7 +320,7 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
-			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns, c.References.MatchType)
 		case ConstraintTypeExclude:
 			constraintsSQL[i] = writer.WriteExclude(c.Exclude.IndexMethod, c.Exclude.Elements, c.Exclude.Predicate)
 		}
@@ -383,7 +383,7 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string) string {
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string, matchType ForeignKeyMatchType) string {
 	onDeleteAction := string(ForeignKeyActionNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
@@ -395,15 +395,20 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	if onUpdate != "" {
 		onUpdateAction = strings.ToUpper(string(onUpdate))
 	}
+	matchTypeStr := string(ForeignKeyMatchTypeSIMPLE)
+	if matchType != "" {
+		matchTypeStr = strings.ToUpper(string(matchType))
+	}
 
 	constraint := ""
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
+	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s",
 		strings.Join(quoteColumnNames(w.Columns), ", "),
 		pq.QuoteIdentifier(referencedTable),
 		strings.Join(quoteColumnNames(referencedColumns), ", "),
+		matchTypeStr,
 		onDeleteAction,
 		onUpdateAction,
 	)
