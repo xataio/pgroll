@@ -215,35 +215,35 @@ func TestConvertCreateTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE RESTRICT)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteRESTRICT),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionRESTRICT),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE CASCADE)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteCASCADE),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionCASCADE),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET NULL)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteSETNULL),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETNULL),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET DEFAULT)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteSETDEFAULT),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETDEFAULT),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyOnDeleteNOACTION, migrations.ForeignKeyOnDeleteNOACTION),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON DELETE CASCADE ON UPDATE RESTRICT)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteCASCADE, migrations.ForeignKeyOnDeleteRESTRICT),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyActionRESTRICT),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON DELETE SET NULL ON UPDATE CASCADE)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyOnDeleteSETNULL, migrations.ForeignKeyOnDeleteCASCADE),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyActionCASCADE),
 		},
 		{
 			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT)",
-			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyOnDeleteSETDEFAULT, migrations.ForeignKeyOnDeleteSETDEFAULT),
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyActionSETDEFAULT),
 		},
 		{
 			sql:        "CREATE TABLE foo(id integer, s timestamptz, e timestamptz, canceled boolean DEFAULT false, EXCLUDE USING gist (id WITH =, tstzrange(s, e) WITH &&) WHERE (not canceled))",
