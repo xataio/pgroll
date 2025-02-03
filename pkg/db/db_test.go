@@ -123,7 +123,7 @@ func TestWithRetryableTransaction(t *testing.T) {
 
 		// run a transaction that should retry until the lock is released
 		rdb := &db.RDB{DB: conn}
-		err := rdb.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		err := rdb.WithRetryableTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 			return tx.QueryRowContext(ctx, "SELECT 1 FROM test").Err()
 		})
 		require.NoError(t, err)
@@ -149,7 +149,7 @@ func TestWithRetryableTransactionWhenContextCancelled(t *testing.T) {
 		// Cancel the context before the lock times out
 		go time.AfterFunc(500*time.Millisecond, cancel)
 
-		err := rdb.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		err := rdb.WithRetryableTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 			return tx.QueryRowContext(ctx, "SELECT 1 FROM test").Err()
 		})
 		require.Errorf(t, err, "context canceled")

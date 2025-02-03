@@ -19,7 +19,7 @@ func (db *FakeDB) QueryContext(ctx context.Context, query string, args ...interf
 	return nil, nil
 }
 
-func (db *FakeDB) WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error {
+func (db *FakeDB) WithRetryableTransaction(ctx context.Context, opts *sql.TxOptions, f func(context.Context, *sql.Tx) error) error {
 	return nil
 }
 

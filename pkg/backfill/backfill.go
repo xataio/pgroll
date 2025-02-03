@@ -169,7 +169,7 @@ type batcher struct {
 }
 
 func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
-	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+	return conn.WithRetryableTransaction(ctx, nil, func(ctx context.Context, tx *sql.Tx) error {
 		// Build the query to update the next batch of rows
 		sql, err := templates.BuildSQL(b.BatchConfig)
 		if err != nil {

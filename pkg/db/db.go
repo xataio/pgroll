@@ -21,7 +21,7 @@ const (
 type DB interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-	WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error
+	WithRetryableTransaction(ctx context.Context, opts *sql.TxOptions, f func(context.Context, *sql.Tx) error) error
 	RawConn() *sql.DB
 	Close() error
 }
@@ -77,11 +77,11 @@ func (db *RDB) QueryContext(ctx context.Context, query string, args ...interface
 }
 
 // WithRetryableTransaction runs `f` in a transaction, retrying on lock_timeout errors.
-func (db *RDB) WithRetryableTransaction(ctx context.Context, f func(context.Context, *sql.Tx) error) error {
+func (db *RDB) WithRetryableTransaction(ctx context.Context, opts *sql.TxOptions, f func(context.Context, *sql.Tx) error) error {
 	b := backoff.New(maxBackoffDuration, backoffInterval)
 
 	for {
-		tx, err := db.DB.BeginTx(ctx, nil)
+		tx, err := db.DB.BeginTx(ctx, opts)
 		if err != nil {
 			return err
 		}
