@@ -309,7 +309,7 @@ func TestCreateTable(t *testing.T) {
 										Column:   "id",
 										Name:     "fk_users_id",
 										Table:    "users",
-										OnDelete: migrations.ForeignKeyOnDeleteCASCADE,
+										OnDelete: migrations.ForeignKeyActionCASCADE,
 									},
 								},
 								{
@@ -820,7 +820,7 @@ func TestCreateTable(t *testing.T) {
 									References: &migrations.TableForeignKeyReference{
 										Table:    "owners",
 										Columns:  []string{"id"},
-										OnDelete: migrations.ForeignKeyOnDeleteCASCADE,
+										OnDelete: migrations.ForeignKeyActionCASCADE,
 									},
 								},
 							},
@@ -950,7 +950,7 @@ func TestCreateTable(t *testing.T) {
 									References: &migrations.TableForeignKeyReference{
 										Table:              "owners",
 										Columns:            []string{"id", "city"},
-										OnDelete:           migrations.ForeignKeyOnDeleteSETDEFAULT,
+										OnDelete:           migrations.ForeignKeyActionSETDEFAULT,
 										OnDeleteSetColumns: []string{"owner_id", "owner_city_id"},
 									},
 								},

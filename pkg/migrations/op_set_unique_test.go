@@ -288,7 +288,7 @@ func TestSetColumnUnique(t *testing.T) {
 										Name:     "fk_employee_department",
 										Table:    "departments",
 										Column:   "id",
-										OnDelete: migrations.ForeignKeyOnDeleteSETNULL,
+										OnDelete: migrations.ForeignKeyActionSETNULL,
 									},
 								},
 							},

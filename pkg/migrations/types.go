@@ -137,19 +137,19 @@ const ConstraintTypeForeignKey ConstraintType = "foreign_key"
 const ConstraintTypePrimaryKey ConstraintType = "primary_key"
 const ConstraintTypeUnique ConstraintType = "unique"
 
+type ForeignKeyAction string
+
+const ForeignKeyActionCASCADE ForeignKeyAction = "CASCADE"
+const ForeignKeyActionNOACTION ForeignKeyAction = "NO ACTION"
+const ForeignKeyActionRESTRICT ForeignKeyAction = "RESTRICT"
+const ForeignKeyActionSETDEFAULT ForeignKeyAction = "SET DEFAULT"
+const ForeignKeyActionSETNULL ForeignKeyAction = "SET NULL"
+
 type ForeignKeyMatchType string
 
 const ForeignKeyMatchTypeFULL ForeignKeyMatchType = "FULL"
 const ForeignKeyMatchTypePARTIAL ForeignKeyMatchType = "PARTIAL"
 const ForeignKeyMatchTypeSIMPLE ForeignKeyMatchType = "SIMPLE"
-
-type ForeignKeyOnDelete string
-
-const ForeignKeyOnDeleteCASCADE ForeignKeyOnDelete = "CASCADE"
-const ForeignKeyOnDeleteNOACTION ForeignKeyOnDelete = "NO ACTION"
-const ForeignKeyOnDeleteRESTRICT ForeignKeyOnDelete = "RESTRICT"
-const ForeignKeyOnDeleteSETDEFAULT ForeignKeyOnDelete = "SET DEFAULT"
-const ForeignKeyOnDeleteSETNULL ForeignKeyOnDelete = "SET NULL"
 
 // Foreign key reference definition
 type ForeignKeyReference struct {
@@ -169,10 +169,10 @@ type ForeignKeyReference struct {
 	Name string `json:"name"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
 
 	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyOnDelete `json:"on_update,omitempty"`
+	OnUpdate ForeignKeyAction `json:"on_update,omitempty"`
 
 	// Name of the referenced table
 	Table string `json:"table"`
@@ -454,13 +454,13 @@ type TableForeignKeyReference struct {
 	MatchType ForeignKeyMatchType `json:"match_type,omitempty"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyOnDelete `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
 
 	// Columns to set to null or to default on delete
 	OnDeleteSetColumns []string `json:"on_delete_set_columns,omitempty"`
 
 	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyOnDelete `json:"on_update,omitempty"`
+	OnUpdate ForeignKeyAction `json:"on_update,omitempty"`
 
 	// Name of the table
 	Table string `json:"table"`

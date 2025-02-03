@@ -218,9 +218,8 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 		o.Column.Nullable = true
 	}
 
-	// Generated identity columns are marked not null automatically by PostgreSQL.
-	if o.Column.Generated != nil && o.Column.Generated.Identity != nil && !o.Column.IsNullable() {
-		o.Column.Nullable = true
+	if o.Column.Generated != nil {
+		return fmt.Errorf("adding generated columns to existing tables is not supported")
 	}
 
 	// Don't add a column with a CHECK constraint directly.

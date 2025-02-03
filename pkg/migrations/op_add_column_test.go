@@ -255,101 +255,6 @@ func TestAddColumn(t *testing.T) {
 				}, res)
 			},
 		},
-		{
-			name: "add generated identity column and a regular stored column",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_add_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "users",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "bigint",
-									Pk:   true,
-									Generated: &migrations.ColumnGenerated{
-										Identity: &migrations.ColumnGeneratedIdentity{
-											UserSpecifiedValues: "ALWAYS",
-										},
-									},
-								},
-								{
-									Name: "name",
-									Type: "varchar(255)",
-								},
-							},
-						},
-					},
-				},
-				{
-					Name: "02_add_column",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "users",
-							Column: migrations.Column{
-								Name: "generated_upper",
-								Type: "varchar(255)",
-								Generated: &migrations.ColumnGenerated{
-									Expression: "upper(name)",
-								},
-								Nullable: false,
-							},
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// old and new views of the table should exist
-				ViewMustExist(t, db, schema, "01_add_table", "users")
-				ViewMustExist(t, db, schema, "02_add_column", "users")
-
-				// inserting via both the old and the new views works
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
-					"name": "Alice",
-				})
-				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
-					"name": "Bob",
-				})
-
-				// selecting from both the old and the new views works
-				resOld := MustSelect(t, db, schema, "01_add_table", "users")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice"},
-					{"id": 2, "name": "Bob"},
-				}, resOld)
-				resNew := MustSelect(t, db, schema, "02_add_column", "users")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "generated_upper": "ALICE"},
-					{"id": 2, "name": "Bob", "generated_upper": "BOB"},
-				}, resNew)
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// The new column has been dropped from the underlying table
-				columnName := migrations.TemporaryName("generated_upper")
-				ColumnMustNotExist(t, db, schema, "users", columnName)
-
-				// The table's column count reflects the drop of the new column
-				TableMustHaveColumnCount(t, db, schema, "users", 2)
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// The new view still exists
-				ViewMustExist(t, db, schema, "02_add_column", "users")
-
-				// Inserting into the new view still works
-				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
-					"name": "Carl",
-				})
-
-				// Selecting from the new view still works
-				res := MustSelect(t, db, schema, "02_add_column", "users")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "Alice", "generated_upper": "ALICE"},
-					{"id": 2, "name": "Bob", "generated_upper": "BOB"},
-					{"id": 3, "name": "Carl", "generated_upper": "CARL"},
-				}, res)
-			},
-		},
 	})
 }
 
@@ -722,7 +627,7 @@ func TestAddForeignKeyColumn(t *testing.T) {
 									Name:     "fk_users_id",
 									Table:    "users",
 									Column:   "id",
-									OnDelete: migrations.ForeignKeyOnDeleteCASCADE,
+									OnDelete: migrations.ForeignKeyActionCASCADE,
 								},
 							},
 						},
@@ -1519,31 +1424,6 @@ func TestAddColumnValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: nil,
-		},
-		{
-			name: "generated column is either stored or identity",
-			migrations: []migrations.Migration{
-				addTableMigrationNoPKNullable,
-				{
-					Name: "02_add_column",
-					Operations: migrations.Operations{
-						&migrations.OpAddColumn{
-							Table: "users",
-							Column: migrations.Column{
-								Name: "name_upper",
-								Type: "text",
-								Generated: &migrations.ColumnGenerated{
-									Expression: "upper(name)",
-									Identity: &migrations.ColumnGeneratedIdentity{
-										SequenceOptions: "start 2",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			wantStartErr: migrations.InvalidGeneratedColumnError{Table: "users", Column: "name_upper"},
 		},
 	})
 }

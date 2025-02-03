@@ -7,7 +7,7 @@ import (
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
 
-func AddForeignKeyOp1WithParams(matchType migrations.ForeignKeyMatchType, onDelete, onUpdate migrations.ForeignKeyOnDelete) *migrations.OpCreateConstraint {
+func AddForeignKeyOp1WithParams(matchType migrations.ForeignKeyMatchType, onDelete, onUpdate migrations.ForeignKeyAction) *migrations.OpCreateConstraint {
 	return &migrations.OpCreateConstraint{
 		Columns: []string{"a", "b"},
 		Name:    "fk_bar_cd",
@@ -36,8 +36,8 @@ var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 	Name:    "fk_bar_c",
 	References: &migrations.TableForeignKeyReference{
 		Columns:   []string{"c"},
-		OnDelete:  migrations.ForeignKeyOnDeleteNOACTION,
-		OnUpdate:  migrations.ForeignKeyOnDeleteNOACTION,
+		OnDelete:  migrations.ForeignKeyActionNOACTION,
+		OnUpdate:  migrations.ForeignKeyActionNOACTION,
 		MatchType: migrations.ForeignKeyMatchTypeSIMPLE,
 		Table:     "bar",
 	},
@@ -56,8 +56,8 @@ var AddForeignKeyOp3 = &migrations.OpCreateConstraint{
 	Name:    "fk_bar_c",
 	References: &migrations.TableForeignKeyReference{
 		Columns:   []string{"c"},
-		OnDelete:  migrations.ForeignKeyOnDeleteNOACTION,
-		OnUpdate:  migrations.ForeignKeyOnDeleteNOACTION,
+		OnDelete:  migrations.ForeignKeyActionNOACTION,
+		OnUpdate:  migrations.ForeignKeyActionNOACTION,
 		MatchType: migrations.ForeignKeyMatchTypeSIMPLE,
 		Table:     "schema_a.bar",
 	},

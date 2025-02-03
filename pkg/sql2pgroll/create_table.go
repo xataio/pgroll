@@ -11,12 +11,12 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
-var referentialAction = map[string]migrations.ForeignKeyOnDelete{
-	"a": migrations.ForeignKeyOnDeleteNOACTION,
-	"c": migrations.ForeignKeyOnDeleteCASCADE,
-	"d": migrations.ForeignKeyOnDeleteSETDEFAULT,
-	"n": migrations.ForeignKeyOnDeleteSETNULL,
-	"r": migrations.ForeignKeyOnDeleteRESTRICT,
+var referentialAction = map[string]migrations.ForeignKeyAction{
+	"a": migrations.ForeignKeyActionNOACTION,
+	"c": migrations.ForeignKeyActionCASCADE,
+	"d": migrations.ForeignKeyActionSETDEFAULT,
+	"n": migrations.ForeignKeyActionSETNULL,
+	"r": migrations.ForeignKeyActionRESTRICT,
 }
 
 var matchTypes = map[string]migrations.ForeignKeyMatchType{
@@ -359,7 +359,7 @@ func convertFkConstraint(c *pgq.Constraint) ([]string, *migrations.TableForeignK
 		matchType = matchTypes[c.FkMatchtype]
 	}
 	var columnsToSet []string
-	onDelete := migrations.ForeignKeyOnDeleteNOACTION
+	onDelete := migrations.ForeignKeyActionNOACTION
 	if c.GetFkDelAction() != "" {
 		onDelete = referentialAction[c.GetFkDelAction()]
 		if c.GetFkDelSetCols() != nil {
@@ -369,7 +369,7 @@ func convertFkConstraint(c *pgq.Constraint) ([]string, *migrations.TableForeignK
 			}
 		}
 	}
-	onUpdate := migrations.ForeignKeyOnDeleteNOACTION
+	onUpdate := migrations.ForeignKeyActionNOACTION
 	if c.GetFkUpdAction() != "" {
 		onUpdate = referentialAction[c.GetFkUpdAction()]
 	}
@@ -452,12 +452,12 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 		return nil, nil
 	}
 
-	onDelete := migrations.ForeignKeyOnDeleteNOACTION
+	onDelete := migrations.ForeignKeyActionNOACTION
 	if constraint.GetFkDelAction() != "" {
 		onDelete = referentialAction[constraint.FkDelAction]
 	}
 
-	onUpdate := migrations.ForeignKeyOnDeleteNOACTION
+	onUpdate := migrations.ForeignKeyActionNOACTION
 	if constraint.GetFkUpdAction() != "" {
 		onUpdate = referentialAction[constraint.FkUpdAction]
 	}

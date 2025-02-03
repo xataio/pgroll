@@ -135,7 +135,7 @@ var AddColumnOp10 = &migrations.OpAddColumn{
 	},
 }
 
-func AddColumnOp8WithOnDeleteAction(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
+func AddColumnOp8WithOnDeleteAction(onDelete, onUpdate migrations.ForeignKeyAction, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,
@@ -155,7 +155,7 @@ func AddColumnOp8WithOnDeleteAction(onDelete, onUpdate migrations.ForeignKeyOnDe
 	}
 }
 
-func AddColumnOp9WithOnDeleteActionUnnamed(name string, onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
+func AddColumnOp9WithOnDeleteActionUnnamed(name string, onDelete, onUpdate migrations.ForeignKeyAction, matchType migrations.ForeignKeyMatchType) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: "foo",
 		Up:    sql2pgroll.PlaceHolderSQL,
@@ -175,7 +175,7 @@ func AddColumnOp9WithOnDeleteActionUnnamed(name string, onDelete, onUpdate migra
 	}
 }
 
-func AddConstraintOp10ForeignKey(onDelete, onUpdate migrations.ForeignKeyOnDelete, matchType migrations.ForeignKeyMatchType) *migrations.OpCreateConstraint {
+func AddConstraintOp10ForeignKey(onDelete, onUpdate migrations.ForeignKeyAction, matchType migrations.ForeignKeyMatchType) *migrations.OpCreateConstraint {
 	return &migrations.OpCreateConstraint{
 		Table:   "foo",
 		Columns: []string{"a", "b"},
