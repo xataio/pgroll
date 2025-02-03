@@ -11,7 +11,7 @@ func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyAction) *migrati
 	return &migrations.OpCreateConstraint{
 		Columns: []string{"a", "b"},
 		Name:    "fk_bar_cd",
-		References: &migrations.OpCreateConstraintReferences{
+		References: &migrations.TableForeignKeyReference{
 			Columns:  []string{"c", "d"},
 			OnDelete: onDelete,
 			Table:    "bar",
@@ -32,7 +32,7 @@ func AddForeignKeyOp1WithOnDelete(onDelete migrations.ForeignKeyAction) *migrati
 var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
-	References: &migrations.OpCreateConstraintReferences{
+	References: &migrations.TableForeignKeyReference{
 		Columns:  []string{"c"},
 		OnDelete: migrations.ForeignKeyActionNOACTION,
 		Table:    "bar",
@@ -50,7 +50,7 @@ var AddForeignKeyOp2 = &migrations.OpCreateConstraint{
 var AddForeignKeyOp3 = &migrations.OpCreateConstraint{
 	Columns: []string{"a"},
 	Name:    "fk_bar_c",
-	References: &migrations.OpCreateConstraintReferences{
+	References: &migrations.TableForeignKeyReference{
 		Columns:  []string{"c"},
 		OnDelete: migrations.ForeignKeyActionNOACTION,
 		Table:    "schema_a.bar",

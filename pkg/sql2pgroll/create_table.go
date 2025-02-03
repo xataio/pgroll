@@ -248,7 +248,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	var nullsNotDistinct bool
 	var checkExpr string
 	var err error
-	var references *migrations.ConstraintReferences
+	var references *migrations.TableForeignKeyReference
 	var exclude *migrations.ConstraintExclude
 
 	columns := make([]string, len(c.Keys))
@@ -275,14 +275,14 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		for i, node := range c.PkAttrs {
 			referencedColumns[i] = node.GetString_().Sval
 		}
-		matchType := migrations.ConstraintReferencesMatchTypeSIMPLE
+		matchType := migrations.ForeignKeyMatchTypeSIMPLE
 		switch c.FkMatchtype {
 		case "p":
-			matchType = migrations.ConstraintReferencesMatchTypePARTIAL
+			matchType = migrations.ForeignKeyMatchTypePARTIAL
 		case "f":
-			matchType = migrations.ConstraintReferencesMatchTypeFULL
+			matchType = migrations.ForeignKeyMatchTypeFULL
 		case "s":
-			matchType = migrations.ConstraintReferencesMatchTypeSIMPLE
+			matchType = migrations.ForeignKeyMatchTypeSIMPLE
 		}
 		columnsToSet := make([]string, len(c.FkDelSetCols))
 		onDelete := migrations.ForeignKeyActionNOACTION
@@ -301,7 +301,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 			columns[i] = node.GetString_().Sval
 		}
 
-		references = &migrations.ConstraintReferences{
+		references = &migrations.TableForeignKeyReference{
 			Table:              referencedTable,
 			Columns:            referencedColumns,
 			MatchType:          matchType,

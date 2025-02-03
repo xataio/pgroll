@@ -420,7 +420,7 @@ func TestCreateConstraint(t *testing.T) {
 							Table:   "reports",
 							Type:    "foreign_key",
 							Columns: []string{"users_id", "users_zip"},
-							References: &migrations.OpCreateConstraintReferences{
+							References: &migrations.TableForeignKeyReference{
 								Table:   "users",
 								Columns: []string{"id", "zip"},
 							},
@@ -769,7 +769,7 @@ func TestCreateConstraintValidation(t *testing.T) {
 							Table:   "users",
 							Columns: []string{"name"},
 							Type:    "foreign_key",
-							References: &migrations.OpCreateConstraintReferences{
+							References: &migrations.TableForeignKeyReference{
 								Table:   "missing_table",
 								Columns: []string{"id"},
 							},
