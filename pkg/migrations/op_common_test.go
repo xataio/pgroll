@@ -23,15 +23,16 @@ import (
 )
 
 type TestCase struct {
-	name              string
-	minPgMajorVersion int
-	migrations        []migrations.Migration
-	wantStartErr      error
-	wantRollbackErr   error
-	wantCompleteErr   error
-	afterStart        func(t *testing.T, db *sql.DB, schema string)
-	afterComplete     func(t *testing.T, db *sql.DB, schema string)
-	afterRollback     func(t *testing.T, db *sql.DB, schema string)
+	name                      string
+	minPgMajorVersion         int
+	migrations                []migrations.Migration
+	wantStartErr              error
+	wantRollbackErr           error
+	wantStartAfterRollbackErr error
+	wantCompleteErr           error
+	afterStart                func(t *testing.T, db *sql.DB, schema string)
+	afterComplete             func(t *testing.T, db *sql.DB, schema string)
+	afterRollback             func(t *testing.T, db *sql.DB, schema string)
 }
 
 type TestCases []TestCase
@@ -98,7 +99,15 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				}
 
 				// re-start the last migration
-				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
+				err = mig.Start(ctx, &tt.migrations[len(tt.migrations)-1])
+				if tt.wantStartAfterRollbackErr != nil {
+					if !errors.Is(err, tt.wantStartAfterRollbackErr) {
+						t.Fatalf("Expected error %q, got %q", tt.wantStartAfterRollbackErr, err)
+					}
+					return
+				}
+
+				if err != nil {
 					t.Fatalf("Failed to start migration: %v", err)
 				}
 

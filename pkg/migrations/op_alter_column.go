@@ -168,12 +168,6 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	// If the operation requires backfills (ie it isn't a rename-only operation),
-	// ensure that the column meets the requirements for backfilling.
-	if err := backfill.IsPossible(table); err != nil {
-		return err
-	}
-
 	ops := o.subOperations()
 
 	// Ensure that at least one sub-operation or rename is present

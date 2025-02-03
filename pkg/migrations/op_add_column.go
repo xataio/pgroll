@@ -177,14 +177,6 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 
-	// Ensure backfill is possible
-	if o.Up != "" {
-		err := backfill.IsPossible(table)
-		if err != nil {
-			return err
-		}
-	}
-
 	if o.Column.Generated != nil && o.Column.Generated.Expression != "" && o.Column.Generated.Identity != nil {
 		return InvalidGeneratedColumnError{Table: o.Table, Column: o.Column.Name}
 	}
