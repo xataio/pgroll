@@ -90,23 +90,35 @@ func TestConvertAlterTableStatements(t *testing.T) {
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d);",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyActionNOACTION),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE NO ACTION;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyActionNOACTION),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyActionRESTRICT),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionRESTRICT, migrations.ForeignKeyActionNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyActionSETDEFAULT),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyActionNOACTION),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET NULL;",
-			expectedOp: expect.AddForeignKeyOp1WithOnDelete(migrations.ForeignKeyActionSETNULL),
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyActionNOACTION),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE RESTRICT ON UPDATE SET DEFAULT;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionRESTRICT, migrations.ForeignKeyActionSETDEFAULT),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON DELETE SET DEFAULT ON UPDATE RESTRICT;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyActionRESTRICT),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL ON UPDATE SET NULL;",
+			expectedOp: expect.AddForeignKeyOp1WithParams(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETNULL),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_bar_c FOREIGN KEY (a) REFERENCES bar (c);",
@@ -195,32 +207,68 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			expectedOp: expect.AddColumnOp7,
 		},
 		{
-			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar)",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION),
+			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) MATCH FULL",
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeFULL),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON UPDATE NO ACTION",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE NO ACTION",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE RESTRICT",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionRESTRICT),
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionRESTRICT, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
-			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE SET NULL ",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionSETNULL),
+			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) MATCH SIMPLE ON DELETE SET NULL ",
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
-			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE SET DEFAULT",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionSETDEFAULT),
+			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE SET DEFAULT ON UPDATE NO ACTION",
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeSIMPLE),
 		},
 		{
-			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) ON DELETE CASCADE",
-			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionCASCADE),
+			sql:        "ALTER TABLE foo ADD COLUMN bar int CONSTRAINT fk_baz REFERENCES baz (bar) MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE",
+			expectedOp: expect.AddColumnOp8WithOnDeleteAction(migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyMatchTypeFULL),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD COLUMN bar int REFERENCES baz (bar) ON UPDATE RESTRICT",
+			expectedOp: expect.AddColumnOp9WithOnDeleteActionUnnamed("foo_bar_fkey", migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionRESTRICT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD COLUMN bar int REFERENCES baz (bar) ON UPDATE CASCADE",
+			expectedOp: expect.AddColumnOp9WithOnDeleteActionUnnamed("foo_bar_fkey", migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD COLUMN bar int REFERENCES baz (bar) ON UPDATE SET NULL",
+			expectedOp: expect.AddColumnOp9WithOnDeleteActionUnnamed("foo_bar_fkey", migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD COLUMN bar int REFERENCES baz (bar) ON UPDATE SET DEFAULT",
+			expectedOp: expect.AddColumnOp9WithOnDeleteActionUnnamed("foo_bar_fkey", migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_baz FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE RESTRICT",
+			expectedOp: expect.AddConstraintOp10ForeignKey(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionRESTRICT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_baz FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE CASCADE",
+			expectedOp: expect.AddConstraintOp10ForeignKey(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_baz FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL",
+			expectedOp: expect.AddConstraintOp10ForeignKey(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_baz FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET DEFAULT",
+			expectedOp: expect.AddConstraintOp10ForeignKey(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyMatchTypeSIMPLE),
+		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT fk_baz FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL",
+			expectedOp: expect.AddConstraintOp10ForeignKey(migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyMatchTypeFULL),
 		},
 		{
 			sql:        "ALTER TABLE foo ADD COLUMN bar int GENERATED BY DEFAULT AS IDENTITY ",
@@ -265,11 +313,6 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		"ALTER TABLE foo DROP COLUMN IF EXISTS bar",
 
 		// Unsupported foreign key statements
-		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE RESTRICT;",
-		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE CASCADE;",
-		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET NULL;",
-		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) ON UPDATE SET DEFAULT;",
-		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH FULL;",
 		"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) NOT VALID",
 		// MATCH PARTIAL is not implemented in the actual parser yet
 		//"ALTER TABLE foo ADD CONSTRAINT fk_bar_cd FOREIGN KEY (a, b) REFERENCES bar (c, d) MATCH PARTIAL;",
@@ -283,10 +326,6 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NOT VALID",
 
 		// ADD COLUMN cases not yet covered
-		"ALTER TABLE foo ADD COLUMN bar int REFERENCES bar (c) ON UPDATE RESTRICT",
-		"ALTER TABLE foo ADD COLUMN bar int REFERENCES bar (c) ON UPDATE CASCADE",
-		"ALTER TABLE foo ADD COLUMN bar int REFERENCES bar (c) ON UPDATE SET NULL",
-		"ALTER TABLE foo ADD COLUMN bar int REFERENCES bar (c) ON UPDATE SET DEFAULT",
 		"ALTER TABLE foo ADD COLUMN IF NOT EXISTS bar int",
 		"ALTER TABLE foo ADD COLUMN bar int UNIQUE DEFERRABLE",
 		"ALTER TABLE foo ADD COLUMN bar int UNIQUE INITIALLY DEFERRED",

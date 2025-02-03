@@ -320,7 +320,7 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		case ConstraintTypePrimaryKey:
 			constraintsSQL[i] = writer.WritePrimaryKey()
 		case ConstraintTypeForeignKey:
-			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns)
+			constraintsSQL[i] = writer.WriteForeignKey(c.References.Table, c.References.Columns, c.References.OnDelete, c.References.OnUpdate, c.References.OnDeleteSetColumns, c.References.MatchType)
 		case ConstraintTypeExclude:
 			constraintsSQL[i] = writer.WriteExclude(c.Exclude.IndexMethod, c.Exclude.Elements, c.Exclude.Predicate)
 		}
@@ -336,6 +336,7 @@ type ConstraintSQLWriter struct {
 	Columns           []string
 	InitiallyDeferred bool
 	Deferrable        bool
+	SkipValidation    bool
 
 	// unique, exclude, primary key constraints support the following options
 	IncludeColumns    []string
@@ -381,7 +382,7 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string) string {
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string, matchTypeStr ForeignKeyMatchType) string {
 	onDeleteAction := string(ForeignKeyActionNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
@@ -393,19 +394,27 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	if onUpdate != "" {
 		onUpdateAction = strings.ToUpper(string(onUpdate))
 	}
+	matchType := string(ForeignKeyMatchTypeSIMPLE)
+	if matchTypeStr != "" {
+		matchType = strings.ToUpper(string(matchTypeStr))
+	}
 
 	constraint := ""
 	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+		constraint += fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s",
-		strings.Join(quoteColumnNames(w.Columns), ", "),
+	if len(w.Columns) != 0 {
+		constraint += fmt.Sprintf("FOREIGN KEY (%s) ", strings.Join(quoteColumnNames(w.Columns), ", "))
+	}
+	constraint += fmt.Sprintf("REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s",
 		pq.QuoteIdentifier(referencedTable),
 		strings.Join(quoteColumnNames(referencedColumns), ", "),
+		matchType,
 		onDeleteAction,
 		onUpdateAction,
 	)
 	constraint += w.addDeferrable()
+	constraint += w.skipValidation()
 	return constraint
 }
 
@@ -453,4 +462,11 @@ func (w *ConstraintSQLWriter) addDeferrable() string {
 		deferrable += " INITIALLY IMMEDIATE"
 	}
 	return deferrable
+}
+
+func (w *ConstraintSQLWriter) skipValidation() string {
+	if w.SkipValidation {
+		return " NOT VALID"
+	}
+	return ""
 }

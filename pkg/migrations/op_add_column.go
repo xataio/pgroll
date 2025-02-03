@@ -314,16 +314,14 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 
 	if col.References != nil {
-		onDelete := string(ForeignKeyActionNOACTION)
-		if col.References.OnDelete != "" {
-			onDelete = strings.ToUpper(string(col.References.OnDelete))
-		}
-
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
-			pq.QuoteIdentifier(col.References.Name),
-			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(col.References.Column),
-			onDelete)
+		writer := &ConstraintSQLWriter{Name: col.References.Name}
+		sql += " " + writer.WriteForeignKey(
+			col.References.Table,
+			[]string{col.References.Column},
+			col.References.OnDelete,
+			col.References.OnUpdate,
+			nil,
+			col.References.MatchType)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
