@@ -27,3 +27,10 @@ func WithCallbacks(cbs ...CallbackFn) OptionFn {
 		o.callbacks = cbs
 	}
 }
+
+// WithStateSchema sets the schema where pgroll stores its internal state.
+func WithStateSchema(schema string) OptionFn {
+	return func(o *Backfill) {
+		o.stateSchema = schema
+	}
+}

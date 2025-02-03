@@ -11,17 +11,35 @@ import (
 )
 
 type BatchConfig struct {
-	TableName  string
-	PrimaryKey []string
-	LastValue  []string
-	BatchSize  int
+	TableName        string
+	PrimaryKey       []string
+	LastValue        []string
+	BatchSize        int
+	SnapshotID       string
+	StateSchema      string
+	BatchTablePrefix string
 }
 
-func BuildSQL(cfg BatchConfig) (string, error) {
-	return executeTemplate("sql", SQL, cfg)
+type CreateBatchTableConfig struct {
+	StateSchema      string
+	BatchTablePrefix string
+	TableName        string
+	IDColumns        []string
 }
 
-func executeTemplate(name, content string, cfg BatchConfig) (string, error) {
+func BuildCreateBatchTable(cfg CreateBatchTableConfig) (string, error) {
+	return executeTemplate("create_batch_table", CreateBatchTable, cfg)
+}
+
+func BuildSelectBatchInto(cfg BatchConfig) (string, error) {
+	return executeTemplate("select_batch_into", SelectBatchInto, cfg)
+}
+
+func BuildUpdateBatch(cfg BatchConfig) (string, error) {
+	return executeTemplate("update_batch", UpdateBatch, cfg)
+}
+
+func executeTemplate(name, content string, cfg any) (string, error) {
 	ql := pq.QuoteLiteral
 	qi := pq.QuoteIdentifier
 

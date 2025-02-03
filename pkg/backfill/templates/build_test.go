@@ -8,50 +8,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBatchStatementBuilder(t *testing.T) {
+func TestCreateBatchTable(t *testing.T) {
 	tests := map[string]struct {
-		config   BatchConfig
+		config   CreateBatchTableConfig
 		expected string
 	}{
-		"single identity column no last value": {
-			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id"},
-				BatchSize:  10,
+		"in pgroll schema, single identity column": {
+			config: CreateBatchTableConfig{
+				StateSchema:      "pgroll",
+				TableName:        "items",
+				BatchTablePrefix: "batch_",
+				IDColumns:        []string{"id"},
 			},
-			expected: expectSingleIDColumnNoLastValue,
+			expected: createBatchTable1,
 		},
-		"multiple identity columns no last value": {
-			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id", "zip"},
-				BatchSize:  10,
+		"in other schema, single identity column": {
+			config: CreateBatchTableConfig{
+				StateSchema:      "other",
+				TableName:        "items",
+				BatchTablePrefix: "batch_",
+				IDColumns:        []string{"id"},
 			},
-			expected: multipleIDColumnsNoLastValue,
+			expected: createBatchTable2,
 		},
-		"single identity column with last value": {
-			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id"},
-				LastValue:  []string{"1"},
-				BatchSize:  10,
+		"in pgroll schema, multiple identity columns": {
+			config: CreateBatchTableConfig{
+				StateSchema:      "pgroll",
+				TableName:        "items",
+				BatchTablePrefix: "batch_",
+				IDColumns:        []string{"id", "zip"},
 			},
-			expected: singleIDColumnWithLastValue,
+			expected: createBatchTable3,
 		},
-		"multiple identity columns with last value": {
-			config: BatchConfig{
-				TableName:  "table_name",
-				PrimaryKey: []string{"id", "zip"},
-				LastValue:  []string{"1", "1234"},
-				BatchSize:  10,
+		"in pgroll schema, products table, multiple identity columns": {
+			config: CreateBatchTableConfig{
+				StateSchema:      "pgroll",
+				TableName:        "products",
+				BatchTablePrefix: "batch_",
+				IDColumns:        []string{"id", "zip"},
 			},
-			expected: multipleIDColumnsWithLastValue,
+			expected: createBatchTable4,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			actual, err := BuildSQL(test.config)
+			actual, err := BuildCreateBatchTable(test.config)
 			assert.NoError(t, err)
 
 			assert.Equal(t, test.expected, actual)
@@ -59,83 +61,163 @@ func TestBatchStatementBuilder(t *testing.T) {
 	}
 }
 
-const expectSingleIDColumnNoLastValue = `WITH batch AS
-(
+func TestSelectBatchInto(t *testing.T) {
+	tests := map[string]struct {
+		config   BatchConfig
+		expected string
+	}{
+		"first batch (no last pk values)": {
+			config: BatchConfig{
+				TableName:        "items",
+				PrimaryKey:       []string{"id"},
+				BatchSize:        1000,
+				StateSchema:      "pgroll",
+				BatchTablePrefix: "batch_",
+			},
+			expected: selectBatchInto1,
+		},
+		"batch with last pk values (non-initial batch)": {
+			config: BatchConfig{
+				TableName:        "items",
+				PrimaryKey:       []string{"id"},
+				LastValue:        []string{"100"},
+				BatchSize:        1000,
+				StateSchema:      "pgroll",
+				BatchTablePrefix: "batch_",
+			},
+			expected: selectBatchInto2,
+		},
+		"batch for a table with multi-column primary key": {
+			config: BatchConfig{
+				TableName:        "products",
+				PrimaryKey:       []string{"id", "zip"},
+				LastValue:        []string{"100", "abc"},
+				BatchSize:        2000,
+				StateSchema:      "pgroll",
+				BatchTablePrefix: "batch_",
+			},
+			expected: selectBatchInto3,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			actual, err := BuildSelectBatchInto(test.config)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestUpdateBatch(t *testing.T) {
+	tests := map[string]struct {
+		config   BatchConfig
+		expected string
+	}{
+		"single column primary key": {
+			config: BatchConfig{
+				TableName:        "items",
+				PrimaryKey:       []string{"id"},
+				StateSchema:      "pgroll",
+				BatchTablePrefix: "batch_",
+			},
+			expected: updateBatch1,
+		},
+		"multi column primary key": {
+			config: BatchConfig{
+				TableName:        "products",
+				PrimaryKey:       []string{"id", "zip"},
+				StateSchema:      "pgroll",
+				BatchTablePrefix: "batch_",
+			},
+			expected: updateBatch2,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			actual, err := BuildUpdateBatch(test.config)
+			assert.NoError(t, err)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+const createBatchTable1 = `CREATE UNLOGGED TABLE IF NOT EXISTS
+  "pgroll"."batch_items" AS
   SELECT "id"
-  FROM "table_name"
+  FROM "items"
+  WHERE false
+`
+
+const createBatchTable2 = `CREATE UNLOGGED TABLE IF NOT EXISTS
+  "other"."batch_items" AS
+  SELECT "id"
+  FROM "items"
+  WHERE false
+`
+
+const createBatchTable3 = `CREATE UNLOGGED TABLE IF NOT EXISTS
+  "pgroll"."batch_items" AS
+  SELECT "id", "zip"
+  FROM "items"
+  WHERE false
+`
+
+const createBatchTable4 = `CREATE UNLOGGED TABLE IF NOT EXISTS
+  "pgroll"."batch_products" AS
+  SELECT "id", "zip"
+  FROM "products"
+  WHERE false
+`
+
+const selectBatchInto1 = `INSERT INTO "pgroll"."batch_items"
+  ("id")
+  SELECT "id"
+  FROM "items"
   ORDER BY "id"
-  LIMIT 10
-  FOR NO KEY UPDATE
-),
-update AS
+  LIMIT 1000
+`
+
+const selectBatchInto2 = `INSERT INTO "pgroll"."batch_items"
+  ("id")
+  SELECT "id"
+  FROM "items"
+  WHERE ("id") > ('100')
+  ORDER BY "id"
+  LIMIT 1000
+`
+
+const selectBatchInto3 = `INSERT INTO "pgroll"."batch_products"
+  ("id", "zip")
+  SELECT "id", "zip"
+  FROM "products"
+  WHERE ("id", "zip") > ('100', 'abc')
+  ORDER BY "id", "zip"
+  LIMIT 2000
+`
+
+const updateBatch1 = `WITH update AS
 (
-  UPDATE "table_name"
-  SET "id" = "table_name"."id"
-  FROM batch
-  WHERE "table_name"."id" = batch."id"
-  RETURNING "table_name"."id"
+  UPDATE "items"
+  SET "id" = "items"."id"
+  FROM "pgroll"."batch_items" AS batch
+  WHERE "items"."id" = batch."id"
+  RETURNING "items"."id"
 )
 SELECT LAST_VALUE("id") OVER()
 FROM update
 `
 
-const multipleIDColumnsNoLastValue = `WITH batch AS
+const updateBatch2 = `WITH update AS
 (
-  SELECT "id", "zip"
-  FROM "table_name"
-  ORDER BY "id", "zip"
-  LIMIT 10
-  FOR NO KEY UPDATE
-),
-update AS
-(
-  UPDATE "table_name"
-  SET "id" = "table_name"."id", "zip" = "table_name"."zip"
-  FROM batch
-  WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
-  RETURNING "table_name"."id", "table_name"."zip"
-)
-SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER()
-FROM update
-`
-
-const singleIDColumnWithLastValue = `WITH batch AS
-(
-  SELECT "id"
-  FROM "table_name"
-  WHERE ("id") > ('1')
-  ORDER BY "id"
-  LIMIT 10
-  FOR NO KEY UPDATE
-),
-update AS
-(
-  UPDATE "table_name"
-  SET "id" = "table_name"."id"
-  FROM batch
-  WHERE "table_name"."id" = batch."id"
-  RETURNING "table_name"."id"
-)
-SELECT LAST_VALUE("id") OVER()
-FROM update
-`
-
-const multipleIDColumnsWithLastValue = `WITH batch AS
-(
-  SELECT "id", "zip"
-  FROM "table_name"
-  WHERE ("id", "zip") > ('1', '1234')
-  ORDER BY "id", "zip"
-  LIMIT 10
-  FOR NO KEY UPDATE
-),
-update AS
-(
-  UPDATE "table_name"
-  SET "id" = "table_name"."id", "zip" = "table_name"."zip"
-  FROM batch
-  WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
-  RETURNING "table_name"."id", "table_name"."zip"
+  UPDATE "products"
+  SET "id" = "products"."id", "zip" = "products"."zip"
+  FROM "pgroll"."batch_products" AS batch
+  WHERE "products"."id" = batch."id" AND "products"."zip" = batch."zip"
+  RETURNING "products"."id", "products"."zip"
 )
 SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER()
 FROM update
