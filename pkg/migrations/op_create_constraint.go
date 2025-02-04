@@ -68,11 +68,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
-		temporaryColumnNames := make([]string, len(o.Columns))
-		for i, col := range o.Columns {
-			temporaryColumnNames[i] = TemporaryName(col)
-		}
-		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryColumnNames)
+		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryNames(o.Columns))
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn)
 	case OpCreateConstraintTypeForeignKey:
@@ -248,22 +244,33 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB)
 }
 
 func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
-	onDelete := "NO ACTION"
-	if o.References.OnDelete != "" {
-		onDelete = strings.ToUpper(string(o.References.OnDelete))
-	}
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(o.Table))
 
-	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Name),
-			strings.Join(quotedTemporaryNames(o.Columns), ","),
-			pq.QuoteIdentifier(o.References.Table),
-			strings.Join(quoteColumnNames(o.References.Columns), ","),
-			onDelete,
-		))
+	writer := &ConstraintSQLWriter{
+		Name:           o.Name,
+		Columns:        temporaryNames(o.Columns),
+		SkipValidation: true,
+	}
+	sql += writer.WriteForeignKey(
+		o.References.Table,
+		o.References.Columns,
+		o.References.OnDelete,
+		o.References.OnUpdate,
+		o.References.OnDeleteSetColumns,
+		o.References.MatchType,
+	)
+
+	_, err := conn.ExecContext(ctx, sql)
 
 	return err
+}
+
+func temporaryNames(columns []string) []string {
+	names := make([]string, len(columns))
+	for i, col := range columns {
+		names[i] = TemporaryName(col)
+	}
+	return names
 }
 
 func quotedTemporaryNames(columns []string) []string {
