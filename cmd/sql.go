@@ -11,9 +11,9 @@ import (
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
 
-func sqlCmd() *cobra.Command {
-	sqlCmd := &cobra.Command{
-		Use:       "sql <sql statement>",
+func convertCmd() *cobra.Command {
+	convertCmd := &cobra.Command{
+		Use:       "convert <sql statement>",
 		Short:     "Convert SQL statements to pgroll operations",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: []string{"statement"},
@@ -36,5 +36,5 @@ func sqlCmd() *cobra.Command {
 		},
 	}
 
-	return sqlCmd
+	return convertCmd
 }
