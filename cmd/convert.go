@@ -17,7 +17,6 @@ func convertCmd() *cobra.Command {
 		Short:     "Convert SQL statements to pgroll operations",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: []string{"statement"},
-		Hidden:    true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sql := args[0]
 
