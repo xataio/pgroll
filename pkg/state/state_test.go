@@ -622,6 +622,66 @@ func TestReadSchema(t *testing.T) {
 				},
 			},
 			{
+				name:       "foreign key with ON DELETE CASCADE ON UPDATE CASCADE",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) ON DELETE CASCADE, ON UPDATE CASCADE)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"id": {
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]*schema.Index{
+								"table1_pkey": {
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     string(migrations.OpCreateIndexMethodBtree),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+						},
+						"table2": {
+							Name: "table2",
+							Columns: map[string]*schema.Column{
+								"fk": {
+									Name:         "fk",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
+								"fk_fkey": {
+									Name:              "fk_fkey",
+									Columns:           []string{"fk"},
+									ReferencedTable:   "table1",
+									ReferencedColumns: []string{"id"},
+									MatchType:         "SIMPLE",
+									OnDelete:          "CASCADE",
+									OnUpdate:          "CASCADE",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
 				name:       "check constraint",
 				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY, age INTEGER, CONSTRAINT age_check CHECK (age > 18));",
 				wantSchema: &schema.Schema{
