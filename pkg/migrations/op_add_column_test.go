@@ -1127,9 +1127,9 @@ func TestAddColumnWithUpSql(t *testing.T) {
 				// after rollback + restart + complete, all 'description' values are the backfilled ones.
 				res := MustSelect(t, db, schema, "02_add_column", "products")
 				assert.Equal(t, []map[string]any{
+					{"id": "c", "name": "cherries", "description": "CHERRIES"},
 					{"id": "a", "name": "apple", "description": "APPLE"},
 					{"id": "b", "name": "banana", "description": "BANANA"},
-					{"id": "c", "name": "cherries", "description": "CHERRIES"},
 				}, res)
 
 				// The trigger function has been dropped.
