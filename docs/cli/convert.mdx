@@ -1,0 +1,84 @@
+---
+title: Convert
+description: Convert SQL statements to `pgroll` operations
+---
+
+## Command
+
+`pgroll convert` converts a single SQL statement into one or more `pgroll` operations.
+
+To convert a SQL statement, use `pgroll convert` followed by the SQL statement to be converted:
+
+```bash
+$ pgroll convert "CREATE TABLE items(id int PRIMARY KEY, description text)"
+```
+
+This produces the output:
+
+```json
+[
+  {
+    "create_table": {
+      "columns": [
+        {
+          "name": "id",
+          "pk": true,
+          "type": "int"
+        },
+        {
+          "name": "description",
+          "nullable": true,
+          "type": "text"
+        }
+      ],
+      "name": "items"
+    }
+  }
+]
+```
+
+Converting statements that require `up` or `down` data migrations will include placeholders in the generated `pgroll` operations. For example:
+
+```
+$ pgroll convert "ALTER TABLE foo ALTER COLUMN bar SET NOT NULL"
+```
+
+This produces the output:
+
+```json
+[
+  {
+    "alter_column": {
+      "column": "bar",
+      "nullable": false,
+      "table": "foo",
+      "up": "TODO: Implement SQL data migration",
+      "down": "TODO: Implement SQL data migration",
+    }
+  }
+]
+```
+
+SQL expressions for the `up` and `down` data migrations should be filled in before applying the operation.
+
+## Fallback to raw SQL
+
+Not all SQL statements have equivalent `pgroll` operations. For SQL statements for which no equivalent `pgroll` operation exists, a 'raw SQL' operation will be generated instead. For example:
+
+```
+$ pgroll convert "ALTER TABLE foo ADD COLUMN bar int COMPRESSION pglz"
+```
+
+This produces the output:
+
+```json
+[
+  {
+    "sql": {
+      "up": "ALTER TABLE foo ADD COLUMN bar int COMPRESSION pglz"
+    }
+  }
+]
+```
+
+`pgroll` does not support the COMPRESSION clause in `add_column` operations, so the conversion falls back to a raw SQL operation to preserve the intended semantics of the SQL statement.
