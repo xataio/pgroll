@@ -239,13 +239,14 @@ BEGIN
                                     COALESCE(json_object_agg(fk_details.conname, json_build_object('name', fk_details.conname, 'columns', fk_details.columns, 'referencedTable', fk_details.referencedTable, 'referencedColumns', fk_details.referencedColumns, 'matchType', fk_details.matchType, 'onDelete', fk_details.onDelete, 'onUpdate', fk_details.onUpdate)), '{}'::json)
                                 FROM (
                                     SELECT
-                                        fk_info.conname AS conname, fk_info.columns AS columns, fk_info.relname AS referencedTable, array_agg(ref_attr.attname ORDER BY ref_attr.attname) AS referencedColumns, CASE WHEN fk_info.confmatchtype = 'f' THEN 'FULL'
-                                     WHEN fk_info.confmatchtype = 'p' THEN
-                                     'PARTIAL'
-                                     WHEN fk_info.confmatchtype = 's' THEN
-                                     'SIMPLE' END AS matchType,
-                                     CASE WHEN fk_info.confdeltype = 'a' THEN
-                                     'NO ACTION'
+                                        fk_info.conname AS conname, fk_info.columns AS columns, fk_info.relname AS referencedTable, array_agg(ref_attr.attname ORDER BY ref_attr.attname) AS referencedColumns, CASE WHEN fk_info.confmatchtype = 'f' THEN
+                                        'FULL'
+                                    WHEN fk_info.confmatchtype = 'p' THEN
+                                        'PARTIAL'
+                                    WHEN fk_info.confmatchtype = 's' THEN
+                                        'SIMPLE'
+                                    END AS matchType, CASE WHEN fk_info.confdeltype = 'a' THEN
+                                        'NO ACTION'
                                     WHEN fk_info.confdeltype = 'r' THEN
                                         'RESTRICT'
                                     WHEN fk_info.confdeltype = 'c' THEN
@@ -254,8 +255,7 @@ BEGIN
                                         'SET DEFAULT'
                                     WHEN fk_info.confdeltype = 'n' THEN
                                         'SET NULL'
-                                    END AS onDelete,
-                                    CASE WHEN fk_info.confupdtype = 'a' THEN
+                                    END AS onDelete, CASE WHEN fk_info.confupdtype = 'a' THEN
                                         'NO ACTION'
                                     WHEN fk_info.confupdtype = 'r' THEN
                                         'RESTRICT'
