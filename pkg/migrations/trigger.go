@@ -29,8 +29,6 @@ type triggerConfig struct {
 	TableName      string
 	PhysicalColumn string
 	LatestSchema   string
-	TestExpr       string
-	ElseExpr       string
 	SQL            string
 }
 

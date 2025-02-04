@@ -57,51 +57,6 @@ func TestBuildFunction(t *testing.T) {
 `,
 		},
 		{
-			name: "complete up trigger",
-			config: triggerConfig{
-				Name:      "triggerName",
-				Direction: TriggerDirectionUp,
-				Columns: map[string]*schema.Column{
-					"id":       {Name: "id", Type: "int"},
-					"username": {Name: "username", Type: "text"},
-					"product":  {Name: "product", Type: "text"},
-					"review":   {Name: "review", Type: "text"},
-				},
-				SchemaName:     "public",
-				LatestSchema:   "public_01_migration_name",
-				TableName:      "reviews",
-				TestExpr:       `NEW."review" IS NULL`,
-				PhysicalColumn: "_pgroll_new_review",
-				ElseExpr:       `NEW."_pgroll_new_review" = NEW."review"`,
-				SQL:            "product || 'is good'",
-			},
-			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
-    RETURNS TRIGGER
-    LANGUAGE PLPGSQL
-    AS $$
-    DECLARE
-      "id" "public"."reviews"."id"%TYPE := NEW."id";
-      "product" "public"."reviews"."product"%TYPE := NEW."product";
-      "review" "public"."reviews"."review"%TYPE := NEW."review";
-      "username" "public"."reviews"."username"%TYPE := NEW."username";
-      latest_schema text;
-      search_path text;
-    BEGIN
-      SELECT current_setting
-        INTO search_path
-        FROM current_setting('search_path');
-
-      IF search_path != 'public_01_migration_name' AND NEW."review" IS NULL THEN
-        NEW."_pgroll_new_review" = product || 'is good';
-      ELSE
-        NEW."_pgroll_new_review" = NEW."review";
-      END IF;
-
-      RETURN NEW;
-    END; $$
-`,
-		},
-		{
 			name: "simple down trigger",
 			config: triggerConfig{
 				Name:      "triggerName",
