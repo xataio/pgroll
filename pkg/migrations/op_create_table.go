@@ -244,10 +244,9 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		case ConstraintTypeExclude:
 			excludeConstraints[c.Name] = &schema.ExcludeConstraint{
-				Name:        c.Name,
-				IndexMethod: c.Exclude.IndexMethod,
-				Elements:    c.Exclude.Elements,
-				Predicate:   c.Exclude.Predicate,
+				Name:      c.Name,
+				Method:    c.Exclude.IndexMethod,
+				Predicate: c.Exclude.Predicate,
 			}
 		}
 	}
