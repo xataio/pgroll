@@ -26,14 +26,15 @@ const (
 const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 
 type triggerConfig struct {
-	Name           string
-	Direction      TriggerDirection
-	Columns        map[string]*schema.Column
-	SchemaName     string
-	TableName      string
-	PhysicalColumn string
-	LatestSchema   string
-	SQL            string
+	Name                string
+	Direction           TriggerDirection
+	Columns             map[string]*schema.Column
+	SchemaName          string
+	TableName           string
+	PhysicalColumn      string
+	LatestSchema        string
+	SQL                 string
+	NeedsBackfillColumn string
 }
 
 func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg triggerConfig) error {
@@ -47,6 +48,7 @@ func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg trigg
 	}
 
 	cfg.SQL = expr
+	cfg.NeedsBackfillColumn = CNeedsBackfillColumn
 
 	funcSQL, err := buildFunction(cfg)
 	if err != nil {
