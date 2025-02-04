@@ -5,6 +5,8 @@ package migrations
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"fmt"
 	"text/template"
 
 	"github.com/lib/pq"
@@ -21,6 +23,8 @@ const (
 	TriggerDirectionDown TriggerDirection = "down"
 )
 
+const CNeedsBackfillColumn = "_pgroll_needs_backfill"
+
 type triggerConfig struct {
 	Name           string
 	Direction      TriggerDirection
@@ -33,23 +37,18 @@ type triggerConfig struct {
 }
 
 func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg triggerConfig) error {
-	sql, err := tr.TransformSQL(cfg.SQL)
+	expr, err := tr.TransformSQL(cfg.SQL)
 	if err != nil {
 		return err
 	}
 
-	if len(sql) > 0 && sql[0] != '(' {
-		sql = "(" + sql + ")"
+	if len(expr) > 0 && expr[0] != '(' {
+		expr = "(" + expr + ")"
 	}
 
-	cfg.SQL = sql
+	cfg.SQL = expr
 
 	funcSQL, err := buildFunction(cfg)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.ExecContext(ctx, funcSQL)
 	if err != nil {
 		return err
 	}
@@ -59,12 +58,23 @@ func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg trigg
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, triggerSQL)
-	if err != nil {
-		return err
-	}
+	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := conn.ExecContext(ctx,
+			fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s boolean DEFAULT true",
+				pq.QuoteIdentifier(cfg.TableName),
+				pq.QuoteIdentifier(CNeedsBackfillColumn)))
+		if err != nil {
+			return err
+		}
 
-	return nil
+		_, err = conn.ExecContext(ctx, funcSQL)
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.ExecContext(ctx, triggerSQL)
+		return err
+	})
 }
 
 func buildFunction(cfg triggerConfig) (string, error) {
