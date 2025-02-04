@@ -133,7 +133,7 @@ type ForeignKey struct {
 	OnUpdate string `json:"onUpdate"`
 
 	// MatchType is the match type of the foreign key
-	MatchType string `json:"match_type"`
+	MatchType string `json:"matchType"`
 }
 
 // CheckConstraint represents a check constraint on a table

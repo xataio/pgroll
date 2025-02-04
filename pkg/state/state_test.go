@@ -550,7 +550,9 @@ func TestReadSchema(t *testing.T) {
 									Columns:           []string{"fk"},
 									ReferencedTable:   "table1",
 									ReferencedColumns: []string{"id"},
+									MatchType:         "SIMPLE",
 									OnDelete:          "NO ACTION",
+									OnUpdate:          "NO ACTION",
 								},
 							},
 							CheckConstraints:  map[string]*schema.CheckConstraint{},
@@ -608,7 +610,129 @@ func TestReadSchema(t *testing.T) {
 									Columns:           []string{"fk"},
 									ReferencedTable:   "table1",
 									ReferencedColumns: []string{"id"},
+									MatchType:         "SIMPLE",
 									OnDelete:          "CASCADE",
+									OnUpdate:          "NO ACTION",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name:       "foreign key with ON DELETE CASCADE ON UPDATE CASCADE",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) ON DELETE CASCADE ON UPDATE CASCADE)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"id": {
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]*schema.Index{
+								"table1_pkey": {
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     string(migrations.OpCreateIndexMethodBtree),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+						},
+						"table2": {
+							Name: "table2",
+							Columns: map[string]*schema.Column{
+								"fk": {
+									Name:         "fk",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
+								"fk_fkey": {
+									Name:              "fk_fkey",
+									Columns:           []string{"fk"},
+									ReferencedTable:   "table1",
+									ReferencedColumns: []string{"id"},
+									MatchType:         "SIMPLE",
+									OnDelete:          "CASCADE",
+									OnUpdate:          "CASCADE",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name:       "foreign key with MATCH full ON DELETE CASCADE",
+				createStmt: "CREATE TABLE public.table1 (id int PRIMARY KEY); CREATE TABLE public.table2 (fk int NOT NULL, CONSTRAINT fk_fkey FOREIGN KEY (fk) REFERENCES public.table1 (id) MATCH FULL ON DELETE CASCADE)",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"id": {
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{"id"},
+							Indexes: map[string]*schema.Index{
+								"table1_pkey": {
+									Name:       "table1_pkey",
+									Unique:     true,
+									Columns:    []string{"id"},
+									Method:     string(migrations.OpCreateIndexMethodBtree),
+									Definition: "CREATE UNIQUE INDEX table1_pkey ON public.table1 USING btree (id)",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+						},
+						"table2": {
+							Name: "table2",
+							Columns: map[string]*schema.Column{
+								"fk": {
+									Name:         "fk",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
+								"fk_fkey": {
+									Name:              "fk_fkey",
+									Columns:           []string{"fk"},
+									ReferencedTable:   "table1",
+									ReferencedColumns: []string{"id"},
+									MatchType:         "FULL",
+									OnDelete:          "CASCADE",
+									OnUpdate:          "NO ACTION",
 								},
 							},
 							CheckConstraints:  map[string]*schema.CheckConstraint{},
@@ -837,7 +961,88 @@ func TestReadSchema(t *testing.T) {
 									Columns:           []string{"customer_id", "product_id"},
 									ReferencedTable:   "products",
 									ReferencedColumns: []string{"customer_id", "product_id"},
+									MatchType:         "SIMPLE",
 									OnDelete:          "NO ACTION",
+									OnUpdate:          "NO ACTION",
+								},
+							},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name: "multicolumn foreign key constraint with on update action",
+				createStmt: `CREATE TABLE products(
+          customer_id INT NOT NULL, 
+          product_id INT NOT NULL, 
+          PRIMARY KEY(customer_id, product_id));
+
+          CREATE TABLE orders(
+            customer_id INT NOT NULL, 
+            product_id INT NOT NULL, 
+            CONSTRAINT fk_customer_product FOREIGN KEY (customer_id, product_id) REFERENCES products (customer_id, product_id) ON UPDATE CASCADE);`,
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"products": {
+							Name: "products",
+							Columns: map[string]*schema.Column{
+								"customer_id": {
+									Name:         "customer_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+								"product_id": {
+									Name:         "product_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{"customer_id", "product_id"},
+							Indexes: map[string]*schema.Index{
+								"products_pkey": {
+									Name:       "products_pkey",
+									Unique:     true,
+									Columns:    []string{"customer_id", "product_id"},
+									Method:     string(migrations.OpCreateIndexMethodBtree),
+									Definition: "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (customer_id, product_id)",
+								},
+							},
+							ForeignKeys:       map[string]*schema.ForeignKey{},
+							CheckConstraints:  map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{},
+						},
+						"orders": {
+							Name: "orders",
+							Columns: map[string]*schema.Column{
+								"customer_id": {
+									Name:         "customer_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+								"product_id": {
+									Name:         "product_id",
+									Type:         "integer",
+									Nullable:     false,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes:    map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{
+								"fk_customer_product": {
+									Name:              "fk_customer_product",
+									Columns:           []string{"customer_id", "product_id"},
+									ReferencedTable:   "products",
+									ReferencedColumns: []string{"customer_id", "product_id"},
+									MatchType:         "SIMPLE",
+									OnDelete:          "NO ACTION",
+									OnUpdate:          "CASCADE",
 								},
 							},
 							CheckConstraints:  map[string]*schema.CheckConstraint{},
