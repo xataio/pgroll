@@ -273,6 +273,28 @@ BEGIN
 END;
 $$;
 
+-- add current schemas to the migrations table as inferred migrations
+INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, done, migration_type, created_at, updated_at)
+SELECT
+    nspname,
+    'initial_' || nspname,
+    '{}'::jsonb,
+    placeholder.read_schema (nspname),
+    TRUE,
+    'inferred',
+    statement_timestamp(),
+    statement_timestamp()
+FROM
+    pg_catalog.pg_namespace
+WHERE
+    nspname NOT IN ('pg_catalog', 'pg_toast', 'pg_temp_1', 'pg_toast_temp_1', 'pg_statistic', 'pg_temp_2', 'pg_toast_temp_2', 'pg_statistic_temp', 'information_schema', 'pgroll')
+    AND placeholder.read_schema (nspname) -> 'tables' != '{}'::jsonb
+ON CONFLICT (schema,
+    name)
+    DO UPDATE SET
+        resulting_schema = EXCLUDED.resulting_schema,
+        updated_at = EXCLUDED.updated_at;
+
 CREATE OR REPLACE FUNCTION placeholder.raw_migration ()
     RETURNS event_trigger
     LANGUAGE plpgsql
