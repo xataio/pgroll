@@ -265,18 +265,18 @@ func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn d
 	return err
 }
 
-func quotedTemporaryNames(columns []string) []string {
-	names := make([]string, len(columns))
-	for i, col := range columns {
-		names[i] = pq.QuoteIdentifier(TemporaryName(col))
-	}
-	return names
-}
-
 func temporaryNames(columns []string) []string {
 	names := make([]string, len(columns))
 	for i, col := range columns {
 		names[i] = TemporaryName(col)
+	}
+	return names
+}
+
+func quotedTemporaryNames(columns []string) []string {
+	names := make([]string, len(columns))
+	for i, col := range columns {
+		names[i] = pq.QuoteIdentifier(TemporaryName(col))
 	}
 	return names
 }
