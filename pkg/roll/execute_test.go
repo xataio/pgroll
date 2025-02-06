@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
@@ -33,7 +34,7 @@ func TestSchemaIsCreatedAfterMigrationStart(t *testing.T) {
 		ctx := context.Background()
 		version := "1_create_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -53,7 +54,7 @@ func TestDisabledSchemaManagement(t *testing.T) {
 		ctx := context.Background()
 		version := "1_create_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 
@@ -68,7 +69,7 @@ func TestDisabledSchemaManagement(t *testing.T) {
 			t.Fatalf("Failed to rollback migration: %v", err)
 		}
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration again: %v", err)
 		}
 
@@ -94,13 +95,13 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 				secondVersion = "2_create_table"
 			)
 
-			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 				t.Fatalf("Failed to start first migration: %v", err)
 			}
 			if err := mig.Complete(ctx); err != nil {
 				t.Fatalf("Failed to complete first migration: %v", err)
 			}
-			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}); err != nil {
+			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}, backfill.NewConfig()); err != nil {
 				t.Fatalf("Failed to start second migration: %v", err)
 			}
 			if err := mig.Complete(ctx); err != nil {
@@ -125,7 +126,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			)
 
 			// Run the first pgroll migration
-			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+			if err := mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 				t.Fatalf("Failed to start first migration: %v", err)
 			}
 			if err := mig.Complete(ctx); err != nil {
@@ -139,7 +140,7 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			}
 
 			// Run the second pgroll migration
-			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}); err != nil {
+			if err := mig.Start(ctx, &migrations.Migration{Name: secondVersion, Operations: migrations.Operations{createTableOp("table2")}}, backfill.NewConfig()); err != nil {
 				t.Fatalf("Failed to start second migration: %v", err)
 			}
 			if err := mig.Complete(ctx); err != nil {
@@ -165,7 +166,7 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 		ctx := context.Background()
 
 		// Apply a create table migration
-		err := mig.Start(ctx, &migrations.Migration{Name: "01_create_table", Operations: migrations.Operations{createTableOp("table1")}})
+		err := mig.Start(ctx, &migrations.Migration{Name: "01_create_table", Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig())
 		require.NoError(t, err)
 		err = mig.Complete(ctx)
 		require.NoError(t, err)
@@ -176,13 +177,13 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 			Operations: migrations.Operations{&migrations.OpRawSQL{
 				Up: "CREATE TABLE table2(a int)",
 			}},
-		})
+		}, backfill.NewConfig())
 		require.NoError(t, err)
 		err = mig.Complete(ctx)
 		require.NoError(t, err)
 
 		// Start a third create table migration
-		err = mig.Start(ctx, &migrations.Migration{Name: "03_create_table", Operations: migrations.Operations{createTableOp("table3")}})
+		err = mig.Start(ctx, &migrations.Migration{Name: "03_create_table", Operations: migrations.Operations{createTableOp("table3")}}, backfill.NewConfig())
 		require.NoError(t, err)
 
 		// The previous version is migration 01 if raw SQL migrations are ignored
@@ -218,7 +219,7 @@ func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 		ctx := context.Background()
 		version := "1_create_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 		if err := mig.Rollback(ctx); err != nil {
@@ -257,7 +258,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 						},
 					},
 				},
-			})
+			}, backfill.NewConfig())
 			assert.Error(t, err)
 
 			// ensure that there is no active migration
@@ -277,7 +278,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 			err := mig.Start(ctx, &migrations.Migration{
 				Name:       "01_create_table",
 				Operations: migrations.Operations{createTableOp("table1")},
-			})
+			}, backfill.NewConfig())
 			assert.NoError(t, err)
 
 			// complete the migration
@@ -301,7 +302,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 						Down:   "invalid",
 					},
 				},
-			})
+			}, backfill.NewConfig())
 			assert.Error(t, err)
 
 			// Ensure that there is no active migration
@@ -321,10 +322,14 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 		const version1 = "1_create_table"
 		const version2 = "2_create_another_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{
-			Name:       version1,
-			Operations: migrations.Operations{createTableOp("table1")},
-		}); err != nil {
+		if err := mig.Start(
+			ctx,
+			&migrations.Migration{
+				Name:       version1,
+				Operations: migrations.Operations{createTableOp("table1")},
+			},
+			backfill.NewConfig(),
+		); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 		if err := mig.Complete(ctx); err != nil {
@@ -354,7 +359,9 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 		if err := mig.Start(ctx, &migrations.Migration{
 			Name:       version2,
 			Operations: migrations.Operations{createTableOp("table2")},
-		}); err != nil {
+		},
+			backfill.NewConfig(),
+		); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 		if err := mig.Complete(ctx); err != nil {
@@ -408,7 +415,7 @@ func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 		err = mig.Start(ctx, &migrations.Migration{
 			Name:       "01_add_column",
 			Operations: migrations.Operations{addColumnOp("table1")},
-		})
+		}, backfill.NewConfig())
 		require.NoError(t, err)
 	})
 }
@@ -425,7 +432,7 @@ func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
 		}
 
 		// Start and complete a migration to create a simple `users` table
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("users")}}); err != nil {
+		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("users")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
 		}
 		if err := mig.Complete(ctx); err != nil {
@@ -516,7 +523,7 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		err = mig.Start(ctx, &migrations.Migration{
 			Name:       "01_create_table",
 			Operations: []migrations.Operation{createTableOp("table1")},
-		})
+		}, backfill.NewConfig())
 		assert.NoError(t, err)
 
 		// Get the migration status
@@ -549,7 +556,7 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		err = mig.Start(ctx, &migrations.Migration{
 			Name:       "01_create_table",
 			Operations: []migrations.Operation{createTableOp("table1")},
-		})
+		}, backfill.NewConfig())
 		assert.NoError(t, err)
 		err = mig.Complete(ctx)
 		assert.NoError(t, err)
@@ -577,7 +584,7 @@ func TestRoleIsRespected(t *testing.T) {
 		err := mig.Start(ctx, &migrations.Migration{
 			Name:       "01_create_table",
 			Operations: migrations.Operations{createTableOp("table1")},
-		})
+		}, backfill.NewConfig())
 		assert.NoError(t, err)
 
 		// Complete the create table migration
@@ -628,7 +635,7 @@ func TestMigrationHooksAreInvoked(t *testing.T) {
 		err := mig.Start(ctx, &migrations.Migration{
 			Name:       "01_create_table",
 			Operations: migrations.Operations{createTableOp("table1")},
-		})
+		}, backfill.NewConfig())
 		assert.NoError(t, err)
 
 		// Ensure that both the before_start_ddl and after_start_ddl tables were created
@@ -676,7 +683,7 @@ func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
 					Down:   "name",
 				},
 			},
-		}, cb)
+		}, backfill.NewConfig(backfill.WithCallbacks(cb)))
 		require.NoError(t, err)
 
 		// Ensure that the callback was invoked
@@ -718,7 +725,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 			err := mig.Start(ctx, &migrations.Migration{
 				Name:       "01_create_table",
 				Operations: migrations.Operations{createTableOp("table1")},
-			})
+			}, backfill.NewConfig())
 			require.NoError(t, err)
 
 			// Complete the migration
@@ -743,7 +750,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 						},
 					},
 				},
-			})
+			}, backfill.NewConfig())
 			require.NoError(t, err)
 
 			// Complete the migration
@@ -774,7 +781,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 			err := mig.Start(ctx, &migrations.Migration{
 				Name:       "01_create_table",
 				Operations: migrations.Operations{createTableOp("table1")},
-			})
+			}, backfill.NewConfig())
 			require.NoError(t, err)
 
 			// Complete the migration
@@ -799,7 +806,7 @@ func TestSQLTransformerOptionIsUsedWhenCreatingTriggers(t *testing.T) {
 						},
 					},
 				},
-			})
+			}, backfill.NewConfig())
 			// Ensure that the start phase has failed with a SQL transformer error
 			require.ErrorIs(t, err, testutils.ErrMockSQLTransformer)
 		})
@@ -830,7 +837,7 @@ func TestWithSearchPathOptionIsRespected(t *testing.T) {
 					Up: "SELECT say_hello()",
 				},
 			},
-		})
+		}, backfill.NewConfig())
 		require.NoError(t, err)
 
 		// Complete the migration

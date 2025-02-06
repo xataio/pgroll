@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/lib/pq"
 
@@ -19,9 +18,7 @@ import (
 type PGVersion int
 
 const (
-	PGVersion15              PGVersion     = 15
-	DefaultBackfillBatchSize int           = 1000
-	DefaultBackfillDelay     time.Duration = 0
+	PGVersion15 PGVersion = 15
 )
 
 var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local migration")
@@ -42,10 +39,7 @@ type Roll struct {
 	state          *state.State
 	pgVersion      PGVersion
 	sqlTransformer migrations.SQLTransformer
-
-	backfillBatchSize  int
-	backfillBatchDelay time.Duration
-	skipValidation     bool
+	skipValidation bool
 }
 
 // New creates a new Roll instance
@@ -53,9 +47,6 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 	rollOpts := &options{}
 	for _, o := range opts {
 		o(rollOpts)
-	}
-	if rollOpts.backfillBatchSize <= 0 {
-		rollOpts.backfillBatchSize = DefaultBackfillBatchSize
 	}
 
 	conn, err := setupConn(ctx, pgURL, schema, *rollOpts)
@@ -85,8 +76,6 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		disableVersionSchemas:    rollOpts.disableVersionSchemas,
 		noVersionSchemaForRawSQL: rollOpts.noVersionSchemaForRawSQL,
 		migrationHooks:           rollOpts.migrationHooks,
-		backfillBatchSize:        rollOpts.backfillBatchSize,
-		backfillBatchDelay:       rollOpts.backfillBatchDelay,
 		skipValidation:           rollOpts.skipValidation,
 	}, nil
 }

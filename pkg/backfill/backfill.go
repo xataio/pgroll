@@ -15,24 +15,18 @@ import (
 )
 
 type Backfill struct {
-	conn       db.DB
-	batchSize  int
-	batchDelay time.Duration
-	callbacks  []CallbackFn
+	conn   db.DB
+	config *Config
 }
 
 type CallbackFn func(done int64, total int64)
 
 // New creates a new backfill operation with the given options. The backfill is
 // not started until `Start` is invoked.
-func New(conn db.DB, opts ...OptionFn) *Backfill {
+func New(conn db.DB, c *Config) *Backfill {
 	b := &Backfill{
-		conn:      conn,
-		batchSize: 1000,
-	}
-
-	for _, opt := range opts {
-		opt(b)
+		conn:   conn,
+		config: c,
 	}
 
 	return b
@@ -61,14 +55,14 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 		BatchConfig: templates.BatchConfig{
 			TableName:  table.Name,
 			PrimaryKey: identityColumns,
-			BatchSize:  bf.batchSize,
+			BatchSize:  bf.config.batchSize,
 		},
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.
 	for batch := 0; ; batch++ {
-		for _, cb := range bf.callbacks {
-			cb(int64(batch*bf.batchSize), total)
+		for _, cb := range bf.config.callbacks {
+			cb(int64(batch*bf.config.batchSize), total)
 		}
 
 		if err := b.updateBatch(ctx, bf.conn); err != nil {
@@ -81,7 +75,7 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(bf.batchDelay):
+		case <-time.After(bf.config.batchDelay):
 		}
 	}
 

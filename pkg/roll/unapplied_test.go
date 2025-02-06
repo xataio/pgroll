@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -57,7 +58,7 @@ func TestUnappliedMigrations(t *testing.T) {
 			require.NoError(t, err)
 
 			// Apply the first migration
-			err = roll.Start(ctx, &migration)
+			err = roll.Start(ctx, &migration, backfill.NewConfig())
 			require.NoError(t, err)
 			err = roll.Complete(ctx)
 			require.NoError(t, err)
@@ -89,7 +90,7 @@ func TestUnappliedMigrations(t *testing.T) {
 				err := json.Unmarshal(fs[filename].Data, &migration)
 				require.NoError(t, err)
 
-				err = roll.Start(ctx, &migration)
+				err = roll.Start(ctx, &migration, backfill.NewConfig())
 				require.NoError(t, err)
 				err = roll.Complete(ctx)
 				require.NoError(t, err)
@@ -119,7 +120,7 @@ func TestUnappliedMigrations(t *testing.T) {
 				Operations: migrations.Operations{
 					&migrations.OpRawSQL{Up: "SELECT 1"},
 				},
-			})
+			}, backfill.NewConfig())
 			require.NoError(t, err)
 			err = m.Complete(ctx)
 			require.NoError(t, err)

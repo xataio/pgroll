@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/xataio/pgroll/cmd/flags"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -34,30 +35,39 @@ func startCmd() *cobra.Command {
 			}
 			defer m.Close()
 
-			return runMigrationFromFile(cmd.Context(), m, fileName, complete)
+			c := backfill.NewConfig(
+				backfill.WithBatchSize(flags.BackfillBatchSize()),
+				backfill.WithBatchDelay(flags.BackfillBatchDelay()),
+			)
+
+			return runMigrationFromFile(cmd.Context(), m, fileName, complete, c)
 		},
 	}
 
+	startCmd.PersistentFlags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	startCmd.PersistentFlags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
-
 	startCmd.Flags().BoolP("skip-validation", "s", false, "skip migration validation")
+
+	viper.BindPFlag("BACKFILL_BATCH_SIZE", startCmd.PersistentFlags().Lookup("backfill-batch-size"))
+	viper.BindPFlag("BACKFILL_BATCH_DELAY", startCmd.PersistentFlags().Lookup("backfill-batch-delay"))
 	viper.BindPFlag("SKIP_VALIDATION", startCmd.Flags().Lookup("skip-validation"))
 
 	return startCmd
 }
 
-func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, complete bool) error {
+func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, complete bool, c *backfill.Config) error {
 	migration, err := readMigration(fileName)
 	if err != nil {
 		return err
 	}
 
-	return runMigration(ctx, m, migration, complete)
+	return runMigration(ctx, m, migration, complete, c)
 }
 
-func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool) error {
+func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool, c *backfill.Config) error {
 	sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
-	cb := func(n int64, total int64) {
+	c.AddCallback(func(n int64, total int64) {
 		if total > 0 {
 			percent := float64(n) / float64(total) * 100
 			// Percent can be > 100 if we're on the last batch in which case we still want to display 100.
@@ -66,9 +76,9 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 		} else {
 			sp.UpdateText(fmt.Sprintf("%d records complete...", n))
 		}
-	}
+	})
 
-	err := m.Start(ctx, migration, cb)
+	err := m.Start(ctx, migration, c)
 	if err != nil {
 		sp.Fail(fmt.Sprintf("Failed to start migration: %s", err))
 		return err
