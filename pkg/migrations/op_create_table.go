@@ -401,7 +401,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 
 	constraint := ""
 	if w.Name != "" {
-		constraint += fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
+		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
 	// in case of in line foreign key constraint, columns are already included in the column definition
 	if len(w.Columns) != 0 {
@@ -415,7 +415,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 		onUpdateAction,
 	)
 	constraint += w.addDeferrable()
-	constraint += w.skipValidation()
+	constraint += w.addNotValid()
 	return constraint
 }
 
@@ -465,7 +465,7 @@ func (w *ConstraintSQLWriter) addDeferrable() string {
 	return deferrable
 }
 
-func (w *ConstraintSQLWriter) skipValidation() string {
+func (w *ConstraintSQLWriter) addNotValid() string {
 	if w.SkipValidation {
 		return " NOT VALID"
 	}
