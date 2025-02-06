@@ -68,11 +68,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
-		temporaryColumnNames := make([]string, len(o.Columns))
-		for i, col := range o.Columns {
-			temporaryColumnNames[i] = TemporaryName(col)
-		}
-		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryColumnNames)
+		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryNames(o.Columns))
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn)
 	case OpCreateConstraintTypeForeignKey:
@@ -261,7 +257,8 @@ func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn d
 		o.References.OnDelete,
 		o.References.OnUpdate,
 		o.References.OnDeleteSetColumns,
-		o.References.MatchType)
+		o.References.MatchType,
+	)
 
 	_, err := conn.ExecContext(ctx, sql)
 

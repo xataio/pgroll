@@ -99,6 +99,9 @@ type Index struct {
 	// Unique indicates whether or not the index is unique
 	Unique bool `json:"unique"`
 
+	// Exclusion indicates whether or not the index is an exclusion index
+	Exclusion bool `json:"exclusion"`
+
 	// Columns is the set of key columns on which the index is defined
 	Columns []string `json:"columns"`
 
@@ -133,7 +136,7 @@ type ForeignKey struct {
 	OnUpdate string `json:"onUpdate"`
 
 	// MatchType is the match type of the foreign key
-	MatchType string `json:"match_type"`
+	MatchType string `json:"matchType"`
 }
 
 // CheckConstraint represents a check constraint on a table
@@ -162,14 +165,17 @@ type ExcludeConstraint struct {
 	// Name is the name of the exclude constraint in postgres
 	Name string `json:"name"`
 
-	// IndexMethod is the index method of the exclude constraint
-	IndexMethod string `json:"indexMethod"`
-
-	// Elements is the elements of the exclude constraint
-	Elements string `json:"elements"`
+	// Method is the index method of the exclude constraint
+	Method string `json:"method"`
 
 	// Predicate is the predicate of the index
 	Predicate string `json:"predicate"`
+
+	// The columns that the exclusion constraint is defined on
+	Columns []string `json:"columns"`
+
+	// The definition of the exclusion
+	Definition string `json:"definition"`
 }
 
 // GetTable returns a table by name

@@ -103,6 +103,5 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 		o.References.MatchType)
 
 	_, err := conn.ExecContext(ctx, sql)
-
 	return err
 }

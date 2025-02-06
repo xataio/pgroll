@@ -19,12 +19,8 @@ const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
         INTO search_path
         FROM current_setting('search_path');
 
-      IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} {{ .LatestSchema | ql }} {{ if .TestExpr  -}} AND {{ .TestExpr }} {{ end -}} THEN
+      IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} {{ .LatestSchema | ql }} THEN
         NEW.{{ .PhysicalColumn | qi  }} = {{ .SQL }};
-      {{- if .ElseExpr }}
-      ELSE
-        {{ .ElseExpr }};
-      {{- end }}
       END IF;
 
       RETURN NEW;

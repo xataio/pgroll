@@ -244,10 +244,9 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		case ConstraintTypeExclude:
 			excludeConstraints[c.Name] = &schema.ExcludeConstraint{
-				Name:        c.Name,
-				IndexMethod: c.Exclude.IndexMethod,
-				Elements:    c.Exclude.Elements,
-				Predicate:   c.Exclude.Predicate,
+				Name:      c.Name,
+				Method:    c.Exclude.IndexMethod,
+				Predicate: c.Exclude.Predicate,
 			}
 		}
 	}
@@ -368,6 +367,7 @@ func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
 	if noInherit {
 		constraint += " NO INHERIT"
 	}
+	constraint += w.addNotValid()
 	return constraint
 }
 
@@ -382,7 +382,7 @@ func (w *ConstraintSQLWriter) WritePrimaryKey() string {
 	return constraint
 }
 
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string, matchTypeStr ForeignKeyMatchType) string {
+func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string, matchType ForeignKeyMatchType) string {
 	onDeleteAction := string(ForeignKeyActionNOACTION)
 	if onDelete != "" {
 		onDeleteAction = strings.ToUpper(string(onDelete))
@@ -394,22 +394,23 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	if onUpdate != "" {
 		onUpdateAction = strings.ToUpper(string(onUpdate))
 	}
-	matchType := string(ForeignKeyMatchTypeSIMPLE)
-	if matchTypeStr != "" {
-		matchType = strings.ToUpper(string(matchTypeStr))
+	matchTypeStr := string(ForeignKeyMatchTypeSIMPLE)
+	if matchType != "" {
+		matchTypeStr = strings.ToUpper(string(matchType))
 	}
 
 	constraint := ""
 	if w.Name != "" {
 		constraint += fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
+	// in case of in line foreign key constraint, columns are already included in the column definition
 	if len(w.Columns) != 0 {
 		constraint += fmt.Sprintf("FOREIGN KEY (%s) ", strings.Join(quoteColumnNames(w.Columns), ", "))
 	}
 	constraint += fmt.Sprintf("REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s",
 		pq.QuoteIdentifier(referencedTable),
 		strings.Join(quoteColumnNames(referencedColumns), ", "),
-		matchType,
+		matchTypeStr,
 		onDeleteAction,
 		onUpdateAction,
 	)
