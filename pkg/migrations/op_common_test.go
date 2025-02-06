@@ -244,16 +244,30 @@ func UniqueConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constrai
 	}
 }
 
-func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string, opts ...foreignKeyOnDeleteOpt) {
+func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
-	if !foreignKeyExists(t, db, schema, table, constraint, true, opts...) {
+	if !foreignKeyExists(t, db, schema, table, constraint, true, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION) {
 		t.Fatalf("Expected validated foreign key %q to exist", constraint)
 	}
 }
 
-func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string, opts ...foreignKeyOnDeleteOpt) {
+func ValidatedForeignKeyMustExistWithReferentialAction(t *testing.T, db *sql.DB, schema, table, constraint string, onDelete, onUpdate migrations.ForeignKeyAction) {
 	t.Helper()
-	if !foreignKeyExists(t, db, schema, table, constraint, false, opts...) {
+	if !foreignKeyExists(t, db, schema, table, constraint, true, onDelete, onUpdate) {
+		t.Fatalf("Expected validated foreign key %q to exist", constraint)
+	}
+}
+
+func NotValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !foreignKeyExists(t, db, schema, table, constraint, false, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION) {
+		t.Fatalf("Expected not validated foreign key %q to exist", constraint)
+	}
+}
+
+func NotValidatedForeignKeyMustExistWithReferentialAction(t *testing.T, db *sql.DB, schema, table, constraint string, onDelete, onUpdate migrations.ForeignKeyAction) {
+	t.Helper()
+	if !foreignKeyExists(t, db, schema, table, constraint, false, onDelete, onUpdate) {
 		t.Fatalf("Expected not validated foreign key %q to exist", constraint)
 	}
 }
@@ -395,23 +409,25 @@ func uniqueConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint 
 	return exists
 }
 
-type foreignKeyOnDeleteOpt func() string
-
-func withOnDeleteCascade() foreignKeyOnDeleteOpt {
-	return func() string { return "c" }
-}
-
-func withOnDeleteSetNull() foreignKeyOnDeleteOpt {
-	return func() string { return "n" }
-}
-
-func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, validated bool, opts ...foreignKeyOnDeleteOpt) bool {
-	t.Helper()
-
-	confDelType := "a"
-	for _, opt := range opts {
-		confDelType = opt()
+func referentialAction(a migrations.ForeignKeyAction) string {
+	switch a {
+	case migrations.ForeignKeyActionNOACTION:
+		return "a"
+	case migrations.ForeignKeyActionRESTRICT:
+		return "r"
+	case migrations.ForeignKeyActionSETNULL:
+		return "n"
+	case migrations.ForeignKeyActionSETDEFAULT:
+		return "d"
+	case migrations.ForeignKeyActionCASCADE:
+		return "c"
+	default:
+		return "a"
 	}
+}
+
+func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string, validated bool, onDeleteAction, onUpdateAction migrations.ForeignKeyAction) bool {
+	t.Helper()
 
 	var exists bool
 	err := db.QueryRow(`
@@ -422,9 +438,10 @@ func foreignKeyExists(t *testing.T, db *sql.DB, schema, table, constraint string
       AND conname = $2
       AND contype = 'f'
       AND convalidated = $3
-      AND confdeltype = $4 
+      AND confdeltype = $4
+      AND confupdtype = $5
     )`,
-		fmt.Sprintf("%s.%s", schema, table), constraint, validated, confDelType).Scan(&exists)
+		fmt.Sprintf("%s.%s", schema, table), constraint, validated, referentialAction(onDeleteAction), referentialAction(onUpdateAction)).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}

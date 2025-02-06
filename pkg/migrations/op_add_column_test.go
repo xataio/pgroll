@@ -636,7 +636,14 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
+				ValidatedForeignKeyMustExistWithReferentialAction(
+					t,
+					db,
+					schema,
+					"orders",
+					"fk_users_id",
+					migrations.ForeignKeyActionCASCADE,
+					migrations.ForeignKeyActionNOACTION)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -669,7 +676,14 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the new table
-				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
+				ValidatedForeignKeyMustExistWithReferentialAction(
+					t,
+					db,
+					schema,
+					"orders",
+					"fk_users_id",
+					migrations.ForeignKeyActionCASCADE,
+					migrations.ForeignKeyActionNOACTION)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
