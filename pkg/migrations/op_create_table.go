@@ -404,6 +404,7 @@ func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referenced
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
+	// in case of in line foreign key constraint, columns are already included in the column definition
 	if len(w.Columns) != 0 {
 		constraint += fmt.Sprintf("FOREIGN KEY (%s) ", strings.Join(quoteColumnNames(w.Columns), ", "))
 	}
