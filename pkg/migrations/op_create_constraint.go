@@ -69,7 +69,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	case OpCreateConstraintTypeUnique:
 		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryNames(o.Columns))
 	case OpCreateConstraintTypeCheck:
-		return table, o.addCheckConstraint(ctx, conn)
+		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:
 		return table, o.addForeignKeyConstraint(ctx, conn)
 	}
@@ -232,9 +232,9 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	return nil
 }
 
-func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
+func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB, tableName string) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(o.Name),
 		rewriteCheckExpression(*o.Check, o.Columns...),
 	))
