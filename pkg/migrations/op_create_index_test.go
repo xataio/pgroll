@@ -314,10 +314,117 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 	}})
 }
 
-func TestCreateIndexOnObjectsCreatedInSameMigration(t *testing.T) {
+func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 	t.Parallel()
 
 	ExecuteTests(t, TestCases{
+		{
+			name: "rename table, create index",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpCreateIndex{
+							Table:   "products",
+							Columns: []string{"name"},
+							Name:    "idx_products_name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "items", "idx_products_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "items", "idx_products_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The index remains on the underlying table.
+				IndexMustExist(t, db, schema, "products", "idx_products_name")
+			},
+		},
+		{
+			name: "rename table, rename column, create index",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpCreateIndex{
+							Table:   "products",
+							Columns: []string{"item_name"},
+							Name:    "idx_products_item_name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "items", "idx_products_item_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "items", "idx_products_item_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The index remains on the underlying table.
+				IndexMustExist(t, db, schema, "products", "idx_products_item_name")
+			},
+		},
 		{
 			name: "create index on newly created table",
 			migrations: []migrations.Migration{
