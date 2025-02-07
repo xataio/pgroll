@@ -753,6 +753,110 @@ func TestChangeTypeInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "name")
 			},
 		},
+		{
+			name: "rename table, rename column, change type",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(3)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "products",
+							Column: "item_name",
+							Type:   ptr("text"),
+							Up:     "item_name",
+							Down:   "CASE WHEN LENGTH(item_name) > 3 THEN 'xxx' ELSE item_name END",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has the expected type
+				// The table hasn't been physically renamed yet, so we need to use the old name
+				ColumnMustHaveType(t, db, schema, "items", migrations.TemporaryName("item_name"), "text")
+
+				// Can insert a row into the new schema
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "1",
+					"item_name": "apple",
+				})
+
+				// Can insert a row into the old schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "2",
+					"name": "abc",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apple"},
+					{"id": 2, "item_name": "abc"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "xxx"},
+					{"id": 2, "name": "abc"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+				TableMustBeCleanedUp(t, db, schema, "items", "item_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has the expected type
+				ColumnMustHaveType(t, db, schema, "products", "item_name", "text")
+
+				// Can insert a row into the new schema
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "3",
+					"item_name": "carrot",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "xxx"},
+					{"id": 2, "item_name": "abc"},
+					{"id": 3, "item_name": "carrot"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+				TableMustBeCleanedUp(t, db, schema, "products", "item_name")
+			},
+		},
 	})
 }
 
