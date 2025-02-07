@@ -1324,6 +1324,56 @@ func TestCreateTableValidation(t *testing.T) {
 			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 		{
+			name: "column definition missing a name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									// missing name
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "orders", Name: ""},
+		},
+		{
+			name: "column definition missing a type",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									// missing type
+								},
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "orders", Name: "name"},
+		},
+		{
 			name: "invalid column name",
 			migrations: []migrations.Migration{
 				{
