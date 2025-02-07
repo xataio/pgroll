@@ -41,6 +41,16 @@ type ColumnAlreadyExistsError struct {
 	Name  string
 }
 
+type ColumnIsInvalidError struct {
+	Table string
+	Name  string
+}
+
+func (e ColumnIsInvalidError) Error() string {
+	return fmt.Sprintf(`column %q in table %q is missing one or more required fields - "name" or "type"`,
+		e.Name, e.Table)
+}
+
 func (e ColumnAlreadyExistsError) Error() string {
 	return fmt.Sprintf("column %q already exists in table %q", e.Name, e.Table)
 }
