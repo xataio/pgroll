@@ -19,6 +19,12 @@ var referentialAction = map[string]migrations.ForeignKeyAction{
 	"r": migrations.ForeignKeyActionRESTRICT,
 }
 
+var matchTypes = map[string]migrations.ForeignKeyMatchType{
+	"s": migrations.ForeignKeyMatchTypeSIMPLE,
+	"p": migrations.ForeignKeyMatchTypePARTIAL,
+	"f": migrations.ForeignKeyMatchTypeFULL,
+}
+
 // convertCreateStmt converts a CREATE TABLE statement to a pgroll operation.
 func convertCreateStmt(stmt *pgq.CreateStmt) (migrations.Operations, error) {
 	// Check if the statement can be converted
@@ -270,45 +276,7 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 		constraintType = migrations.ConstraintTypePrimaryKey
 	case pgq.ConstrType_CONSTR_FOREIGN:
 		constraintType = migrations.ConstraintTypeForeignKey
-		referencedTable := c.Pktable.Relname
-		referencedColumns := make([]string, len(c.PkAttrs))
-		for i, node := range c.PkAttrs {
-			referencedColumns[i] = node.GetString_().Sval
-		}
-		matchType := migrations.ForeignKeyMatchTypeSIMPLE
-		switch c.FkMatchtype {
-		case "p":
-			matchType = migrations.ForeignKeyMatchTypePARTIAL
-		case "f":
-			matchType = migrations.ForeignKeyMatchTypeFULL
-		case "s":
-			matchType = migrations.ForeignKeyMatchTypeSIMPLE
-		}
-		columnsToSet := make([]string, len(c.FkDelSetCols))
-		onDelete := migrations.ForeignKeyActionNOACTION
-		if c.FkDelAction != "" {
-			onDelete = referentialAction[c.FkDelAction]
-			for i, node := range c.FkDelSetCols {
-				columnsToSet[i] = node.GetString_().Sval
-			}
-		}
-		onUpdate := migrations.ForeignKeyActionNOACTION
-		if c.FkUpdAction != "" {
-			onUpdate = referentialAction[c.FkUpdAction]
-		}
-		columns = make([]string, len(c.FkAttrs))
-		for i, node := range c.FkAttrs {
-			columns[i] = node.GetString_().Sval
-		}
-
-		references = &migrations.TableForeignKeyReference{
-			Table:              referencedTable,
-			Columns:            referencedColumns,
-			MatchType:          matchType,
-			OnDelete:           onDelete,
-			OnDeleteSetColumns: columnsToSet,
-			OnUpdate:           onUpdate,
-		}
+		columns, references = convertFkConstraint(c)
 	case pgq.ConstrType_CONSTR_EXCLUSION:
 		constraintType = migrations.ConstraintTypeExclude
 		exclude = &migrations.ConstraintExclude{
@@ -379,6 +347,50 @@ func convertConstraint(c *pgq.Constraint) (*migrations.Constraint, error) {
 	}, nil
 }
 
+// convertFkConstraint converts a foreign key constraint to a table level foreign key constraint.
+func convertFkConstraint(c *pgq.Constraint) ([]string, *migrations.TableForeignKeyReference) {
+	referencedTable := getQualifiedRelationName(c.GetPktable())
+	referencedColumns := make([]string, len(c.PkAttrs))
+	for i, node := range c.PkAttrs {
+		referencedColumns[i] = node.GetString_().Sval
+	}
+	matchType := migrations.ForeignKeyMatchTypeSIMPLE
+	if c.GetFkMatchtype() != "" {
+		matchType = matchTypes[c.FkMatchtype]
+	}
+	var columnsToSet []string
+	onDelete := migrations.ForeignKeyActionNOACTION
+	if c.GetFkDelAction() != "" {
+		onDelete = referentialAction[c.GetFkDelAction()]
+		if c.GetFkDelSetCols() != nil {
+			columnsToSet = make([]string, len(c.FkDelSetCols))
+			for i, node := range c.FkDelSetCols {
+				columnsToSet[i] = node.GetString_().Sval
+			}
+		}
+	}
+	onUpdate := migrations.ForeignKeyActionNOACTION
+	if c.GetFkUpdAction() != "" {
+		onUpdate = referentialAction[c.GetFkUpdAction()]
+	}
+	var columns []string
+	if c.GetFkAttrs() != nil {
+		columns = make([]string, len(c.GetFkAttrs()))
+		for i, node := range c.GetFkAttrs() {
+			columns[i] = node.GetString_().Sval
+		}
+	}
+
+	return columns, &migrations.TableForeignKeyReference{
+		Table:              referencedTable,
+		Columns:            referencedColumns,
+		MatchType:          matchType,
+		OnDelete:           onDelete,
+		OnDeleteSetColumns: columnsToSet,
+		OnUpdate:           onUpdate,
+	}
+}
+
 // canConvertColumnDef returns true iff `col` can be converted to a pgroll
 // `Column` definition.
 func canConvertColumnDef(col *pgq.ColumnDef) bool {
@@ -440,9 +452,19 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 		return nil, nil
 	}
 
-	onDelete, err := parseOnDeleteAction(constraint.GetFkDelAction())
-	if err != nil {
-		return nil, err
+	onDelete := migrations.ForeignKeyActionNOACTION
+	if constraint.GetFkDelAction() != "" {
+		onDelete = referentialAction[constraint.FkDelAction]
+	}
+
+	onUpdate := migrations.ForeignKeyActionNOACTION
+	if constraint.GetFkUpdAction() != "" {
+		onUpdate = referentialAction[constraint.FkUpdAction]
+	}
+
+	matchType := migrations.ForeignKeyMatchTypeSIMPLE
+	if constraint.GetFkMatchtype() != "" {
+		matchType = matchTypes[constraint.FkMatchtype]
 	}
 
 	name := fmt.Sprintf("%s_%s_fkey", tableName, columnName)
@@ -451,10 +473,14 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 	}
 
 	return &migrations.ForeignKeyReference{
-		Name:     name,
-		OnDelete: onDelete,
-		Column:   constraint.GetPkAttrs()[0].GetString_().GetSval(),
-		Table:    getQualifiedRelationName(constraint.GetPktable()),
+		Name:              name,
+		OnDelete:          onDelete,
+		OnUpdate:          onUpdate,
+		MatchType:         matchType,
+		Column:            constraint.GetPkAttrs()[0].GetString_().GetSval(),
+		Table:             getQualifiedRelationName(constraint.GetPktable()),
+		Deferrable:        constraint.GetDeferrable(),
+		InitiallyDeferred: constraint.GetInitdeferred(),
 	}, nil
 }
 

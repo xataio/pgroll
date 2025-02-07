@@ -78,7 +78,7 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp20,
 		},
 		{
-			sql:        "CREATE TABLE foo(a int CONSTRAINT my_fk REFERENCES bar(b))",
+			sql:        "CREATE TABLE foo(a int CONSTRAINT my_fk REFERENCES bar(b) MATCH FULL)",
 			expectedOp: expect.CreateTableOp19,
 		},
 		{
@@ -214,12 +214,44 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp33,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE RESTRICT)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionRESTRICT),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionCASCADE),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET NULL)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETNULL),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET DEFAULT)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionSETDEFAULT),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON DELETE CASCADE ON UPDATE RESTRICT)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionCASCADE, migrations.ForeignKeyActionRESTRICT),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) ON DELETE SET NULL ON UPDATE CASCADE)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeSIMPLE, migrations.ForeignKeyActionSETNULL, migrations.ForeignKeyActionCASCADE),
+		},
+		{
+			sql:        "CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT)",
+			expectedOp: expect.CreateTableOp34(migrations.ForeignKeyMatchTypeFULL, migrations.ForeignKeyActionSETDEFAULT, migrations.ForeignKeyActionSETDEFAULT),
+		},
+		{
 			sql:        "CREATE TABLE foo(id integer, s timestamptz, e timestamptz, canceled boolean DEFAULT false, EXCLUDE USING gist (id WITH =, tstzrange(s, e) WITH &&) WHERE (not canceled))",
-			expectedOp: expect.CreateTableOp34,
+			expectedOp: expect.CreateTableOp35,
 		},
 		{
 			sql:        "CREATE TABLE foo(id integer, b text, EXCLUDE USING btree (id WITH =) DEFERRABLE INITIALLY DEFERRED)",
-			expectedOp: expect.CreateTableOp35,
+			expectedOp: expect.CreateTableOp36,
 		},
 	}
 
@@ -301,11 +333,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int UNIQUE USING INDEX TABLESPACE baz)",
 
 		// Some options on FOREIGN KEY constraints are not supported
-		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE RESTRICT)",
-		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE CASCADE)",
-		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET NULL)",
-		"CREATE TABLE foo(a int REFERENCES bar (b) ON UPDATE SET DEFAULT)",
-		"CREATE TABLE foo(a int REFERENCES bar (b) MATCH FULL)",
 
 		// Named inline constraints are not supported for DEFAULT, NULL, NOT NULL,
 		// UNIQUE or PRIMARY KEY constraints
