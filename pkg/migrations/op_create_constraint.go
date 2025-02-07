@@ -37,7 +37,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: physicalColumnName,
 			SQL:            upSQL,
 		})
@@ -56,7 +56,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 			Columns:        table.Columns,
 			LatestSchema:   latestSchema,
 			SchemaName:     s.Name,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: colName,
 			SQL:            downSQL,
 		})
