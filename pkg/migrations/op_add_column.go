@@ -148,6 +148,11 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return err
 	}
 
+	// Validate that the column contains all required fields
+	if !o.Column.Validate() {
+		return ColumnIsInvalidError{Table: o.Table, Name: o.Column.Name}
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
