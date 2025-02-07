@@ -17,11 +17,6 @@ import (
 // If the local order of migrations does not match the order of migrations in
 // the schema history, an `ErrMismatchedMigration` error is returned.
 func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migrations.Migration, error) {
-	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
-	if err != nil {
-		return nil, fmt.Errorf("determining latest version: %w", err)
-	}
-
 	files, err := fs.Glob(dir, "*.json")
 	if err != nil {
 		return nil, fmt.Errorf("reading directory: %w", err)
@@ -34,7 +29,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 
 	// Find the index of the first unapplied migration
 	var idx int
-	if latestVersion != nil {
+	if len(history) > 0 {
 		for _, file := range files {
 			migration, err := openAndReadMigrationFile(dir, file)
 			if err != nil {
@@ -47,7 +42,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 			}
 
 			idx++
-			if migration.Name == *latestVersion {
+			if idx == len(history) {
 				break
 			}
 		}

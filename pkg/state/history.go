@@ -28,7 +28,7 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
 			FROM %s.migrations
-			WHERE schema=$1 ORDER BY created_at`,
+			WHERE schema=$1 AND migration_type='pgroll' ORDER BY created_at`,
 			pq.QuoteIdentifier(s.schema)), schema)
 	if err != nil {
 		return nil, err
