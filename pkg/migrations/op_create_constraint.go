@@ -134,8 +134,10 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(table.Name),
 		dropMultipleColumns(quotedTemporaryNames(o.Columns)),
 	))
 	if err != nil {
