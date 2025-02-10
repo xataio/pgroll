@@ -132,6 +132,9 @@ type ForeignKey struct {
 	// The ON DELETE behavior of the foreign key
 	OnDelete string `json:"onDelete"`
 
+	// OnDeleteSetColumns is the list of columns to update ON DELETE
+	OnDeleteSetColumns []string `json:"onDeleteSetColumns"`
+
 	// The ON UPDATE behavior of the foreign key
 	OnUpdate string `json:"onUpdate"`
 

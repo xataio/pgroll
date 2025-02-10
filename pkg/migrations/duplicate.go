@@ -42,7 +42,6 @@ const (
 
 	cSetDefaultSQL                   = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
 	cAlterTableAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
-	cAlterTableAddForeignKeySQL      = `ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s`
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
@@ -190,14 +189,20 @@ func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint
 			continue
 		}
 		if duplicatedMember, constraintColumns := d.allConstraintColumns(fk.Columns, colNames...); duplicatedMember {
-			stmts = append(stmts, fmt.Sprintf(cAlterTableAddForeignKeySQL,
-				pq.QuoteIdentifier(d.table.Name),
-				pq.QuoteIdentifier(DuplicationName(fk.Name)),
-				strings.Join(quoteColumnNames(constraintColumns), ", "),
-				pq.QuoteIdentifier(fk.ReferencedTable),
-				strings.Join(quoteColumnNames(fk.ReferencedColumns), ", "),
-				fk.OnDelete,
-			))
+			sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(d.table.Name))
+			writer := ConstraintSQLWriter{
+				Name:    DuplicationName(fk.Name),
+				Columns: constraintColumns,
+			}
+			sql += writer.WriteForeignKey(
+				fk.ReferencedTable,
+				fk.ReferencedColumns,
+				ForeignKeyAction(fk.OnDelete),
+				ForeignKeyAction(fk.OnUpdate),
+				fk.OnDeleteSetColumns,
+				ForeignKeyMatchType(fk.MatchType),
+			)
+			stmts = append(stmts, sql)
 		}
 	}
 	return stmts
