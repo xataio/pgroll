@@ -792,6 +792,40 @@ func TestReadSchema(t *testing.T) {
 									Name:       "age_check",
 									Columns:    []string{"age"},
 									Definition: "CHECK ((age > 18))",
+									NoInherit:  false,
+								},
+							},
+							UniqueConstraints:  map[string]*schema.UniqueConstraint{},
+							ExcludeConstraints: map[string]*schema.ExcludeConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name:       "check constraint with no inherit",
+				createStmt: "CREATE TABLE public.table1 (age INTEGER, CONSTRAINT age_check CHECK (age > 18) NO INHERIT);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"age": {
+									Name:         "age",
+									Type:         "integer",
+									Nullable:     true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey:  []string{},
+							Indexes:     map[string]*schema.Index{},
+							ForeignKeys: map[string]*schema.ForeignKey{},
+							CheckConstraints: map[string]*schema.CheckConstraint{
+								"age_check": {
+									Name:       "age_check",
+									Columns:    []string{"age"},
+									Definition: "CHECK ((age > 18)) NO INHERIT",
+									NoInherit:  true,
 								},
 							},
 							UniqueConstraints:  map[string]*schema.UniqueConstraint{},

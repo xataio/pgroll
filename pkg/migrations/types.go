@@ -12,6 +12,9 @@ type CheckConstraint struct {
 
 	// Name of check constraint
 	Name string `json:"name"`
+
+	// Do not propagate constraint to child tables
+	NoInherit bool `json:"no_inherit,omitempty"`
 }
 
 // Column definition
@@ -247,6 +250,9 @@ type OpCreateConstraint struct {
 
 	// Name of the constraint
 	Name string `json:"name"`
+
+	// Do not propagate constraint to child tables
+	NoInherit bool `json:"no_inherit,omitempty"`
 
 	// Reference to the foreign key
 	References *TableForeignKeyReference `json:"references,omitempty"`

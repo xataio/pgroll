@@ -216,10 +216,10 @@ BEGIN
                                 WHERE
                                     indrelid = t.oid::regclass GROUP BY pi.indexrelid, pi.indisunique, pi.indpred, am.amname) AS ix_details), 'checkConstraints', (
                         SELECT
-                            COALESCE(json_object_agg(cc_details.conname, json_build_object('name', cc_details.conname, 'columns', cc_details.columns, 'definition', cc_details.definition)), '{}'::json)
+                            COALESCE(json_object_agg(cc_details.conname, json_build_object('name', cc_details.conname, 'columns', cc_details.columns, 'definition', cc_details.definition, 'noInherit', cc_details.connoinherit)), '{}'::json)
                         FROM (
                             SELECT
-                                cc_constraint.conname, array_agg(cc_attr.attname ORDER BY cc_constraint.conkey::int[]) AS columns, pg_get_constraintdef(cc_constraint.oid) AS definition FROM pg_constraint AS cc_constraint
+                                cc_constraint.conname, array_agg(cc_attr.attname ORDER BY cc_constraint.conkey::int[]) AS columns, pg_get_constraintdef(cc_constraint.oid) AS definition, cc_constraint.connoinherit FROM pg_constraint AS cc_constraint
                             INNER JOIN pg_attribute cc_attr ON cc_attr.attrelid = cc_constraint.conrelid
                                 AND cc_attr.attnum = ANY (cc_constraint.conkey)
                             WHERE

@@ -545,6 +545,7 @@ func TestCreateTable(t *testing.T) {
 									Check: &migrations.CheckConstraint{
 										Name:       "check_name_length",
 										Constraint: "length(name) > 3",
+										NoInherit:  true,
 									},
 								},
 							},
@@ -554,7 +555,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint exists on the new table.
-				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+				NotInheritableCheckConstraintMustExist(t, db, schema, "users", "check_name_length")
 
 				// Inserting a row into the table succeeds when the check constraint is satisfied.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -571,7 +572,7 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint exists on the new table.
-				CheckConstraintMustExist(t, db, schema, "users", "check_name_length")
+				NotInheritableCheckConstraintMustExist(t, db, schema, "users", "check_name_length")
 
 				// Inserting a row into the table succeeds when the check constraint is satisfied.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{

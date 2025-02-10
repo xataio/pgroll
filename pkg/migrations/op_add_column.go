@@ -329,9 +329,8 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			col.References.MatchType)
 	}
 	if col.Check != nil {
-		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",
-			pq.QuoteIdentifier(col.Check.Name),
-			col.Check.Constraint)
+		writer := &ConstraintSQLWriter{Name: col.Check.Name}
+		sql += " " + writer.WriteCheck(col.Check.Constraint, col.Check.NoInherit)
 	}
 	return sql, nil
 }

@@ -152,6 +152,9 @@ type CheckConstraint struct {
 
 	// The definition of the check constraint
 	Definition string `json:"definition"`
+
+	// NoInherit indicates that the check constraint should not be inherited
+	NoInherit bool `json:"noInherit"`
 }
 
 // UniqueConstraint represents a unique constraint on a table

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	pgq "github.com/xataio/pg_query_go/v6"
 
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -27,7 +28,7 @@ var table = &schema.Table{
 		"unique_name_nick": {Name: "unique_name_nick", Columns: []string{"name", "nick"}},
 	},
 	CheckConstraints: map[string]*schema.CheckConstraint{
-		"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`},
+		"email_at":        {Name: "email_at", Columns: []string{"email"}, Definition: `"email" ~ '@'`, NoInherit: true},
 		"adults":          {Name: "adults", Columns: []string{"age"}, Definition: `"age" > 18`},
 		"new_york_adults": {Name: "new_york_adults", Columns: []string{"city", "age"}, Definition: `"city" = 'New York' AND "age" > 21`},
 		"different_nick":  {Name: "different_nick", Columns: []string{"name", "nick"}, Definition: `"name" != "nick"`},
@@ -67,35 +68,37 @@ func TestDuplicateStmtBuilderCheckConstraints(t *testing.T) {
 		},
 		"single-column check constraint with single column duplicated": {
 			columns:       []string{"email"},
-			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_email_at" "_pgroll_new_email" ~ '@' NOT VALID`},
+			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_email_at" CHECK ("_pgroll_new_email" ~ '@') NO INHERIT NOT VALID`},
 		},
 		"multiple multi and single column check constraint with single column duplicated": {
 			columns: []string{"age"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_adults" "_pgroll_new_age" > 18 NOT VALID`,
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_new_york_adults" "city" = 'New York' AND "_pgroll_new_age" > 21 NOT VALID`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_adults" CHECK ("_pgroll_new_age" > 18) NOT VALID`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_new_york_adults" CHECK ("city" = 'New York' AND "_pgroll_new_age" > 21) NOT VALID`,
 			},
 		},
 		"multiple multi and single column check constraint with multiple column duplicated": {
 			columns: []string{"age", "description"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_adults" "_pgroll_new_age" > 18 NOT VALID`,
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_new_york_adults" "city" = 'New York' AND "_pgroll_new_age" > 21 NOT VALID`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_adults" CHECK ("_pgroll_new_age" > 18) NOT VALID`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_new_york_adults" CHECK ("city" = 'New York' AND "_pgroll_new_age" > 21) NOT VALID`,
 			},
 		},
 		"multi-column check constraint with multiple columns with single column duplicated": {
 			columns:       []string{"name"},
-			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_different_nick" "_pgroll_new_name" != "nick" NOT VALID`},
+			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_different_nick" CHECK ("_pgroll_new_name" != "nick") NOT VALID`},
 		},
 		"multi-column check constraint with multiple columns duplicated": {
 			columns:       []string{"name", "nick"},
-			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_different_nick" "_pgroll_new_name" != "_pgroll_new_nick" NOT VALID`},
+			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_different_nick" CHECK ("_pgroll_new_name" != "_pgroll_new_nick") NOT VALID`},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			stmts := d.duplicateCheckConstraints(nil, testCases.columns...)
 			assert.Equal(t, len(testCases.expectedStmts), len(stmts))
 			for _, stmt := range stmts {
+				_, err := pgq.Parse(stmt)
+				assert.NoError(t, err)
 				assert.True(t, slices.Contains(testCases.expectedStmts, stmt))
 			}
 		})
