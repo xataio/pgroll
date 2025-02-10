@@ -113,6 +113,20 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 		}
 	}
 
+	for _, col := range o.Columns {
+		seq := getSequenceNameForColumn(ctx, conn, o.Table, col)
+		if seq != "" {
+			_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+				seq,
+				pq.QuoteIdentifier(o.Table),
+				pq.QuoteIdentifier(TemporaryName(col)),
+			))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// remove old columns
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
 		pq.QuoteIdentifier(o.Table),
@@ -156,6 +170,24 @@ func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) err
 		strings.Join(dropFuncs, ", "),
 	))
 	return err
+}
+
+func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, columnName string) string {
+	var sequenceName string
+	query := fmt.Sprintf(`
+		SELECT pg_get_serial_sequence('%s', '%s')
+	`, pq.QuoteIdentifier(tableName), columnName)
+	rows, err := conn.QueryContext(ctx, query)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+
+	if err := db.ScanFirstValue(rows, &sequenceName); err != nil {
+		return ""
+	}
+
+	return sequenceName
 }
 
 func dropMultipleColumns(columns []string) string {

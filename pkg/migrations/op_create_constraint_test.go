@@ -931,5 +931,66 @@ func TestCreateConstraintValidation(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
 		},
+		{
+			name: "create unique constraint on serial column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "email",
+									Type: "text",
+									Pk:   true,
+								},
+								{
+									Name: "id",
+									Type: "serial",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "unique_id",
+							Table:   "users",
+							Type:    "unique",
+							Columns: []string{"id"},
+							Up: map[string]string{
+								"id": "id",
+							},
+							Down: map[string]string{
+								"id": "id",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "unique_id")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "unique_id")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "id")
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"email": "alice@xata.io", "id": "1",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"email": "bob@xata.io", "id": "1",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
 	})
 }
