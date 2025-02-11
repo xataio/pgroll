@@ -354,3 +354,36 @@ func errorIgnoringErrorCode(err error, code pq.ErrorCode) error {
 
 	return err
 }
+
+func alterSequenceOwnerToDuplicatedColumn(ctx context.Context, conn db.DB, tableName, columnName string) error {
+	sequenceName := getSequenceNameForColumn(ctx, conn, tableName, columnName)
+	if sequenceName == "" {
+		// No sequence for the column
+		return nil
+	}
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+		sequenceName,
+		pq.QuoteIdentifier(tableName),
+		pq.QuoteIdentifier(TemporaryName(columnName)),
+	))
+
+	return err
+}
+
+func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, columnName string) string {
+	var sequenceName string
+	query := fmt.Sprintf(`
+		SELECT pg_get_serial_sequence('%s', '%s')
+	`, pq.QuoteIdentifier(tableName), columnName)
+	rows, err := conn.QueryContext(ctx, query)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+
+	if err := db.ScanFirstValue(rows, &sequenceName); err != nil {
+		return ""
+	}
+
+	return sequenceName
+}

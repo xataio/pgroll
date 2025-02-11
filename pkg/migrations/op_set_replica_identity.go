@@ -9,14 +9,13 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type
 	identitySQL := strings.ToUpper(o.Identity.Type)
 	if identitySQL == "INDEX" {

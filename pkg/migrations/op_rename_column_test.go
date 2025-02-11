@@ -85,6 +85,77 @@ func TestOpRenameColumn(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "rename serial column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "orders",
+							Columns: []migrations.Column{
+								{
+									Name: "order_id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "description",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_rename_serial_column",
+					Operations: migrations.Operations{
+						&migrations.OpRenameColumn{
+							Table: "orders",
+							From:  "order_id",
+							To:    "id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The column in the underlying table has not been renamed.
+				ColumnMustExist(t, db, schema, "orders", "order_id")
+
+				// Insertions to the new column name in the new version schema should work.
+				MustInsert(t, db, schema, "02_rename_serial_column", "orders", map[string]string{
+					"id":          "1",
+					"description": "first order",
+				})
+
+				// Insertions to the old column name in the old version schema should work.
+				MustInsert(t, db, schema, "01_create_table", "orders", map[string]string{
+					"order_id":    "2",
+					"description": "second order",
+				})
+
+				// Data can be read from the view in the new version schema.
+				rows := MustSelect(t, db, schema, "02_rename_serial_column", "orders")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "description": "first order"},
+					{"id": 2, "description": "second order"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// no-op
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The column in the underlying table has been renamed.
+				ColumnMustExist(t, db, schema, "orders", "id")
+
+				// Data can be read from the view in the new version schema.
+				rows := MustSelect(t, db, schema, "02_rename_serial_column", "orders")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "description": "first order"},
+					{"id": 2, "description": "second order"},
+				}, rows)
+			},
+		},
 	})
 }
 
