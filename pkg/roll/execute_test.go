@@ -671,6 +671,9 @@ func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
 		invoked := false
 		cb := func(n, total int64) { invoked = true }
 
+		backfillConfig := backfill.NewConfig()
+		backfillConfig.AddCallback(cb)
+
 		// Start a migration that requires a backfill
 		err = mig.Start(ctx, &migrations.Migration{
 			Name: "02_change_type",
@@ -683,7 +686,7 @@ func TestCallbacksAreInvokedOnMigrationStart(t *testing.T) {
 					Down:   "name",
 				},
 			},
-		}, backfill.NewConfig(backfill.WithCallbacks(cb)))
+		}, backfillConfig)
 		require.NoError(t, err)
 
 		// Ensure that the callback was invoked

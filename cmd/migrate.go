@@ -81,12 +81,12 @@ func migrateCmd() *cobra.Command {
 		},
 	}
 
-	migrateCmd.PersistentFlags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
-	migrateCmd.PersistentFlags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	migrateCmd.Flags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	migrateCmd.Flags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	migrateCmd.Flags().BoolVarP(&complete, "complete", "c", false, "complete the final migration rather than leaving it active")
 
-	viper.BindPFlag("BACKFILL_BATCH_SIZE", migrateCmd.PersistentFlags().Lookup("backfill-batch-size"))
-	viper.BindPFlag("BACKFILL_BATCH_DELAY", migrateCmd.PersistentFlags().Lookup("backfill-batch-delay"))
+	viper.BindPFlag("BACKFILL_BATCH_SIZE", migrateCmd.Flags().Lookup("backfill-batch-size"))
+	viper.BindPFlag("BACKFILL_BATCH_DELAY", migrateCmd.Flags().Lookup("backfill-batch-delay"))
 
 	return migrateCmd
 }

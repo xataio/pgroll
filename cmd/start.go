@@ -44,13 +44,13 @@ func startCmd() *cobra.Command {
 		},
 	}
 
-	startCmd.PersistentFlags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
-	startCmd.PersistentFlags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	startCmd.Flags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	startCmd.Flags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
 	startCmd.Flags().BoolP("skip-validation", "s", false, "skip migration validation")
 
-	viper.BindPFlag("BACKFILL_BATCH_SIZE", startCmd.PersistentFlags().Lookup("backfill-batch-size"))
-	viper.BindPFlag("BACKFILL_BATCH_DELAY", startCmd.PersistentFlags().Lookup("backfill-batch-delay"))
+	viper.BindPFlag("BACKFILL_BATCH_SIZE", startCmd.Flags().Lookup("backfill-batch-size"))
+	viper.BindPFlag("BACKFILL_BATCH_DELAY", startCmd.Flags().Lookup("backfill-batch-delay"))
 	viper.BindPFlag("SKIP_VALIDATION", startCmd.Flags().Lookup("skip-validation"))
 
 	return startCmd
