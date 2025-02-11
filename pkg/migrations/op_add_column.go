@@ -17,7 +17,7 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table, tr); err != nil {

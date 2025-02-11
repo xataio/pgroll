@@ -5,14 +5,13 @@ package migrations
 import (
 	"context"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	if o.OnComplete {
 		return nil, nil
 	}
