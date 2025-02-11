@@ -22,7 +22,11 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		columns[i] = table.GetColumn(colName)
 	}
 
+	// Duplicate each column using its final name after migration completion
 	d := NewColumnDuplicator(conn, table, columns...)
+	for _, colName := range o.Columns {
+		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
+	}
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
@@ -30,7 +34,6 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	// Setup triggers
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		physicalColumnName := TemporaryName(colName)
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, colName),
 			Direction:      TriggerDirectionUp,
@@ -38,26 +41,31 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
 			TableName:      table.Name,
-			PhysicalColumn: physicalColumnName,
+			PhysicalColumn: TemporaryName(colName),
 			SQL:            upSQL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
 		}
 
+		// Add the new column to the internal schema representation. This is done
+		// here, before creation of the down trigger, so that the trigger can declare
+		// a variable for the new column. Save the old column name for use as the
+		// physical column name in the down trigger first.
+		oldPhysicalColumn := table.GetColumn(colName).Name
 		table.AddColumn(colName, &schema.Column{
-			Name: physicalColumnName,
+			Name: TemporaryName(colName),
 		})
 
 		downSQL := o.Down[colName]
 		err = createTrigger(ctx, conn, tr, triggerConfig{
-			Name:           TriggerName(o.Table, physicalColumnName),
+			Name:           TriggerName(o.Table, TemporaryName(colName)),
 			Direction:      TriggerDirectionDown,
 			Columns:        table.Columns,
 			LatestSchema:   latestSchema,
 			SchemaName:     s.Name,
 			TableName:      table.Name,
-			PhysicalColumn: colName,
+			PhysicalColumn: oldPhysicalColumn,
 			SQL:            downSQL,
 		})
 		if err != nil {
