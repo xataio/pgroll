@@ -92,6 +92,18 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 			return err
 		}
 
+		seq := getSequenceNameForColumn(ctx, conn, o.Table, columnName)
+		if seq != "" {
+			_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+				seq,
+				pq.QuoteIdentifier(o.Table),
+				pq.QuoteIdentifier(TemporaryName(columnName)),
+			))
+			if err != nil {
+				return err
+			}
+		}
+
 		// Drop the old column
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),

@@ -172,24 +172,6 @@ func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) err
 	return err
 }
 
-func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, columnName string) string {
-	var sequenceName string
-	query := fmt.Sprintf(`
-		SELECT pg_get_serial_sequence('%s', '%s')
-	`, pq.QuoteIdentifier(tableName), columnName)
-	rows, err := conn.QueryContext(ctx, query)
-	if err != nil {
-		return ""
-	}
-	defer rows.Close()
-
-	if err := db.ScanFirstValue(rows, &sequenceName); err != nil {
-		return ""
-	}
-
-	return sequenceName
-}
-
 func dropMultipleColumns(columns []string) string {
 	for i, col := range columns {
 		columns[i] = "DROP COLUMN IF EXISTS " + col
