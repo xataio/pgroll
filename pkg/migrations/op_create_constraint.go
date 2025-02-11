@@ -114,16 +114,8 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 	}
 
 	for _, col := range o.Columns {
-		seq := getSequenceNameForColumn(ctx, conn, o.Table, col)
-		if seq != "" {
-			_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
-				seq,
-				pq.QuoteIdentifier(o.Table),
-				pq.QuoteIdentifier(TemporaryName(col)),
-			))
-			if err != nil {
-				return err
-			}
+		if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, col); err != nil {
+			return err
 		}
 	}
 

@@ -86,16 +86,8 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 		}
 	}
 
-	seq := getSequenceNameForColumn(ctx, conn, o.Table, o.Column)
-	if seq != "" {
-		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
-			seq,
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(TemporaryName(o.Column)),
-		))
-		if err != nil {
-			return err
-		}
+	if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, o.Column); err != nil {
+		return err
 	}
 
 	// Drop the old column

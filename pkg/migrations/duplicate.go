@@ -354,6 +354,21 @@ func errorIgnoringErrorCode(err error, code pq.ErrorCode) error {
 	return err
 }
 
+func alterSequenceOwnerToDuplicatedColumn(ctx context.Context, conn db.DB, tableName, columnName string) error {
+	sequenceName := getSequenceNameForColumn(ctx, conn, tableName, columnName)
+	if sequenceName == "" {
+		// No sequence for the column
+		return nil
+	}
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+		sequenceName,
+		pq.QuoteIdentifier(tableName),
+		pq.QuoteIdentifier(TemporaryName(columnName)),
+	))
+
+	return err
+}
+
 func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, columnName string) string {
 	var sequenceName string
 	query := fmt.Sprintf(`
