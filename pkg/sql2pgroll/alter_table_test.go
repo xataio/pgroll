@@ -152,6 +152,10 @@ func TestConvertAlterTableStatements(t *testing.T) {
 			sql:        "ALTER TABLE schema.foo ADD CONSTRAINT bar CHECK (age > 0)",
 			expectedOp: expect.CreateConstraintOp4,
 		},
+		{
+			sql:        "ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NO INHERIT",
+			expectedOp: expect.CreateConstraintOp5,
+		},
 
 		// Add column
 		{
@@ -320,9 +324,8 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		// Drop constraint with CASCADE
 		"ALTER TABLE foo DROP CONSTRAINT bar CASCADE",
 
-		// NO INHERIT and NOT VALID options on CHECK constraints are not
+		// NOT VALID option on CHECK constraint is not
 		// representable by `OpCreateConstraint`
-		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NO INHERIT",
 		"ALTER TABLE foo ADD CONSTRAINT bar CHECK (age > 0) NOT VALID",
 
 		// ADD COLUMN cases not yet covered
