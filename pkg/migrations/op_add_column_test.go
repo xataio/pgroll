@@ -636,7 +636,14 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint exists on the new table.
-				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
+				ValidatedForeignKeyMustExistWithReferentialAction(
+					t,
+					db,
+					schema,
+					"orders",
+					"fk_users_id",
+					migrations.ForeignKeyActionCASCADE,
+					migrations.ForeignKeyActionNOACTION)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -669,7 +676,14 @@ func TestAddForeignKeyColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The foreign key constraint still exists on the new table
-				ValidatedForeignKeyMustExist(t, db, schema, "orders", "fk_users_id", withOnDeleteCascade())
+				ValidatedForeignKeyMustExistWithReferentialAction(
+					t,
+					db,
+					schema,
+					"orders",
+					"fk_users_id",
+					migrations.ForeignKeyActionCASCADE,
+					migrations.ForeignKeyActionNOACTION)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
@@ -1307,6 +1321,44 @@ func TestAddColumnValidation(t *testing.T) {
 				},
 			},
 			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "name"},
+		},
+		{
+			name: "column must be valid (not missing its type)",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name: "description",
+								// Missing type
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: "description"},
+		},
+		{
+			name: "column must be valid (not missing its name)",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								// Missing name
+								Type: "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: ""},
 		},
 		{
 			name: "up SQL is mandatory when adding a NOT NULL column with no DEFAULT",

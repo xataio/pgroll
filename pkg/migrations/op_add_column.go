@@ -17,7 +17,7 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
@@ -146,6 +146,11 @@ func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransforme
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	if err := ValidateIdentifierLength(o.Column.Name); err != nil {
 		return err
+	}
+
+	// Validate that the column contains all required fields
+	if !o.Column.Validate() {
+		return ColumnIsInvalidError{Table: o.Table, Name: o.Column.Name}
 	}
 
 	table := s.GetTable(o.Table)
@@ -314,16 +319,14 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 	}
 
 	if col.References != nil {
-		onDelete := string(ForeignKeyActionNOACTION)
-		if col.References.OnDelete != "" {
-			onDelete = strings.ToUpper(string(col.References.OnDelete))
-		}
-
-		sql += fmt.Sprintf(" CONSTRAINT %s REFERENCES %s(%s) ON DELETE %s",
-			pq.QuoteIdentifier(col.References.Name),
-			pq.QuoteIdentifier(col.References.Table),
-			pq.QuoteIdentifier(col.References.Column),
-			onDelete)
+		writer := &ConstraintSQLWriter{Name: col.References.Name}
+		sql += " " + writer.WriteForeignKey(
+			col.References.Table,
+			[]string{col.References.Column},
+			col.References.OnDelete,
+			col.References.OnUpdate,
+			nil,
+			col.References.MatchType)
 	}
 	if col.Check != nil {
 		sql += fmt.Sprintf(" CONSTRAINT %s CHECK (%s)",

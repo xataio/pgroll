@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(o.Column)
 	ops := o.subOperations()
@@ -68,7 +68,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// perform any operation specific start steps
 	for _, op := range ops {
-		if _, err := op.Start(ctx, conn, latestSchema, tr, s, cbs...); err != nil {
+		if _, err := op.Start(ctx, conn, latestSchema, tr, s); err != nil {
 			return nil, err
 		}
 	}

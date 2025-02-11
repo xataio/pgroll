@@ -49,7 +49,3 @@ func WithBatchDelay(delay time.Duration) OptionFn {
 func (c *Config) AddCallback(fn CallbackFn) {
 	c.callbacks = append(c.callbacks, fn)
 }
-
-func (c *Config) Callbacks() []CallbackFn {
-	return c.callbacks
-}

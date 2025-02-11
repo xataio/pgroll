@@ -26,3 +26,15 @@ func (c *Column) HasImplicitDefault() bool {
 		return false
 	}
 }
+
+// Validate returns true iff the column contains all fields required to create
+// the column
+func (c *Column) Validate() bool {
+	if c.Name == "" {
+		return false
+	}
+	if c.Type == "" {
+		return false
+	}
+	return true
+}

@@ -7,14 +7,13 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	if o.Down != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column),

@@ -34,7 +34,7 @@ var table = &schema.Table{
 	},
 	ForeignKeys: map[string]*schema.ForeignKey{
 		"fk_city":      {Name: "fk_city", Columns: []string{"city"}, ReferencedTable: "cities", ReferencedColumns: []string{"id"}, OnDelete: "NO ACTION"},
-		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE"},
+		"fk_name_nick": {Name: "fk_name_nick", Columns: []string{"name", "nick"}, ReferencedTable: "users", ReferencedColumns: []string{"name", "nick"}, OnDelete: "CASCADE", OnUpdate: "CASCADE", MatchType: "FULL"},
 	},
 	Indexes: map[string]*schema.Index{
 		"idx_no_kate": {
@@ -115,30 +115,30 @@ func TestDuplicateStmtBuilderForeignKeyConstraints(t *testing.T) {
 		"single-column FK with single column duplicated": {
 			columns: []string{"city"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") ON DELETE NO ACTION`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION`,
 			},
 		},
 		"single-column FK with multiple columns duplicated": {
 			columns: []string{"city", "description"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") ON DELETE NO ACTION`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_city" FOREIGN KEY ("_pgroll_new_city") REFERENCES "cities" ("id") MATCH SIMPLE ON DELETE NO ACTION ON UPDATE NO ACTION`,
 			},
 		},
 		"multi-column FK with single column duplicated": {
 			columns: []string{"name"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE`,
 			},
 		},
 		"multi-column FK with multiple unrelated column duplicated": {
 			columns: []string{"name", "description"},
 			expectedStmts: []string{
-				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`,
+				`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "nick") REFERENCES "users" ("name", "nick") MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE`,
 			},
 		},
 		"multi-column FK with multiple columns": {
 			columns:       []string{"name", "nick"},
-			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "_pgroll_new_nick") REFERENCES "users" ("name", "nick") ON DELETE CASCADE`},
+			expectedStmts: []string{`ALTER TABLE "test_table" ADD CONSTRAINT "_pgroll_dup_fk_name_nick" FOREIGN KEY ("_pgroll_new_name", "_pgroll_new_nick") REFERENCES "users" ("name", "nick") MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE`},
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

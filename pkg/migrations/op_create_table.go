@@ -10,14 +10,13 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns, tr)
 	if err != nil {
@@ -87,6 +86,11 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 	for _, col := range o.Columns {
 		if err := ValidateIdentifierLength(col.Name); err != nil {
 			return fmt.Errorf("invalid column: %w", err)
+		}
+
+		// Validate that the column contains all required fields
+		if !col.Validate() {
+			return ColumnIsInvalidError{Table: o.Name, Name: col.Name}
 		}
 
 		// Ensure that any foreign key references are valid, ie. the referenced
@@ -244,10 +248,9 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			}
 		case ConstraintTypeExclude:
 			excludeConstraints[c.Name] = &schema.ExcludeConstraint{
-				Name:        c.Name,
-				IndexMethod: c.Exclude.IndexMethod,
-				Elements:    c.Exclude.Elements,
-				Predicate:   c.Exclude.Predicate,
+				Name:      c.Name,
+				Method:    c.Exclude.IndexMethod,
+				Predicate: c.Exclude.Predicate,
 			}
 		}
 	}
@@ -329,143 +332,4 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		return "", nil
 	}
 	return ", " + strings.Join(constraintsSQL, ", "), nil
-}
-
-type ConstraintSQLWriter struct {
-	Name              string
-	Columns           []string
-	InitiallyDeferred bool
-	Deferrable        bool
-	SkipValidation    bool
-
-	// unique, exclude, primary key constraints support the following options
-	IncludeColumns    []string
-	StorageParameters string
-	Tablespace        string
-}
-
-func (w *ConstraintSQLWriter) WriteUnique(nullsNotDistinct bool) string {
-	var constraint string
-	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
-	}
-	nullsDistinct := ""
-	if nullsNotDistinct {
-		nullsDistinct = "NULLS NOT DISTINCT"
-	}
-	constraint += fmt.Sprintf("UNIQUE %s (%s)", nullsDistinct, strings.Join(quoteColumnNames(w.Columns), ", "))
-	constraint += w.addIndexParameters()
-	constraint += w.addDeferrable()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
-	constraint := ""
-	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
-	}
-	constraint += fmt.Sprintf("CHECK (%s)", check)
-	if noInherit {
-		constraint += " NO INHERIT"
-	}
-	constraint += w.addNotValid()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WritePrimaryKey() string {
-	constraint := ""
-	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
-	}
-	constraint += fmt.Sprintf("PRIMARY KEY (%s)", strings.Join(quoteColumnNames(w.Columns), ", "))
-	constraint += w.addIndexParameters()
-	constraint += w.addDeferrable()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteForeignKey(referencedTable string, referencedColumns []string, onDelete, onUpdate ForeignKeyAction, setColumns []string, matchType ForeignKeyMatchType) string {
-	onDeleteAction := string(ForeignKeyActionNOACTION)
-	if onDelete != "" {
-		onDeleteAction = strings.ToUpper(string(onDelete))
-		if len(setColumns) != 0 {
-			onDeleteAction += " (" + strings.Join(quoteColumnNames(setColumns), ", ") + ")"
-		}
-	}
-	onUpdateAction := string(ForeignKeyActionNOACTION)
-	if onUpdate != "" {
-		onUpdateAction = strings.ToUpper(string(onUpdate))
-	}
-	matchTypeStr := string(ForeignKeyMatchTypeSIMPLE)
-	if matchType != "" {
-		matchTypeStr = strings.ToUpper(string(matchType))
-	}
-
-	constraint := ""
-	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
-	}
-	constraint += fmt.Sprintf("FOREIGN KEY (%s) REFERENCES %s (%s) MATCH %s ON DELETE %s ON UPDATE %s",
-		strings.Join(quoteColumnNames(w.Columns), ", "),
-		pq.QuoteIdentifier(referencedTable),
-		strings.Join(quoteColumnNames(referencedColumns), ", "),
-		matchTypeStr,
-		onDeleteAction,
-		onUpdateAction,
-	)
-	constraint += w.addDeferrable()
-	constraint += w.addNotValid()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) WriteExclude(indexMethod, elements, predicate string) string {
-	constraint := ""
-	if w.Name != "" {
-		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
-	}
-	constraint += fmt.Sprintf("EXCLUDE USING %s (%s)", indexMethod, elements)
-	constraint += w.addIndexParameters()
-	if predicate != "" {
-		constraint += fmt.Sprintf(" WHERE (%s)", predicate)
-	}
-	constraint += w.addDeferrable()
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) addIndexParameters() string {
-	constraint := ""
-	if len(w.IncludeColumns) != 0 {
-		constraint += fmt.Sprintf(" INCLUDE (%s)", strings.Join(quoteColumnNames(w.IncludeColumns), ", "))
-	}
-	if w.StorageParameters != "" {
-		constraint += fmt.Sprintf(" WITH (%s)", w.StorageParameters)
-	}
-	if w.Tablespace != "" {
-		constraint += fmt.Sprintf(" USING INDEX TABLESPACE %s", w.Tablespace)
-	}
-	return constraint
-}
-
-func (w *ConstraintSQLWriter) addDeferrable() string {
-	if !w.InitiallyDeferred && !w.Deferrable {
-		return ""
-	}
-	deferrable := ""
-	if w.Deferrable {
-		deferrable += " DEFERRABLE"
-	} else {
-		deferrable += " NOT DEFERRABLE"
-	}
-	if w.InitiallyDeferred {
-		deferrable += " INITIALLY DEFERRED"
-	} else {
-		deferrable += " INITIALLY IMMEDIATE"
-	}
-	return deferrable
-}
-
-func (w *ConstraintSQLWriter) addNotValid() string {
-	if w.SkipValidation {
-		return " NOT VALID"
-	}
-	return ""
 }

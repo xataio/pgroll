@@ -5,11 +5,9 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/lib/pq"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -24,7 +22,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema, cbs ...backfill.CallbackFn) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.
@@ -89,20 +87,20 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 	referencedTable := s.GetTable(o.References.Table)
 	referencedColumn := referencedTable.GetColumn(o.References.Column)
 
-	onDelete := "NO ACTION"
-	if o.References.OnDelete != "" {
-		onDelete = strings.ToUpper(string(o.References.OnDelete))
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(table.Name))
+	writer := &ConstraintSQLWriter{
+		Name:           o.References.Name,
+		Columns:        []string{column.Name},
+		SkipValidation: true,
 	}
+	sql += writer.WriteForeignKey(
+		referencedTable.Name,
+		[]string{referencedColumn.Name},
+		o.References.OnDelete,
+		o.References.OnUpdate,
+		nil,
+		o.References.MatchType)
 
-	_, err := conn.ExecContext(ctx,
-		fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s NOT VALID",
-			pq.QuoteIdentifier(table.Name),
-			pq.QuoteIdentifier(o.References.Name),
-			pq.QuoteIdentifier(column.Name),
-			pq.QuoteIdentifier(referencedTable.Name),
-			pq.QuoteIdentifier(referencedColumn.Name),
-			onDelete,
-		))
-
+	_, err := conn.ExecContext(ctx, sql)
 	return err
 }

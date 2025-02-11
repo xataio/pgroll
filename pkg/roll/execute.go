@@ -17,7 +17,7 @@ import (
 
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, c *backfill.Config) error {
-	tablesToBackfill, err := m.StartDDLOperations(ctx, migration, c.Callbacks()...)
+	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, c *ba
 
 // StartDDLOperations performs the DDL operations for the migration. This does
 // not include running backfills for any modified tables.
-func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration, cbs ...backfill.CallbackFn) ([]*schema.Table, error) {
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) ([]*schema.Table, error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -86,7 +86,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.pgConn, latestSchema, m.sqlTransformer, newSchema, cbs...)
+		table, err := op.Start(ctx, m.pgConn, latestSchema, m.sqlTransformer, newSchema)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 

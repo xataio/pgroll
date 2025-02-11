@@ -185,83 +185,27 @@ func convertAlterTableAddForeignKeyConstraint(stmt *pgq.AlterTableStmt, constrai
 		return nil, nil
 	}
 
-	columns := make([]string, len(constraint.GetFkAttrs()))
-	for i := range columns {
-		columns[i] = constraint.GetFkAttrs()[i].GetString_().GetSval()
-	}
-
-	foreignColumns := make([]string, len(constraint.GetPkAttrs()))
-	for i := range columns {
-		foreignColumns[i] = constraint.GetPkAttrs()[i].GetString_().GetSval()
-	}
+	tableName := getQualifiedRelationName(stmt.Relation)
+	columns, references := convertFkConstraint(constraint)
 
 	migs := make(map[string]string)
 	for _, column := range columns {
 		migs[column] = PlaceHolderSQL
 	}
 
-	onDelete, err := parseOnDeleteAction(constraint.GetFkDelAction())
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse on delete action: %w", err)
-	}
-
-	tableName := getQualifiedRelationName(stmt.Relation)
-	foreignTable := getQualifiedRelationName(constraint.GetPktable())
-
 	return &migrations.OpCreateConstraint{
-		Columns: columns,
-		Up:      migs,
-		Down:    migs,
-		Name:    constraint.GetConname(),
-		References: &migrations.TableForeignKeyReference{
-			Columns:  foreignColumns,
-			OnDelete: onDelete,
-			Table:    foreignTable,
-		},
-		Table: tableName,
-		Type:  migrations.OpCreateConstraintTypeForeignKey,
+		Columns:    columns,
+		Up:         migs,
+		Down:       migs,
+		Name:       constraint.GetConname(),
+		References: references,
+		Table:      tableName,
+		Type:       migrations.OpCreateConstraintTypeForeignKey,
 	}, nil
 }
 
-func parseOnDeleteAction(action string) (migrations.ForeignKeyAction, error) {
-	switch action {
-	case "a":
-		return migrations.ForeignKeyActionNOACTION, nil
-	case "c":
-		return migrations.ForeignKeyActionCASCADE, nil
-	case "r":
-		return migrations.ForeignKeyActionRESTRICT, nil
-	case "d":
-		return migrations.ForeignKeyActionSETDEFAULT, nil
-	case "n":
-		return migrations.ForeignKeyActionSETNULL, nil
-	default:
-		return migrations.ForeignKeyActionNOACTION, fmt.Errorf("unknown delete action: %q", action)
-	}
-}
-
 func canConvertForeignKeyConstraint(constraint *pgq.Constraint) bool {
-	if constraint.SkipValidation {
-		return false
-	}
-
-	switch constraint.GetFkUpdAction() {
-	case "r", "c", "n", "d":
-		// RESTRICT, CASCADE, SET NULL, SET DEFAULT
-		return false
-	case "a":
-		// NO ACTION, the default
-		break
-	}
-	switch constraint.GetFkMatchtype() {
-	case "f":
-		// FULL
-		return false
-	case "s":
-		// SIMPLE, the default
-		break
-	}
-	return true
+	return !constraint.SkipValidation
 }
 
 // convertAlterTableAddCheckConstraint converts SQL statements like:
