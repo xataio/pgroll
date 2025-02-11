@@ -22,7 +22,11 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		columns[i] = table.GetColumn(colName)
 	}
 
+	// Duplicate each column using its final name after migration completion
 	d := NewColumnDuplicator(conn, table, columns...)
+	for _, colName := range o.Columns {
+		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
+	}
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
@@ -30,34 +34,38 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	// Setup triggers
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		physicalColumnName := TemporaryName(colName)
 		err := createTrigger(ctx, conn, tr, triggerConfig{
 			Name:           TriggerName(o.Table, colName),
 			Direction:      TriggerDirectionUp,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
-			PhysicalColumn: physicalColumnName,
+			TableName:      table.Name,
+			PhysicalColumn: TemporaryName(colName),
 			SQL:            upSQL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
 		}
 
+		// Add the new column to the internal schema representation. This is done
+		// here, before creation of the down trigger, so that the trigger can declare
+		// a variable for the new column. Save the old column name for use as the
+		// physical column name in the down trigger first.
+		oldPhysicalColumn := table.GetColumn(colName).Name
 		table.AddColumn(colName, &schema.Column{
-			Name: physicalColumnName,
+			Name: TemporaryName(colName),
 		})
 
 		downSQL := o.Down[colName]
 		err = createTrigger(ctx, conn, tr, triggerConfig{
-			Name:           TriggerName(o.Table, physicalColumnName),
+			Name:           TriggerName(o.Table, TemporaryName(colName)),
 			Direction:      TriggerDirectionDown,
 			Columns:        table.Columns,
 			LatestSchema:   latestSchema,
 			SchemaName:     s.Name,
-			TableName:      o.Table,
-			PhysicalColumn: colName,
+			TableName:      table.Name,
+			PhysicalColumn: oldPhysicalColumn,
 			SQL:            downSQL,
 		})
 		if err != nil {
@@ -69,7 +77,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	case OpCreateConstraintTypeUnique:
 		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, o.Table, temporaryNames(o.Columns))
 	case OpCreateConstraintTypeCheck:
-		return table, o.addCheckConstraint(ctx, conn)
+		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:
 		return table, o.addForeignKeyConstraint(ctx, conn)
 	}
@@ -134,8 +142,10 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(table.Name),
 		dropMultipleColumns(quotedTemporaryNames(o.Columns)),
 	))
 	if err != nil {
@@ -232,9 +242,9 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	return nil
 }
 
-func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB) error {
+func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB, tableName string) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(tableName),
 		pq.QuoteIdentifier(o.Name),
 		rewriteCheckExpression(*o.Check, o.Columns...),
 	))
