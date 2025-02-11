@@ -746,7 +746,7 @@ func TestCreateConstraintInMultiOperationMigrations(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "rename table, create constraint",
+			name: "rename table, create check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -854,7 +854,7 @@ func TestCreateConstraintInMultiOperationMigrations(t *testing.T) {
 			},
 		},
 		{
-			name: "rename table, rename column, create constraint",
+			name: "rename table, rename column, create check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -960,6 +960,118 @@ func TestCreateConstraintInMultiOperationMigrations(t *testing.T) {
 					{"id": 1, "item_name": "apple"},
 					{"id": 2, "item_name": "abc-xxx"},
 					{"id": 3, "item_name": "banana"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
+		{
+			name: "rename table, rename column, create unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpCreateConstraint{
+							Table:   "products",
+							Type:    migrations.OpCreateConstraintTypeUnique,
+							Name:    "unique_item_name",
+							Columns: []string{"item_name"},
+							Up: map[string]string{
+								"item_name": "item_name",
+							},
+							Down: map[string]string{
+								"item_name": "item_name",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "1",
+					"item_name": "apple",
+				})
+
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "2",
+					"item_name": "banana",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "3",
+					"item_name": "apple",
+				}, testutils.UniqueViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apple"},
+					{"id": 2, "item_name": "banana"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": "banana"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "3",
+					"item_name": "carrot",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "4",
+					"item_name": "carrot",
+				}, testutils.UniqueViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "apple"},
+					{"id": 2, "item_name": "banana"},
+					{"id": 3, "item_name": "carrot"},
 				}, rows)
 
 				// The table has been cleaned up
