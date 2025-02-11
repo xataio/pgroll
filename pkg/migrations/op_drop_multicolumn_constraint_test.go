@@ -269,7 +269,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 							Columns: []migrations.Column{
 								{
 									Name: "id",
-									Type: "integer",
+									Type: "serial",
 									Pk:   true,
 								},
 								{
