@@ -120,6 +120,12 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 		}
 	}
 
+	for _, col := range o.Columns {
+		if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, col); err != nil {
+			return err
+		}
+	}
+
 	// remove old columns
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
 		pq.QuoteIdentifier(o.Table),

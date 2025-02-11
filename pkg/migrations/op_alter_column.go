@@ -86,6 +86,10 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 		}
 	}
 
+	if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, o.Column); err != nil {
+		return err
+	}
+
 	// Drop the old column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(o.Table),

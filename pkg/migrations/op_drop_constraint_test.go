@@ -410,6 +410,69 @@ func TestDropConstraint(t *testing.T) {
 			},
 		},
 		{
+			name: "drop unique constraint from serial column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:   "secondary_id",
+									Type:   "serial",
+									Unique: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_drop_unique_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpDropConstraint{
+							Table: "users",
+							Name:  "users_secondary_id_key",
+							Up:    "secondary_id",
+							Down:  "secondary_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new (temporary) `secondary_id` column should exist on the underlying table.
+				ColumnMustExist(t, db, schema, "users", migrations.TemporaryName("secondary_id"))
+
+				// Inserting a row that meets the unique constraint into the old view works.
+				MustInsert(t, db, schema, "01_add_tables", "users", map[string]string{
+					"secondary_id": "1",
+				})
+
+				// Inserting a row that does not meet the unique constraint into the old view fails.
+				MustNotInsert(t, db, schema, "01_add_tables", "users", map[string]string{
+					"secondary_id": "1",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "users", "secondary_id")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The table is cleaned up; temporary columns, trigger functions and triggers no longer exist.
+				TableMustBeCleanedUp(t, db, schema, "users", "secondary_id")
+
+				// Inserting a row that does not meet the unique constraint into the new view works.
+				MustInsert(t, db, schema, "02_drop_unique_constraint", "users", map[string]string{
+					"secondary_id": "1",
+				})
+			},
+		},
+		{
 			name: "dropping a unique constraint preserves the column's default value",
 			migrations: []migrations.Migration{
 				{
