@@ -89,6 +89,11 @@ func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {
 			return fmt.Errorf("invalid column: %w", err)
 		}
 
+		// Validate that the column contains all required fields
+		if !col.Validate() {
+			return ColumnIsInvalidError{Table: o.Name, Name: col.Name}
+		}
+
 		// Ensure that any foreign key references are valid, ie. the referenced
 		// table and column exist.
 		if col.References != nil {

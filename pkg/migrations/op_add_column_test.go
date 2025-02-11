@@ -1323,6 +1323,44 @@ func TestAddColumnValidation(t *testing.T) {
 			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "name"},
 		},
 		{
+			name: "column must be valid (not missing its type)",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name: "description",
+								// Missing type
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: "description"},
+		},
+		{
+			name: "column must be valid (not missing its name)",
+			migrations: []migrations.Migration{
+				addTableMigration,
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								// Missing name
+								Type: "text",
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: ""},
+		},
+		{
 			name: "up SQL is mandatory when adding a NOT NULL column with no DEFAULT",
 			migrations: []migrations.Migration{
 				addTableMigration,
