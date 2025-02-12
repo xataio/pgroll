@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"time"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -20,6 +21,8 @@ import (
 
 func startCmd() *cobra.Command {
 	var complete bool
+	var batchSize int
+	var batchDelay time.Duration
 
 	startCmd := &cobra.Command{
 		Use:       "start <file>",
@@ -36,21 +39,19 @@ func startCmd() *cobra.Command {
 			defer m.Close()
 
 			c := backfill.NewConfig(
-				backfill.WithBatchSize(flags.BackfillBatchSize()),
-				backfill.WithBatchDelay(flags.BackfillBatchDelay()),
+				backfill.WithBatchSize(batchSize),
+				backfill.WithBatchDelay(batchDelay),
 			)
 
 			return runMigrationFromFile(cmd.Context(), m, fileName, complete, c)
 		},
 	}
 
-	startCmd.Flags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
-	startCmd.Flags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	startCmd.Flags().IntVar(&batchSize, "backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	startCmd.Flags().DurationVar(&batchDelay, "backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
 	startCmd.Flags().BoolP("skip-validation", "s", false, "skip migration validation")
 
-	viper.BindPFlag("BACKFILL_BATCH_SIZE", startCmd.Flags().Lookup("backfill-batch-size"))
-	viper.BindPFlag("BACKFILL_BATCH_DELAY", startCmd.Flags().Lookup("backfill-batch-delay"))
 	viper.BindPFlag("SKIP_VALIDATION", startCmd.Flags().Lookup("skip-validation"))
 
 	return startCmd
