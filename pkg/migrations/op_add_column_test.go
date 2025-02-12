@@ -174,13 +174,12 @@ func TestAddColumn(t *testing.T) {
 				// The new view still exists
 				ViewMustExist(t, db, schema, "02_add_column", "items")
 
-				// Inserting duplicate into the new view does not work
+				// Inserting into the new view works
 				MustInsert(t, db, schema, "02_add_column", "items", map[string]string{
 					"name": "laptops",
 					"foo":  "bar",
 				})
 
-				// Selecting from the new view still works
 				// Inserting duplicate into the new view does not work
 				MustNotInsert(t, db, schema, "02_add_column", "items", map[string]string{
 					"name": "keyboards",
