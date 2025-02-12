@@ -5,16 +5,17 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/backfill"
 )
 
 func migrateCmd() *cobra.Command {
 	var complete bool
+	var batchSize int
+	var batchDelay time.Duration
 
 	migrateCmd := &cobra.Command{
 		Use:       "migrate <directory>",
@@ -64,8 +65,8 @@ func migrateCmd() *cobra.Command {
 			}
 
 			backfillConfig := backfill.NewConfig(
-				backfill.WithBatchSize(flags.BackfillBatchSize()),
-				backfill.WithBatchDelay(flags.BackfillBatchDelay()),
+				backfill.WithBatchSize(batchSize),
+				backfill.WithBatchDelay(batchDelay),
 			)
 
 			// Run all migrations after the latest version up to the final migration,
@@ -81,12 +82,9 @@ func migrateCmd() *cobra.Command {
 		},
 	}
 
-	migrateCmd.Flags().Int("backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
-	migrateCmd.Flags().Duration("backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	migrateCmd.Flags().IntVar(&batchSize, "backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	migrateCmd.Flags().DurationVar(&batchDelay, "backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	migrateCmd.Flags().BoolVarP(&complete, "complete", "c", false, "complete the final migration rather than leaving it active")
-
-	viper.BindPFlag("BACKFILL_BATCH_SIZE", migrateCmd.Flags().Lookup("backfill-batch-size"))
-	viper.BindPFlag("BACKFILL_BATCH_DELAY", migrateCmd.Flags().Lookup("backfill-batch-delay"))
 
 	return migrateCmd
 }
