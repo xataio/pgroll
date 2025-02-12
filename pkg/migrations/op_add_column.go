@@ -42,6 +42,12 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 	}
 
+	if o.Column.Unique {
+		if err := createUniqueIndexConcurrently(ctx, conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, []string{TemporaryName(o.Column.Name)}); err != nil {
+			return nil, fmt.Errorf("failed to add unique index: %w", err)
+		}
+	}
+
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
@@ -112,6 +118,17 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.Column.Check.Name)))
+		if err != nil {
+			return err
+		}
+	}
+
+	if o.Column.Unique {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s_%s_key UNIQUE USING INDEX %s",
+			pq.QuoteIdentifier(o.Table),
+			o.Table,
+			o.Column.Name,
+			UniqueIndexName(o.Column.Name)))
 		if err != nil {
 			return err
 		}
@@ -266,6 +283,11 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
 	))
 	return err
+}
+
+// UniqueIndexName returns the name of the unique index for the given column
+func UniqueIndexName(columnName string) string {
+	return columnName + "uniq"
 }
 
 // NotNullConstraintName returns the name of the NOT NULL constraint for the given column

@@ -112,6 +112,83 @@ func TestAddColumn(t *testing.T) {
 			},
 		},
 		{
+			name: "add column unique",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "items",
+							Column: migrations.Column{
+								Name:   "foo",
+								Type:   "text",
+								Unique: true,
+							},
+							Up: "random()::text",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// old and new views of the table should exist
+				ViewMustExist(t, db, schema, "01_add_table", "items")
+				ViewMustExist(t, db, schema, "02_add_column", "items")
+
+				// inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_add_table", "items", map[string]string{
+					"name": "shoes",
+				})
+				MustInsert(t, db, schema, "02_add_column", "items", map[string]string{
+					"name": "hats",
+					"foo":  "bar",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped from the underlying table
+				columnName := migrations.TemporaryName("foo")
+				ColumnMustNotExist(t, db, schema, "items", columnName)
+
+				// The table's column count reflects the drop of the new column
+				TableMustHaveColumnCount(t, db, schema, "items", 2)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new view still exists
+				ViewMustExist(t, db, schema, "02_add_column", "items")
+
+				// Inserting duplicate into the new view does not work
+				MustInsert(t, db, schema, "02_add_column", "items", map[string]string{
+					"name": "laptops",
+					"foo":  "bar",
+				})
+
+				// Selecting from the new view still works
+				// Inserting duplicate into the new view does not work
+				MustNotInsert(t, db, schema, "02_add_column", "items", map[string]string{
+					"name": "keyboards",
+					"foo":  "bar",
+				}, "unique_violation")
+			},
+		},
+		{
 			name: "a newly added column can't be used as the identity column for a backfill",
 			migrations: []migrations.Migration{
 				{
