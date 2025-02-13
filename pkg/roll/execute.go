@@ -16,14 +16,14 @@ import (
 )
 
 // Start will apply the required changes to enable supporting the new schema version
-func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, c *backfill.Config) error {
+func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
 		return err
 	}
 
 	// perform backfills for the tables that require it
-	return m.performBackfills(ctx, tablesToBackfill, c)
+	return m.performBackfills(ctx, tablesToBackfill, cfg)
 }
 
 // StartDDLOperations performs the DDL operations for the migration. This does
@@ -309,8 +309,8 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 	return nil
 }
 
-func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, c *backfill.Config) error {
-	bf := backfill.New(m.pgConn, c)
+func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg *backfill.Config) error {
+	bf := backfill.New(m.pgConn, cfg)
 
 	for _, table := range tables {
 		if err := bf.Start(ctx, table); err != nil {

@@ -46,6 +46,8 @@ func WithBatchDelay(delay time.Duration) OptionFn {
 	}
 }
 
+// AddCallback adds a callback to the backfill operation.
+// Callbacks are invoked after each batch is processed.
 func (c *Config) AddCallback(fn CallbackFn) {
 	c.callbacks = append(c.callbacks, fn)
 }
