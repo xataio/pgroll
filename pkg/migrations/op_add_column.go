@@ -287,7 +287,7 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 
 // UniqueIndexName returns the name of the unique index for the given column
 func UniqueIndexName(columnName string) string {
-	return columnName + "uniq"
+	return "_pgroll_uniq_"  + columnName 
 }
 
 // NotNullConstraintName returns the name of the NOT NULL constraint for the given column
