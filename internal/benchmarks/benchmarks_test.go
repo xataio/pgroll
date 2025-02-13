@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -71,7 +72,7 @@ func BenchmarkBackfill(b *testing.B) {
 
 				// Backfill
 				b.StartTimer()
-				require.NoError(b, mig.Start(ctx, &migAlterColumn))
+				require.NoError(b, mig.Start(ctx, &migAlterColumn, backfill.NewConfig()))
 				require.NoError(b, mig.Complete(ctx))
 				b.StopTimer()
 				b.Logf("Backfilled %d rows in %s", rowCount, b.Elapsed())
@@ -132,7 +133,7 @@ func BenchmarkWriteAmplification(b *testing.B) {
 					setupInitialTable(b, ctx, testSchema, mig, db, rowCount)
 
 					// Start the migration
-					require.NoError(b, mig.Start(ctx, &migAlterColumn))
+					require.NoError(b, mig.Start(ctx, &migAlterColumn, backfill.NewConfig()))
 					b.Cleanup(func() {
 						// Finish the migration
 						require.NoError(b, mig.Complete(ctx))
@@ -211,7 +212,7 @@ func setupInitialTable(tb testing.TB, ctx context.Context, testSchema string, mi
 	}
 
 	// Setup
-	require.NoError(tb, mig.Start(ctx, &migCreateTable))
+	require.NoError(tb, mig.Start(ctx, &migCreateTable, backfill.NewConfig()))
 	require.NoError(tb, mig.Complete(ctx))
 	seed(tb, rowCount, db)
 }

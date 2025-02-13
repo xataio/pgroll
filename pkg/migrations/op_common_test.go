@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -51,10 +52,11 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
+				config := backfill.NewConfig()
 
 				// run all migrations except the last one
 				for i := 0; i < len(tt.migrations)-1; i++ {
-					if err := mig.Start(ctx, &tt.migrations[i]); err != nil {
+					if err := mig.Start(ctx, &tt.migrations[i], config); err != nil {
 						t.Fatalf("Failed to start migration: %v", err)
 					}
 
@@ -64,7 +66,7 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				}
 
 				// start the last migration
-				err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1])
+				err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1], config)
 				if tt.wantStartErr != nil {
 					if !errors.Is(err, tt.wantStartErr) {
 						t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
@@ -98,7 +100,7 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				}
 
 				// re-start the last migration
-				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1]); err != nil {
+				if err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1], config); err != nil {
 					t.Fatalf("Failed to start migration: %v", err)
 				}
 

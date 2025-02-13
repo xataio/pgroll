@@ -57,6 +57,16 @@
       "example": "migrate ./migrations",
       "flags": [
         {
+          "name": "backfill-batch-delay",
+          "description": "Duration of delay between batch backfills (eg. 1s, 1000ms)",
+          "default": "0s"
+        },
+        {
+          "name": "backfill-batch-size",
+          "description": "Number of rows backfilled in each batch",
+          "default": "1000"
+        },
+        {
           "name": "complete",
           "shorthand": "c",
           "description": "complete the final migration rather than leaving it active",
@@ -113,6 +123,16 @@
       "example": "",
       "flags": [
         {
+          "name": "backfill-batch-delay",
+          "description": "Duration of delay between batch backfills (eg. 1s, 1000ms)",
+          "default": "0s"
+        },
+        {
+          "name": "backfill-batch-size",
+          "description": "Number of rows backfilled in each batch",
+          "default": "1000"
+        },
+        {
           "name": "complete",
           "shorthand": "c",
           "description": "Mark the migration as complete",
@@ -141,16 +161,6 @@
     }
   ],
   "flags": [
-    {
-      "name": "backfill-batch-delay",
-      "description": "Duration of delay between batch backfills (eg. 1s, 1000ms)",
-      "default": "0s"
-    },
-    {
-      "name": "backfill-batch-size",
-      "description": "Number of rows backfilled in each batch",
-      "default": "1000"
-    },
     {
       "name": "lock-timeout",
       "description": "Postgres lock timeout in milliseconds for pgroll DDL operations",

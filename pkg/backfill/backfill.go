@@ -15,24 +15,18 @@ import (
 )
 
 type Backfill struct {
-	conn       db.DB
-	batchSize  int
-	batchDelay time.Duration
-	callbacks  []CallbackFn
+	conn db.DB
+	*Config
 }
 
 type CallbackFn func(done int64, total int64)
 
 // New creates a new backfill operation with the given options. The backfill is
 // not started until `Start` is invoked.
-func New(conn db.DB, opts ...OptionFn) *Backfill {
+func New(conn db.DB, c *Config) *Backfill {
 	b := &Backfill{
-		conn:      conn,
-		batchSize: 1000,
-	}
-
-	for _, opt := range opts {
-		opt(b)
+		conn:   conn,
+		Config: c,
 	}
 
 	return b

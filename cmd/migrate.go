@@ -5,12 +5,17 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/xataio/pgroll/pkg/backfill"
 )
 
 func migrateCmd() *cobra.Command {
 	var complete bool
+	var batchSize int
+	var batchDelay time.Duration
 
 	migrateCmd := &cobra.Command{
 		Use:       "migrate <directory>",
@@ -59,19 +64,26 @@ func migrateCmd() *cobra.Command {
 				return nil
 			}
 
+			backfillConfig := backfill.NewConfig(
+				backfill.WithBatchSize(batchSize),
+				backfill.WithBatchDelay(batchDelay),
+			)
+
 			// Run all migrations after the latest version up to the final migration,
 			// completing each one.
 			for _, mig := range migs[:len(migs)-1] {
-				if err := runMigration(ctx, m, mig, true); err != nil {
+				if err := runMigration(ctx, m, mig, true, backfillConfig); err != nil {
 					return fmt.Errorf("failed to run migration file %q: %w", mig.Name, err)
 				}
 			}
 
 			// Run the final migration, completing it only if requested.
-			return runMigration(ctx, m, migs[len(migs)-1], complete)
+			return runMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig)
 		},
 	}
 
+	migrateCmd.Flags().IntVar(&batchSize, "backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
+	migrateCmd.Flags().DurationVar(&batchDelay, "backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
 	migrateCmd.Flags().BoolVarP(&complete, "complete", "c", false, "complete the final migration rather than leaving it active")
 
 	return migrateCmd
