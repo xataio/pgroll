@@ -19,6 +19,9 @@ var _ Operation = (*OpAddColumn)(nil)
 
 func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 
 	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
 		return nil, fmt.Errorf("failed to start add column operation: %w", err)
@@ -120,6 +123,9 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	// Add the column to the in-memory schema so that Complete steps in subsequent
 	// operations can see the new column.
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	table.AddColumn(o.Column.Name, &schema.Column{
 		Name: o.Column.Name,
 	})
@@ -129,7 +135,13 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column.Name)
+	if column == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column.Name}
+	}
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 		pq.QuoteIdentifier(table.Name),

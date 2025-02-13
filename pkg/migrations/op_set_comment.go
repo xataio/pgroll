@@ -22,6 +22,9 @@ var _ Operation = (*OpSetComment)(nil)
 
 func (o *OpSetComment) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	tbl := s.GetTable(o.Table)
+	if tbl == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 
 	return tbl, addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column), o.Comment)
 }

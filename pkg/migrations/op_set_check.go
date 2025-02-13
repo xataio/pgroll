@@ -25,6 +25,9 @@ var _ Operation = (*OpSetCheckConstraint)(nil)
 
 func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 
 	// Add the check constraint to the new column as NOT VALID.
 	if err := o.addCheckConstraint(ctx, conn, s); err != nil {

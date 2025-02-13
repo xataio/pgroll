@@ -17,7 +17,13 @@ var _ Operation = (*OpAlterColumn)(nil)
 
 func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
 	ops := o.subOperations()
 
 	// Duplicate the column on the underlying table.
@@ -114,7 +120,13 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 
 	// Rename the new column to the old column name
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column)
+	if column == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
 	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
 		return err
 	}
@@ -124,7 +136,13 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column)
+	if column == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
 
 	// Perform any operation specific rollback steps
 	ops := o.subOperations()

@@ -22,7 +22,13 @@ var _ Operation = (*OpSetNotNull)(nil)
 
 func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
 
 	// Add an unchecked NOT NULL constraint to the new column.
 	if err := addNotNullConstraint(ctx, conn, table.Name, o.Column, column.Name); err != nil {

@@ -83,9 +83,22 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 
 func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	column := table.GetColumn(o.Column)
+	if column == nil {
+		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
 	referencedTable := s.GetTable(o.References.Table)
+	if referencedTable == nil {
+		return TableDoesNotExistError{Name: o.References.Table}
+	}
+
 	referencedColumn := referencedTable.GetColumn(o.References.Column)
+	if referencedColumn == nil {
+		return ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
+	}
 
 	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(table.Name))
 	writer := &ConstraintSQLWriter{
