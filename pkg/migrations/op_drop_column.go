@@ -30,6 +30,15 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 		}
 	}
 
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+	column := table.GetColumn(o.Column)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
+
 	s.GetTable(o.Table).RemoveColumn(o.Column)
 	return nil, nil
 }

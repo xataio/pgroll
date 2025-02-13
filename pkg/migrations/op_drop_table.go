@@ -15,6 +15,9 @@ var _ Operation = (*OpDropTable)(nil)
 
 func (o *OpDropTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Name)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Name}
+	}
 
 	// Soft-delete the table in order that a create table operation in the same
 	// migration can create a table with the same name

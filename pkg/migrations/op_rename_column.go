@@ -15,6 +15,13 @@ var _ Operation = (*OpRenameColumn)(nil)
 func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	// Rename the table in the in-memory schema.
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+	column := table.GetColumn(o.From)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.From}
+	}
 	table.RenameColumn(o.From, o.To)
 
 	return nil, nil

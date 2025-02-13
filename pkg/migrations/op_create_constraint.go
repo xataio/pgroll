@@ -17,9 +17,16 @@ var _ Operation = (*OpCreateConstraint)(nil)
 
 func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+
 	columns := make([]*schema.Column, len(o.Columns))
 	for i, colName := range o.Columns {
 		columns[i] = table.GetColumn(colName)
+		if columns[i] == nil {
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: colName}
+		}
 	}
 
 	// Duplicate each column using its final name after migration completion
@@ -137,8 +144,14 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 
 	// rename new columns to old name
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 	for _, col := range o.Columns {
 		column := table.GetColumn(col)
+		if column == nil {
+			return ColumnDoesNotExistError{Table: o.Table, Name: col}
+		}
 		if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
 			return err
 		}
@@ -149,6 +162,9 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return TableDoesNotExistError{Name: o.Table}
+	}
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
 		pq.QuoteIdentifier(table.Name),

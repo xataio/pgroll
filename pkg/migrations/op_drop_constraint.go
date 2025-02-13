@@ -16,10 +16,16 @@ var _ Operation = (*OpDropConstraint)(nil)
 
 func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 
 	// By this point Validate() should have run which ensures the constraint exists and that we only have
 	// one column associated with it.
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: table.GetConstraintColumns(o.Name)[0]}
+	}
 
 	// Create a copy of the column on the underlying table.
 	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)

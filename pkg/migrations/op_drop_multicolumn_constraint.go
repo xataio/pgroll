@@ -16,12 +16,18 @@ var _ Operation = (*OpDropMultiColumnConstraint)(nil)
 
 func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
 
 	// Get all columns covered by the constraint to be dropped
 	constraintColumns := table.GetConstraintColumns(o.Name)
 	columns := make([]*schema.Column, len(constraintColumns))
 	for i, c := range constraintColumns {
 		columns[i] = table.GetColumn(c)
+		if columns[i] == nil {
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: c}
+		}
 	}
 
 	// Duplicate each of the columns covered by the constraint to be dropped
