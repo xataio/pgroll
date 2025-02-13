@@ -252,6 +252,14 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	// This is to avoid unnecessary exclusive table locks.
 	o.Column.Check = nil
 
+	// Don't add a column with a UNIQUE constraint directly.
+	// They are handled by:
+	// - adding the column without the UNIQUE modifier
+	// - creating a UNIQUE index concurrently
+	// - adding a UNIQUE constraint USING the index on migration completion
+	// This is to avoid unnecessary exclusive table locks.
+	o.Column.Unique = false
+
 	o.Column.Name = TemporaryName(o.Column.Name)
 	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
 	colSQL, err := columnWriter.Write(o.Column)
@@ -287,7 +295,7 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 
 // UniqueIndexName returns the name of the unique index for the given column
 func UniqueIndexName(columnName string) string {
-	return "_pgroll_uniq_"  + columnName 
+	return "_pgroll_uniq_" + columnName
 }
 
 // NotNullConstraintName returns the name of the NOT NULL constraint for the given column
