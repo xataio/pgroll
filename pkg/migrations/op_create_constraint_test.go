@@ -1078,6 +1078,153 @@ func TestCreateConstraintInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "name")
 			},
 		},
+		{
+			name: "rename table, rename column, create foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_tables",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+								{
+									Name:     "owner",
+									Type:     "int",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "owner",
+							To:    "owner_id",
+						},
+						&migrations.OpCreateConstraint{
+							Table:   "products",
+							Type:    migrations.OpCreateConstraintTypeForeignKey,
+							Name:    "fk_item_owner",
+							Columns: []string{"owner_id"},
+							References: &migrations.TableForeignKeyReference{
+								Table:   "users",
+								Columns: []string{"id"},
+							},
+							Up: map[string]string{
+								"owner_id": "SELECT CASE WHEN EXISTS (SELECT 1 FROM users WHERE users.id = owner_id) THEN owner_id ELSE NULL END",
+							},
+							Down: map[string]string{
+								"owner_id": "owner_id",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the users table
+				MustInsert(t, db, schema, "02_multi_operation", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// Can insert a row that meets the constraint into the new schema
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":       "1",
+					"name":     "apple",
+					"owner_id": "1",
+				})
+
+				// Can't insert a row that violates the constraint into the new schema
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":       "2",
+					"name":     "banana",
+					"owner_id": "2", // no such user
+				}, testutils.FKViolationErrorCode)
+
+				// Can insert a row that violates the constraint into the old schema
+				MustInsert(t, db, schema, "01_create_tables", "items", map[string]string{
+					"id":    "2",
+					"name":  "banana",
+					"owner": "2",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple", "owner_id": 1},
+					{"id": 2, "name": "banana", "owner_id": nil},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_tables", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple", "owner": 1},
+					{"id": 2, "name": "banana", "owner": 2},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row that meets the constraint into the new schema
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":       "3",
+					"name":     "carrot",
+					"owner_id": "1",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":       "4",
+					"name":     "durian",
+					"owner_id": "2", // no such user
+				}, testutils.FKViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple", "owner_id": 1},
+					{"id": 2, "name": "banana", "owner_id": nil},
+					{"id": 3, "name": "carrot", "owner_id": 1},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
 	})
 }
 
