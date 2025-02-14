@@ -30,8 +30,13 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 		}
 	}
 
-	// Duplicate each of the columns covered by the constraint to be dropped
+	// Duplicate each of the columns covered by the constraint to be dropped.
+	// Each column is duplicated assuming its final name after the migration is
+	// completed.
 	d := NewColumnDuplicator(conn, table, columns...).WithoutConstraint(o.Name)
+	for _, colName := range constraintColumns {
+		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
+	}
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
