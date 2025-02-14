@@ -59,7 +59,11 @@ func (w *ConstraintSQLWriter) WriteCheck(check string, noInherit bool) string {
 	if w.Name != "" {
 		constraint = fmt.Sprintf("CONSTRAINT %s ", pq.QuoteIdentifier(w.Name))
 	}
-	constraint += fmt.Sprintf("CHECK (%s)", check)
+	if !strings.HasPrefix(check, "CHECK (") {
+		constraint += fmt.Sprintf("CHECK (%s)", check)
+	} else {
+		constraint += check
+	}
 	if noInherit {
 		constraint += " NO INHERIT"
 	}

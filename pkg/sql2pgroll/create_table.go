@@ -442,6 +442,7 @@ func convertInlineCheckConstraint(tableName, columnName string, constraint *pgq.
 	return &migrations.CheckConstraint{
 		Name:       name,
 		Constraint: expr,
+		NoInherit:  constraint.GetIsNoInherit(),
 	}, nil
 }
 

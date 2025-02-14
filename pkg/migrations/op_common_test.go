@@ -227,14 +227,21 @@ func TriggerMustNotExist(t *testing.T, db *sql.DB, schema, table, trigger string
 
 func CheckConstraintMustNotExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
-	if checkConstraintExists(t, db, schema, table, constraint) {
+	if checkConstraintExists(t, db, schema, table, constraint, false) {
 		t.Fatalf("Expected constraint %q to not exist", constraint)
 	}
 }
 
 func CheckConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
-	if !checkConstraintExists(t, db, schema, table, constraint) {
+	if !checkConstraintExists(t, db, schema, table, constraint, false) {
+		t.Fatalf("Expected constraint %q to exist", constraint)
+	}
+}
+
+func NotInheritableCheckConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !checkConstraintExists(t, db, schema, table, constraint, true) {
 		t.Fatalf("Expected constraint %q to exist", constraint)
 	}
 }
@@ -371,7 +378,7 @@ func CheckIndexDefinition(t *testing.T, db *sql.DB, schema, table, index, expect
 	}
 }
 
-func checkConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
+func checkConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string, noInherit bool) bool {
 	t.Helper()
 
 	var exists bool
@@ -382,8 +389,9 @@ func checkConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint s
       WHERE conrelid = $1::regclass
       AND conname = $2
       AND contype = 'c'
+      AND connoinherit = $3
     )`,
-		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
+		fmt.Sprintf("%s.%s", schema, table), constraint, noInherit).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}

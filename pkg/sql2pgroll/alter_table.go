@@ -226,11 +226,12 @@ func convertAlterTableAddCheckConstraint(stmt *pgq.AlterTableStmt, constraint *p
 	}
 
 	return &migrations.OpCreateConstraint{
-		Type:    migrations.OpCreateConstraintTypeCheck,
-		Name:    constraint.GetConname(),
-		Table:   tableName,
-		Check:   ptr(expr),
-		Columns: []string{PlaceHolderColumnName},
+		Type:      migrations.OpCreateConstraintTypeCheck,
+		Name:      constraint.GetConname(),
+		Table:     tableName,
+		Check:     ptr(expr),
+		NoInherit: constraint.GetIsNoInherit(),
+		Columns:   []string{PlaceHolderColumnName},
 		Up: migrations.MultiColumnUpSQL{
 			PlaceHolderColumnName: PlaceHolderSQL,
 		},
@@ -245,7 +246,7 @@ func convertAlterTableAddCheckConstraint(stmt *pgq.AlterTableStmt, constraint *p
 // information.
 func canConvertCheckConstraint(constraint *pgq.Constraint) bool {
 	switch {
-	case constraint.IsNoInherit, constraint.SkipValidation:
+	case constraint.SkipValidation:
 		return false
 	default:
 		return true

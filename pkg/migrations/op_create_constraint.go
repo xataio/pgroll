@@ -265,12 +265,14 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 }
 
 func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB, tableName string) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(tableName),
-		pq.QuoteIdentifier(o.Name),
-		rewriteCheckExpression(*o.Check, o.Columns...),
-	))
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(tableName))
 
+	writer := &ConstraintSQLWriter{
+		Name:           o.Name,
+		SkipValidation: true,
+	}
+	sql += writer.WriteCheck(rewriteCheckExpression(*o.Check, o.Columns...), o.NoInherit)
+	_, err := conn.ExecContext(ctx, sql)
 	return err
 }
 

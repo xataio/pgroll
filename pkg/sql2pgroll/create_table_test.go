@@ -66,6 +66,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			expectedOp: expect.CreateTableOp10,
 		},
 		{
+			sql:        "CREATE TABLE foo(a int CHECK (a > 0) NO INHERIT)",
+			expectedOp: expect.CreateTableOp37,
+		},
+		{
 			sql:        "CREATE TABLE foo(a int CONSTRAINT my_check CHECK (a > 0))",
 			expectedOp: expect.CreateTableOp18,
 		},
@@ -323,9 +327,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Primary key constraint options are not supported
 		"CREATE TABLE foo(a int PRIMARY KEY USING INDEX TABLESPACE bar)",
 		"CREATE TABLE foo(a int PRIMARY KEY WITH (fillfactor=70))",
-
-		// CHECK constraint NO INHERIT option is not supported
-		"CREATE TABLE foo(a int CHECK (a > 0) NO INHERIT)",
 
 		// Options on UNIQUE constraints are not supported
 		"CREATE TABLE foo(a int UNIQUE NULLS NOT DISTINCT)",

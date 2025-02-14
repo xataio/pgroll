@@ -233,6 +233,7 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 				Name:       c.Name,
 				Columns:    c.Columns,
 				Definition: c.Check,
+				NoInherit:  c.NoInherit,
 			}
 		case ConstraintTypePrimaryKey:
 			primaryKeys = c.Columns

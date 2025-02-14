@@ -1,0 +1,29 @@
+This is an invalid 'create_constraint' migration.
+Only check constraints have no_inherit flag.
+
+-- create_constraint.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "my_invalid_check",
+        "table": "my_table",
+        "type": "foreign_key",
+        "no_inherit": true,
+        "columns": [
+          "my_column"
+        ],
+        "up": {
+          "my_column": "my_column"
+        },
+        "down": {
+          "my_column": "my_column"
+        }
+      }
+    }
+  ]
+}
+
+-- valid --
+false

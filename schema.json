@@ -16,6 +16,11 @@
         "name": {
           "description": "Name of check constraint",
           "type": "string"
+        },
+        "no_inherit": {
+          "description": "Do not propagate constraint to child tables",
+          "type": "boolean",
+          "default": false
         }
       },
       "required": ["constraint", "name"],
@@ -794,6 +799,11 @@
           "description": "Check constraint expression",
           "type": "string"
         },
+        "no_inherit": {
+          "description": "Do not propagate constraint to child tables",
+          "type": "boolean",
+          "default": false
+        },
         "references": {
           "description": "Reference to the foreign key",
           "$ref": "#/$defs/TableForeignKeyReference"
@@ -820,9 +830,32 @@
             "properties": {
               "check": {
                 "const": ""
+              },
+              "no_inherit": {
+                "const": false
               }
             },
             "required": ["columns", "references"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "check"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "type": "string"
+              },
+              "references": {
+                "const": {}
+              }
+            },
+            "required": ["check"]
           }
         }
       ],

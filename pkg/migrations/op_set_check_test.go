@@ -47,6 +47,7 @@ func TestSetCheckConstraint(t *testing.T) {
 							Check: &migrations.CheckConstraint{
 								Name:       "check_title_length",
 								Constraint: "length(title) > 3",
+								NoInherit:  true,
 							},
 							Up:   "SELECT CASE WHEN length(title) <= 3 THEN LPAD(title, 4, '-') ELSE title END",
 							Down: "title",
@@ -59,7 +60,7 @@ func TestSetCheckConstraint(t *testing.T) {
 				ColumnMustExist(t, db, schema, "posts", migrations.TemporaryName("title"))
 
 				// A check constraint has been added to the temporary column
-				CheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
+				NotInheritableCheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the old view works.
 				MustInsert(t, db, schema, "01_add_table", "posts", map[string]string{
@@ -103,7 +104,7 @@ func TestSetCheckConstraint(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The check constraint exists on the new table.
-				CheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
+				NotInheritableCheckConstraintMustExist(t, db, schema, "posts", "check_title_length")
 
 				// Inserting a row that meets the check constraint into the new view works.
 				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{

@@ -39,9 +39,6 @@ type duplicatorStmtBuilder struct {
 const (
 	dataTypeMismatchErrorCode  pq.ErrorCode = "42804"
 	undefinedFunctionErrorCode pq.ErrorCode = "42883"
-
-	cSetDefaultSQL                   = `ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`
-	cAlterTableAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
@@ -172,11 +169,10 @@ func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []st
 			continue
 		}
 		if duplicatedConstraintColumns := d.duplicatedConstraintColumns(cc.Columns, colNames...); len(duplicatedConstraintColumns) > 0 {
-			stmts = append(stmts, fmt.Sprintf(cAlterTableAddCheckConstraintSQL,
-				pq.QuoteIdentifier(d.table.Name),
-				pq.QuoteIdentifier(DuplicationName(cc.Name)),
-				rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...),
-			))
+			sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(d.table.Name))
+			writer := ConstraintSQLWriter{Name: DuplicationName(cc.Name), SkipValidation: true}
+			sql += writer.WriteCheck(rewriteCheckExpression(cc.Definition, duplicatedConstraintColumns...), cc.NoInherit)
+			stmts = append(stmts, sql)
 		}
 	}
 	return stmts
