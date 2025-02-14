@@ -45,6 +45,12 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 	}
 
+	if o.Column.Unique {
+		if err := createUniqueIndexConcurrently(ctx, conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, []string{TemporaryName(o.Column.Name)}); err != nil {
+			return nil, fmt.Errorf("failed to add unique index: %w", err)
+		}
+	}
+
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
 		err := createTrigger(ctx, conn, tr, triggerConfig{
@@ -115,6 +121,17 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 			pq.QuoteIdentifier(o.Table),
 			pq.QuoteIdentifier(o.Column.Check.Name)))
+		if err != nil {
+			return err
+		}
+	}
+
+	if o.Column.Unique {
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s_%s_key UNIQUE USING INDEX %s",
+			pq.QuoteIdentifier(o.Table),
+			o.Table,
+			o.Column.Name,
+			UniqueIndexName(o.Column.Name)))
 		if err != nil {
 			return err
 		}
@@ -247,6 +264,14 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	// This is to avoid unnecessary exclusive table locks.
 	o.Column.Check = nil
 
+	// Don't add a column with a UNIQUE constraint directly.
+	// They are handled by:
+	// - adding the column without the UNIQUE modifier
+	// - creating a UNIQUE index concurrently
+	// - adding a UNIQUE constraint USING the index on migration completion
+	// This is to avoid unnecessary exclusive table locks.
+	o.Column.Unique = false
+
 	o.Column.Name = TemporaryName(o.Column.Name)
 	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
 	colSQL, err := columnWriter.Write(o.Column)
@@ -278,6 +303,11 @@ func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, 
 		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
 	))
 	return err
+}
+
+// UniqueIndexName returns the name of the unique index for the given column
+func UniqueIndexName(columnName string) string {
+	return "_pgroll_uniq_" + columnName
 }
 
 // NotNullConstraintName returns the name of the NOT NULL constraint for the given column
