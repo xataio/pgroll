@@ -20,6 +20,17 @@
       "args": []
     },
     {
+      "name": "convert",
+      "short": "Convert SQL statements to pgroll operations from SQL",
+      "use": "convert <path to file with migrations>",
+      "example": "",
+      "flags": [],
+      "subcommands": [],
+      "args": [
+        "migration-file"
+      ]
+    },
+    {
       "name": "init",
       "short": "Initialize pgroll in the target database",
       "use": "init <file>",

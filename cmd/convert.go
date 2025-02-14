@@ -10,10 +10,11 @@ import (
 
 func convertCmd() *cobra.Command {
 	convertCmd := &cobra.Command{
-		Use:    "convert <path to file with migrations>",
-		Short:  "Convert SQL statements to pgroll operations from SQL",
-		Args:   cobra.ExactArgs(1),
-		Hidden: true,
+		Use:       "convert <path to file with migrations>",
+		Short:     "Convert SQL statements to pgroll operations from SQL",
+		Args:      cobra.ExactArgs(1),
+		ValidArgs: []string{"migration-file"},
+		Hidden:    true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			file := args[0]
 
