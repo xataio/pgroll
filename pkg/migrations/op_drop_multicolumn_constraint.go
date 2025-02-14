@@ -45,7 +45,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: TemporaryName(columnName),
 			SQL:            o.upSQL(columnName),
 		})
@@ -67,7 +67,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: columnName,
 			SQL:            o.Down[columnName],
 		})
