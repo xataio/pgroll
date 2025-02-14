@@ -277,6 +277,28 @@ func (t *Table) GetConstraintColumns(name string) []string {
 	return slices.Compact(columns)
 }
 
+// RenameConstraintColumns renames all occurrences of a column name in any
+// constraint on the table from `from` to `to`.
+func (t *Table) RenameConstraintColumns(from, to string) {
+	updateColumns := func(columns []string) {
+		for i, c := range columns {
+			if c == from {
+				columns[i] = to
+			}
+		}
+	}
+
+	for _, cc := range t.CheckConstraints {
+		updateColumns(cc.Columns)
+	}
+	for _, uc := range t.UniqueConstraints {
+		updateColumns(uc.Columns)
+	}
+	for _, fk := range t.ForeignKeys {
+		updateColumns(fk.Columns)
+	}
+}
+
 // GetPrimaryKey returns the columns that make up the primary key
 func (t *Table) GetPrimaryKey() (columns []*Column) {
 	for _, name := range t.PrimaryKey {

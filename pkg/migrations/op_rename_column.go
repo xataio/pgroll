@@ -24,6 +24,10 @@ func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema str
 	}
 	table.RenameColumn(o.From, o.To)
 
+	// Update the name of the column in any constraints that reference the
+	// renamed column.
+	table.RenameConstraintColumns(o.From, o.To)
+
 	return nil, nil
 }
 
@@ -43,6 +47,10 @@ func (o *OpRenameColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfo
 	// has really been renamed.
 	column := table.GetColumn(o.To)
 	column.Name = o.To
+
+	// Update the name of the column in any constraints that reference the
+	// renamed column.
+	table.RenameConstraintColumns(o.From, o.To)
 
 	return err
 }
@@ -86,6 +94,7 @@ func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	// Update the in-memory schema to reflect the column rename so that it is
 	// visible to subsequent operations' validation steps.
 	table.RenameColumn(o.From, o.To)
+	table.RenameConstraintColumns(o.From, o.To)
 
 	return nil
 }

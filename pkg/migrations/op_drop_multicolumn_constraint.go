@@ -30,8 +30,13 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 		}
 	}
 
-	// Duplicate each of the columns covered by the constraint to be dropped
+	// Duplicate each of the columns covered by the constraint to be dropped.
+	// Each column is duplicated assuming its final name after the migration is
+	// completed.
 	d := NewColumnDuplicator(conn, table, columns...).WithoutConstraint(o.Name)
+	for _, colName := range constraintColumns {
+		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
+	}
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
@@ -45,7 +50,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
+			TableName:      table.Name,
 			PhysicalColumn: TemporaryName(columnName),
 			SQL:            o.upSQL(columnName),
 		})
@@ -55,7 +60,9 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
-		// a variable for the new column.
+		// a variable for the new column. Save the old column name for use as the
+		// physical column name in the down trigger first.
+		oldPhysicalColumn := table.GetColumn(columnName).Name
 		table.AddColumn(columnName, &schema.Column{
 			Name: TemporaryName(columnName),
 		})
@@ -67,8 +74,8 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
-			TableName:      o.Table,
-			PhysicalColumn: columnName,
+			TableName:      table.Name,
+			PhysicalColumn: oldPhysicalColumn,
 			SQL:            o.Down[columnName],
 		})
 		if err != nil {
@@ -125,7 +132,7 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Drop the new column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
-			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(TemporaryName(columnName)),
 		))
 		if err != nil {
