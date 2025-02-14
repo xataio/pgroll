@@ -53,19 +53,43 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 
 	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Remove the needs backfill column
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+	table := s.GetTable(o.Table)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+	if err != nil {
+		return err
+	}
+
+	// Remove the needs backfill column
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+		pq.QuoteIdentifier(table.Name),
+		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	if err != nil {
+		return err
+	}
 
 	// Mark the column as no longer deleted so thats it's visible to preceding
 	// rollback operations in the same migration
 	s.GetTable(o.Table).UnRemoveColumn(o.Column)
 
-	return err
+	return nil
 }
 
 func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {

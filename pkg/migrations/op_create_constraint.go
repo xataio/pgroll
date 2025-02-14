@@ -157,7 +157,16 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 		}
 	}
 
-	return o.removeTriggers(ctx, conn)
+	if err := o.removeTriggers(ctx, conn); err != nil {
+		return err
+	}
+
+	// Remove the needs backfill column
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+		pq.QuoteIdentifier(o.Table),
+		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+
+	return err
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
@@ -174,7 +183,16 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTra
 		return err
 	}
 
-	return o.removeTriggers(ctx, conn)
+	if err := o.removeTriggers(ctx, conn); err != nil {
+		return err
+	}
+
+	// Remove the needs backfill column
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+		pq.QuoteIdentifier(table.Name),
+		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+
+	return err
 }
 
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {

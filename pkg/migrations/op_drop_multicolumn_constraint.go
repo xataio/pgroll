@@ -108,6 +108,14 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 			return err
 		}
 
+		// Remove the needs backfill column
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(CNeedsBackfillColumn)))
+		if err != nil {
+			return err
+		}
+
 		// Drop the old column
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
 			pq.QuoteIdentifier(o.Table),
@@ -151,6 +159,14 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, 
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
 			pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(columnName))),
 		))
+		if err != nil {
+			return err
+		}
+
+		// Remove the needs backfill column
+		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
+			pq.QuoteIdentifier(table.Name),
+			pq.QuoteIdentifier(CNeedsBackfillColumn)))
 		if err != nil {
 			return err
 		}
