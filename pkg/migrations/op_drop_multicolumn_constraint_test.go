@@ -517,6 +517,114 @@ func TestDropMultiColumnConstraintInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "name")
 			},
 		},
+		{
+			name: "rename table, rename column, drop constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+									Check: &migrations.CheckConstraint{
+										Name:       "check_name_length",
+										Constraint: "length(name) > 3",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_multi_operation",
+					Operations: migrations.Operations{
+						&migrations.OpRenameTable{
+							From: "items",
+							To:   "products",
+						},
+						&migrations.OpRenameColumn{
+							Table: "products",
+							From:  "name",
+							To:    "item_name",
+						},
+						&migrations.OpDropMultiColumnConstraint{
+							Table: "products",
+							Name:  "check_name_length",
+							Down: map[string]string{
+								"item_name": "SELECT CASE WHEN length(item_name) <= 3 THEN LPAD(item_name, 4, '-') ELSE item_name END",
+							},
+							Up: map[string]string{
+								"item_name": "item_name",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that violates the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "1",
+					"item_name": "a",
+				})
+
+				// Can't insert a row into the old schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "2",
+					"name": "b",
+				}, testutils.CheckViolationErrorCode)
+
+				// Can insert a row into the old schema that meets the constraint
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "2",
+					"name": "bananas",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "a"},
+					{"id": 2, "item_name": "bananas"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "---a"}, // rewritten by the down migration
+					{"id": 2, "name": "bananas"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "items", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the new schema that violates the constraint
+				MustInsert(t, db, schema, "02_multi_operation", "products", map[string]string{
+					"id":        "3",
+					"item_name": "c",
+				})
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "02_multi_operation", "products")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "item_name": "---a"},
+					{"id": 2, "item_name": "bananas"},
+					{"id": 3, "item_name": "c"},
+				}, rows)
+
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "products", "name")
+			},
+		},
 	})
 }
 
