@@ -60,7 +60,9 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
-		// a variable for the new column.
+		// a variable for the new column. Save the old column name for use as the
+		// physical column name in the down trigger first.
+		oldPhysicalColumn := table.GetColumn(columnName).Name
 		table.AddColumn(columnName, &schema.Column{
 			Name: TemporaryName(columnName),
 		})
@@ -73,7 +75,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
 			TableName:      table.Name,
-			PhysicalColumn: columnName,
+			PhysicalColumn: oldPhysicalColumn,
 			SQL:            o.Down[columnName],
 		})
 		if err != nil {
