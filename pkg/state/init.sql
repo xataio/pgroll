@@ -278,7 +278,7 @@ INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, d
 SELECT
     nspname,
     'initial_' || nspname,
-    '{}'::jsonb,
+    jsonb_build_object('name', 'initial_' || nspname),
     placeholder.read_schema (nspname),
     TRUE,
     'inferred',
