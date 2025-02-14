@@ -86,7 +86,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:
-		return table, o.addForeignKeyConstraint(ctx, conn)
+		return table, o.addForeignKeyConstraint(ctx, conn, table)
 	}
 
 	return table, nil
@@ -274,8 +274,8 @@ func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB,
 	return err
 }
 
-func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB) error {
-	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(o.Table))
+func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB, table *schema.Table) error {
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(table.Name))
 
 	writer := &ConstraintSQLWriter{
 		Name:           o.Name,
