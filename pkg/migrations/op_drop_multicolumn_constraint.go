@@ -125,7 +125,7 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Drop the new column
 		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
-			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(TemporaryName(columnName)),
 		))
 		if err != nil {
