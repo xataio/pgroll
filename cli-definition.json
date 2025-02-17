@@ -124,17 +124,6 @@
       "args": []
     },
     {
-      "name": "sql",
-      "short": "Convert SQL statements to pgroll operations",
-      "use": "sql <sql statement>",
-      "example": "",
-      "flags": [],
-      "subcommands": [],
-      "args": [
-        "statement"
-      ]
-    },
-    {
       "name": "start",
       "short": "Start a migration for the operations present in the given file",
       "use": "start <file>",
