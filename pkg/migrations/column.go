@@ -17,6 +17,11 @@ func (c *Column) IsPrimaryKey() bool {
 	return c.Pk
 }
 
+// HasDefault returns true if the column has a default value
+func (c *Column) HasDefault() bool {
+	return c.Default != nil
+}
+
 // HasImplicitDefault returns true if the column has an implicit default value
 func (c *Column) HasImplicitDefault() bool {
 	switch c.Type {

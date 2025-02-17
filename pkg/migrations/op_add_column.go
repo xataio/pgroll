@@ -10,6 +10,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/internal/defaults"
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -23,7 +24,18 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
+	// If the column has a DEFAULT, check if it can be added using the fast path
+	// optimization
+	fastPathDefault := false
+	if o.Column.HasDefault() {
+		v, err := defaults.UsesFastPath(ctx, conn, table.Name, o.Column.Type, *o.Column.Default)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check for fast path default optimization: %w", err)
+		}
+		fastPathDefault = v
+	}
+
+	if err := addColumn(ctx, conn, *o, table, fastPathDefault, tr); err != nil {
 		return nil, fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
@@ -33,7 +45,11 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		}
 	}
 
-	if !o.Column.IsNullable() && o.Column.Default == nil {
+	// If the column is `NOT NULL` and there is no default value (either because
+	// the column as no DEFAULT or because the default value cannot be set using
+	// the fast path optimization), add a NOT NULL constraint to the column which
+	// will be validated on migration completion.
+	if !o.Column.IsNullable() && (o.Column.Default == nil || !fastPathDefault) {
 		if err := addNotNullConstraint(ctx, conn, table.Name, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
 			return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 		}
@@ -48,6 +64,15 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 	if o.Column.Unique {
 		if err := createUniqueIndexConcurrently(ctx, conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, []string{TemporaryName(o.Column.Name)}); err != nil {
 			return nil, fmt.Errorf("failed to add unique index: %w", err)
+		}
+	}
+
+	// If the column has a DEFAULT that cannot be set using the fast path
+	// optimization, the `up` SQL expression must be used to set the DEFAULT
+	// value for the column.
+	if o.Column.HasDefault() && !fastPathDefault {
+		if o.Up != *o.Column.Default {
+			return nil, UpSQLMustBeColumnDefaultError{Column: o.Column.Name}
 		}
 	}
 
@@ -77,11 +102,9 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 }
 
 func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	tempName := TemporaryName(o.Column.Name)
-
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
 		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(tempName),
+		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
 		pq.QuoteIdentifier(o.Column.Name),
 	))
 	if err != nil {
@@ -103,23 +126,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil {
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name))))
-		if err != nil {
-			return err
-		}
-
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Column.Name)))
-		if err != nil {
-			return err
-		}
-
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(NotNullConstraintName(o.Column.Name))))
+		err = upgradeNotNullConstraintToNotNullAttribute(ctx, conn, o.Table, o.Column.Name)
 		if err != nil {
 			return err
 		}
@@ -142,6 +149,28 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 			UniqueIndexName(o.Column.Name)))
 		if err != nil {
 			return err
+		}
+	}
+
+	// If the column has a DEFAULT that could not be set using the fast-path
+	// optimization, set it here.
+	column := s.GetTable(o.Table).GetColumn(TemporaryName(o.Column.Name))
+	if o.Column.HasDefault() && column.Default == nil {
+		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET DEFAULT %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Column.Name),
+			*o.Column.Default,
+		))
+		if err != nil {
+			return err
+		}
+
+		// Validate the `NOT NULL` constraint on the column if necessary
+		if !o.Column.IsNullable() {
+			err = upgradeNotNullConstraintToNotNullAttribute(ctx, conn, o.Table, o.Column.Name)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -247,7 +276,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
+func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, fastPathDefault bool, tr SQLTransformer) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:
 	// - adding the column as nullable
@@ -279,6 +308,17 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	// This is to avoid unnecessary exclusive table locks.
 	o.Column.Unique = false
 
+	// Don't add volatile DEFAULT values directly.
+	// They are handled by:
+	// - adding the column without a DEFAULT
+	// - creating a trigger to backfill the column with the default
+	// - adding the DEFAULT value on migration completion
+	// This is to avoid unnecessary exclusive table locks.
+	if !fastPathDefault {
+		o.Column.Default = nil
+		o.Column.Nullable = true
+	}
+
 	o.Column.Name = TemporaryName(o.Column.Name)
 	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
 	colSQL, err := columnWriter.Write(o.Column)
@@ -290,6 +330,31 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 		pq.QuoteIdentifier(t.Name),
 		colSQL,
 	))
+
+	return err
+}
+
+// upgradeNotNullConstraintToNotNullAttribute validates and upgrades a NOT NULL
+// constraint to a NOT NULL column attribute. The constraint is removed after
+// the column attribute is added.
+func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB, tableName, columnName string) error {
+	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
+		pq.QuoteIdentifier(tableName),
+		pq.QuoteIdentifier(NotNullConstraintName(columnName))))
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
+		pq.QuoteIdentifier(tableName),
+		pq.QuoteIdentifier(columnName)))
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
+		pq.QuoteIdentifier(tableName),
+		pq.QuoteIdentifier(NotNullConstraintName(columnName))))
 
 	return err
 }
