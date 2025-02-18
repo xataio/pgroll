@@ -793,7 +793,7 @@
         "type": {
           "description": "Type of the constraint",
           "type": "string",
-          "enum": ["unique", "check", "foreign_key"]
+          "enum": ["unique", "check", "foreign_key", "primary_key"]
         },
         "check": {
           "description": "Check constraint expression",
@@ -803,6 +803,26 @@
           "description": "Do not propagate constraint to child tables",
           "type": "boolean",
           "default": false
+        },
+        "index_parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tablespace": {
+              "type": "string",
+              "default": ""
+            },
+            "storage_parameters": {
+              "type": "string",
+              "default": ""
+            },
+            "include_columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
         },
         "references": {
           "description": "Reference to the foreign key",
@@ -833,6 +853,9 @@
               },
               "no_inherit": {
                 "const": false
+              },
+              "index_params": {
+                "const": {}
               }
             },
             "required": ["columns", "references"]
@@ -853,9 +876,35 @@
               },
               "references": {
                 "const": {}
+              },
+              "index_params": {
+                "const": {}
               }
             },
             "required": ["check"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "primary_key"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "check": {
+                "const": ""
+              },
+              "no_inherit": {
+                "const": false
+              },
+              "references": {
+                "const": {}
+              }
+            },
+            "required": ["columns"]
           }
         }
       ],
