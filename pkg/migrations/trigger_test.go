@@ -26,11 +26,12 @@ func TestBuildFunction(t *testing.T) {
 					"product":  {Name: "product", Type: "text"},
 					"review":   {Name: "review", Type: "text"},
 				},
-				SchemaName:     "public",
-				LatestSchema:   "public_01_migration_name",
-				TableName:      "reviews",
-				PhysicalColumn: "_pgroll_new_review",
-				SQL:            "product || 'is good'",
+				SchemaName:          "public",
+				LatestSchema:        "public_01_migration_name",
+				TableName:           "reviews",
+				PhysicalColumn:      "_pgroll_new_review",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 "product || 'is good'",
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -50,6 +51,7 @@ func TestBuildFunction(t *testing.T) {
 
       IF search_path != 'public_01_migration_name' THEN
         NEW."_pgroll_new_review" = product || 'is good';
+        NEW."_pgroll_needs_backfill" = false;
       END IF;
 
       RETURN NEW;
@@ -67,11 +69,12 @@ func TestBuildFunction(t *testing.T) {
 					"product":  {Name: "product", Type: "text"},
 					"review":   {Name: "review", Type: "text"},
 				},
-				SchemaName:     "public",
-				LatestSchema:   "public_01_migration_name",
-				TableName:      "reviews",
-				PhysicalColumn: "review",
-				SQL:            `NEW."_pgroll_new_review"`,
+				SchemaName:          "public",
+				LatestSchema:        "public_01_migration_name",
+				TableName:           "reviews",
+				PhysicalColumn:      "review",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 `NEW."_pgroll_new_review"`,
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -91,6 +94,7 @@ func TestBuildFunction(t *testing.T) {
 
       IF search_path = 'public_01_migration_name' THEN
         NEW."review" = NEW."_pgroll_new_review";
+        NEW."_pgroll_needs_backfill" = false;
       END IF;
 
       RETURN NEW;
@@ -109,11 +113,12 @@ func TestBuildFunction(t *testing.T) {
 					"review":   {Name: "review", Type: "text"},
 					"rating":   {Name: "_pgroll_new_rating", Type: "integer"},
 				},
-				SchemaName:     "public",
-				LatestSchema:   "public_01_migration_name",
-				TableName:      "reviews",
-				PhysicalColumn: "rating",
-				SQL:            `CAST(rating as text)`,
+				SchemaName:          "public",
+				LatestSchema:        "public_01_migration_name",
+				TableName:           "reviews",
+				PhysicalColumn:      "rating",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 `CAST(rating as text)`,
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -134,6 +139,7 @@ func TestBuildFunction(t *testing.T) {
 
       IF search_path = 'public_01_migration_name' THEN
         NEW."rating" = CAST(rating as text);
+        NEW."_pgroll_needs_backfill" = false;
       END IF;
 
       RETURN NEW;

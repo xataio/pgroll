@@ -882,12 +882,16 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 // - The down functions for the columns no longer exist.
 // - The up triggers for the columns no longer exist.
 // - The down triggers for the columns no longer exist.
+// - The _pgroll_needs_backfill column should not exist on the table.
 func TableMustBeCleanedUp(t *testing.T, db *sql.DB, schema, table string, columns ...string) {
 	t.Helper()
 
 	for _, column := range columns {
 		// The temporary column should not exist on the underlying table.
 		ColumnMustNotExist(t, db, schema, table, migrations.TemporaryName(column))
+
+		// The _pgroll_needs_backfill column should not exist on the table.
+		ColumnMustNotExist(t, db, schema, table, migrations.CNeedsBackfillColumn)
 
 		// The up function for the column no longer exists.
 		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, column))

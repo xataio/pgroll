@@ -53,9 +53,10 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 	// Create a batcher for the table.
 	b := batcher{
 		BatchConfig: templates.BatchConfig{
-			TableName:  table.Name,
-			PrimaryKey: identityColumns,
-			BatchSize:  bf.batchSize,
+			TableName:           table.Name,
+			PrimaryKey:          identityColumns,
+			BatchSize:           bf.batchSize,
+			NeedsBackfillColumn: "_pgroll_needs_backfill",
 		},
 	}
 

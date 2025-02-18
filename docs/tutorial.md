@@ -159,6 +159,8 @@ After some progress updates you should see a message saying that the migration h
   <summary>What's happening behind the progress updates?</summary>
   
   In order to add the new `description` column, `pgroll` creates a temporary `_pgroll_new_description` column and copies over the data from the existing `description` column, using the `up` SQL from the migration. As we have 10^5 rows in our table, this process takes some time. This process is called _backfilling_ and it is performed in batches to avoid locking all rows in the table simultaneously.
+
+  The `_pgroll_needs_backfill` column in the `users` table is used to track which rows have been backfilled and which have not. This column is set to `true` for all rows at the start of the migration and set to `false` once the row has been backfilled. This ensures that rows inserted or updated while the backfill is in process aren't backfilled twice.
 </details>
 
 At this point it's useful to look at the table data and schema to see what `pgroll` has done. Let's look at the data first:
@@ -169,19 +171,20 @@ SELECT * FROM users ORDER BY id LIMIT 10
 
 You should see something like this:
 ```
-+-----+----------+-------------------------+--------------------------+
-| id  | name     | description             | _pgroll_new_description  |
-+-----+----------+-------------------------+--------------------------+
-| 1   | user_1   | <null>                  | description for user_1   |
-| 2   | user_2   | description for user_2  | description for user_2   |
-| 3   | user_3   | <null>                  | description for user_3   |
-| 4   | user_4   | description for user_4  | description for user_4   |
-| 5   | user_5   | <null>                  | description for user_5   |
-| 6   | user_6   | description for user_6  | description for user_6   |
-| 7   | user_7   | <null>                  | description for user_7   |
-| 8   | user_8   | <null>                  | description for user_8   |
-| 9   | user_9   | description for user_9  | description for user_9   |
-| 10  | user_10  | description for user_10 | description for user_10  |
++----+---------+------------------------+-------------------------+------------------------+
+| id | name    | description            | _pgroll_new_description | _pgroll_needs_backfill |
+|----+---------+------------------------+-------------------------+------------------------|
+| 1  | user_1  | <null>                 | description for user_1  | False                  |
+| 2  | user_2  | description for user_2 | description for user_2  | False                  |
+| 3  | user_3  | <null>                 | description for user_3  | False                  |
+| 4  | user_4  | <null>                 | description for user_4  | False                  |
+| 5  | user_5  | <null>                 | description for user_5  | False                  |
+| 6  | user_6  | description for user_6 | description for user_6  | False                  |
+| 7  | user_7  | <null>                 | description for user_7  | False                  |
+| 8  | user_8  | description for user_8 | description for user_8  | False                  |
+| 9  | user_9  | <null>                 | description for user_9  | False                  |
+| 10 | user_10 | <null>                 | description for user_10 | False                  |
++----+---------+------------------------+-------------------------+------------------------+
 ```
 
 This is the "expand" phase of the [expand/contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/) in action; `pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.json` file:
@@ -201,21 +204,22 @@ DESCRIBE users
 You should see something like this:
 
 ```
-+-------------------------+------------------------+-----------------------------------------------------------------+
-| Column                  | Type                   | Modifiers                                                       |
-+-------------------------+------------------------+-----------------------------------------------------------------+
-| id                      | integer                |  not null default nextval('_pgroll_new_users_id_seq'::regclass) |
-| name                    | character varying(255) |  not null                                                       |
-| description             | text                   |                                                                 |
-| _pgroll_new_description | text                   |                                                                 |
-+-------------------------+------------------------+-----------------------------------------------------------------+
++-------------------------+------------------------+-----------------------------------------------------+
+| Column                  | Type                   | Modifiers                                           |
+|-------------------------+------------------------+-----------------------------------------------------|
+| id                      | integer                |  not null default nextval('users_id_seq'::regclass) |
+| name                    | character varying(255) |  not null                                           |
+| description             | text                   |                                                     |
+| _pgroll_new_description | text                   |                                                     |
+| _pgroll_needs_backfill  | boolean                |  default true                                       |
++-------------------------+------------------------+-----------------------------------------------------+
 Indexes:
-    "_pgroll_new_users_pkey" PRIMARY KEY, btree (id)
-    "_pgroll_new_users_name_key" UNIQUE CONSTRAINT, btree (name)
+    "users_pkey" PRIMARY KEY, btree (id)
+    "users_name_key" UNIQUE CONSTRAINT, btree (name)
 Check constraints:
-    "_pgroll_add_column_check_description" CHECK (_pgroll_new_description IS NOT NULL) NOT VALID
+    "_pgroll_check_not_null_description" CHECK (_pgroll_new_description IS NOT NULL) NOT VALID
 Triggers:
-    _pgroll_trigger_users__pgroll_new_description BEFORE INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION _pgroll_trigger_users__pgroll_new_description>
+    _pgroll_trigger_users__pgroll_new_description BEFORE INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION _pgroll_trigger_users__pgroll_new_description()
     _pgroll_trigger_users_description BEFORE INSERT OR UPDATE ON users FOR EACH ROW EXECUTE FUNCTION _pgroll_trigger_users_description()
 ```
 
@@ -411,6 +415,7 @@ Indexes:
 A few things have happened:
 
 - The extra `_pgroll_new_description` has been renamed to `description`.
+- The `_pgroll_needs_backfill` column has been removed.
 - The old `description` column has been removed.
 - The `description` column is now marked as `NOT NULL`.
 - The triggers to copy data back and forth between the old and new column have been removed.
