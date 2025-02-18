@@ -23,15 +23,6 @@ func (o *OpRenameTable) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 		pq.QuoteIdentifier(o.From),
 		pq.QuoteIdentifier(o.To)))
 
-	// Rename the table in the virtual schema so that the `Complete` methods
-	// of subsequent operations in the same migration can find it.
-	s.RenameTable(o.From, o.To)
-
-	// Update the physical name of the table in the virtual schema now that it
-	// has really been renamed.
-	table := s.GetTable(o.To)
-	table.Name = o.To
-
 	return err
 }
 

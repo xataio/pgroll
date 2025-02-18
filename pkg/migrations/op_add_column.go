@@ -145,17 +145,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 		}
 	}
 
-	// Add the column to the in-memory schema so that Complete steps in subsequent
-	// operations can see the new column.
-	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-	table.AddColumn(o.Column.Name, &schema.Column{
-		Name: o.Column.Name,
-	})
-
-	return err
+	return nil
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
