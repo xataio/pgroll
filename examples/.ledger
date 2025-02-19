@@ -50,3 +50,4 @@
 50_create_table_with_table_constraint.json
 51_create_table_with_table_foreign_key_constraint.json
 52_create_table_with_exclusion_constraint.json
+53_add_column_with_volatile_default.json
