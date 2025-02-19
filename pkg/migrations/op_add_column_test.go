@@ -1215,6 +1215,491 @@ func TestAddNotNullColumnWithNoDefault(t *testing.T) {
 	})
 }
 
+func TestAddColumnWithVolatileAndNonVolatileDefaults(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "add nullable column with non-volatile default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: true,
+								Default:  ptr("0"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "2",
+					"name": "bob",
+					"age":  "21",
+				})
+
+				// Can insert a NULL value into the new view
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+					"age":  "NULL",
+				})
+
+				// The old view has the expected rows
+				resOld := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+					{"id": 3, "name": "carl"},
+				}, resOld)
+
+				// The new view has the expected rows
+				resNew := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 0},
+					{"id": 2, "name": "bob", "age": 21},
+					{"id": 3, "name": "carl", "age": nil},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "users", "age")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "4",
+					"name": "dana",
+					"age":  "31",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "5",
+					"name": "earl",
+				})
+
+				// The new view has the expected rows
+				res := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 0},
+					{"id": 2, "name": "bob", "age": 0},
+					{"id": 3, "name": "carl", "age": 0},
+					{"id": 4, "name": "dana", "age": 31},
+					{"id": 5, "name": "earl", "age": 0},
+				}, res)
+			},
+		},
+		{
+			name: "add not null column with non-volatile default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "integer",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+								Default:  ptr("0"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "2",
+					"name": "bob",
+					"age":  "21",
+				})
+
+				// Can't insert a NULL value into the new view
+				MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+					"age":  "NULL",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The old view has the expected rows
+				resOld := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+				}, resOld)
+
+				// The new view has the expected rows
+				resNew := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 0},
+					{"id": 2, "name": "bob", "age": 21},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "users", "age")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "dana",
+					"age":  "31",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "4",
+					"name": "earl",
+				})
+
+				// Can't insert a NULL value into the new view
+				MustNotInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"id":   "5",
+					"name": "frankie",
+					"age":  "NULL",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				res := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 0},
+					{"id": 2, "name": "bob", "age": 0},
+					{"id": 3, "name": "dana", "age": 31},
+					{"id": 4, "name": "earl", "age": 0},
+				}, res)
+			},
+		},
+		{
+			name: "add nullable column with volatile default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_volatile_function",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: `CREATE FUNCTION public.always_ten() RETURNS integer AS $$ BEGIN RETURN 10; END; $$ LANGUAGE plpgsql VOLATILE;`,
+						},
+					},
+				},
+				{
+					Name: "03_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Up:    "public.always_ten()",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: true,
+								Default:  ptr("public.always_ten()"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting via both the old and the new views works
+				MustInsert(t, db, schema, "02_create_volatile_function", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "2",
+					"name": "bob",
+					"age":  "21",
+				})
+
+				// Can insert a NULL value into the new view
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+					"age":  "NULL",
+				})
+
+				// The old view has the expected rows
+				resOld := MustSelect(t, db, schema, "02_create_volatile_function", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+					{"id": 3, "name": "carl"},
+				}, resOld)
+
+				// The new view has the expected rows
+				resNew := MustSelect(t, db, schema, "03_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 10},
+					{"id": 2, "name": "bob", "age": 21},
+					{"id": 3, "name": "carl", "age": nil},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "users", "age")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "4",
+					"name": "dana",
+				})
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "5",
+					"name": "earl",
+					"age":  "51",
+				})
+
+				// Can insert a NULL value into the new view
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "6",
+					"name": "frankie",
+					"age":  "NULL",
+				})
+
+				// The new view has the expected rows
+				res := MustSelect(t, db, schema, "03_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 10},
+					{"id": 2, "name": "bob", "age": 10},
+					{"id": 3, "name": "carl", "age": 10},
+					{"id": 4, "name": "dana", "age": 10},
+					{"id": 5, "name": "earl", "age": 51},
+					{"id": 6, "name": "frankie", "age": nil},
+				}, res)
+			},
+		},
+		{
+			name: "add not null column with volatile default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_volatile_function",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: `CREATE FUNCTION public.always_ten() RETURNS integer AS $$ BEGIN RETURN 10; END; $$ LANGUAGE plpgsql VOLATILE;`,
+						},
+					},
+				},
+				{
+					Name: "03_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Up:    "public.always_ten()",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+								Default:  ptr("public.always_ten()"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting via both the old and the new views works
+				MustInsert(t, db, schema, "02_create_volatile_function", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "2",
+					"name": "bob",
+					"age":  "21",
+				})
+
+				// Can't insert a NULL value into the new view
+				MustNotInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+					"age":  "NULL",
+				}, testutils.CheckViolationErrorCode)
+
+				// The old view has the expected rows
+				resOld := MustSelect(t, db, schema, "02_create_volatile_function", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice"},
+					{"id": 2, "name": "bob"},
+				}, resOld)
+
+				// The new view has the expected rows
+				resNew := MustSelect(t, db, schema, "03_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 10},
+					{"id": 2, "name": "bob", "age": 21},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "users", "age")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+					"age":  "31",
+				})
+				MustInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "4",
+					"name": "dana",
+				})
+
+				// Can't insert a NULL value into the new view
+				MustNotInsert(t, db, schema, "03_add_column", "users", map[string]string{
+					"id":   "5",
+					"name": "earl",
+					"age":  "NULL",
+				}, testutils.NotNullViolationErrorCode)
+
+				// The new view has the expected rows
+				res := MustSelect(t, db, schema, "03_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "age": 10},
+					{"id": 2, "name": "bob", "age": 10},
+					{"id": 3, "name": "carl", "age": 31},
+					{"id": 4, "name": "dana", "age": 10},
+				}, res)
+			},
+		},
+		{
+			name: "up expression must be the default expression when adding a column with a volatile default",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_volatile_function",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: `CREATE FUNCTION public.always_ten() RETURNS integer AS $$ BEGIN RETURN 10; END; $$ LANGUAGE plpgsql VOLATILE;`,
+						},
+					},
+				},
+				{
+					Name: "03_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Up:    "'incorrect - must be the same as the column default'",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+								Default:  ptr("public.always_ten()"),
+							},
+						},
+					},
+				},
+			},
+			wantStartErr: migrations.UpSQLMustBeColumnDefaultError{Column: "age"},
+		},
+	})
+}
+
 func TestAddColumnValidation(t *testing.T) {
 	t.Parallel()
 
