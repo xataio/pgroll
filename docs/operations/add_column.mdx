@@ -39,6 +39,20 @@ Default values are subject to the usual rules for quoting SQL expressions. In pa
 
 **NOTE:** As a special case, the `up` field can be omitted when adding `smallserial`, `serial` and `bigserial` columns.
 
+### Volatile and non-volatile defaults
+
+Postgres handles adding columns with defaults in one of two ways, depending on the [volatility](https://www.postgresql.org/docs/current/xfunc-volatility.html) of the default expression:
+  * For non-volatile defaults, Postgres uses a fast-path optimization to avoid a table rewrite.
+  * For volatile defaults, Postgres must rewrite the table to populate the new column with the default value. This requires a lengthy `ACCESS_EXCLUSIVE` lock on the table.
+
+When adding a new column with a `default`, `pgroll` handles these two cases differently:
+
+For non-volatile defaults, `pgroll` will add the column with the default value directly on migration start.
+
+For volatile defaults, `pgroll` will add the column without the `default` on migration start and use the `up` SQL (which must be set to the same expression as `default`) to populate the column with the 'default' value. The default will be added to the column on migration completion.
+
+By handling defaults in this way, `pgroll` ensures that the lengthy `ACCESS_EXCLUSIVE` lock is avoided when adding columns with volatile defaults.
+
 ## Examples
 
 ### Add multiple columns
