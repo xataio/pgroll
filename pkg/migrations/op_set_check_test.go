@@ -614,7 +614,7 @@ func TestSetCheckInMultiOperationMigrations(t *testing.T) {
 
 	ExecuteTests(t, TestCases{
 		{
-			name: "rename table, set not null",
+			name: "rename table, set check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
@@ -716,7 +716,7 @@ func TestSetCheckInMultiOperationMigrations(t *testing.T) {
 			},
 		},
 		{
-			name: "rename table, rename column set not null",
+			name: "rename table, rename column set check constraint",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_create_table",
