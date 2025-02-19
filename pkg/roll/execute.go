@@ -261,7 +261,9 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	// update the in-memory schema with the results of applying the migration
-	migration.UpdateVirtualSchema(ctx, schema)
+	if err := migration.UpdateVirtualSchema(ctx, schema); err != nil {
+		return fmt.Errorf("unable to replay changes to in-memory schema: %w", err)
+	}
 
 	// roll back operations in reverse order
 	for i := len(migration.Operations) - 1; i >= 0; i-- {
