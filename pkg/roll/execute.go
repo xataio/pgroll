@@ -194,6 +194,11 @@ func (m *Roll) Complete(ctx context.Context) error {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
 
+		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
+		if err != nil {
+			return fmt.Errorf("unable to read schema: %w", err)
+		}
+
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
 			if _, ok := op.(*migrations.OpRawSQL); !ok || !m.noVersionSchemaForRawSQL {
 				refreshViews = true

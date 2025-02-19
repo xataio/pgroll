@@ -60,9 +60,7 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 }
 
 func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
-	// Update the in-memory schema representation with the new table
-	o.updateSchema(s)
-
+	// No-op
 	return nil
 }
 
