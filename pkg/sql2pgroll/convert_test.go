@@ -18,7 +18,9 @@ func TestConvertToMigration(t *testing.T) {
 		expectedErr bool
 	}{
 		"empty SQL statement": {
-			sql: "",
+			sql:         "",
+			expectedOps: nil,
+			expectedErr: false,
 		},
 		"single SQL statement": {
 			sql: "DROP TYPE t1;",
@@ -27,6 +29,7 @@ func TestConvertToMigration(t *testing.T) {
 					Up: "DROP TYPE t1",
 				},
 			},
+			expectedErr: false,
 		},
 		"single multiline statement with comments": {
 			sql: `CREATE TABLE t1 (
@@ -51,6 +54,7 @@ name TEXT -- my name column
 					},
 				},
 			},
+			expectedErr: false,
 		},
 		"single function definition multiline with comments": {
 			sql: `CREATE OR REPLACE FUNCTION check_password(uname TEXT, pass TEXT)
@@ -88,6 +92,7 @@ SECURITY DEFINER`,
 					Up: "DROP TYPE t2",
 				},
 			},
+			expectedErr: false,
 		},
 		"multiple SQL migrations to raw and regular pgroll operations": {
 			sql: "CREATE TABLE t1 (id INT); DROP INDEX idx1; DROP TYPE t1; ALTER TABLE t1 ADD COLUMN name TEXT;",
@@ -118,6 +123,7 @@ SECURITY DEFINER`,
 					Up: sql2pgroll.PlaceHolderSQL,
 				},
 			},
+			expectedErr: false,
 		},
 		"multiple unknown DDL statements": {
 			sql: "CREATE TYPE t1 AS ENUM ('a', 'b'); CREATE DOMAIN d1 AS TEXT; CREATE SCHEMA s1; CREATE EXTENSION e1;",
@@ -135,6 +141,7 @@ SECURITY DEFINER`,
 					Up: "CREATE EXTENSION e1",
 				},
 			},
+			expectedErr: false,
 		},
 		"multiple empty SQL statements": {
 			sql: ";;",
@@ -156,6 +163,7 @@ SECURITY DEFINER`,
 					Up: "DROP TYPE t1",
 				},
 			},
+			expectedErr: false,
 		},
 		"multiple multiline statments with comments": {
 			sql: `DROP TYPE t1; -- drop type t1
@@ -169,6 +177,7 @@ DROP INDEX ixd1; -- drop my index
 					Name: "ixd1",
 				},
 			},
+			expectedErr: false,
 		},
 		"multiple statements with function definition multiline with comments": {
 			sql: `DROP TABLE t1; DROP INDEX idx2; CREATE OR REPLACE FUNCTION check_password(uname TEXT, pass TEXT)
@@ -212,9 +221,11 @@ SECURITY DEFINER`,
 					Up: "CREATE TYPE t1",
 				},
 			},
+			expectedErr: false,
 		},
 		"syntax error in second statement": {
 			sql:         "DROP INDEX idx1; DROP INDX idx2",
+			expectedOps: nil,
 			expectedErr: true,
 		},
 	}
