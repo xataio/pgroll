@@ -12,7 +12,7 @@ import (
 
 var _ Operation = (*OpRenameColumn)(nil)
 
-func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	// Rename the table in the in-memory schema.
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -31,7 +31,7 @@ func (o *OpRenameColumn) Start(ctx context.Context, conn db.DB, latestSchema str
 	return nil, nil
 }
 
-func (o *OpRenameColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Rename the column
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
 		pq.QuoteIdentifier(o.Table),
@@ -41,7 +41,7 @@ func (o *OpRenameColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfo
 	return err
 }
 
-func (o *OpRenameColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Rename the column back to the original name in the in-memory schema.
 	table := s.GetTable(o.Table)
 	table.RenameColumn(o.To, o.From)

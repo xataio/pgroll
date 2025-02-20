@@ -19,7 +19,7 @@ type OpChangeType struct {
 
 var _ Operation = (*OpChangeType)(nil)
 
-func (o *OpChangeType) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpChangeType) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -28,11 +28,11 @@ func (o *OpChangeType) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return table, nil
 }
 
-func (o *OpChangeType) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpChangeType) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpChangeType) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpChangeType) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

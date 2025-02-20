@@ -14,12 +14,12 @@ import (
 
 var _ Operation = (*OpRenameConstraint)(nil)
 
-func (o *OpRenameConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpRenameConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	// no-op
 	return nil, nil
 }
 
-func (o *OpRenameConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// rename the constraint in the underlying table
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME CONSTRAINT %s TO %s",
 		pq.QuoteIdentifier(o.Table),
@@ -28,7 +28,7 @@ func (o *OpRenameConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 	return err
 }
 
-func (o *OpRenameConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// no-op
 	return nil
 }

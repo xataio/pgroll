@@ -13,12 +13,12 @@ import (
 
 var _ Operation = (*OpDropIndex)(nil)
 
-func (o *OpDropIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropIndex) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	// no-op
 	return nil, nil
 }
 
-func (o *OpDropIndex) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropIndex) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))
@@ -26,7 +26,7 @@ func (o *OpDropIndex) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return err
 }
 
-func (o *OpDropIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropIndex) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// no-op
 	return nil
 }

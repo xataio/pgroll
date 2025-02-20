@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -34,7 +34,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := createTrigger(ctx, conn, tr, triggerConfig{
+	err := createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, column.Name),
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
@@ -56,7 +56,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	err = createTrigger(ctx, conn, tr, triggerConfig{
+	err = createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, TemporaryName(column.Name)),
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,
@@ -72,7 +72,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	return table, nil
 }
 
-func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
@@ -119,7 +119,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTrans
 	return err
 }
 
-func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
 	columnName := table.GetConstraintColumns(o.Name)[0]

@@ -17,13 +17,13 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	if err := addColumn(ctx, conn, *o, table, tr); err != nil {
+	if err := addColumn(ctx, conn, *o, table); err != nil {
 		return nil, fmt.Errorf("failed to start add column operation: %w", err)
 	}
 
@@ -53,7 +53,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
-		err := createTrigger(ctx, conn, tr, triggerConfig{
+		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, o.Column.Name),
 			Direction:      TriggerDirectionUp,
 			Columns:        table.Columns,
@@ -76,7 +76,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 	return tableToBackfill, nil
 }
 
-func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	tempName := TemporaryName(o.Column.Name)
 
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
@@ -148,7 +148,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return nil
 }
 
-func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
@@ -247,7 +247,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, tr SQLTransformer) error {
+func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table) error {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:
 	// - adding the column as nullable
@@ -280,7 +280,7 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	o.Column.Unique = false
 
 	o.Column.Name = TemporaryName(o.Column.Name)
-	columnWriter := ColumnSQLWriter{WithPK: true, Transformer: tr}
+	columnWriter := ColumnSQLWriter{WithPK: true}
 	colSQL, err := columnWriter.Write(o.Column)
 	if err != nil {
 		return err
@@ -331,8 +331,7 @@ func IsNotNullConstraintName(name string) bool {
 // It can optionally include the primary key constraint
 // When creating a table, the primary key constraint is not added to the column definition
 type ColumnSQLWriter struct {
-	WithPK      bool
-	Transformer SQLTransformer
+	WithPK bool
 }
 
 func (w ColumnSQLWriter) Write(col Column) (string, error) {
@@ -349,11 +348,7 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		sql += " NOT NULL"
 	}
 	if col.Default != nil {
-		d, err := w.Transformer.TransformSQL(*col.Default)
-		if err != nil {
-			return "", err
-		}
-		sql += fmt.Sprintf(" DEFAULT %s", d)
+		sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
 	}
 
 	if col.Generated != nil {
