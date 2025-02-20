@@ -13,7 +13,7 @@ import (
 
 var _ Operation = (*OpDropTable)(nil)
 
-func (o *OpDropTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropTable) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Name)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Name}
@@ -32,7 +32,7 @@ func (o *OpDropTable) Start(ctx context.Context, conn db.DB, latestSchema string
 	return nil, nil
 }
 
-func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	deletionName := DeletionName(o.Name)
 
 	// Perform the actual deletion of the soft-deleted table
@@ -41,7 +41,7 @@ func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return err
 }
 
-func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Mark the table as no longer deleted so that it is visible to preceding
 	// Rollbacks in the same migration
 	s.UnRemoveTable(o.Name)

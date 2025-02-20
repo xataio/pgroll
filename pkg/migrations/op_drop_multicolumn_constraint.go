@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpDropMultiColumnConstraint)(nil)
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -44,7 +44,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 	// Create triggers for each column covered by the constraint to be dropped
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-		err := createTrigger(ctx, conn, tr, triggerConfig{
+		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, columnName),
 			Direction:      TriggerDirectionUp,
 			Columns:        table.Columns,
@@ -68,7 +68,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 		})
 
 		// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-		err = createTrigger(ctx, conn, tr, triggerConfig{
+		err = createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, TemporaryName(columnName)),
 			Direction:      TriggerDirectionDown,
 			Columns:        table.Columns,
@@ -86,7 +86,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 	return table, nil
 }
 
-func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
@@ -134,7 +134,7 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 	return nil
 }
 
-func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {

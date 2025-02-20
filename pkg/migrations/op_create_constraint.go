@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpCreateConstraint)(nil)
 
-func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -41,7 +41,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	// Setup triggers
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		err := createTrigger(ctx, conn, tr, triggerConfig{
+		err := createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, colName),
 			Direction:      TriggerDirectionUp,
 			Columns:        table.Columns,
@@ -65,7 +65,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		})
 
 		downSQL := o.Down[colName]
-		err = createTrigger(ctx, conn, tr, triggerConfig{
+		err = createTrigger(ctx, conn, triggerConfig{
 			Name:           TriggerName(o.Table, TemporaryName(colName)),
 			Direction:      TriggerDirectionDown,
 			Columns:        table.Columns,
@@ -92,14 +92,14 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	return table, nil
 }
 
-func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
 			Name:  o.Name,
 		}
-		err := uniqueOp.Complete(ctx, conn, tr, s)
+		err := uniqueOp.Complete(ctx, conn, s)
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 				Name: o.Name,
 			},
 		}
-		err := checkOp.Complete(ctx, conn, tr, s)
+		err := checkOp.Complete(ctx, conn, s)
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 				Name: o.Name,
 			},
 		}
-		err := fkOp.Complete(ctx, conn, tr, s)
+		err := fkOp.Complete(ctx, conn, s)
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTra
 	return err
 }
 
-func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

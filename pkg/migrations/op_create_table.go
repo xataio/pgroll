@@ -16,9 +16,9 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	// Generate SQL for the columns in the table
-	columnsSQL, err := columnsToSQL(o.Columns, tr)
+	columnsSQL, err := columnsToSQL(o.Columns)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
@@ -59,12 +59,12 @@ func (o *OpCreateTable) Start(ctx context.Context, conn db.DB, latestSchema stri
 	return nil, nil
 }
 
-func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateTable) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// No-op
 	return nil
 }
 
-func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateTable) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))
 	return err
@@ -267,10 +267,10 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 	return s
 }
 
-func columnsToSQL(cols []Column, tr SQLTransformer) (string, error) {
+func columnsToSQL(cols []Column) (string, error) {
 	var sql string
 	var primaryKeys []string
-	columnWriter := ColumnSQLWriter{WithPK: false, Transformer: tr}
+	columnWriter := ColumnSQLWriter{WithPK: false}
 	for i, col := range cols {
 		if i > 0 {
 			sql += ", "
