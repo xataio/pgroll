@@ -3,17 +3,25 @@
 package cmd
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
 
 func convertCmd() *cobra.Command {
+	var migrationName string
+
 	convertCmd := &cobra.Command{
 		Use:       "convert <path to file with migrations>",
-		Short:     "Convert SQL statements to pgroll operations from SQL",
+		Short:     "Convert SQL statements to a pgroll migration",
+		Long:      "Convert SQL statements to a pgroll migration. The command can read SQL statements from stdin or a file",
 		Args:      cobra.MaximumNArgs(1),
 		ValidArgs: []string{"migration-file"},
 		Hidden:    true,
@@ -24,10 +32,23 @@ func convertCmd() *cobra.Command {
 			}
 			defer reader.Close()
 
-			_, err = scanSQLStatements(reader)
-			return err
+			if migrationName == "{current_timestamp}" {
+				migrationName = time.Now().Format("20060102150405")
+			}
+			migration, err := sqlStatementsToMigration(reader, migrationName)
+			if err != nil {
+				return err
+			}
+			enc := json.NewEncoder(os.Stdout)
+			enc.SetIndent("", "  ")
+			if err := enc.Encode(migration); err != nil {
+				return fmt.Errorf("encode migration: %w", err)
+			}
+			return nil
 		},
 	}
+
+	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "{current_timestamp}", "Name of the migration")
 
 	return convertCmd
 }
@@ -39,6 +60,18 @@ func openSQLReader(args []string) (io.ReadCloser, error) {
 	return os.Open(args[0])
 }
 
-func scanSQLStatements(reader io.Reader) ([]string, error) {
-	panic("not implemented")
+func sqlStatementsToMigration(reader io.Reader, name string) (migrations.Migration, error) {
+	var buf bytes.Buffer
+	_, err := io.Copy(&buf, reader)
+	if err != nil {
+		return migrations.Migration{}, err
+	}
+	ops, err := sql2pgroll.Convert(buf.String())
+	if err != nil {
+		return migrations.Migration{}, err
+	}
+	return migrations.Migration{
+		Name:       name,
+		Operations: ops,
+	}, nil
 }
