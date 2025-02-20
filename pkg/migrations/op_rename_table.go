@@ -14,11 +14,11 @@ import (
 
 var _ Operation = (*OpRenameTable)(nil)
 
-func (o *OpRenameTable) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpRenameTable) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	return nil, s.RenameTable(o.From, o.To)
 }
 
-func (o *OpRenameTable) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameTable) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(o.From),
 		pq.QuoteIdentifier(o.To)))
@@ -26,7 +26,7 @@ func (o *OpRenameTable) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 	return err
 }
 
-func (o *OpRenameTable) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRenameTable) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	s.RenameTable(o.To, o.From)
 	return nil
 }

@@ -21,7 +21,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -34,7 +34,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 	return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, []string{column.Name})
 }
 
-func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Create a unique constraint using the unique index
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
 		pq.QuoteIdentifier(o.Table),
@@ -47,7 +47,7 @@ func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, tr SQLTransforme
 	return err
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetUnique) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

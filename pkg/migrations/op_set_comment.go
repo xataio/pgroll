@@ -20,7 +20,7 @@ type OpSetComment struct {
 
 var _ Operation = (*OpSetComment)(nil)
 
-func (o *OpSetComment) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetComment) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	tbl := s.GetTable(o.Table)
 	if tbl == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -29,11 +29,11 @@ func (o *OpSetComment) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return tbl, addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column), o.Comment)
 }
 
-func (o *OpSetComment) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetComment) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

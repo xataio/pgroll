@@ -11,45 +11,30 @@ import (
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	if o.OnComplete {
 		return nil, nil
 	}
 
-	up, err := tr.TransformSQL(o.Up)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = conn.ExecContext(ctx, up)
+	_, err := conn.ExecContext(ctx, o.Up)
 	return nil, err
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRawSQL) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	if !o.OnComplete {
 		return nil
 	}
 
-	up, err := tr.TransformSQL(o.Up)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.ExecContext(ctx, up)
+	_, err := conn.ExecContext(ctx, o.Up)
 	return err
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpRawSQL) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	if o.Down == "" {
 		return nil
 	}
 
-	down, err := tr.TransformSQL(o.Down)
-	if err != nil {
-		return err
-	}
-
-	_, err = conn.ExecContext(ctx, down)
+	_, err := conn.ExecContext(ctx, o.Down)
 	return err
 }
 
