@@ -32,7 +32,7 @@ func convertCmd() *cobra.Command {
 			}
 			defer reader.Close()
 
-			if migrationName == "" {
+			if migrationName == "{current_timestamp}" {
 				migrationName = time.Now().Format("20060102150405")
 			}
 			migration, err := sqlStatementsToMigration(reader, migrationName)
@@ -48,7 +48,7 @@ func convertCmd() *cobra.Command {
 		},
 	}
 
-	convertCmd.Flags().StringVar(&migrationName, "migration-name", "{current_timestamp}", "Name of the migration")
+	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "{current_timestamp}", "Name of the migration")
 
 	return convertCmd
 }

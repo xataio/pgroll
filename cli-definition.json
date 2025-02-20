@@ -26,7 +26,8 @@
       "example": "",
       "flags": [
         {
-          "name": "migration-name",
+          "name": "name",
+          "shorthand": "n",
           "description": "Name of the migration",
           "default": "{current_timestamp}"
         }
