@@ -21,7 +21,7 @@ func convertCmd() *cobra.Command {
 	convertCmd := &cobra.Command{
 		Use:       "convert <path to file with migrations>",
 		Short:     "Convert SQL statements to a pgroll migration",
-		Long:      "Convert SQL statements to pgroll migrations from SQL. The command can read SQL statements from stdin or a file",
+		Long:      "Convert SQL statements to a pgroll migration. The command can read SQL statements from stdin or a file",
 		Args:      cobra.MaximumNArgs(1),
 		ValidArgs: []string{"migration-file"},
 		Hidden:    true,
