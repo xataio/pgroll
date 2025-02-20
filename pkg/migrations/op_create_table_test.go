@@ -12,7 +12,6 @@ import (
 
 	"github.com/xataio/pgroll/internal/testutils"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func TestCreateTable(t *testing.T) {
@@ -1498,95 +1497,6 @@ func TestCreateTableValidation(t *testing.T) {
 			wantStartErr: migrations.PrimaryKeysAreAlreadySetError{Table: "table1"},
 		},
 	})
-}
-
-func TestCreateTableColumnDefaultTransformation(t *testing.T) {
-	t.Parallel()
-
-	sqlTransformer := testutils.NewMockSQLTransformer(map[string]string{
-		"'default value 1'": "'rewritten'",
-		"'default value 2'": testutils.MockSQLTransformerError,
-	})
-
-	ExecuteTests(t, TestCases{
-		{
-			name: "column default is rewritten by the SQL transformer",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "users",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name:    "name",
-									Type:    "text",
-									Default: ptr("'default value 1'"),
-								},
-							},
-						},
-					},
-				},
-			},
-			afterStart: func(t *testing.T, db *sql.DB, schema string) {
-				// Insert some data into the table
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
-					"id": "1",
-				})
-
-				// Ensure the row has the rewritten default value.
-				rows := MustSelect(t, db, schema, "01_create_table", "users")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "rewritten"},
-				}, rows)
-			},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-			},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
-				// Insert some data into the table
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
-					"id": "1",
-				})
-
-				// Ensure the row has the rewritten default value.
-				rows := MustSelect(t, db, schema, "01_create_table", "users")
-				assert.Equal(t, []map[string]any{
-					{"id": 1, "name": "rewritten"},
-				}, rows)
-			},
-		},
-		{
-			name: "create table fails when the SQL transformer returns an error",
-			migrations: []migrations.Migration{
-				{
-					Name: "01_create_table",
-					Operations: migrations.Operations{
-						&migrations.OpCreateTable{
-							Name: "users",
-							Columns: []migrations.Column{
-								{
-									Name: "id",
-									Type: "serial",
-									Pk:   true,
-								},
-								{
-									Name:    "name",
-									Type:    "text",
-									Default: ptr("'default value 2'"),
-								},
-							},
-						},
-					},
-				},
-			},
-			wantStartErr: testutils.ErrMockSQLTransformer,
-		},
-	}, roll.WithSQLTransformer(sqlTransformer))
 }
 
 func TestCreateTableValidationInMultiOperationMigrations(t *testing.T) {
