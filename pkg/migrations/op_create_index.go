@@ -34,9 +34,33 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" USING %s", string(o.Method))
 	}
 
-	stmt += fmt.Sprintf(" (%s)", strings.Join(
-		quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
-	)
+	if len(o.Columns) != 0 {
+		cols := make([]string, 0, len(o.Columns))
+		columns := map[string]IndexElemSettings(o.Columns)
+		for column, settings := range columns {
+			physicalName := table.PhysicalColumnNamesFor(column)
+			col := pq.QuoteIdentifier(physicalName[0])
+			if settings.Collate != "" {
+				col += " COLLATE " + settings.Collate
+			}
+			if settings.Opclass != nil {
+				col += " " + settings.Opclass.Name
+				ops := make([]string, 0, len(settings.Opclass.Params))
+				for name, value := range settings.Opclass.Params {
+					ops = append(ops, fmt.Sprintf("%s = %s", name, value))
+				}
+				col += " " + strings.Join(ops, ", ")
+			}
+			if settings.Sort != "" {
+				col += " " + string(settings.Sort)
+			}
+			if settings.Nulls != nil {
+				col += " " + string(*settings.Nulls)
+			}
+			cols = append(cols, col)
+		}
+		stmt += fmt.Sprintf(" (%s)", strings.Join(cols, ", "))
+	}
 
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
@@ -77,7 +101,12 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	for _, column := range o.Columns {
+	if len(o.Columns) == 0 {
+		return FieldRequiredError{Name: "columns"}
+	}
+
+	cols := map[string]IndexElemSettings(o.Columns)
+	for column := range cols {
 		if table.GetColumn(column) == nil {
 			return ColumnDoesNotExistError{Table: o.Table, Name: column}
 		}

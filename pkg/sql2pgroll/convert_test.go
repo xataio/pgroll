@@ -214,7 +214,7 @@ SECURITY DEFINER`,
 				&migrations.OpCreateIndex{
 					Name:    "idx1",
 					Table:   "t1",
-					Columns: []string{"id"},
+					Columns: map[string]migrations.IndexElemSettings{"id": {}},
 					Method:  "btree",
 				},
 				&migrations.OpRawSQL{

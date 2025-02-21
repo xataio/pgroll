@@ -45,7 +45,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
 							Table:   "users",
-							Columns: []string{"name"},
+							Columns: map[string]migrations.IndexElemSettings{"name": {}},
 						},
 					},
 				},
@@ -91,7 +91,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_USERS_name",
 							Table:   "users",
-							Columns: []string{"name"},
+							Columns: map[string]migrations.IndexElemSettings{"name": {}},
 						},
 					},
 				},
@@ -142,7 +142,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:      "idx_users_name_after_2019",
 							Table:     "users",
-							Columns:   []string{"registered_at_year"},
+							Columns:   map[string]migrations.IndexElemSettings{"registered_at_year": {}},
 							Predicate: "registered_at_year > 2019",
 						},
 					},
@@ -156,6 +156,52 @@ func TestCreateIndex(t *testing.T) {
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
 				IndexMustNotExist(t, db, schema, "users", "idx_users_name_after_2019")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Complete is a no-op.
+			},
+		},
+		{
+			name: "create index with descending order",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_index",
+					Operations: migrations.Operations{
+						&migrations.OpCreateIndex{
+							Name:    "idx_users_name",
+							Table:   "users",
+							Columns: map[string]migrations.IndexElemSettings{"name": {Sort: migrations.IndexElemSettingsSortDESC}},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_users_name")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Complete is a no-op.
@@ -195,7 +241,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    invalidName,
 							Table:   "users",
-							Columns: []string{"registered_at_year"},
+							Columns: map[string]migrations.IndexElemSettings{"registered_at_year": {}},
 						},
 					},
 				},
@@ -234,7 +280,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:              "idx_users_name_hash",
 							Table:             "users",
-							Columns:           []string{"name"},
+							Columns:           map[string]migrations.IndexElemSettings{"name": {}},
 							Method:            migrations.OpCreateIndexMethodHash,
 							StorageParameters: "fillfactor = 70",
 						},
@@ -295,7 +341,7 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 					&migrations.OpCreateIndex{
 						Name:    "idx_users_name_email",
 						Table:   "users",
-						Columns: []string{"name", "email"},
+						Columns: map[string]migrations.IndexElemSettings{"name": {}, "email": {}},
 					},
 				},
 			},
@@ -350,7 +396,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						},
 						&migrations.OpCreateIndex{
 							Table:   "products",
-							Columns: []string{"name"},
+							Columns: map[string]migrations.IndexElemSettings{"name": {}},
 							Name:    "idx_products_name",
 						},
 					},
@@ -406,7 +452,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						},
 						&migrations.OpCreateIndex{
 							Table:   "products",
-							Columns: []string{"item_name"},
+							Columns: map[string]migrations.IndexElemSettings{"item_name": {}},
 							Name:    "idx_products_item_name",
 						},
 					},
@@ -449,7 +495,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
 							Table:   "users",
-							Columns: []string{"name"},
+							Columns: map[string]migrations.IndexElemSettings{"name": {}},
 						},
 					},
 				},
@@ -505,7 +551,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_age",
 							Table:   "users",
-							Columns: []string{"age"},
+							Columns: map[string]migrations.IndexElemSettings{"age": {}},
 						},
 					},
 				},

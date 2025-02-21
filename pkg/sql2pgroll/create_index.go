@@ -4,6 +4,7 @@ package sql2pgroll
 
 import (
 	"fmt"
+	"strings"
 
 	pgq "github.com/xataio/pg_query_go/v6"
 
@@ -18,12 +19,62 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 
 	// Get the qualified table name
 	tableName := getQualifiedRelationName(stmt.GetRelation())
-	var columns []string
 
-	// Get the columns on which the index is defined
+	// Get the columns and their settings on which the index is defined
+	columns := make(map[string]migrations.IndexElemSettings, len(stmt.GetIndexParams()))
 	for _, param := range stmt.GetIndexParams() {
 		if colName := param.GetIndexElem().GetName(); colName != "" {
-			columns = append(columns, colName)
+			var indexElemSettings migrations.IndexElemSettings
+			collate, err := pgq.DeparseAnyName(param.GetIndexElem().GetCollation())
+			if err != nil {
+				return nil, nil
+			}
+			indexElemSettings.Collate = collate
+			opclassName, err := pgq.DeparseAnyName(param.GetIndexElem().GetOpclass())
+			if err != nil {
+				return nil, nil
+			}
+			if opclassName != "" {
+				opclassOpts := make(map[string]any, 0)
+				opts, err := pgq.DeparseRelOptions(param.GetIndexElem().GetOpclassopts())
+				if err != nil {
+					return nil, nil
+				}
+				for _, opt := range strings.Split(opts[1:len(opts)-1], ",") {
+					optKV := strings.SplitN(opt, "=", 2)
+					if len(optKV) != 2 {
+						continue
+					}
+					opclassOpts[optKV[0]] = optKV[1]
+				}
+				indexElemSettings.Opclass = &migrations.IndexElemSettingsOpclass{
+					Name:   opclassName,
+					Params: migrations.IndexElemSettingsOpclassParams(opclassOpts),
+				}
+			}
+
+			if param.GetIndexElem().GetOrdering() != pgq.SortByDir_SORTBY_DEFAULT {
+				switch param.GetIndexElem().GetOrdering() {
+				case pgq.SortByDir_SORTBY_ASC:
+					indexElemSettings.Sort = migrations.IndexElemSettingsSortASC
+				case pgq.SortByDir_SORTBY_DESC:
+					indexElemSettings.Sort = migrations.IndexElemSettingsSortDESC
+				default:
+					return nil, nil
+				}
+			}
+			if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
+				switch param.GetIndexElem().GetNullsOrdering() {
+				case pgq.SortByNulls_SORTBY_NULLS_FIRST:
+					indexElemSettings.Nulls = ptr(migrations.IndexElemSettingsNullsFIRST)
+				case pgq.SortByNulls_SORTBY_NULLS_LAST:
+					indexElemSettings.Nulls = ptr(migrations.IndexElemSettingsNullsLAST)
+				default:
+					return nil, nil
+				}
+			}
+
+			columns[colName] = indexElemSettings
 		}
 	}
 
@@ -96,26 +147,6 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	// Indexes defined on expressions are not supported
 	for _, node := range stmt.GetIndexParams() {
 		if node.GetIndexElem().GetExpr() != nil {
-			return false
-		}
-	}
-
-	for _, param := range stmt.GetIndexParams() {
-		// Indexes with non-default collations are not supported
-		if param.GetIndexElem().GetCollation() != nil {
-			return false
-		}
-		// Indexes with non-default ordering are not supported
-		ordering := param.GetIndexElem().GetOrdering()
-		if ordering != pgq.SortByDir_SORTBY_DEFAULT && ordering != pgq.SortByDir_SORTBY_ASC {
-			return false
-		}
-		// Indexes with non-default nulls ordering are not supported
-		if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
-			return false
-		}
-		// Indexes with opclasses are not supported
-		if param.GetIndexElem().GetOpclass() != nil || param.GetIndexElem().GetOpclassopts() != nil {
 			return false
 		}
 	}

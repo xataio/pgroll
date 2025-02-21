@@ -181,6 +181,40 @@ type ForeignKeyReference struct {
 	Table string `json:"table"`
 }
 
+type IndexElemSettings struct {
+	// Collate corresponds to the JSON schema field "collate".
+	Collate string `json:"collate,omitempty"`
+
+	// Nulls corresponds to the JSON schema field "nulls".
+	Nulls *IndexElemSettingsNulls `json:"nulls,omitempty"`
+
+	// Opclass corresponds to the JSON schema field "opclass".
+	Opclass *IndexElemSettingsOpclass `json:"opclass,omitempty"`
+
+	// Sort corresponds to the JSON schema field "sort".
+	Sort IndexElemSettingsSort `json:"sort,omitempty"`
+}
+
+type IndexElemSettingsNulls string
+
+const IndexElemSettingsNullsFIRST IndexElemSettingsNulls = "FIRST"
+const IndexElemSettingsNullsLAST IndexElemSettingsNulls = "LAST"
+
+type IndexElemSettingsOpclass struct {
+	// Name corresponds to the JSON schema field "name".
+	Name string `json:"name,omitempty"`
+
+	// Params corresponds to the JSON schema field "params".
+	Params IndexElemSettingsOpclassParams `json:"params,omitempty"`
+}
+
+type IndexElemSettingsOpclassParams map[string]interface{}
+
+type IndexElemSettingsSort string
+
+const IndexElemSettingsSortASC IndexElemSettingsSort = "ASC"
+const IndexElemSettingsSortDESC IndexElemSettingsSort = "DESC"
+
 // Map of column names to down SQL expressions
 type MultiColumnDownSQL map[string]string
 
@@ -275,8 +309,11 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation
 type OpCreateIndex struct {
-	// Names of columns on which to define the index
-	Columns []string `json:"columns"`
+	// Names and settings of columns on which to define the index
+	Columns OpCreateIndexColumns `json:"columns,omitempty"`
+
+	// Advanced columns configuration
+	Elements []string `json:"elements,omitempty"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`
@@ -296,6 +333,9 @@ type OpCreateIndex struct {
 	// Indicates if the index is unique
 	Unique bool `json:"unique,omitempty"`
 }
+
+// Names and settings of columns on which to define the index
+type OpCreateIndexColumns map[string]IndexElemSettings
 
 type OpCreateIndexMethod string
 
