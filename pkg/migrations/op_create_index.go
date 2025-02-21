@@ -34,9 +34,13 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" USING %s", string(o.Method))
 	}
 
-	stmt += fmt.Sprintf(" (%s)", strings.Join(
-		quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
-	)
+	if len(o.Columns) != 0 {
+		stmt += fmt.Sprintf(" (%s)", strings.Join(
+			quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
+		)
+	} else if len(o.Elements) != 0 {
+		stmt += fmt.Sprintf(" (%s)", strings.Join(o.Elements, ", "))
+	}
 
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
@@ -75,6 +79,10 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
+	}
+
+	if len(o.Columns) == 0 && len(o.Elements) == 0 {
+		return FieldRequiredError{Name: "columns or elements"}
 	}
 
 	for _, column := range o.Columns {

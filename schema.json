@@ -568,13 +568,20 @@
           "type": "string",
           "default": ""
         },
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Advanced columns configuration"
+        },
         "unique": {
           "description": "Indicates if the index is unique",
           "type": "boolean",
           "default": false
         }
       },
-      "required": ["columns", "name", "table"],
+      "required": ["name", "table"],
       "type": "object"
     },
     "OpCreateTable": {

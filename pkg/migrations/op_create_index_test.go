@@ -162,6 +162,52 @@ func TestCreateIndex(t *testing.T) {
 			},
 		},
 		{
+			name: "create index with descending order",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_index",
+					Operations: migrations.Operations{
+						&migrations.OpCreateIndex{
+							Name:     "idx_users_name",
+							Table:    "users",
+							Elements: []string{"name DESC"},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_users_name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Complete is a no-op.
+			},
+		},
+		{
 			name: "invalid name",
 			migrations: []migrations.Migration{
 				{
