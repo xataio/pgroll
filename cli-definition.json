@@ -21,10 +21,17 @@
     },
     {
       "name": "convert",
-      "short": "Convert SQL statements to pgroll operations from SQL",
+      "short": "Convert SQL statements to a pgroll migration",
       "use": "convert <path to file with migrations>",
       "example": "",
-      "flags": [],
+      "flags": [
+        {
+          "name": "name",
+          "shorthand": "n",
+          "description": "Name of the migration",
+          "default": "{current_timestamp}"
+        }
+      ],
       "subcommands": [],
       "args": [
         "migration-file"
