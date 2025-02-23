@@ -56,6 +56,48 @@ var CreateIndexOp5 = &migrations.OpCreateIndex{
 	Predicate: "foo > 0",
 }
 
+var CreateIndexOp6 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar COLLATE en_us"},
+}
+
+var CreateIndexOp7 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar DESC"},
+}
+
+var CreateIndexOp8 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar NULLS FIRST"},
+}
+
+var CreateIndexOp9 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar NULLS LAST"},
+}
+
+var CreateIndexOp10 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar opclass(test=test)"},
+}
+
+var CreateIndexOp11 = &migrations.OpCreateIndex{
+	Name:     "idx_name",
+	Table:    "foo",
+	Method:   migrations.OpCreateIndexMethodBtree,
+	Elements: []string{"bar opclass1", "baz opclass2"},
+}
+
 func CreateIndexOpWithStorageParam(param string) *migrations.OpCreateIndex {
 	return &migrations.OpCreateIndex{
 		Name:              "idx_name",

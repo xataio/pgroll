@@ -18,12 +18,24 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 
 	// Get the qualified table name
 	tableName := getQualifiedRelationName(stmt.GetRelation())
-	var columns []string
 
 	// Get the columns on which the index is defined
-	for _, param := range stmt.GetIndexParams() {
-		if colName := param.GetIndexElem().GetName(); colName != "" {
-			columns = append(columns, colName)
+	var elements, columns []string
+	if extraIndexElemConfig(stmt.GetIndexParams()) {
+		elements = make([]string, len(stmt.GetIndexParams()))
+		for i, param := range stmt.GetIndexParams() {
+			indexElem, err := pgq.DeparseIndexElem(param)
+			if err != nil {
+				return nil, fmt.Errorf("parsing index element: %w", err)
+			}
+			elements[i] = indexElem
+		}
+	} else {
+		columns = make([]string, len(stmt.GetIndexParams()))
+		for i, param := range stmt.GetIndexParams() {
+			if colName := param.GetIndexElem().GetName(); colName != "" {
+				columns[i] = colName
+			}
 		}
 	}
 
@@ -68,8 +80,28 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 			Unique:            unique,
 			Predicate:         predicate,
 			StorageParameters: storageParams,
+			Elements:          elements,
 		},
 	}, nil
+}
+
+func extraIndexElemConfig(elems []*pgq.Node) bool {
+	for _, param := range elems {
+		if param.GetIndexElem().GetCollation() != nil {
+			return true
+		}
+		ordering := param.GetIndexElem().GetOrdering()
+		if ordering != pgq.SortByDir_SORTBY_DEFAULT && ordering != pgq.SortByDir_SORTBY_ASC {
+			return true
+		}
+		if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
+			return true
+		}
+		if param.GetIndexElem().GetOpclass() != nil || param.GetIndexElem().GetOpclassopts() != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
@@ -96,26 +128,6 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	// Indexes defined on expressions are not supported
 	for _, node := range stmt.GetIndexParams() {
 		if node.GetIndexElem().GetExpr() != nil {
-			return false
-		}
-	}
-
-	for _, param := range stmt.GetIndexParams() {
-		// Indexes with non-default collations are not supported
-		if param.GetIndexElem().GetCollation() != nil {
-			return false
-		}
-		// Indexes with non-default ordering are not supported
-		ordering := param.GetIndexElem().GetOrdering()
-		if ordering != pgq.SortByDir_SORTBY_DEFAULT && ordering != pgq.SortByDir_SORTBY_ASC {
-			return false
-		}
-		// Indexes with non-default nulls ordering are not supported
-		if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
-			return false
-		}
-		// Indexes with opclasses are not supported
-		if param.GetIndexElem().GetOpclass() != nil || param.GetIndexElem().GetOpclassopts() != nil {
 			return false
 		}
 	}

@@ -276,7 +276,10 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 // Create index operation
 type OpCreateIndex struct {
 	// Names of columns on which to define the index
-	Columns []string `json:"columns"`
+	Columns []string `json:"columns,omitempty"`
+
+	// Advanced columns configuration
+	Elements []string `json:"elements,omitempty"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`
