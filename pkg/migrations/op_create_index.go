@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpCreateIndex)(nil)
 
-func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -50,12 +50,12 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 	return nil, err
 }
 
-func (o *OpCreateIndex) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateIndex) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// No-op
 	return nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpCreateIndex) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))

@@ -22,7 +22,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.
@@ -33,7 +33,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema st
 	return table, nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -45,7 +45,7 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, tr SQLTransf
 	return nil
 }
 
-func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

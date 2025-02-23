@@ -23,7 +23,7 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -37,7 +37,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSche
 	return table, nil
 }
 
-func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -49,7 +49,7 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, tr SQLT
 	return nil
 }
 
-func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

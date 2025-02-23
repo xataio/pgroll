@@ -11,7 +11,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
-	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/state"
 )
 
@@ -38,7 +37,6 @@ type Roll struct {
 	migrationHooks MigrationHooks
 	state          *state.State
 	pgVersion      PGVersion
-	sqlTransformer migrations.SQLTransformer
 	skipValidation bool
 }
 
@@ -60,19 +58,11 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
 	}
 
-	var sqlTransformer migrations.SQLTransformer = migrations.SQLTransformerFunc(
-		func(sql string) (string, error) { return sql, nil },
-	)
-	if rollOpts.sqlTransformer != nil {
-		sqlTransformer = rollOpts.sqlTransformer
-	}
-
 	return &Roll{
 		pgConn:                   &db.RDB{DB: conn},
 		schema:                   schema,
 		state:                    state,
 		pgVersion:                pgMajorVersion,
-		sqlTransformer:           sqlTransformer,
 		disableVersionSchemas:    rollOpts.disableVersionSchemas,
 		noVersionSchemaForRawSQL: rollOpts.noVersionSchemaForRawSQL,
 		migrationHooks:           rollOpts.migrationHooks,

@@ -22,7 +22,7 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -50,11 +50,11 @@ func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return table, nil
 }
 
-func (o *OpSetDefault) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetDefault) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 
-func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 

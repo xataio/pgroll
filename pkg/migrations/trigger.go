@@ -37,17 +37,12 @@ type triggerConfig struct {
 	NeedsBackfillColumn string
 }
 
-func createTrigger(ctx context.Context, conn db.DB, tr SQLTransformer, cfg triggerConfig) error {
-	expr, err := tr.TransformSQL(cfg.SQL)
-	if err != nil {
-		return err
+func createTrigger(ctx context.Context, conn db.DB, cfg triggerConfig) error {
+	// Parenthesize the up/down SQL if it's not parenthesized already
+	if len(cfg.SQL) > 0 && cfg.SQL[0] != '(' {
+		cfg.SQL = "(" + cfg.SQL + ")"
 	}
 
-	if len(expr) > 0 && expr[0] != '(' {
-		expr = "(" + expr + ")"
-	}
-
-	cfg.SQL = expr
 	cfg.NeedsBackfillColumn = CNeedsBackfillColumn
 
 	funcSQL, err := buildFunction(cfg)

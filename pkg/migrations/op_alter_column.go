@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -34,7 +34,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := createTrigger(ctx, conn, tr, triggerConfig{
+	err := createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, o.Column),
 		Direction:      TriggerDirectionUp,
 		Columns:        table.Columns,
@@ -58,7 +58,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	})
 
 	// Add a trigger to copy values from the new column to the old.
-	err = createTrigger(ctx, conn, tr, triggerConfig{
+	err = createTrigger(ctx, conn, triggerConfig{
 		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
 		Direction:      TriggerDirectionDown,
 		Columns:        table.Columns,
@@ -74,7 +74,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// perform any operation specific start steps
 	for _, op := range ops {
-		if _, err := op.Start(ctx, conn, latestSchema, tr, s); err != nil {
+		if _, err := op.Start(ctx, conn, latestSchema, s); err != nil {
 			return nil, err
 		}
 	}
@@ -82,12 +82,12 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	return table, nil
 }
 
-func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	ops := o.subOperations()
 
 	// Perform any operation specific completion steps
 	for _, op := range ops {
-		if err := op.Complete(ctx, conn, tr, s); err != nil {
+		if err := op.Complete(ctx, conn, s); err != nil {
 			return err
 		}
 	}
@@ -142,7 +142,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, tr SQLTransfor
 	return nil
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
@@ -155,7 +155,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, tr SQLTransfor
 	// Perform any operation specific rollback steps
 	ops := o.subOperations()
 	for _, ops := range ops {
-		if err := ops.Rollback(ctx, conn, tr, nil); err != nil {
+		if err := ops.Rollback(ctx, conn, nil); err != nil {
 			return err
 		}
 	}

@@ -20,7 +20,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema string, tr SQLTransformer, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -38,7 +38,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return table, nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetNotNull) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// Validate the NOT NULL constraint on the old column.
 	// The constraint must be valid because:
 	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
@@ -69,7 +69,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, conn db.DB, tr SQLTransform
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, conn db.DB, tr SQLTransformer, s *schema.Schema) error {
+func (o *OpSetNotNull) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	return nil
 }
 
