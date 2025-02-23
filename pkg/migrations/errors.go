@@ -289,3 +289,11 @@ type InvalidGeneratedColumnError struct {
 func (e InvalidGeneratedColumnError) Error() string {
 	return fmt.Sprintf("column %q on table %q is invalid: only one of generated.expression and generated.identity may be set", e.Column, e.Table)
 }
+
+type UpSQLMustBeColumnDefaultError struct {
+	Column string
+}
+
+func (e UpSQLMustBeColumnDefaultError) Error() string {
+	return fmt.Sprintf(`volatile default expression for column %q; "up" must be equal to "default"`, e.Column)
+}
