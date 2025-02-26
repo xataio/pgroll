@@ -1,4 +1,4 @@
-# Getting started
+# Hello Richard!
 
 This guide covers the key concepts of `pgroll` and how to get started with it.
 
@@ -30,7 +30,7 @@ For other more complex changes, like adding a `NOT NULL` constraint to a column,
 
 ### Client applications
 
-In order to work with the multiple versioned schema that `pgroll` creates, clients need to be configured to work with one of them. 
+In order to work with the multiple versioned schema that `pgroll` creates, clients need to be configured to work with one of them.
 
 This is done by having client applications configure the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) when they connect to the Postgres database.
 
@@ -87,4 +87,3 @@ brew install pgroll
 `pgroll` supports Postgres versions >= 14.
 
 :warning: In Postgres 14, row level security policies on tables are not respected by `pgroll`'s versioned views. This is because `pgroll` is unable to create the views with the `(security_invoker = true)` option, as the ability to do so was added in Postgres 15. If you use RLS in Postgres 14 `pgroll` is likely a poor choice of migration tool. All other `pgroll` features are fully supported across all supported Postgres versions.
-
