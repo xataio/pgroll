@@ -26,7 +26,7 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 		},
 		{
 			sql:        "CREATE INDEX idx_name ON foo (bar ASC)",
-			expectedOp: expect.CreateIndexOp1,
+			expectedOp: expect.CreateIndexOp12,
 		},
 		{
 			sql:        "CREATE INDEX idx_name ON foo USING btree (bar)",
@@ -112,6 +112,34 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			sql:        "CREATE INDEX idx_name ON foo (bar) WITH (fillfactor = 70, deduplicate_items = true)",
 			expectedOp: expect.CreateIndexOpWithStorageParam("fillfactor=70, deduplicate_items=true"),
 		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar COLLATE en_us)",
+			expectedOp: expect.CreateIndexOp6,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar DESC)",
+			expectedOp: expect.CreateIndexOp7,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar NULLS FIRST)",
+			expectedOp: expect.CreateIndexOp8,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar NULLS LAST)",
+			expectedOp: expect.CreateIndexOp9,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar opclass (test = test))",
+			expectedOp: expect.CreateIndexOp10,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar opclass1, baz opclass2)",
+			expectedOp: expect.CreateIndexOp11,
+		},
+		{
+			sql:        "CREATE INDEX idx_name ON foo (bar opclass1, baz opclass2)",
+			expectedOp: expect.CreateIndexOp11,
+		},
 	}
 
 	for _, tc := range tests {
@@ -132,18 +160,8 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 	tests := []string{
 		// Tablespaces are not supported
 		"CREATE INDEX idx_name ON foo (bar) TABLESPACE baz",
-		// Index collations are not supported
-		"CREATE INDEX idx_name ON foo (bar COLLATE en_US)",
-		// Index ordering other than the default ASC is not supported
-		"CREATE INDEX idx_name ON foo (bar DESC)",
-		// Index nulls ordering is not supported
-		"CREATE INDEX idx_name ON foo (bar NULLS FIRST)",
-		"CREATE INDEX idx_name ON foo (bar NULLS LAST)",
 		// Included columns are not supported
 		"CREATE INDEX idx_name ON foo (bar) INCLUDE (baz)",
-		// opclasses with or without options are not supported
-		"CREATE INDEX idx_name ON foo (bar opclass (test = test))",
-		"CREATE INDEX idx_name ON foo (bar opclass)",
 		// Indexes created with ONLY are not supported
 		"CREATE INDEX idx_name ON ONLY foo (bar)",
 		// Indexes with NULLS NOT DISTINCT are not supported

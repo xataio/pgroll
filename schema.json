@@ -419,6 +419,40 @@
       "required": ["name", "type"],
       "type": "object"
     },
+    "IndexElemSettings": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "collate": {
+          "type": "string",
+          "default": ""
+        },
+        "sort": {
+          "type": "string",
+          "enum": ["ASC", "DESC"],
+          "default": ""
+        },
+        "opclass": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": ""
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true,
+              "default": {}
+            }
+          }
+        },
+        "nulls": {
+          "type": "string",
+          "enum": ["FIRST", "LAST"]
+        }
+      }
+    },
     "OpAddColumn": {
       "additionalProperties": false,
       "description": "Add column operation",
@@ -538,11 +572,12 @@
       "description": "Create index operation",
       "properties": {
         "columns": {
-          "description": "Names of columns on which to define the index",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "Names and settings of columns on which to define the index",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/IndexElemSettings",
+            "description": "Index element settings"
+          }
         },
         "name": {
           "description": "Index name",
@@ -568,13 +603,20 @@
           "type": "string",
           "default": ""
         },
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Advanced columns configuration"
+        },
         "unique": {
           "description": "Indicates if the index is unique",
           "type": "boolean",
           "default": false
         }
       },
-      "required": ["columns", "name", "table"],
+      "required": ["name", "table"],
       "type": "object"
     },
     "OpCreateTable": {
