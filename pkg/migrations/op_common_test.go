@@ -309,9 +309,9 @@ func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	}
 }
 
-func IndexDescendingMustExist(t *testing.T, db *sql.DB, table, index string, columnIdx int) {
+func IndexDescendingMustExist(t *testing.T, db *sql.DB, schema, table, index string, columnIdx int) {
 	t.Helper()
-	if !indexDescendingExists(t, db, table, index, columnIdx) {
+	if !indexDescendingExists(t, db, schema, table, index, columnIdx) {
 		t.Fatalf("Expected index %q to exist", index)
 	}
 }
@@ -364,7 +364,7 @@ func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
 	return exists
 }
 
-func indexDescendingExists(t *testing.T, db *sql.DB, table, index string, columnIdx int) bool {
+func indexDescendingExists(t *testing.T, db *sql.DB, schema, table, index string, columnIdx int) bool {
 	t.Helper()
 
 	var flags []uint8
@@ -373,7 +373,7 @@ func indexDescendingExists(t *testing.T, db *sql.DB, table, index string, column
     FROM pg_index
     WHERE indrelid = $1::regclass
     AND indexrelid = $2::regclass`,
-		table, index).Scan(&flags)
+		fmt.Sprintf("%s.%s", schema, table), index).Scan(&flags)
 	if err != nil {
 		t.Fatal(err)
 	}

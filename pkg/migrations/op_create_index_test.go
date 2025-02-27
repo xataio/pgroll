@@ -201,7 +201,7 @@ func TestCreateIndex(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been created on the underlying table.
-				IndexDescendingMustExist(t, db, "users", "idx_users_name", 0)
+				IndexDescendingMustExist(t, db, schema, "users", "idx_users_name", 0)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been dropped from the the underlying table.
