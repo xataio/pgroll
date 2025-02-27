@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - no-static-linux-amd-binary
     tags:
       - 'v*'
 permissions:
