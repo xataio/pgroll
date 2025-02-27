@@ -9,6 +9,8 @@ before:
 builds:
   - id: build_cgo
     binary: pgroll
+    flags:
+      - -tags=netgo,osusergo
     ldflags:
       - -X github.com/xataio/pgroll/cmd.Version={{ .Version }}
     env:
