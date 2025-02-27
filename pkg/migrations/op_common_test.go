@@ -373,7 +373,7 @@ func indexDescendingExists(t *testing.T, db *sql.DB, schema, table, index string
     FROM pg_index
     WHERE indrelid = $1::regclass
     AND indexrelid = $2::regclass`,
-		fmt.Sprintf("%s.%s", schema, table), index).Scan(&flags)
+		fmt.Sprintf("%s.%s", schema, table), fmt.Sprintf("%s.%s", schema, index)).Scan(&flags)
 	if err != nil {
 		t.Fatal(err)
 	}
