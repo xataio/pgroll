@@ -421,6 +421,7 @@
     },
     "IndexField": {
       "additionalProperties": false,
+      "description": "Index field and its settings",
       "type": "object",
       "properties": {
         "collate": {
@@ -610,13 +611,6 @@
           "description": "Storage parameters for the index",
           "type": "string",
           "default": ""
-        },
-        "elements": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "Advanced columns configuration"
         },
         "unique": {
           "description": "Indicates if the index is unique",

@@ -181,6 +181,7 @@ type ForeignKeyReference struct {
 	Table string `json:"table"`
 }
 
+// Index field and its settings
 type IndexField struct {
 	// Collation for the index element
 	Collate string `json:"collate,omitempty"`
@@ -310,9 +311,6 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 type OpCreateIndex struct {
 	// Names and settings of columns on which to define the index
 	Columns OpCreateIndexColumns `json:"columns"`
-
-	// Advanced columns configuration
-	Elements []string `json:"elements,omitempty"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`
