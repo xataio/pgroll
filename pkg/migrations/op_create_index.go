@@ -100,12 +100,7 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	if len(o.Columns) == 0 {
-		return FieldRequiredError{Name: "columns"}
-	}
-
-	cols := map[string]IndexField(o.Columns)
-	for column := range cols {
+	for column := range map[string]IndexField(o.Columns) {
 		if table.GetColumn(column) == nil {
 			return ColumnDoesNotExistError{Table: o.Table, Name: column}
 		}

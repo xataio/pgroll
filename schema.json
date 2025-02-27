@@ -624,7 +624,7 @@
           "default": false
         }
       },
-      "required": ["name", "table"],
+      "required": ["columns", "name", "table"],
       "type": "object"
     },
     "OpCreateTable": {

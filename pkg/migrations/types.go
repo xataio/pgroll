@@ -309,7 +309,7 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 // Create index operation
 type OpCreateIndex struct {
 	// Names and settings of columns on which to define the index
-	Columns OpCreateIndexColumns `json:"columns,omitempty"`
+	Columns OpCreateIndexColumns `json:"columns"`
 
 	// Advanced columns configuration
 	Elements []string `json:"elements,omitempty"`
