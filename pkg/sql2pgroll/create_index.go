@@ -21,60 +21,65 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	// Get the columns and their settings on which the index is defined
-	columns := make(map[string]migrations.IndexElemSettings, len(stmt.GetIndexParams()))
+	columns := make(map[string]migrations.IndexField, len(stmt.GetIndexParams()))
 	for _, param := range stmt.GetIndexParams() {
 		if colName := param.GetIndexElem().GetName(); colName != "" {
-			var indexElemSettings migrations.IndexElemSettings
+			var indexField migrations.IndexField
+			// Deparse collation name
 			collate, err := pgq.DeparseAnyName(param.GetIndexElem().GetCollation())
 			if err != nil {
 				return nil, nil
 			}
-			indexElemSettings.Collate = collate
+			indexField.Collate = collate
+
+			// Deparse operator class name
 			opclassName, err := pgq.DeparseAnyName(param.GetIndexElem().GetOpclass())
 			if err != nil {
 				return nil, nil
 			}
 			if opclassName != "" {
-				opclassOpts := make(map[string]any, 0)
+				// if operator class is set, deparse operator class options as well
+				opclassOpts := make([]string, 0)
 				opts, err := pgq.DeparseRelOptions(param.GetIndexElem().GetOpclassopts())
 				if err != nil {
 					return nil, nil
 				}
-				for _, opt := range strings.Split(opts[1:len(opts)-1], ",") {
-					optKV := strings.SplitN(opt, "=", 2)
-					if len(optKV) != 2 {
-						continue
+				if opts != "()" {
+					for _, opt := range strings.Split(opts[1:len(opts)-1], ",") {
+						opclassOpts = append(opclassOpts, strings.TrimSpace(opt))
 					}
-					opclassOpts[optKV[0]] = optKV[1]
 				}
-				indexElemSettings.Opclass = &migrations.IndexElemSettingsOpclass{
+				indexField.Opclass = &migrations.IndexFieldOpclass{
 					Name:   opclassName,
-					Params: migrations.IndexElemSettingsOpclassParams(opclassOpts),
+					Params: opclassOpts,
 				}
 			}
 
+			// Deparse index field sort
 			if param.GetIndexElem().GetOrdering() != pgq.SortByDir_SORTBY_DEFAULT {
 				switch param.GetIndexElem().GetOrdering() {
 				case pgq.SortByDir_SORTBY_ASC:
-					indexElemSettings.Sort = migrations.IndexElemSettingsSortASC
+					indexField.Sort = migrations.IndexFieldSortASC
 				case pgq.SortByDir_SORTBY_DESC:
-					indexElemSettings.Sort = migrations.IndexElemSettingsSortDESC
-				default:
-					return nil, nil
-				}
-			}
-			if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
-				switch param.GetIndexElem().GetNullsOrdering() {
-				case pgq.SortByNulls_SORTBY_NULLS_FIRST:
-					indexElemSettings.Nulls = ptr(migrations.IndexElemSettingsNullsFIRST)
-				case pgq.SortByNulls_SORTBY_NULLS_LAST:
-					indexElemSettings.Nulls = ptr(migrations.IndexElemSettingsNullsLAST)
+					indexField.Sort = migrations.IndexFieldSortDESC
 				default:
 					return nil, nil
 				}
 			}
 
-			columns[colName] = indexElemSettings
+			// Deparse index field nulls ordering
+			if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
+				switch param.GetIndexElem().GetNullsOrdering() {
+				case pgq.SortByNulls_SORTBY_NULLS_FIRST:
+					indexField.Nulls = ptr(migrations.IndexFieldNullsFIRST)
+				case pgq.SortByNulls_SORTBY_NULLS_LAST:
+					indexField.Nulls = ptr(migrations.IndexFieldNullsLAST)
+				default:
+					return nil, nil
+				}
+			}
+
+			columns[colName] = indexField
 		}
 	}
 

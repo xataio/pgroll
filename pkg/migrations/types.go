@@ -181,39 +181,38 @@ type ForeignKeyReference struct {
 	Table string `json:"table"`
 }
 
-type IndexElemSettings struct {
-	// Collate corresponds to the JSON schema field "collate".
+type IndexField struct {
+	// Collation for the index element
 	Collate string `json:"collate,omitempty"`
 
-	// Nulls corresponds to the JSON schema field "nulls".
-	Nulls *IndexElemSettingsNulls `json:"nulls,omitempty"`
+	// Nulls ordering, default is first if ascending, last if descending
+	Nulls *IndexFieldNulls `json:"nulls,omitempty"`
 
-	// Opclass corresponds to the JSON schema field "opclass".
-	Opclass *IndexElemSettingsOpclass `json:"opclass,omitempty"`
+	// Operator class settings
+	Opclass *IndexFieldOpclass `json:"opclass,omitempty"`
 
-	// Sort corresponds to the JSON schema field "sort".
-	Sort IndexElemSettingsSort `json:"sort,omitempty"`
+	// Sort order, default is ascending (ASC)
+	Sort IndexFieldSort `json:"sort,omitempty"`
 }
 
-type IndexElemSettingsNulls string
+type IndexFieldNulls string
 
-const IndexElemSettingsNullsFIRST IndexElemSettingsNulls = "FIRST"
-const IndexElemSettingsNullsLAST IndexElemSettingsNulls = "LAST"
+const IndexFieldNullsFIRST IndexFieldNulls = "FIRST"
+const IndexFieldNullsLAST IndexFieldNulls = "LAST"
 
-type IndexElemSettingsOpclass struct {
-	// Name corresponds to the JSON schema field "name".
+// Operator class settings
+type IndexFieldOpclass struct {
+	// Name of the operator class
 	Name string `json:"name,omitempty"`
 
-	// Params corresponds to the JSON schema field "params".
-	Params IndexElemSettingsOpclassParams `json:"params,omitempty"`
+	// Operator class parameters
+	Params []string `json:"params,omitempty"`
 }
 
-type IndexElemSettingsOpclassParams map[string]interface{}
+type IndexFieldSort string
 
-type IndexElemSettingsSort string
-
-const IndexElemSettingsSortASC IndexElemSettingsSort = "ASC"
-const IndexElemSettingsSortDESC IndexElemSettingsSort = "DESC"
+const IndexFieldSortASC IndexFieldSort = "ASC"
+const IndexFieldSortDESC IndexFieldSort = "DESC"
 
 // Map of column names to down SQL expressions
 type MultiColumnDownSQL map[string]string
@@ -335,7 +334,7 @@ type OpCreateIndex struct {
 }
 
 // Names and settings of columns on which to define the index
-type OpCreateIndexColumns map[string]IndexElemSettings
+type OpCreateIndexColumns map[string]IndexField
 
 type OpCreateIndexMethod string
 

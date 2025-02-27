@@ -419,36 +419,44 @@
       "required": ["name", "type"],
       "type": "object"
     },
-    "IndexElemSettings": {
+    "IndexField": {
       "additionalProperties": false,
       "type": "object",
       "properties": {
         "collate": {
           "type": "string",
+          "description": "Collation for the index element",
           "default": ""
         },
         "sort": {
+          "description": "Sort order, default is ascending (ASC)",
           "type": "string",
           "enum": ["ASC", "DESC"],
           "default": ""
         },
         "opclass": {
           "type": "object",
+          "description": "Operator class settings",
           "additionalProperties": false,
           "properties": {
             "name": {
+              "description": "Name of the operator class",
               "type": "string",
               "default": ""
             },
             "params": {
-              "type": "object",
+              "description": "Operator class parameters",
+              "type": "array",
               "additionalProperties": true,
-              "default": {}
+              "items": {
+                "type": "string"
+              }
             }
           }
         },
         "nulls": {
           "type": "string",
+          "description": "Nulls ordering, default is first if ascending, last if descending",
           "enum": ["FIRST", "LAST"]
         }
       }
@@ -575,8 +583,8 @@
           "description": "Names and settings of columns on which to define the index",
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/$defs/IndexElemSettings",
-            "description": "Index element settings"
+            "$ref": "#/$defs/IndexField",
+            "description": "Index field settings"
           }
         },
         "name": {

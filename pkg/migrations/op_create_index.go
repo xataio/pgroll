@@ -34,33 +34,32 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" USING %s", string(o.Method))
 	}
 
-	if len(o.Columns) != 0 {
-		cols := make([]string, 0, len(o.Columns))
-		columns := map[string]IndexElemSettings(o.Columns)
-		for column, settings := range columns {
-			physicalName := table.PhysicalColumnNamesFor(column)
-			col := pq.QuoteIdentifier(physicalName[0])
-			if settings.Collate != "" {
-				col += " COLLATE " + settings.Collate
-			}
-			if settings.Opclass != nil {
-				col += " " + settings.Opclass.Name
-				ops := make([]string, 0, len(settings.Opclass.Params))
-				for name, value := range settings.Opclass.Params {
-					ops = append(ops, fmt.Sprintf("%s = %s", name, value))
-				}
-				col += " " + strings.Join(ops, ", ")
-			}
-			if settings.Sort != "" {
-				col += " " + string(settings.Sort)
-			}
-			if settings.Nulls != nil {
-				col += " " + string(*settings.Nulls)
-			}
-			cols = append(cols, col)
+	colSQLs := make([]string, 0, len(o.Columns))
+	for columnName, settings := range map[string]IndexField(o.Columns) {
+		physicalName := table.PhysicalColumnNamesFor(columnName)
+		colSQL := pq.QuoteIdentifier(physicalName[0])
+		// deparse collations
+		if settings.Collate != "" {
+			colSQL += " COLLATE " + settings.Collate
 		}
-		stmt += fmt.Sprintf(" (%s)", strings.Join(cols, ", "))
+		// deparse operator classes and their parameters
+		if settings.Opclass != nil {
+			colSQL += " " + settings.Opclass.Name
+			if len(settings.Opclass.Params) > 0 {
+				colSQL += " " + strings.Join(settings.Opclass.Params, ", ")
+			}
+		}
+		// deparse sort order of the index column
+		if settings.Sort != "" {
+			colSQL += " " + string(settings.Sort)
+		}
+		// deparse nulls order of the index column
+		if settings.Nulls != nil {
+			colSQL += " " + string(*settings.Nulls)
+		}
+		colSQLs = append(colSQLs, colSQL)
 	}
+	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
 
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
@@ -105,7 +104,7 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return FieldRequiredError{Name: "columns"}
 	}
 
-	cols := map[string]IndexElemSettings(o.Columns)
+	cols := map[string]IndexField(o.Columns)
 	for column := range cols {
 		if table.GetColumn(column) == nil {
 			return ColumnDoesNotExistError{Table: o.Table, Name: column}
