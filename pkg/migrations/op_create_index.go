@@ -34,9 +34,32 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 		stmt += fmt.Sprintf(" USING %s", string(o.Method))
 	}
 
-	stmt += fmt.Sprintf(" (%s)", strings.Join(
-		quoteColumnNames(table.PhysicalColumnNamesFor(o.Columns...)), ", "),
-	)
+	colSQLs := make([]string, 0, len(o.Columns))
+	for columnName, settings := range map[string]IndexField(o.Columns) {
+		physicalName := table.PhysicalColumnNamesFor(columnName)
+		colSQL := pq.QuoteIdentifier(physicalName[0])
+		// deparse collations
+		if settings.Collate != "" {
+			colSQL += " COLLATE " + settings.Collate
+		}
+		// deparse operator classes and their parameters
+		if settings.Opclass != nil {
+			colSQL += " " + settings.Opclass.Name
+			if len(settings.Opclass.Params) > 0 {
+				colSQL += " " + strings.Join(settings.Opclass.Params, ", ")
+			}
+		}
+		// deparse sort order of the index column
+		if settings.Sort != "" {
+			colSQL += " " + string(settings.Sort)
+		}
+		// deparse nulls order of the index column
+		if settings.Nulls != nil {
+			colSQL += " " + string(*settings.Nulls)
+		}
+		colSQLs = append(colSQLs, colSQL)
+	}
+	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
 
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
@@ -77,7 +100,7 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	for _, column := range o.Columns {
+	for column := range map[string]IndexField(o.Columns) {
 		if table.GetColumn(column) == nil {
 			return ColumnDoesNotExistError{Table: o.Table, Name: column}
 		}

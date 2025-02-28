@@ -309,6 +309,13 @@ func IndexMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	}
 }
 
+func IndexDescendingMustExist(t *testing.T, db *sql.DB, schema, table, index string, columnIdx int) {
+	t.Helper()
+	if !indexDescendingExists(t, db, schema, table, index, columnIdx) {
+		t.Fatalf("Expected index %q to exist", index)
+	}
+}
+
 func IndexMustNotExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	t.Helper()
 	if indexExists(t, db, schema, table, index) {
@@ -355,6 +362,25 @@ func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
 	}
 
 	return exists
+}
+
+func indexDescendingExists(t *testing.T, db *sql.DB, schema, table, index string, columnIdx int) bool {
+	t.Helper()
+
+	var flags []uint8
+	err := db.QueryRow(`
+    SELECT indoption
+    FROM pg_index
+    WHERE indrelid = $1::regclass
+    AND indexrelid = $2::regclass`,
+		fmt.Sprintf("%s.%s", schema, table), fmt.Sprintf("%s.%s", schema, index)).Scan(&flags)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// check if index is descending using the 1st bit of the flags
+	indoptionDesc := uint8(1)
+	return flags[columnIdx]&indoptionDesc == 1
 }
 
 func CheckIndexDefinition(t *testing.T, db *sql.DB, schema, table, index, expectedDefinition string) {

@@ -10,7 +10,20 @@ description: A create index operation creates a new index on a set of columns.
   "create_index": {
     "table": "name of table on which to define the index",
     "name": "index name",
-    "columns": [ "names of columns on which to define the index" ]
+    "columns": [
+      "column_name": {
+        "collate": "collation name",
+        "sort": "ASC | DESC",
+        "nulls": "FIRST | LAST",
+        "opclass": {
+          "name": "operator_class_name",
+          "params": [
+             "param1=val",
+             "param2=val"
+          ]
+        }
+      }
+    ]
     "predicate": "conditional expression for defining a partial index",
     "storage_parameters": "comma-separated list of storage parameters",
     "unique": true | false,
@@ -51,3 +64,9 @@ Set storage parameters and index method:
 Create a unique index:
 
 <ExampleSnippet example="42_create_unique_index.json" language="json" />
+
+### Create an index with custom operator class
+
+Create an index with a custom operator class:
+
+<ExampleSnippet example="54_create_index_with_opclass.json" language="json" />

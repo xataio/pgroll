@@ -181,6 +181,40 @@ type ForeignKeyReference struct {
 	Table string `json:"table"`
 }
 
+// Index field and its settings
+type IndexField struct {
+	// Collation for the index element
+	Collate string `json:"collate,omitempty"`
+
+	// Nulls ordering, default is first if ascending, last if descending
+	Nulls *IndexFieldNulls `json:"nulls,omitempty"`
+
+	// Operator class settings
+	Opclass *IndexFieldOpclass `json:"opclass,omitempty"`
+
+	// Sort order, default is ascending (ASC)
+	Sort IndexFieldSort `json:"sort,omitempty"`
+}
+
+type IndexFieldNulls string
+
+const IndexFieldNullsFIRST IndexFieldNulls = "FIRST"
+const IndexFieldNullsLAST IndexFieldNulls = "LAST"
+
+// Operator class settings
+type IndexFieldOpclass struct {
+	// Name of the operator class
+	Name string `json:"name,omitempty"`
+
+	// Operator class parameters
+	Params []string `json:"params,omitempty"`
+}
+
+type IndexFieldSort string
+
+const IndexFieldSortASC IndexFieldSort = "ASC"
+const IndexFieldSortDESC IndexFieldSort = "DESC"
+
 // Map of column names to down SQL expressions
 type MultiColumnDownSQL map[string]string
 
@@ -275,8 +309,8 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation
 type OpCreateIndex struct {
-	// Names of columns on which to define the index
-	Columns []string `json:"columns"`
+	// Names and settings of columns on which to define the index
+	Columns OpCreateIndexColumns `json:"columns"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`
@@ -296,6 +330,9 @@ type OpCreateIndex struct {
 	// Indicates if the index is unique
 	Unique bool `json:"unique,omitempty"`
 }
+
+// Names and settings of columns on which to define the index
+type OpCreateIndexColumns map[string]IndexField
 
 type OpCreateIndexMethod string
 

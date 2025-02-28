@@ -5,9 +5,9 @@
       "create_index": {
         "name": "idx_fruits_name",
         "table": "fruits",
-        "columns": [
-          "name"
-        ]
+        "columns": {
+          "name": {}
+        }
       }
     }
   ]
