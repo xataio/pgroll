@@ -16,7 +16,7 @@ This reads the SQL statements from `/path/to/migration.sql` and translates them 
 If a file name is not specified `pgroll convert` reads the SQL statements from stdin.
 
 ```
-$ cat 'CREATE TABLE my_table(name text);' | pgroll convert --name create_first_table
+$ cat 'CREATE TABLE my_table(name text);' | pgroll convert --name 01_create_first_table
 ```
 
 <Warning>
