@@ -1,0 +1,24 @@
+---
+title: Convert
+description: Convert SQL migration files to a pgroll migration
+---
+
+## Command
+
+```
+$ pgroll convert --name 01_create_first_table /path/to/migration.sql
+```
+
+This reads the SQL statements from `/path/to/migration.sql` and translates them into a `pgroll` migration. The name of the migration will be `01_create_first_table`.
+
+### Read SQL statements from stdin
+
+If a file name is not specified `pgroll convert` reads the SQL statements from stdin.
+
+```
+$ cat 'CREATE TABLE my_table(name text);' | pgroll convert --name 01_create_first_table
+```
+
+<Warning>
+The generated pgroll migrations might include `up` and `down` migrations. Those must be filled in manually because currently `pgroll` is unable to infer correct up and down migrations.
+</Warning>

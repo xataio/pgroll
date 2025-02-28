@@ -24,7 +24,6 @@ func convertCmd() *cobra.Command {
 		Long:      "Convert SQL statements to a pgroll migration. The command can read SQL statements from stdin or a file",
 		Args:      cobra.MaximumNArgs(1),
 		ValidArgs: []string{"migration-file"},
-		Hidden:    true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reader, err := openSQLReader(args)
 			if err != nil {
