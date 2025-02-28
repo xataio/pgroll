@@ -70,7 +70,7 @@ To install `pgroll` from source, run the following command:
 go install github.com/xataio/pgroll@latest
 ```
 
-Note: requires [Go 1.23](https://golang.org/doc/install) or later.
+Note: requires [Go 1.24](https://golang.org/doc/install) or later.
 
 ### From package manager - Homebrew
 

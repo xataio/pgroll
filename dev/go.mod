@@ -1,6 +1,6 @@
 module github.com/xataio/pgroll/dev
 
-go 1.23.3
+go 1.24
 
 require (
 	github.com/go-echarts/go-echarts/v2 v2.4.5

@@ -1,6 +1,6 @@
 module github.com/xataio/pgroll
 
-go 1.23
+go 1.24
 
 require (
 	github.com/cloudflare/backoff v0.0.0-20240920015135-e46b80a3a7d0
