@@ -1,4 +1,4 @@
-goVersion: &goVersion "1.23"
+goVersion: &goVersion "1.24"
 
 run:
   go: *goVersion
