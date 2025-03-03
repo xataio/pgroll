@@ -25,6 +25,7 @@ jobs:
               environment: 'Docs Preview',
               description: 'Creating a preview',
             });
+            console.log('zzz', deployment)
             if (deployment.status !== 201) {
               throw new Error('Failed to create deployment');
             }
