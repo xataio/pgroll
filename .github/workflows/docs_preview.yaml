@@ -19,6 +19,7 @@ jobs:
               owner: repoOwner,
               repo,
               ref: pr.head.sha,
+              required_contexts: [], // Don't require checks to pass
               state: 'success',
               description: 'Created a preview',
               environment_url: `https://pgroll.com/next/preview-path?path=/docs/${prOwner}:${branch}/`
