@@ -2,12 +2,6 @@ name: Docs Preview
 on:
   pull_request_target: # Like pull_request but runs the 'base' workflow, safer and works with forks.
     types: [opened, reopened, synchronize]
-
-permissions:
-  contents: write
-  packages: write
-  pull-requests: write
-  issues: write
 jobs:
   docs-preview:
     runs-on: ubuntu-latest
