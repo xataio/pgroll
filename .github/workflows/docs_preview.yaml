@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
   packages: write
-
+  pull-requests: write
 jobs:
   docs-preview:
     runs-on: ubuntu-latest
