@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   docs-preview:
