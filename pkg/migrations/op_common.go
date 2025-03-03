@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
+	"slices"
+	"strings"
 )
 
 type OpName string
@@ -79,7 +82,8 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 		var opName OpName
 		var logBody json.RawMessage
 		if len(opObj) != 1 {
-			return fmt.Errorf("invalid migration: %v", opObj)
+			return fmt.Errorf("multiple keys in operation object at index %d: %v",
+				i, strings.Join(slices.Collect(maps.Keys(opObj)), ", "))
 		}
 		for k, v := range opObj {
 			opName = OpName(k)
