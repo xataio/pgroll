@@ -282,6 +282,9 @@ type OpCreateConstraint struct {
 	// SQL expressions for down migrations
 	Down MultiColumnDownSQL `json:"down"`
 
+	// IndexParameters corresponds to the JSON schema field "index_parameters".
+	IndexParameters *OpCreateConstraintIndexParameters `json:"index_parameters,omitempty"`
+
 	// Name of the constraint
 	Name string `json:"name"`
 
@@ -301,10 +304,22 @@ type OpCreateConstraint struct {
 	Up MultiColumnUpSQL `json:"up"`
 }
 
+type OpCreateConstraintIndexParameters struct {
+	// IncludeColumns corresponds to the JSON schema field "include_columns".
+	IncludeColumns []string `json:"include_columns,omitempty"`
+
+	// StorageParameters corresponds to the JSON schema field "storage_parameters".
+	StorageParameters string `json:"storage_parameters,omitempty"`
+
+	// Tablespace corresponds to the JSON schema field "tablespace".
+	Tablespace string `json:"tablespace,omitempty"`
+}
+
 type OpCreateConstraintType string
 
 const OpCreateConstraintTypeCheck OpCreateConstraintType = "check"
 const OpCreateConstraintTypeForeignKey OpCreateConstraintType = "foreign_key"
+const OpCreateConstraintTypePrimaryKey OpCreateConstraintType = "primary_key"
 const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation
