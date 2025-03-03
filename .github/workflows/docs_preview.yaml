@@ -2,6 +2,10 @@ name: Docs Preview
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+
 jobs:
   docs-preview:
     runs-on: ubuntu-latest
