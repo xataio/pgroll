@@ -1,0 +1,39 @@
+name: Docs Preview
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+jobs:
+  docs-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Docs Preview GitHub Deployment
+        id: create_deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner: repoOwner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const prOwner = pr.head.repo.full_name === context.repo.full_name ? repoOwner : pr.head.repo.owner.login;
+            const branch = pr.head.ref;
+            const previewUrl = `https://pgroll.com/next/preview-path?path=/docs/${prOwner}:${branch}/`
+
+            const deployment = await github.rest.repos.createDeployment({
+              owner: repoOwner,
+              repo,
+              ref: pr.head.sha,
+              required_contexts: [], // Don't require checks to pass
+              environment: 'Docs Preview',
+              description: 'Creating a preview',
+            });
+            if (deployment.status !== 201) {
+              throw new Error('Failed to create deployment');
+            }
+            await github.rest.repos.createDeploymentStatus({
+              deployment_id: deployment.data.id,
+              owner: repoOwner,
+              repo,
+              state: 'success',
+              description: 'Created a preview',
+              environment_url: previewUrl
+            });
+
