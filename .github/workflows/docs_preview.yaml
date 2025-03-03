@@ -1,9 +1,7 @@
 name: Docs Preview
-
 on:
   pull_request:
     types: [opened, reopened, synchronize]
-
 jobs:
   docs-preview:
     runs-on: ubuntu-latest
@@ -13,16 +11,18 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
+            const { owner: repoOwner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const prOwner = pr.head.repo.full_name === context.repo.full_name ? repoOwner : pr.head.repo.owner.login;
+            const branch = pr.head.ref;
             const deployment = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.payload.pull_request.head.sha,
+              owner: repoOwner,
+              repo,
+              ref: pr.head.sha,
               state: 'success',
               description: 'Created a preview',
-              environment_url: 'https://pgroll.com/next/preview-path?path=/docs/${{ context.payload.pull_request.head.repo.owner.login }}:${{ context.payload.pull_request.head.ref }}/'
+              environment_url: `https://pgroll.com/next/preview-path?path=/docs/${prOwner}:${branch}/`
             });
-
             if (deployment.status !== 201) {
               throw new Error('Failed to create deployment');
             }
-
