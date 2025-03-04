@@ -122,7 +122,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.S
 	table := s.GetTable(o.Table)
 	columnName := table.GetConstraintColumns(o.Name)[0]
 
-	removeNewColumn := NewDropColumnAction(conn, o.Table, columnName)
+	removeNewColumn := NewDropColumnAction(conn, o.Table, TemporaryName(columnName))
 	err := removeNewColumn.Execute(ctx)
 	if err != nil {
 		return err
