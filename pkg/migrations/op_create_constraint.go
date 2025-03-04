@@ -307,11 +307,3 @@ func temporaryNames(columns []string) []string {
 	}
 	return names
 }
-
-func quotedTemporaryNames(columns []string) []string {
-	names := make([]string, len(columns))
-	for i, col := range columns {
-		names[i] = pq.QuoteIdentifier(TemporaryName(col))
-	}
-	return names
-}

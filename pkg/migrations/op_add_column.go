@@ -119,6 +119,9 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema
 
 	removeBackfillColumn := NewDropColumnAction(conn, o.Table, CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
+	if err != nil {
+		return err
+	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil {
 		err = upgradeNotNullConstraintToNotNullAttribute(ctx, conn, o.Table, o.Column.Name)
