@@ -95,18 +95,16 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, s *schema.S
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
 
-	// Drop the old column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(column.Name)))
+	removeOldColumn := NewDropColumnAction(conn,
+		o.Table,
+		column.Name)
+	err = removeOldColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -124,11 +122,8 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.S
 	table := s.GetTable(o.Table)
 	columnName := table.GetConstraintColumns(o.Name)[0]
 
-	// Drop the new column
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(columnName)),
-	))
+	removeNewColumn := NewDropColumnAction(conn, o.Table, TemporaryName(columnName))
+	err := removeNewColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -149,10 +144,8 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.S
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 
 	return err
 }
