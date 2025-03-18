@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - temp-fix-build
     tags:
       - 'v*'
 permissions:
