@@ -11,16 +11,15 @@ format:
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json node:alpine npx prettier /mnt/schema.json --parser json --tab-width 2 --single-quote --trailing-comma all --no-semi --arrow-parens always --print-width 120 --write
 	# Format embedded SQL
 	docker run --rm -v $$PWD/pkg/state/init.sql:/data/init.sql backplane/pgformatter --inplace /data/init.sql
+	# Run gofumpt
 	gofumpt -w .
 
-generate: format
+generate:
 	# Generate the types from the JSON schema
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json omissis/go-jsonschema:0.17.0 --only-models -p migrations --tags json /mnt/schema.json > pkg/migrations/types.go
-	
-	# Add the license header
+	# Add the license header to the generated type file
 	echo "// SPDX-License-Identifier: Apache-2.0" | cat - pkg/migrations/types.go > pkg/migrations/types.go.tmp
 	mv pkg/migrations/types.go.tmp pkg/migrations/types.go
-
 	# Generate the cli-definition.json file
 	go run tools/build-cli-definition.go
 
