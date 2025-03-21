@@ -96,8 +96,8 @@ jobs:
           fi
         done
 
-  type-generation:
-    name: type generation
+  format:
+    name: format
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -111,16 +111,40 @@ jobs:
         run: |
           go install mvdan.cc/gofumpt@latest
 
-      - name: Generate types
+      - name: Run make format
+        run: |
+          chmod 666 pkg/state/init.sql
+          make format
+
+      - name: Ensure code is formatted
+        run: |
+          if ! git diff --quiet; then
+            echo "code formatting is out-of-date!"
+            echo "run 'make format' to reformat"
+            exit 1
+          fi
+
+  code-generation:
+    name: code generation
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Generate code
         run: |
           chmod 666 pkg/state/init.sql
           make generate
 
-      - name: Ensure generated types are up-to-date
+      - name: Ensure generated code is up-to-date
         run: |
           if ! git diff --quiet; then
-            echo "generated types are out of date!"
-            echo "run 'make generate' to regenerate type definitions"
+            echo "generated code is out of date!"
+            echo "run 'make generate' to regenerate"
             exit 1
           fi
 
@@ -232,7 +256,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: goreleaser/goreleaser-cross:v1.24
-    needs: [test, lint, examples-schema-validation, examples, license-check, type-generation, dead-code-check, check-ledger, cross-build]
+    needs: [test, lint, examples-schema-validation, examples, license-check, format, code-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
