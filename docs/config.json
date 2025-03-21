@@ -75,11 +75,6 @@
           "noLink": true,
           "items": [
             {
-              "title": "Rename column",
-              "href": "/operations/alter_column/rename_column",
-              "file": "docs/operations/alter_column/rename_column.mdx"
-            },
-            {
               "title": "Change type",
               "href": "/operations/alter_column/change_type",
               "file": "docs/operations/alter_column/change_type.mdx"
@@ -170,6 +165,11 @@
           "title": "Rename table",
           "href": "/operations/rename_table",
           "file": "docs/operations/rename_table.mdx"
+        },
+        {
+          "title": "Rename column",
+          "href": "/operations/rename_column",
+          "file": "docs/operations/rename_column.mdx"
         },
         {
           "title": "Rename constraint",
