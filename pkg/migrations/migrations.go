@@ -51,7 +51,7 @@ type RequiresSchemaRefreshOperation interface {
 type (
 	Operations []Operation
 	Migration  struct {
-		Name string `json:"name"`
+		Name string `json:"name,omitempty"`
 
 		Operations Operations `json:"operations"`
 	}

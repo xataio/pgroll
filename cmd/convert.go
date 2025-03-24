@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -31,9 +30,6 @@ func convertCmd() *cobra.Command {
 			}
 			defer reader.Close()
 
-			if migrationName == "{current_timestamp}" {
-				migrationName = time.Now().Format("20060102150405")
-			}
 			migration, err := sqlStatementsToMigration(reader, migrationName)
 			if err != nil {
 				return err
@@ -47,7 +43,7 @@ func convertCmd() *cobra.Command {
 		},
 	}
 
-	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "{current_timestamp}", "Name of the migration")
+	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "", "Name of the migration")
 
 	return convertCmd
 }
