@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -107,7 +109,10 @@ func readMigration(fileName string) (*migrations.Migration, error) {
 	}
 	defer file.Close()
 
-	migration, err := migrations.ReadMigration(file)
+	// Extract base filename without extension as the default migration name
+	defaultName := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
+
+	migration, err := migrations.ReadMigration(file, defaultName)
 	if err != nil {
 		return nil, fmt.Errorf("reading migration file: %w", err)
 	}

@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"path/filepath"
+	"strings"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -73,10 +75,8 @@ func openAndReadMigrationFile(dir fs.FS, filename string) (*migrations.Migration
 	}
 	defer file.Close()
 
-	migration, err := migrations.ReadMigration(file)
-	if err != nil {
-		return nil, err
-	}
+	// Extract base filename without extension as the default migration name
+	defaultName := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 
-	return migration, nil
+	return migrations.ReadMigration(file, defaultName)
 }

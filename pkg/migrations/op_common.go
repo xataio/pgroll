@@ -48,7 +48,8 @@ func DeletionName(name string) string {
 }
 
 // ReadMigration reads a migration from an io.Reader, like a file.
-func ReadMigration(r io.Reader) (*Migration, error) {
+// If the migration doesn't have a name field, defaultName will be used as the name.
+func ReadMigration(r io.Reader, defaultName string) (*Migration, error) {
 	byteValue, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -60,6 +61,11 @@ func ReadMigration(r io.Reader) (*Migration, error) {
 	mig := Migration{}
 	if err = dec.Decode(&mig); err != nil {
 		return nil, err
+	}
+
+	// Use the default name (filename without extension) if no name is provided
+	if mig.Name == "" {
+		mig.Name = defaultName
 	}
 
 	return &mig, nil
