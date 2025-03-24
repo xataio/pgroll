@@ -300,3 +300,27 @@ jobs:
         TAP_GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
         DOCKER_USERNAME: ghcr.io/${{ github.repository_owner }}
+
+    - name: Set up PostgreSQL client
+      run: |
+        apt-get update
+        apt-get install -y postgresql-client
+
+    - name: Update doc versions on pgroll.com
+      run: |
+        # Insert new doc version
+        psql "$DATABASE_URL" -c "INSERT INTO doc_versions (version, owner, repository, ref, config_path, examples_path) \
+          VALUES ( \
+          '${{ github.ref_name }}', \
+          'xataio', \
+          'pgroll', \
+          '${{ github.ref_name }}', \
+          'docs/config.json', \
+          'examples/')"
+
+        # Update 'latest' row to point to the new tag
+        psql "$DATABASE_URL" -c "UPDATE doc_versions SET ref='${{ github.ref_name }}' WHERE version='latest'"
+
+        echo "Database updated successfully with version ${{ github.ref_name }}"
+      env:
+        DATABASE_URL: ${{ secrets.PGROLL_COM_DATABASE_URL }}
