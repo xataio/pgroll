@@ -41,6 +41,7 @@ func Prepare() *cobra.Command {
 		Use:          "pgroll",
 		SilenceUsage: true,
 		Version:      Version,
+		Long:         "For more information, visit http://pgroll.com/docs",
 	}
 
 	viper.SetEnvPrefix("PGROLL")
