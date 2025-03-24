@@ -72,6 +72,8 @@ With `pgroll` initialized, let's run our first migration. Here is a migration to
 
 Take this file and save it as `sql/01_create_users_table.json`.
 
+> Note: The `name` field is optional. If not provided, `pgroll` will use the filename (without the `.json` extension) as the migration name. In this example, the file is saved as `sql/01_create_users_table.json`, so the name would be `01_create_users_table` if not explicitly provided.
+
 The migration will create a `users` table with three columns. It is equivalent to the following SQL DDL statement:
 
 ```sql
@@ -146,6 +148,8 @@ Here is the `pgroll` migration that will perform the migration to make the `desc
   ]
 }
 ```
+
+> As mentioned earlier, the `name` field is optional. If the file is saved as `sql/02_user_description_set_nullable.json`, `pgroll` will use `02_user_description_set_nullable` as the migration name if the name field is not provided.
 
 Save this migration as `sql/02_user_description_set_nullable.json` and start the migration:
 
@@ -455,6 +459,8 @@ Looking at the second of these items, rollbacks, let's see how to roll back a `p
   ]
 }
 ```
+
+> Again, the `name` field is optional. The filename will be used as the default name if not specified.
 
 (the misspelling of `is_active` is intentional!)
 
