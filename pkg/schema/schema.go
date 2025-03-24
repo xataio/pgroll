@@ -113,6 +113,9 @@ type Index struct {
 
 	// Definition is statement to construct the index
 	Definition string `json:"definition"`
+
+	// NullsNotDistinct indicates that nulls are not distinct in the unique index
+	NullsNotDistinct bool `json:"nullsNotDistinct"`
 }
 
 // ForeignKey represents a foreign key on a table
@@ -164,6 +167,9 @@ type UniqueConstraint struct {
 
 	// The columns that the unique constraint is defined on
 	Columns []string `json:"columns"`
+
+	// NullsNotDistinct indicates that nulls are not distinct
+	NullsNotDistinct bool `json:"nullsNotDistinct"`
 }
 
 // ExcludeConstraint represents a unique constraint on a table

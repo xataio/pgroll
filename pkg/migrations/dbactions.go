@@ -189,13 +189,14 @@ type createUniqueIndexConcurrentlyAction struct {
 	columnNames []string
 }
 
-func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
+func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName bool, nullsNotDistinct bool, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
 	return &createUniqueIndexConcurrentlyAction{
-		conn:        conn,
-		schemaName:  schemaName,
-		indexName:   indexName,
-		tableName:   tableName,
-		columnNames: columnNames,
+		conn:             conn,
+		schemaName:       schemaName,
+		indexName:        indexName,
+		tableName:        tableName,
+		columnNames:      columnNames,
+		nullsNotDistinct: nullsNotDistinct,
 	}
 }
 
@@ -264,6 +265,9 @@ func (a *createUniqueIndexConcurrentlyAction) getCreateUniqueIndexConcurrentlySQ
 		qualifiedTableName,
 		strings.Join(quoteColumnNames(a.columnNames), ", "),
 	)
+	if a.nullsNotDistinct {
+		indexQuery += " NULLS NOT DISTINCT"
+	}
 
 	return indexQuery
 }

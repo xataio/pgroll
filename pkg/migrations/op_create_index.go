@@ -61,6 +61,10 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 	}
 	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
 
+	if o.Unique && o.NullsNotDistinct {
+		stmt += " NULLS NOT DISTINCT"
+	}
+
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
 	}

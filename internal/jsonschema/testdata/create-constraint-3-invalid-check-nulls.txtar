@@ -1,0 +1,30 @@
+This is an invalid 'create_constraint' migration.
+Check constraints cannot configure nulls_not_distinct.
+
+-- create_constraint.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "my_invalid_check",
+        "table": "my_table",
+        "type": "check",
+        "check": "my_column > 5",
+        "nulls_not_distinct": true,
+        "columns": [
+          "my_column"
+        ],
+        "up": {
+          "my_column": "my_column"
+        },
+        "down": {
+          "my_column": "my_column"
+        }
+      }
+    }
+  ]
+}
+
+-- valid --
+false
