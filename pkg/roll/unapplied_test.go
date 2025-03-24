@@ -147,6 +147,33 @@ func TestUnappliedMigrations(t *testing.T) {
 			require.Len(t, migs, 0)
 		})
 	})
+
+	t.Run("migrations with no name use filename as migration name", func(t *testing.T) {
+		// Create migration JSON without a name field
+		migrationWithoutName := migrations.Migration{
+			Operations: migrations.Operations{
+				&migrations.OpRawSQL{Up: "SELECT 1"},
+			},
+		}
+		migBytes, err := json.Marshal(migrationWithoutName)
+		require.NoError(t, err)
+
+		fs := fstest.MapFS{
+			"03_unnamed_migration.json": &fstest.MapFile{Data: migBytes},
+		}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(roll *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Get migrations to apply
+			migs, err := roll.UnappliedMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that the migration name is taken from the filename
+			require.Len(t, migs, 1)
+			require.Equal(t, "03_unnamed_migration", migs[0].Name)
+		})
+	})
 }
 
 func exampleMigration(t *testing.T, name string) []byte {
