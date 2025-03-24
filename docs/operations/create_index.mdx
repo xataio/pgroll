@@ -27,6 +27,7 @@ description: A create index operation creates a new index on a set of columns.
     "predicate": "conditional expression for defining a partial index",
     "storage_parameters": "comma-separated list of storage parameters",
     "unique": true | false,
+    "nulls_not_distinct": true | false,
     "method": "btree"
   }
 }
@@ -35,6 +36,7 @@ description: A create index operation creates a new index on a set of columns.
 * The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 * You can also specify storage parameters for the index in `storage_parameters`.
 * To create a unique index set `unique` to `true`.
+* If the index is unique, you can configure `nulls_not_distinct` in case of PG15+.
 
 ## Examples
 

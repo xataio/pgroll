@@ -54,6 +54,31 @@ $$
 LANGUAGE SQL
 STABLE;
 
+CREATE OR REPLACE FUNCTION placeholder.indnullsnotdistinct (schemaname name, indname name)
+    RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    SELECT
+        EXISTS (
+            SELECT
+                1
+            FROM
+                pg_index
+                JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+                JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+            WHERE
+                pg_namespace.nspname = schemaname
+                AND pg_index.indisunique
+                AND pg_index.indexrelname = indname
+                AND NOT pg_index.indisvalid);
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN FALSE;
+END;
+
+$$;
+
 -- Get the latest version name (this is the one with child migrations)
 CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
     RETURNS text
@@ -209,7 +234,7 @@ BEGIN
                                 AND pg_attribute.attnum = ANY (pg_index.indkey)
                                 AND indisprimary), 'indexes', (
                                 SELECT
-                                    COALESCE(json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition)), '{}'::json)
+                                    COALESCE(json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'nullsNotDistinct', placeholder.indnullsnotdistinct (schemaname, ix_details.name), 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition)), '{}'::json)
                             FROM (
                                 SELECT
                                     replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') AS name, pi.indisunique, pi.indisexclusion, array_agg(a.attname) AS columns, pg_get_expr(pi.indpred, t.oid) AS predicate, am.amname AS method, pg_get_indexdef(pi.indexrelid) AS definition

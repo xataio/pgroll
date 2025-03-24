@@ -85,7 +85,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
-		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns))
+		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns), o.NullsNotDistinct)
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:
@@ -261,6 +261,10 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 				}
 			}
 		}
+	}
+
+	if o.Type != OpCreateConstraintTypeUnique && o.NullsNotDistinct {
+		return fmt.Errorf("nulls_not_distinct can only be true for unique constraints")
 	}
 
 	return nil
