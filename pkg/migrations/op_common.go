@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 package migrations
 
 import (
@@ -8,8 +6,12 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type OpName string
@@ -54,11 +56,31 @@ func ReadMigration(r io.Reader) (*Migration, error) {
 		return nil, err
 	}
 
+	ext := strings.ToLower(filepath.Ext(r.(io.ReadSeeker).Name()))
+	if ext == ".yaml" || ext == ".yml" {
+		return ReadMigrationYAML(bytes.NewReader(byteValue))
+	}
+
 	dec := json.NewDecoder(bytes.NewReader(byteValue))
 	dec.DisallowUnknownFields()
 
 	mig := Migration{}
 	if err = dec.Decode(&mig); err != nil {
+		return nil, err
+	}
+
+	return &mig, nil
+}
+
+// ReadMigrationYAML reads a migration from a YAML file.
+func ReadMigrationYAML(r io.Reader) (*Migration, error) {
+	byteValue, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	mig := Migration{}
+	if err = yaml.Unmarshal(byteValue, &mig); err != nil {
 		return nil, err
 	}
 

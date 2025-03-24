@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 package cmd
 
 import (
@@ -8,9 +6,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/sql2pgroll"
 )
@@ -73,4 +74,38 @@ func sqlStatementsToMigration(reader io.Reader, name string) (migrations.Migrati
 		Name:       name,
 		Operations: ops,
 	}, nil
+}
+
+func detectFileFormat(filename string) (string, error) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".json":
+		return "json", nil
+	case ".yaml", ".yml":
+		return "yaml", nil
+	default:
+		return "", fmt.Errorf("unsupported file format: %s", ext)
+	}
+}
+
+func readMigrationFile(filename string) (*migrations.Migration, error) {
+	format, err := detectFileFormat(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	switch format {
+	case "json":
+		return migrations.ReadMigration(file)
+	case "yaml":
+		return migrations.ReadMigrationYAML(file)
+	default:
+		return nil, fmt.Errorf("unsupported file format: %s", format)
+	}
 }

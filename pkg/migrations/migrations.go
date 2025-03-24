@@ -1,10 +1,12 @@
-// SPDX-License-Identifier: Apache-2.0
-
 package migrations
 
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 
 	_ "github.com/lib/pq"
 
@@ -101,4 +103,23 @@ func (m *Migration) ContainsRawSQLOperation() bool {
 		}
 	}
 	return false
+}
+
+// ReadMigrationFile reads a migration file based on its extension.
+func ReadMigrationFile(filename string) (*Migration, error) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	switch ext {
+	case ".json":
+		return ReadMigration(file)
+	case ".yaml", ".yml":
+		return ReadMigrationYAML(file)
+	default:
+		return nil, fmt.Errorf("unsupported file format: %s", ext)
+	}
 }
