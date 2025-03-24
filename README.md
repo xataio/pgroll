@@ -167,7 +167,7 @@ For more advanced usage, tutorials, and detailed options refer to the guides and
 
 ## Benchmarks
 
-Some performance benchmarks are run on each commit to `main` in order to track performance over time. Each benchmark is run against Postgres 14.8, 15.3, 16.4, 17.0 and "latest". Each line on the chart represents the number of rows the benchmark was run against, currently 10k, 100k and 300k rows.
+Some performance benchmarks are run on each commit to `main` in order to track performance over time. Each benchmark is run against Postgres 15.3, 16.4, 17.0 and "latest". Each line on the chart represents the number of rows the benchmark was run against, currently 10k, 100k and 300k rows.
 
 * `Backfill:` Rows/s to backfill a text column with the value `placeholder`. We use our default batching strategy of 10k rows per batch with no backoff.
 * `WriteAmplification/NoTrigger:` Baseline rows/s when writing data to a table without a `pgroll` trigger.
