@@ -33,6 +33,15 @@ func migrateCmd() *cobra.Command {
 			}
 			defer m.Close()
 
+			// Ensure that pgroll is initialized
+			ok, err := m.State().IsInitialized(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errPGRollNotInitialized
+			}
+
 			latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
 			if err != nil {
 				return fmt.Errorf("unable to determine latest version: %w", err)

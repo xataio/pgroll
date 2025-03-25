@@ -80,6 +80,18 @@ func (s *State) Init(ctx context.Context) error {
 	return tx.Commit()
 }
 
+func (s *State) IsInitialized(ctx context.Context) (bool, error) {
+	var isInitialized bool
+	err := s.pgConn.QueryRowContext(ctx,
+		"SELECT EXISTS (SELECT 1 from pg_catalog.pg_namespace WHERE nspname = $1)",
+		s.schema).Scan(&isInitialized)
+	if err != nil {
+		return false, err
+	}
+
+	return isInitialized, nil
+}
+
 func (s *State) Close() error {
 	return s.pgConn.Close()
 }

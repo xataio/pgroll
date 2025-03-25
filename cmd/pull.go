@@ -32,6 +32,15 @@ func pullCmd() *cobra.Command {
 			}
 			defer state.Close()
 
+			// Ensure that pgroll is initialized
+			ok, err := state.IsInitialized(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errPGRollNotInitialized
+			}
+
 			migs, err := state.SchemaHistory(ctx, flags.Schema())
 			if err != nil {
 				return fmt.Errorf("failed to read schema history: %w", err)

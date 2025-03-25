@@ -38,6 +38,15 @@ func startCmd() *cobra.Command {
 			}
 			defer m.Close()
 
+			// Ensure that pgroll is initialized
+			ok, err := m.State().IsInitialized(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errPGRollNotInitialized
+			}
+
 			c := backfill.NewConfig(
 				backfill.WithBatchSize(batchSize),
 				backfill.WithBatchDelay(batchDelay),
