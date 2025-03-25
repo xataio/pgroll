@@ -291,23 +291,12 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 		}
 	}
 
-	// Create view with security_invoker option for PG 15+
-	//
-	// This ensures that any row level security permissions on the underlying
-	// table are respected. `security_invoker` views are not supported in PG 14
-	// and below.
-	withOptions := ""
-	if m.PGVersion() >= PGVersion15 {
-		withOptions = "WITH (security_invoker = true)"
-	}
-
 	_, err := m.pgConn.ExecContext(ctx,
-		fmt.Sprintf("BEGIN; DROP VIEW IF EXISTS %s.%s; CREATE VIEW %s.%s %s AS SELECT %s FROM %s; COMMIT",
+		fmt.Sprintf("BEGIN; DROP VIEW IF EXISTS %s.%s; CREATE VIEW %s.%s WITH (security_invoker = true) AS SELECT %s FROM %s; COMMIT",
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
-			withOptions,
 			strings.Join(columns, ","),
 			pq.QuoteIdentifier(table.Name)))
 	if err != nil {

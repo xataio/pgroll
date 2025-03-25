@@ -16,10 +16,6 @@ import (
 
 type PGVersion int
 
-const (
-	PGVersion15 PGVersion = 15
-)
-
 var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local migration")
 
 type Roll struct {

@@ -427,10 +427,6 @@ func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {
 		ctx := context.Background()
 		version := "1_create_table"
 
-		if mig.PGVersion() < roll.PGVersion15 {
-			t.Skip("Skipping test for postgres < 15 as `security_invoker` views are not supported")
-		}
-
 		// Start and complete a migration to create a simple `users` table
 		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("users")}}, backfill.NewConfig()); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)

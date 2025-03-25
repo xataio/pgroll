@@ -23,7 +23,7 @@ See the [introductory blog post](https://pgroll.com/blog/introducing-pgroll-zero
 - Automatic columns backfilling when needed.
 - Instant rollback in case of issues during migration.
 - Works against existing schemas, no need to start from scratch.
-- Works with Postgres 14.0 or later.
+- Works with Postgres 15.0 or later.
 - Works with any Postgres service (including RDS and Aurora).
 - Written in Go, cross-platform single binary with no external dependencies.
 
