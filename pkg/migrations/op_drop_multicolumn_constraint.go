@@ -44,8 +44,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 	// Create triggers for each column covered by the constraint to be dropped
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-		createUpTrigger := NewCreateTriggerAction(
-			conn,
+		err := NewCreateTriggerAction(conn,
 			triggerConfig{
 				Name:           TriggerName(o.Table, columnName),
 				Direction:      TriggerDirectionUp,
@@ -56,8 +55,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 				PhysicalColumn: TemporaryName(columnName),
 				SQL:            o.upSQL(columnName),
 			},
-		)
-		err := createUpTrigger.Execute(ctx)
+		).Execute(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
 		}
@@ -72,8 +70,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 		})
 
 		// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-		createDownTrigger := NewCreateTriggerAction(
-			conn,
+		err = NewCreateTriggerAction(conn,
 			triggerConfig{
 				Name:           TriggerName(o.Table, TemporaryName(columnName)),
 				Direction:      TriggerDirectionDown,
@@ -84,8 +81,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 				PhysicalColumn: oldPhysicalColumn,
 				SQL:            o.Down[columnName],
 			},
-		)
-		err = createDownTrigger.Execute(ctx)
+		).Execute(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create down trigger: %w", err)
 		}

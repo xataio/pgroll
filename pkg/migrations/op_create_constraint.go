@@ -41,8 +41,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	// Setup triggers
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		createUpTrigger := NewCreateTriggerAction(
-			conn,
+		err := NewCreateTriggerAction(conn,
 			triggerConfig{
 				Name:           TriggerName(o.Table, colName),
 				Direction:      TriggerDirectionUp,
@@ -53,8 +52,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 				PhysicalColumn: TemporaryName(colName),
 				SQL:            upSQL,
 			},
-		)
-		err := createUpTrigger.Execute(ctx)
+		).Execute(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create up trigger: %w", err)
 		}
@@ -69,8 +67,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		})
 
 		downSQL := o.Down[colName]
-		createDownTrigger := NewCreateTriggerAction(
-			conn,
+		err = NewCreateTriggerAction(conn,
 			triggerConfig{
 				Name:           TriggerName(o.Table, TemporaryName(colName)),
 				Direction:      TriggerDirectionDown,
@@ -81,8 +78,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 				PhysicalColumn: oldPhysicalColumn,
 				SQL:            downSQL,
 			},
-		)
-		err = createDownTrigger.Execute(ctx)
+		).Execute(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create down trigger: %w", err)
 		}

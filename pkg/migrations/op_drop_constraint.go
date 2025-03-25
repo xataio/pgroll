@@ -34,8 +34,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	upTriggerAction := NewCreateTriggerAction(
-		conn,
+	err := NewCreateTriggerAction(conn,
 		triggerConfig{
 			Name:           TriggerName(o.Table, column.Name),
 			Direction:      TriggerDirectionUp,
@@ -46,8 +45,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 			PhysicalColumn: TemporaryName(column.Name),
 			SQL:            o.upSQL(column.Name),
 		},
-	)
-	err := upTriggerAction.Execute(ctx)
+	).Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
 	}
@@ -60,8 +58,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	downTriggerAction := NewCreateTriggerAction(
-		conn,
+	err = NewCreateTriggerAction(conn,
 		triggerConfig{
 			Name:           TriggerName(o.Table, TemporaryName(column.Name)),
 			Direction:      TriggerDirectionDown,
@@ -72,8 +69,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, conn db.DB, latestSchema s
 			PhysicalColumn: column.Name,
 			SQL:            o.Down,
 		},
-	)
-	err = downTriggerAction.Execute(ctx)
+	).Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}

@@ -15,8 +15,7 @@ var _ Operation = (*OpDropColumn)(nil)
 
 func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	if o.Down != "" {
-		triggerAction := NewCreateTriggerAction(
-			conn,
+		err := NewCreateTriggerAction(conn,
 			triggerConfig{
 				Name:           TriggerName(o.Table, o.Column),
 				Direction:      TriggerDirectionDown,
@@ -27,8 +26,7 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 				PhysicalColumn: o.Column,
 				SQL:            o.Down,
 			},
-		)
-		err := triggerAction.Execute(ctx)
+		).Execute(ctx)
 		if err != nil {
 			return nil, err
 		}
