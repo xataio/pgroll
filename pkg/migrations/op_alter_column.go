@@ -106,16 +106,8 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Sche
 		return err
 	}
 
-	// Remove the up function and trigger
-	dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column))
-	err = dropUpFunction.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Remove the down function and trigger
-	dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(o.Column)))
-	err = dropDownFunction.Execute(ctx)
+	// Remove the up and down function and trigger
+	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column), TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
 	if err != nil {
 		return err
 	}

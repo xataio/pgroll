@@ -109,8 +109,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema
 		return err
 	}
 
-	dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name))
-	err = dropUpFunction.Execute(ctx)
+	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}

@@ -94,16 +94,8 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 	table := s.GetTable(o.Table)
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		// Remove the up function and trigger
-		dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName))
-		err := dropUpFunction.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Remove the down function and trigger
-		dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(columnName)))
-		err = dropDownFunction.Execute(ctx)
+		// Remove the up and down function and trigger
+		err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName), TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
 		if err != nil {
 			return err
 		}
@@ -144,16 +136,8 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, 
 			return err
 		}
 
-		// Remove the up function and trigger
-		dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName))
-		err = dropUpFunction.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Remove the down function and trigger
-		dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(columnName)))
-		err = dropDownFunction.Execute(ctx)
+		// Remove the up and down function and trigger
+		err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName), TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
 		if err != nil {
 			return err
 		}

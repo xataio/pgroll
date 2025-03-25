@@ -50,8 +50,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	dropFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column))
-	err = dropFunction.Execute(ctx)
+	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -68,8 +67,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
-	dropFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column))
-	err := dropFunction.Execute(ctx)
+	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
