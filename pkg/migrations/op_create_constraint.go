@@ -133,11 +133,8 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 		}
 	}
 
-	// remove old columns
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
-		pq.QuoteIdentifier(o.Table),
-		dropMultipleColumns(quoteColumnNames(o.Columns)),
-	))
+	removeOldColumns := NewDropColumnAction(conn, o.Table, o.Columns...)
+	err := removeOldColumns.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -161,10 +158,8 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, o.Table, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 
 	return err
 }
@@ -175,10 +170,8 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s %s",
-		pq.QuoteIdentifier(table.Name),
-		dropMultipleColumns(quotedTemporaryNames(o.Columns)),
-	))
+	removeDuplicatedColumns := NewDropColumnAction(conn, table.Name, temporaryNames(o.Columns)...)
+	err := removeDuplicatedColumns.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -187,10 +180,8 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 
 	return err
 }
@@ -205,13 +196,6 @@ func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) err
 		strings.Join(dropFuncs, ", "),
 	))
 	return err
-}
-
-func dropMultipleColumns(columns []string) string {
-	for i, col := range columns {
-		columns[i] = "DROP COLUMN IF EXISTS " + col
-	}
-	return strings.Join(columns, ", ")
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {
@@ -320,14 +304,6 @@ func temporaryNames(columns []string) []string {
 	names := make([]string, len(columns))
 	for i, col := range columns {
 		names[i] = TemporaryName(col)
-	}
-	return names
-}
-
-func quotedTemporaryNames(columns []string) []string {
-	names := make([]string, len(columns))
-	for i, col := range columns {
-		names[i] = pq.QuoteIdentifier(TemporaryName(col))
 	}
 	return names
 }

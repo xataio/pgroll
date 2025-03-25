@@ -44,9 +44,8 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 }
 
 func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP COLUMN %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.Column)))
+	removeColumn := NewDropColumnAction(conn, o.Table, o.Column)
+	err := removeColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -57,10 +56,8 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, o.Table, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -77,10 +74,8 @@ func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	// Remove the needs backfill column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP COLUMN IF EXISTS %s",
-		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(CNeedsBackfillColumn)))
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}
