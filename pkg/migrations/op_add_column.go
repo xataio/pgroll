@@ -102,11 +102,8 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 }
 
 func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column.Name)),
-		pq.QuoteIdentifier(o.Column.Name),
-	))
+	renameColumn := NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name)
+	err := renameColumn.Execute(ctx)
 	if err != nil {
 		return err
 	}

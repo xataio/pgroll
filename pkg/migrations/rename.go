@@ -19,7 +19,6 @@ import (
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
 func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
 	const (
-		cRenameColumnSQL           = `ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s`
 		cRenameConstraintSQL       = `ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s`
 		cValidateConstraintSQL     = `ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s`
 		cSetNotNullSQL             = `ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL`
@@ -28,13 +27,8 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 		cRenameIndexSQL            = `ALTER INDEX IF EXISTS %s RENAME TO %s`
 	)
 
-	// Rename the old column to the new column name
-	renameColumnSQL := fmt.Sprintf(cRenameColumnSQL,
-		pq.QuoteIdentifier(table.Name),
-		pq.QuoteIdentifier(TemporaryName(column.Name)),
-		pq.QuoteIdentifier(column.Name))
-
-	_, err := conn.ExecContext(ctx, renameColumnSQL)
+	renameDuplicatedColumn := NewRenameColumnAction(conn, table.Name, TemporaryName(column.Name), column.Name)
+	err := renameDuplicatedColumn.Execute(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to rename duplicated column %q: %w", column.Name, err)
 	}

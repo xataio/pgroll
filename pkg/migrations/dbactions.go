@@ -47,3 +47,29 @@ func (a *dropColumnAction) dropMultipleColumns() string {
 	}
 	return strings.Join(cols, ", ")
 }
+
+// renameColumnAction is a DBAction that renames a column in a table.
+type renameColumnAction struct {
+	conn db.DB
+
+	table string
+	from  string
+	to    string
+}
+
+func NewRenameColumnAction(conn db.DB, table, from, to string) *renameColumnAction {
+	return &renameColumnAction{
+		conn:  conn,
+		table: table,
+		from:  from,
+		to:    to,
+	}
+}
+
+func (a *renameColumnAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.from),
+		pq.QuoteIdentifier(a.to)))
+	return err
+}
