@@ -27,8 +27,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 		cRenameIndexSQL            = `ALTER INDEX IF EXISTS %s RENAME TO %s`
 	)
 
-	renameDuplicatedColumn := NewRenameColumnAction(conn, table.Name, TemporaryName(column.Name), column.Name)
-	err := renameDuplicatedColumn.Execute(ctx)
+	err := NewRenameColumnAction(conn, table.Name, TemporaryName(column.Name), column.Name).Execute(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to rename duplicated column %q: %w", column.Name, err)
 	}

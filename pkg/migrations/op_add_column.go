@@ -102,8 +102,7 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 }
 
 func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	renameColumn := NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name)
-	err := renameColumn.Execute(ctx)
+	err := NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name).Execute(ctx)
 	if err != nil {
 		return err
 	}
