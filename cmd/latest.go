@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func latestCmd() *cobra.Command {
@@ -37,7 +38,7 @@ func latestCmd() *cobra.Command {
 					return fmt.Errorf("migrations directory %q is not a directory", migrationsDir)
 				}
 
-				latestVersion, err = m.LatestVersionLocal(ctx, os.DirFS(migrationsDir))
+				latestVersion, err = roll.LatestVersionLocal(ctx, os.DirFS(migrationsDir))
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
