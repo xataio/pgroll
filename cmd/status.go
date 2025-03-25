@@ -17,11 +17,21 @@ var statusCmd = &cobra.Command{
 	Short: "Show pgroll status",
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
+
 		state, err := state.New(ctx, flags.PostgresURL(), flags.StateSchema())
 		if err != nil {
 			return err
 		}
 		defer state.Close()
+
+		// Ensure that pgroll is initialized
+		ok, err := state.IsInitialized(ctx)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errPGRollNotInitialized
+		}
 
 		status, err := state.Status(ctx, flags.Schema())
 		if err != nil {
