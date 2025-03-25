@@ -15,16 +15,20 @@ var _ Operation = (*OpDropColumn)(nil)
 
 func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	if o.Down != "" {
-		err := createTrigger(ctx, conn, triggerConfig{
-			Name:           TriggerName(o.Table, o.Column),
-			Direction:      TriggerDirectionDown,
-			Columns:        s.GetTable(o.Table).Columns,
-			SchemaName:     s.Name,
-			LatestSchema:   latestSchema,
-			TableName:      s.GetTable(o.Table).Name,
-			PhysicalColumn: o.Column,
-			SQL:            o.Down,
-		})
+		triggerAction := NewCreateTriggerAction(
+			conn,
+			triggerConfig{
+				Name:           TriggerName(o.Table, o.Column),
+				Direction:      TriggerDirectionDown,
+				Columns:        s.GetTable(o.Table).Columns,
+				SchemaName:     s.Name,
+				LatestSchema:   latestSchema,
+				TableName:      s.GetTable(o.Table).Name,
+				PhysicalColumn: o.Column,
+				SQL:            o.Down,
+			},
+		)
+		err := triggerAction.Execute(ctx)
 		if err != nil {
 			return nil, err
 		}

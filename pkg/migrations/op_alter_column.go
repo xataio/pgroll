@@ -34,16 +34,20 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := createTrigger(ctx, conn, triggerConfig{
-		Name:           TriggerName(o.Table, o.Column),
-		Direction:      TriggerDirectionUp,
-		Columns:        table.Columns,
-		SchemaName:     s.Name,
-		LatestSchema:   latestSchema,
-		TableName:      table.Name,
-		PhysicalColumn: TemporaryName(o.Column),
-		SQL:            o.upSQLForOperations(ops),
-	})
+	createUpTrigger := NewCreateTriggerAction(
+		conn,
+		triggerConfig{
+			Name:           TriggerName(o.Table, o.Column),
+			Direction:      TriggerDirectionUp,
+			Columns:        table.Columns,
+			SchemaName:     s.Name,
+			LatestSchema:   latestSchema,
+			TableName:      table.Name,
+			PhysicalColumn: TemporaryName(o.Column),
+			SQL:            o.upSQLForOperations(ops),
+		},
+	)
+	err := createUpTrigger.Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create up trigger: %w", err)
 	}
@@ -58,16 +62,20 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	})
 
 	// Add a trigger to copy values from the new column to the old.
-	err = createTrigger(ctx, conn, triggerConfig{
-		Name:           TriggerName(o.Table, TemporaryName(o.Column)),
-		Direction:      TriggerDirectionDown,
-		Columns:        table.Columns,
-		LatestSchema:   latestSchema,
-		SchemaName:     s.Name,
-		TableName:      table.Name,
-		PhysicalColumn: oldPhysicalColumn,
-		SQL:            o.downSQLForOperations(ops),
-	})
+	createDownTrigger := NewCreateTriggerAction(
+		conn,
+		triggerConfig{
+			Name:           TriggerName(o.Table, TemporaryName(o.Column)),
+			Direction:      TriggerDirectionDown,
+			Columns:        table.Columns,
+			LatestSchema:   latestSchema,
+			SchemaName:     s.Name,
+			TableName:      table.Name,
+			PhysicalColumn: oldPhysicalColumn,
+			SQL:            o.downSQLForOperations(ops),
+		},
+	)
+	err = createDownTrigger.Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}
