@@ -5,7 +5,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/lib/pq"
 
@@ -193,13 +192,11 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
 	dropFuncs := make([]string, len(o.Columns)*2)
 	for i, j := 0, 0; i < len(o.Columns); i, j = i+1, j+2 {
-		dropFuncs[j] = pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Columns[i]))
-		dropFuncs[j+1] = pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(o.Columns[i])))
+		dropFuncs[j] = TriggerFunctionName(o.Table, o.Columns[i])
+		dropFuncs[j+1] = TriggerFunctionName(o.Table, TemporaryName(o.Columns[i]))
 	}
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		strings.Join(dropFuncs, ", "),
-	))
-	return err
+	dropFunctions := NewDropFunctionAction(conn, dropFuncs...)
+	return dropFunctions.Execute(ctx)
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {

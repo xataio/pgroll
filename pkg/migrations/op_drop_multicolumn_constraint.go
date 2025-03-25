@@ -95,15 +95,15 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Remove the up function and trigger
-		_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-			pq.QuoteIdentifier(TriggerFunctionName(o.Table, columnName))))
+		dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName))
+		err := dropUpFunction.Execute(ctx)
 		if err != nil {
 			return err
 		}
 
 		// Remove the down function and trigger
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-			pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(columnName)))))
+		dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(columnName)))
+		err = dropDownFunction.Execute(ctx)
 		if err != nil {
 			return err
 		}
@@ -145,17 +145,15 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, 
 		}
 
 		// Remove the up function and trigger
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-			pq.QuoteIdentifier(TriggerFunctionName(o.Table, columnName)),
-		))
+		dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName))
+		err = dropUpFunction.Execute(ctx)
 		if err != nil {
 			return err
 		}
 
 		// Remove the down function and trigger
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-			pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(columnName))),
-		))
+		dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(columnName)))
+		err = dropDownFunction.Execute(ctx)
 		if err != nil {
 			return err
 		}

@@ -109,8 +109,8 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name))))
+	dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name))
+	err = dropUpFunction.Execute(ctx)
 	if err != nil {
 		return err
 	}

@@ -107,15 +107,15 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Sche
 	}
 
 	// Remove the up function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+	dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column))
+	err = dropUpFunction.Execute(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Remove the down function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(o.Column)))))
+	dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(o.Column)))
+	err = dropDownFunction.Execute(ctx)
 	if err != nil {
 		return err
 	}

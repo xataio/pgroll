@@ -98,3 +98,26 @@ func (a *renameConstraintAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.to)))
 	return err
 }
+
+// dropFunctionAction is a DBAction that drops a function and all of its dependencies (cascade).
+type dropFunctionAction struct {
+	conn      db.DB
+	functions []string
+}
+
+func NewDropFunctionAction(conn db.DB, functions ...string) *dropFunctionAction {
+	return &dropFunctionAction{
+		conn:      conn,
+		functions: functions,
+	}
+}
+
+func (a *dropFunctionAction) Execute(ctx context.Context) error {
+	functions := make([]string, len(a.functions))
+	for idx, fn := range a.functions {
+		functions[idx] = pq.QuoteIdentifier(fn)
+	}
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
+		strings.Join(functions, ",")))
+	return err
+}

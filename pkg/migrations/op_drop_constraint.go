@@ -82,15 +82,15 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, s *schema.S
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Remove the up function and trigger
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, column.Name))))
+	dropUpFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, column.Name))
+	err := dropUpFunction.Execute(ctx)
 	if err != nil {
 		return err
 	}
 
 	// Remove the down function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(column.Name)))))
+	dropDownFunction := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, TemporaryName(column.Name)))
+	err = dropDownFunction.Execute(ctx)
 	if err != nil {
 		return err
 	}
