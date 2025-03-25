@@ -1,4 +1,4 @@
-.PHONY: pgroll generate format lint examples test
+.PHONY: pgroll generate format lint examples test install-license-checker license
 
 pgroll:
 	go build
@@ -40,3 +40,9 @@ test:
 
 bench:
 	go test ./internal/benchmarks -v -benchtime=1x -bench .
+
+install-license-checker:
+	if [ ! -f ./bin/license-header-checker ]; then curl -s https://raw.githubusercontent.com/lluissm/license-header-checker/master/install.sh | bash; fi
+
+license: install-license-checker
+	./bin/license-header-checker -a -r .github/license-header.txt . go
