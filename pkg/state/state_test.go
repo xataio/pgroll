@@ -338,6 +338,32 @@ func TestPgRollInitializationInANonDefaultSchema(t *testing.T) {
 	})
 }
 
+func TestIsInitializedMethodReturnsTrueAfterInitialization(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithUninitializedState(t, func(state *state.State) {
+		ctx := context.Background()
+
+		// Get whether the state is initialized
+		ok, err := state.IsInitialized(ctx)
+		require.NoError(t, err)
+
+		// Assert that the state is not initialized as `Init` has not been called
+		require.False(t, ok)
+
+		// Invoke `Init` to initialize the state
+		err = state.Init(ctx)
+		require.NoError(t, err)
+
+		// Get whether the state is initialized
+		ok, err = state.IsInitialized(ctx)
+		require.NoError(t, err)
+
+		// Assert that the state is initialized
+		require.True(t, ok)
+	})
+}
+
 func TestConcurrentInitialization(t *testing.T) {
 	t.Parallel()
 
