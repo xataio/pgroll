@@ -54,6 +54,11 @@
           "title": "Pull",
           "href": "/cli/pull",
           "file": "docs/cli/pull.mdx"
+        },
+        {
+          "title": "Convert",
+          "href": "/cli/convert",
+          "file": "docs/cli/convert.mdx"
         }
       ]
     },
