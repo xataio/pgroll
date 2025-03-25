@@ -111,11 +111,6 @@ func (m *Roll) Init(ctx context.Context) error {
 	return m.state.Init(ctx)
 }
 
-// PGVersion returns the postgres version
-func (m *Roll) PGVersion() PGVersion {
-	return m.pgVersion
-}
-
 // PgConn returns the underlying database connection
 func (m *Roll) PgConn() db.DB {
 	return m.pgConn
