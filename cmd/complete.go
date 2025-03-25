@@ -19,6 +19,15 @@ var completeCmd = &cobra.Command{
 		}
 		defer m.Close()
 
+		// Ensure that pgroll is initialized
+		ok, err := m.State().IsInitialized(cmd.Context())
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return errPGRollNotInitialized
+		}
+
 		sp, _ := pterm.DefaultSpinner.WithText("Completing migration...").Start()
 		err = m.Complete(cmd.Context())
 		if err != nil {
