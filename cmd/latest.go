@@ -42,6 +42,15 @@ func latestCmd() *cobra.Command {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
 			} else {
+				// Ensure that pgroll is initialized
+				ok, err := m.State().IsInitialized(cmd.Context())
+				if err != nil {
+					return err
+				}
+				if !ok {
+					return errPGRollNotInitialized
+				}
+
 				latestVersion, err = m.LatestVersionRemote(ctx)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from database: %w", err)
