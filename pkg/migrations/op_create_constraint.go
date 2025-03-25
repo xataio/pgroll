@@ -190,13 +190,12 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema
 }
 
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
-	dropFuncs := make([]string, len(o.Columns)*2)
+	dropFuncs := make([]string, 0, len(o.Columns)*2)
 	for i, j := 0, 0; i < len(o.Columns); i, j = i+1, j+2 {
-		dropFuncs[j] = TriggerFunctionName(o.Table, o.Columns[i])
-		dropFuncs[j+1] = TriggerFunctionName(o.Table, TemporaryName(o.Columns[i]))
+		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, o.Columns[i]))
+		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, TemporaryName(o.Columns[i])))
 	}
-	dropFunctions := NewDropFunctionAction(conn, dropFuncs...)
-	return dropFunctions.Execute(ctx)
+	return NewDropFunctionAction(conn, dropFuncs...).Execute(ctx)
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {
