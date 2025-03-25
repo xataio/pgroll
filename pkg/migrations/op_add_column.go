@@ -78,16 +78,18 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
-		err := createTrigger(ctx, conn, triggerConfig{
-			Name:           TriggerName(o.Table, o.Column.Name),
-			Direction:      TriggerDirectionUp,
-			Columns:        table.Columns,
-			SchemaName:     s.Name,
-			LatestSchema:   latestSchema,
-			TableName:      table.Name,
-			PhysicalColumn: TemporaryName(o.Column.Name),
-			SQL:            o.Up,
-		})
+		err := NewCreateTriggerAction(conn,
+			triggerConfig{
+				Name:           TriggerName(o.Table, o.Column.Name),
+				Direction:      TriggerDirectionUp,
+				Columns:        table.Columns,
+				SchemaName:     s.Name,
+				LatestSchema:   latestSchema,
+				TableName:      table.Name,
+				PhysicalColumn: TemporaryName(o.Column.Name),
+				SQL:            o.Up,
+			},
+		).Execute(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create trigger: %w", err)
 		}

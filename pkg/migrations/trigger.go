@@ -37,39 +37,51 @@ type triggerConfig struct {
 	NeedsBackfillColumn string
 }
 
-func createTrigger(ctx context.Context, conn db.DB, cfg triggerConfig) error {
+type createTriggerAction struct {
+	conn db.DB
+	cfg  triggerConfig
+}
+
+func NewCreateTriggerAction(conn db.DB, cfg triggerConfig) DBAction {
+	return &createTriggerAction{
+		conn: conn,
+		cfg:  cfg,
+	}
+}
+
+func (a *createTriggerAction) Execute(ctx context.Context) error {
 	// Parenthesize the up/down SQL if it's not parenthesized already
-	if len(cfg.SQL) > 0 && cfg.SQL[0] != '(' {
-		cfg.SQL = "(" + cfg.SQL + ")"
+	if len(a.cfg.SQL) > 0 && a.cfg.SQL[0] != '(' {
+		a.cfg.SQL = "(" + a.cfg.SQL + ")"
 	}
 
-	cfg.NeedsBackfillColumn = CNeedsBackfillColumn
+	a.cfg.NeedsBackfillColumn = CNeedsBackfillColumn
 
-	funcSQL, err := buildFunction(cfg)
+	funcSQL, err := buildFunction(a.cfg)
 	if err != nil {
 		return err
 	}
 
-	triggerSQL, err := buildTrigger(cfg)
+	triggerSQL, err := buildTrigger(a.cfg)
 	if err != nil {
 		return err
 	}
 
-	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		_, err := conn.ExecContext(ctx,
+	return a.conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		_, err := a.conn.ExecContext(ctx,
 			fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s boolean DEFAULT true",
-				pq.QuoteIdentifier(cfg.TableName),
+				pq.QuoteIdentifier(a.cfg.TableName),
 				pq.QuoteIdentifier(CNeedsBackfillColumn)))
 		if err != nil {
 			return err
 		}
 
-		_, err = conn.ExecContext(ctx, funcSQL)
+		_, err = a.conn.ExecContext(ctx, funcSQL)
 		if err != nil {
 			return err
 		}
 
-		_, err = conn.ExecContext(ctx, triggerSQL)
+		_, err = a.conn.ExecContext(ctx, triggerSQL)
 		return err
 	})
 }
