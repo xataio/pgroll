@@ -40,7 +40,8 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 	}
 
 	if o.Column.Comment != nil {
-		if err := addCommentToColumn(ctx, conn, table.Name, TemporaryName(o.Column.Name), o.Column.Comment); err != nil {
+		err := NewCommentColumnAction(conn, table.Name, TemporaryName(o.Column.Name), o.Column.Comment).Execute(ctx)
+		if err != nil {
 			return nil, fmt.Errorf("failed to add comment to column: %w", err)
 		}
 	}
