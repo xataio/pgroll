@@ -4,9 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -21,11 +18,7 @@ func (o *OpRenameConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 func (o *OpRenameConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	// rename the constraint in the underlying table
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s RENAME CONSTRAINT %s TO %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.From),
-		pq.QuoteIdentifier(o.To)))
-	return err
+	return NewRenameConstraintAction(conn, o.Table, o.From, o.To).Execute(ctx)
 }
 
 func (o *OpRenameConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {

@@ -73,3 +73,28 @@ func (a *renameColumnAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.to)))
 	return err
 }
+
+// renameConstraintAction is a DBAction that renames a constraint in a table.
+type renameConstraintAction struct {
+	conn  db.DB
+	table string
+	from  string
+	to    string
+}
+
+func NewRenameConstraintAction(conn db.DB, table, from, to string) *renameConstraintAction {
+	return &renameConstraintAction{
+		conn:  conn,
+		table: table,
+		from:  from,
+		to:    to,
+	}
+}
+
+func (a *renameConstraintAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.from),
+		pq.QuoteIdentifier(a.to)))
+	return err
+}
