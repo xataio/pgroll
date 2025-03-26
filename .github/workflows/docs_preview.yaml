@@ -21,6 +21,7 @@ jobs:
               owner: repoOwner,
               repo,
               ref: pr.head.sha,
+              auto_merge: false,
               required_contexts: [], // Don't require checks to pass
               environment: 'Docs Preview',
               description: 'Creating a preview',
