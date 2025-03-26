@@ -257,6 +257,10 @@ func TestConvertCreateTableStatements(t *testing.T) {
 			sql:        "CREATE TABLE foo(id integer, b text, EXCLUDE USING btree (id WITH =) DEFERRABLE INITIALLY DEFERRED)",
 			expectedOp: expect.CreateTableOp36,
 		},
+		{
+			sql:        "CREATE TABLE IF NOT EXISTS foo(a int)",
+			expectedOp: expect.CreateTableOp1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -282,9 +286,6 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Temporary and unlogged tables are not supported
 		"CREATE TEMPORARY TABLE foo(a int)",
 		"CREATE UNLOGGED TABLE foo(a int)",
-
-		// The IF NOT EXISTS clause is not supported
-		"CREATE TABLE IF NOT EXISTS foo(a int)",
 
 		// Table inheritance is not supported
 		"CREATE TABLE foo(a int) INHERITS (bar)",

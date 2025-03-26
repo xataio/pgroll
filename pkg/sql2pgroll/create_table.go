@@ -79,8 +79,6 @@ func canConvertCreateStatement(stmt *pgq.CreateStmt) bool {
 	case
 		// Temporary and unlogged tables are not supported
 		stmt.GetRelation().GetRelpersistence() != "p",
-		// CREATE TABLE IF NOT EXISTS is not supported
-		stmt.GetIfNotExists(),
 		// Table inheritance is not supported
 		len(stmt.GetInhRelations()) != 0,
 		// Paritioned tables are not supported
