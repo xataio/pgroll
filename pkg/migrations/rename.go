@@ -19,7 +19,6 @@ import (
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
 func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
 	const (
-		cRenameConstraintSQL       = `ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s`
 		cValidateConstraintSQL     = `ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s`
 		cSetNotNullSQL             = `ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL`
 		cDropConstraintSQL         = `ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s`
@@ -40,13 +39,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 		}
 
 		if slices.Contains(fk.Columns, TemporaryName(column.Name)) {
-			renameConstraintSQL := fmt.Sprintf(cRenameConstraintSQL,
-				pq.QuoteIdentifier(table.Name),
-				pq.QuoteIdentifier(fk.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(fk.Name)),
-			)
-
-			_, err = conn.ExecContext(ctx, renameConstraintSQL)
+			err = NewRenameConstraintAction(conn, table.Name, fk.Name, StripDuplicationPrefix(fk.Name)).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to rename foreign key constraint %q: %w", fk.Name, err)
 			}
@@ -72,13 +65,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 				return fmt.Errorf("failed to validate check constraint %q: %w", cc.Name, err)
 			}
 
-			renameConstraintSQL := fmt.Sprintf(cRenameConstraintSQL,
-				pq.QuoteIdentifier(table.Name),
-				pq.QuoteIdentifier(cc.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(cc.Name)),
-			)
-
-			_, err = conn.ExecContext(ctx, renameConstraintSQL)
+			err = NewRenameConstraintAction(conn, table.Name, cc.Name, StripDuplicationPrefix(cc.Name)).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to rename check constraint %q: %w", cc.Name, err)
 			}
