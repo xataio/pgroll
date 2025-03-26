@@ -204,7 +204,7 @@ func (a *createUniqueIndexConcurrentlyAction) Execute(ctx context.Context) error
 	if a.schemaName != "" {
 		quotedQualifiedIndexName = fmt.Sprintf("%s.%s", pq.QuoteIdentifier(a.schemaName), pq.QuoteIdentifier(a.indexName))
 	}
-	for retryCount := 0; retryCount < 5; retryCount++ {
+	for range 5 {
 		// Add a unique index to the new column
 		// Indexes are created in the same schema with the table automatically. Instead of the qualified one, just pass the index name.
 		createIndexSQL := a.getCreateUniqueIndexConcurrentlySQL()
