@@ -4,9 +4,7 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -52,8 +50,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -70,8 +67,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
 	table := s.GetTable(o.Table)
 
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column))))
+	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
