@@ -29,7 +29,7 @@
           "name": "name",
           "shorthand": "n",
           "description": "Name of the migration",
-          "default": "{current_timestamp}"
+          "default": ""
         }
       ],
       "subcommands": [],
