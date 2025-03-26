@@ -26,11 +26,11 @@ func (o *OpSetComment) Start(ctx context.Context, conn db.DB, latestSchema strin
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return tbl, addCommentToColumn(ctx, conn, o.Table, TemporaryName(o.Column), o.Comment)
+	return tbl, NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment).Execute(ctx)
 }
 
 func (o *OpSetComment) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	return nil
+	return NewCommentColumnAction(conn, o.Table, o.Column, o.Comment).Execute(ctx)
 }
 
 func (o *OpSetComment) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {

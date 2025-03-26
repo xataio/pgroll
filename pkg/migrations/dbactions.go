@@ -121,3 +121,61 @@ func (a *dropFunctionAction) Execute(ctx context.Context) error {
 		strings.Join(functions, ",")))
 	return err
 }
+
+// commentColumnAction is a DBAction that adds a comment to a column in a table.
+type commentColumnAction struct {
+	conn    db.DB
+	table   string
+	column  string
+	comment *string
+}
+
+func NewCommentColumnAction(conn db.DB, table, column string, comment *string) *commentColumnAction {
+	return &commentColumnAction{
+		conn:    conn,
+		table:   table,
+		column:  column,
+		comment: comment,
+	}
+}
+
+func (a *commentColumnAction) Execute(ctx context.Context) error {
+	commentSQL := fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.column),
+		commentToSQL(a.comment))
+
+	_, err := a.conn.ExecContext(ctx, commentSQL)
+	return err
+}
+
+// commentTableAction is a DBAction that adds a comment to a table.
+type commentTableAction struct {
+	conn    db.DB
+	table   string
+	comment *string
+}
+
+func NewCommentTableAction(conn db.DB, table string, comment *string) *commentTableAction {
+	return &commentTableAction{
+		conn:    conn,
+		table:   table,
+		comment: comment,
+	}
+}
+
+func (a *commentTableAction) Execute(ctx context.Context) error {
+	commentSQL := fmt.Sprintf("COMMENT ON TABLE %s IS %s",
+		pq.QuoteIdentifier(a.table),
+		commentToSQL(a.comment))
+
+	_, err := a.conn.ExecContext(ctx, commentSQL)
+	return err
+}
+
+func commentToSQL(comment *string) string {
+	if comment == nil {
+		return "NULL"
+	}
+	return pq.QuoteLiteral(*comment)
+}
