@@ -6,14 +6,12 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"path/filepath"
-	"strings"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 // UnappliedMigrations returns a slice of unapplied migrations from `dir`,
-// lexicographically ordered by filename. Applying each of the returned
+// lexicographically ordered by filename without extension. Applying each of the returned
 // migrations in order will bring the database up to date with `dir`.
 //
 // If the local order of migrations does not match the order of migrations in
@@ -24,9 +22,9 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 		return nil, fmt.Errorf("determining latest version: %w", err)
 	}
 
-	files, err := fs.Glob(dir, "*.json")
+	files, err := migrations.CollectFilesFromDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("reading directory: %w", err)
+		return nil, fmt.Errorf("reading migration files: %w", err)
 	}
 
 	history, err := m.State().SchemaHistory(ctx, m.Schema())
@@ -38,7 +36,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	var idx int
 	if latestVersion != nil {
 		for _, file := range files {
-			migration, err := openAndReadMigrationFile(dir, file)
+			migration, err := migrations.ReadMigration(dir, file)
 			if err != nil {
 				return nil, fmt.Errorf("reading migration file %q: %w", file, err)
 			}
@@ -58,7 +56,7 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	// Return all unapplied migrations
 	migs := make([]*migrations.Migration, 0, len(files))
 	for _, file := range files[idx:] {
-		migration, err := openAndReadMigrationFile(dir, file)
+		migration, err := migrations.ReadMigration(dir, file)
 		if err != nil {
 			return nil, fmt.Errorf("reading migration file %q: %w", file, err)
 		}
@@ -66,17 +64,4 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 	}
 
 	return migs, nil
-}
-
-func openAndReadMigrationFile(dir fs.FS, filename string) (*migrations.Migration, error) {
-	file, err := dir.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	// Extract base filename without extension as the default migration name
-	defaultName := strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
-
-	return migrations.ReadMigration(file, defaultName)
 }

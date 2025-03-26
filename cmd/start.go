@@ -8,7 +8,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -69,7 +68,7 @@ func startCmd() *cobra.Command {
 }
 
 func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, complete bool, c *backfill.Config) error {
-	migration, err := readMigration(fileName)
+	migration, err := migrations.ReadMigration(os.DirFS(filepath.Dir(fileName)), filepath.Base(fileName))
 	if err != nil {
 		return err
 	}
@@ -109,22 +108,4 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 	sp.Success(msg)
 
 	return nil
-}
-
-func readMigration(fileName string) (*migrations.Migration, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("opening migration file: %w", err)
-	}
-	defer file.Close()
-
-	// Extract base filename without extension as the default migration name
-	defaultName := strings.TrimSuffix(filepath.Base(fileName), filepath.Ext(fileName))
-
-	migration, err := migrations.ReadMigration(file, defaultName)
-	if err != nil {
-		return nil, fmt.Errorf("reading migration file: %w", err)
-	}
-
-	return migration, nil
 }

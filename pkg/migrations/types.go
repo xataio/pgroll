@@ -8,64 +8,64 @@ import "github.com/oapi-codegen/nullable"
 // Check constraint definition
 type CheckConstraint struct {
 	// Constraint expression
-	Constraint string `json:"constraint"`
+	Constraint string `json:"constraint" yaml:"constraint"`
 
 	// Name of check constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Do not propagate constraint to child tables
-	NoInherit bool `json:"no_inherit,omitempty"`
+	NoInherit bool `json:"no_inherit,omitempty" yaml:"no_inherit,omitempty"`
 }
 
 // Column definition
 type Column struct {
 	// Check constraint for the column
-	Check *CheckConstraint `json:"check,omitempty"`
+	Check *CheckConstraint `json:"check,omitempty" yaml:"check,omitempty"`
 
 	// Postgres comment for the column
-	Comment *string `json:"comment,omitempty"`
+	Comment *string `json:"comment,omitempty" yaml:"comment,omitempty"`
 
 	// Default value for the column
-	Default *string `json:"default,omitempty"`
+	Default *string `json:"default,omitempty" yaml:"default,omitempty"`
 
 	// Generated column definition
-	Generated *ColumnGenerated `json:"generated,omitempty"`
+	Generated *ColumnGenerated `json:"generated,omitempty" yaml:"generated,omitempty"`
 
 	// Name of the column
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Indicates if the column is nullable
-	Nullable bool `json:"nullable,omitempty"`
+	Nullable bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 
 	// Indicates if the column is part of the primary key
-	Pk bool `json:"pk,omitempty"`
+	Pk bool `json:"pk,omitempty" yaml:"pk,omitempty"`
 
 	// Foreign key constraint for the column
-	References *ForeignKeyReference `json:"references,omitempty"`
+	References *ForeignKeyReference `json:"references,omitempty" yaml:"references,omitempty"`
 
 	// Postgres type of the column
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 
 	// Indicates if the column values must be unique
-	Unique bool `json:"unique,omitempty"`
+	Unique bool `json:"unique,omitempty" yaml:"unique,omitempty"`
 }
 
 // Generated column definition
 type ColumnGenerated struct {
 	// Generation expression of the column
-	Expression string `json:"expression,omitempty"`
+	Expression string `json:"expression,omitempty" yaml:"expression,omitempty"`
 
 	// Identity corresponds to the JSON schema field "identity".
-	Identity *ColumnGeneratedIdentity `json:"identity,omitempty"`
+	Identity *ColumnGeneratedIdentity `json:"identity,omitempty" yaml:"identity,omitempty"`
 }
 
 type ColumnGeneratedIdentity struct {
 	// Sequence options for identity column, same as in CREATE SEQUENCE
-	SequenceOptions string `json:"sequence_options,omitempty"`
+	SequenceOptions string `json:"sequence_options,omitempty" yaml:"sequence_options,omitempty"`
 
 	// How to handle user specified values for identity column in INSERT and UPDATE
 	// statements
-	UserSpecifiedValues ColumnGeneratedIdentityUserSpecifiedValues `json:"user_specified_values,omitempty"`
+	UserSpecifiedValues ColumnGeneratedIdentityUserSpecifiedValues `json:"user_specified_values,omitempty" yaml:"user_specified_values,omitempty"`
 }
 
 type ColumnGeneratedIdentityUserSpecifiedValues string
@@ -76,60 +76,60 @@ const ColumnGeneratedIdentityUserSpecifiedValuesBYDEFAULT ColumnGeneratedIdentit
 // Constraint definition
 type Constraint struct {
 	// Check constraint expression
-	Check string `json:"check,omitempty"`
+	Check string `json:"check,omitempty" yaml:"check,omitempty"`
 
 	// Columns to add constraint to
-	Columns []string `json:"columns,omitempty"`
+	Columns []string `json:"columns,omitempty" yaml:"columns,omitempty"`
 
 	// Deferable constraint
-	Deferrable bool `json:"deferrable,omitempty"`
+	Deferrable bool `json:"deferrable,omitempty" yaml:"deferrable,omitempty"`
 
 	// Exclude constraint definition
-	Exclude *ConstraintExclude `json:"exclude,omitempty"`
+	Exclude *ConstraintExclude `json:"exclude,omitempty" yaml:"exclude,omitempty"`
 
 	// IndexParameters corresponds to the JSON schema field "index_parameters".
-	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty"`
+	IndexParameters *ConstraintIndexParameters `json:"index_parameters,omitempty" yaml:"index_parameters,omitempty"`
 
 	// Initially deferred constraint
-	InitiallyDeferred bool `json:"initially_deferred,omitempty"`
+	InitiallyDeferred bool `json:"initially_deferred,omitempty" yaml:"initially_deferred,omitempty"`
 
 	// Name of the constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Do not propagate constraint to child tables
-	NoInherit bool `json:"no_inherit,omitempty"`
+	NoInherit bool `json:"no_inherit,omitempty" yaml:"no_inherit,omitempty"`
 
 	// Nulls not distinct constraint
-	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty"`
+	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty" yaml:"nulls_not_distinct,omitempty"`
 
 	// Reference to the foreign key
-	References *TableForeignKeyReference `json:"references,omitempty"`
+	References *TableForeignKeyReference `json:"references,omitempty" yaml:"references,omitempty"`
 
 	// Type of the constraint
-	Type ConstraintType `json:"type"`
+	Type ConstraintType `json:"type" yaml:"type"`
 }
 
 // Exclude constraint definition
 type ConstraintExclude struct {
 	// Expressions of the exclude constraint
-	Elements string `json:"elements,omitempty"`
+	Elements string `json:"elements,omitempty" yaml:"elements,omitempty"`
 
 	// Index method
-	IndexMethod string `json:"index_method,omitempty"`
+	IndexMethod string `json:"index_method,omitempty" yaml:"index_method,omitempty"`
 
 	// Predicate for the exclusion constraint
-	Predicate string `json:"predicate,omitempty"`
+	Predicate string `json:"predicate,omitempty" yaml:"predicate,omitempty"`
 }
 
 type ConstraintIndexParameters struct {
 	// IncludeColumns corresponds to the JSON schema field "include_columns".
-	IncludeColumns []string `json:"include_columns,omitempty"`
+	IncludeColumns []string `json:"include_columns,omitempty" yaml:"include_columns,omitempty"`
 
 	// StorageParameters corresponds to the JSON schema field "storage_parameters".
-	StorageParameters string `json:"storage_parameters,omitempty"`
+	StorageParameters string `json:"storage_parameters,omitempty" yaml:"storage_parameters,omitempty"`
 
 	// Tablespace corresponds to the JSON schema field "tablespace".
-	Tablespace string `json:"tablespace,omitempty"`
+	Tablespace string `json:"tablespace,omitempty" yaml:"tablespace,omitempty"`
 }
 
 type ConstraintType string
@@ -157,43 +157,43 @@ const ForeignKeyMatchTypeSIMPLE ForeignKeyMatchType = "SIMPLE"
 // Foreign key reference definition
 type ForeignKeyReference struct {
 	// Name of the referenced column
-	Column string `json:"column"`
+	Column string `json:"column" yaml:"column"`
 
 	// Deferable constraint
-	Deferrable bool `json:"deferrable,omitempty"`
+	Deferrable bool `json:"deferrable,omitempty" yaml:"deferrable,omitempty"`
 
 	// Initially deferred constraint
-	InitiallyDeferred bool `json:"initially_deferred,omitempty"`
+	InitiallyDeferred bool `json:"initially_deferred,omitempty" yaml:"initially_deferred,omitempty"`
 
 	// Match type of the foreign key constraint
-	MatchType ForeignKeyMatchType `json:"match_type,omitempty"`
+	MatchType ForeignKeyMatchType `json:"match_type,omitempty" yaml:"match_type,omitempty"`
 
 	// Name of the foreign key constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty" yaml:"on_delete,omitempty"`
 
 	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyAction `json:"on_update,omitempty"`
+	OnUpdate ForeignKeyAction `json:"on_update,omitempty" yaml:"on_update,omitempty"`
 
 	// Name of the referenced table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 }
 
 // Index field and its settings
 type IndexField struct {
 	// Collation for the index element
-	Collate string `json:"collate,omitempty"`
+	Collate string `json:"collate,omitempty" yaml:"collate,omitempty"`
 
 	// Nulls ordering, default is first if ascending, last if descending
-	Nulls *IndexFieldNulls `json:"nulls,omitempty"`
+	Nulls *IndexFieldNulls `json:"nulls,omitempty" yaml:"nulls,omitempty"`
 
 	// Operator class settings
-	Opclass *IndexFieldOpclass `json:"opclass,omitempty"`
+	Opclass *IndexFieldOpclass `json:"opclass,omitempty" yaml:"opclass,omitempty"`
 
 	// Sort order, default is ascending (ASC)
-	Sort IndexFieldSort `json:"sort,omitempty"`
+	Sort IndexFieldSort `json:"sort,omitempty" yaml:"sort,omitempty"`
 }
 
 type IndexFieldNulls string
@@ -204,10 +204,10 @@ const IndexFieldNullsLAST IndexFieldNulls = "LAST"
 // Operator class settings
 type IndexFieldOpclass struct {
 	// Name of the operator class
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Operator class parameters
-	Params []string `json:"params,omitempty"`
+	Params []string `json:"params,omitempty" yaml:"params,omitempty"`
 }
 
 type IndexFieldSort string
@@ -224,81 +224,81 @@ type MultiColumnUpSQL map[string]string
 // Add column operation
 type OpAddColumn struct {
 	// Column to add
-	Column Column `json:"column"`
+	Column Column `json:"column" yaml:"column"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// SQL expression for up migration
-	Up string `json:"up,omitempty"`
+	Up string `json:"up,omitempty" yaml:"up,omitempty"`
 }
 
 // Alter column operation
 type OpAlterColumn struct {
 	// Add check constraint to the column
-	Check *CheckConstraint `json:"check,omitempty"`
+	Check *CheckConstraint `json:"check,omitempty" yaml:"check,omitempty"`
 
 	// Name of the column
-	Column string `json:"column"`
+	Column string `json:"column" yaml:"column"`
 
 	// New comment on the column
-	Comment nullable.Nullable[string] `json:"comment,omitempty"`
+	Comment nullable.Nullable[string] `json:"comment,omitempty" yaml:"comment,omitempty"`
 
 	// Default value of the column. Setting to null will drop the default if it was
 	// set previously.
-	Default nullable.Nullable[string] `json:"default,omitempty"`
+	Default nullable.Nullable[string] `json:"default,omitempty" yaml:"default,omitempty"`
 
 	// SQL expression for down migration
-	Down string `json:"down"`
+	Down string `json:"down" yaml:"down"`
 
 	// Indicates if the column is nullable (for add/remove not null constraint
 	// operation)
-	Nullable *bool `json:"nullable,omitempty"`
+	Nullable *bool `json:"nullable,omitempty" yaml:"nullable,omitempty"`
 
 	// Add foreign key constraint to the column
-	References *ForeignKeyReference `json:"references,omitempty"`
+	References *ForeignKeyReference `json:"references,omitempty" yaml:"references,omitempty"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// New type of the column (for change type operation)
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type,omitempty" yaml:"type,omitempty"`
 
 	// Add unique constraint to the column
-	Unique *UniqueConstraint `json:"unique,omitempty"`
+	Unique *UniqueConstraint `json:"unique,omitempty" yaml:"unique,omitempty"`
 
 	// SQL expression for up migration
-	Up string `json:"up"`
+	Up string `json:"up" yaml:"up"`
 }
 
 // Add constraint to table operation
 type OpCreateConstraint struct {
 	// Check constraint expression
-	Check *string `json:"check,omitempty"`
+	Check *string `json:"check,omitempty" yaml:"check,omitempty"`
 
 	// Columns to add constraint to
-	Columns []string `json:"columns,omitempty"`
+	Columns []string `json:"columns,omitempty" yaml:"columns,omitempty"`
 
 	// SQL expressions for down migrations
-	Down MultiColumnDownSQL `json:"down"`
+	Down MultiColumnDownSQL `json:"down" yaml:"down"`
 
 	// Name of the constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Do not propagate constraint to child tables
-	NoInherit bool `json:"no_inherit,omitempty"`
+	NoInherit bool `json:"no_inherit,omitempty" yaml:"no_inherit,omitempty"`
 
 	// Reference to the foreign key
-	References *TableForeignKeyReference `json:"references,omitempty"`
+	References *TableForeignKeyReference `json:"references,omitempty" yaml:"references,omitempty"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// Type of the constraint
-	Type OpCreateConstraintType `json:"type"`
+	Type OpCreateConstraintType `json:"type" yaml:"type"`
 
 	// SQL expressions for up migrations
-	Up MultiColumnUpSQL `json:"up"`
+	Up MultiColumnUpSQL `json:"up" yaml:"up"`
 }
 
 type OpCreateConstraintType string
@@ -310,25 +310,25 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 // Create index operation
 type OpCreateIndex struct {
 	// Names and settings of columns on which to define the index
-	Columns OpCreateIndexColumns `json:"columns"`
+	Columns OpCreateIndexColumns `json:"columns" yaml:"columns"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
-	Method OpCreateIndexMethod `json:"method,omitempty"`
+	Method OpCreateIndexMethod `json:"method,omitempty" yaml:"method,omitempty"`
 
 	// Index name
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Conditional expression for defining a partial index
-	Predicate string `json:"predicate,omitempty"`
+	Predicate string `json:"predicate,omitempty" yaml:"predicate,omitempty"`
 
 	// Storage parameters for the index
-	StorageParameters string `json:"storage_parameters,omitempty"`
+	StorageParameters string `json:"storage_parameters,omitempty" yaml:"storage_parameters,omitempty"`
 
 	// Name of table on which to define the index
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// Indicates if the index is unique
-	Unique bool `json:"unique,omitempty"`
+	Unique bool `json:"unique,omitempty" yaml:"unique,omitempty"`
 }
 
 // Names and settings of columns on which to define the index
@@ -346,133 +346,133 @@ const OpCreateIndexMethodSpgist OpCreateIndexMethod = "spgist"
 // Create table operation
 type OpCreateTable struct {
 	// Columns corresponds to the JSON schema field "columns".
-	Columns []Column `json:"columns"`
+	Columns []Column `json:"columns" yaml:"columns"`
 
 	// Postgres comment for the table
-	Comment *string `json:"comment,omitempty"`
+	Comment *string `json:"comment,omitempty" yaml:"comment,omitempty"`
 
 	// Constraints corresponds to the JSON schema field "constraints".
-	Constraints []Constraint `json:"constraints,omitempty"`
+	Constraints []Constraint `json:"constraints,omitempty" yaml:"constraints,omitempty"`
 
 	// Name of the table
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // Drop column operation
 type OpDropColumn struct {
 	// Name of the column
-	Column string `json:"column"`
+	Column string `json:"column" yaml:"column"`
 
 	// SQL expression for down migration
-	Down string `json:"down,omitempty"`
+	Down string `json:"down,omitempty" yaml:"down,omitempty"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 }
 
 // Drop constraint operation
 type OpDropConstraint struct {
 	// SQL expression for down migration
-	Down string `json:"down"`
+	Down string `json:"down" yaml:"down"`
 
 	// Name of the constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// SQL expression for up migration
-	Up string `json:"up"`
+	Up string `json:"up" yaml:"up"`
 }
 
 // Drop index operation
 type OpDropIndex struct {
 	// Index name
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // Drop multi-column constraint operation
 type OpDropMultiColumnConstraint struct {
 	// SQL expressions for down migrations
-	Down MultiColumnDownSQL `json:"down"`
+	Down MultiColumnDownSQL `json:"down" yaml:"down"`
 
 	// Name of the constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// SQL expressions for up migrations
-	Up MultiColumnUpSQL `json:"up,omitempty"`
+	Up MultiColumnUpSQL `json:"up,omitempty" yaml:"up,omitempty"`
 }
 
 // Drop table operation
 type OpDropTable struct {
 	// Name of the table
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // Raw SQL operation
 type OpRawSQL struct {
 	// SQL expression for down migration
-	Down string `json:"down,omitempty"`
+	Down string `json:"down,omitempty" yaml:"down,omitempty"`
 
 	// SQL expression will run on complete step (rather than on start)
-	OnComplete bool `json:"onComplete,omitempty"`
+	OnComplete bool `json:"onComplete,omitempty" yaml:"onComplete,omitempty"`
 
 	// SQL expression for up migration
-	Up string `json:"up"`
+	Up string `json:"up" yaml:"up"`
 }
 
 // Rename column operation
 type OpRenameColumn struct {
 	// Old name of the column
-	From string `json:"from"`
+	From string `json:"from" yaml:"from"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// New name of the column
-	To string `json:"to"`
+	To string `json:"to" yaml:"to"`
 }
 
 // Rename constraint operation
 type OpRenameConstraint struct {
 	// Name of the constraint
-	From string `json:"from"`
+	From string `json:"from" yaml:"from"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 
 	// New name of the constraint
-	To string `json:"to"`
+	To string `json:"to" yaml:"to"`
 }
 
 // Rename table operation
 type OpRenameTable struct {
 	// Old name of the table
-	From string `json:"from"`
+	From string `json:"from" yaml:"from"`
 
 	// New name of the table
-	To string `json:"to"`
+	To string `json:"to" yaml:"to"`
 }
 
 // Set replica identity operation
 type OpSetReplicaIdentity struct {
 	// Replica identity to set
-	Identity ReplicaIdentity `json:"identity"`
+	Identity ReplicaIdentity `json:"identity" yaml:"identity"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 }
 
 // PgRoll migration definition
 type PgRollMigration struct {
 	// Name of the migration
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" yaml:"name,omitempty"`
 
 	// Operations corresponds to the JSON schema field "operations".
-	Operations PgRollOperations `json:"operations"`
+	Operations PgRollOperations `json:"operations" yaml:"operations"`
 }
 
 type PgRollOperation interface{}
@@ -482,35 +482,35 @@ type PgRollOperations []interface{}
 // Replica identity definition
 type ReplicaIdentity struct {
 	// Name of the index to use as replica identity
-	Index string `json:"index"`
+	Index string `json:"index" yaml:"index"`
 
 	// Type of replica identity
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 }
 
 // Table level foreign key reference definition
 type TableForeignKeyReference struct {
 	// Columns to reference
-	Columns []string `json:"columns"`
+	Columns []string `json:"columns" yaml:"columns"`
 
 	// Match type of the foreign key constraint
-	MatchType ForeignKeyMatchType `json:"match_type,omitempty"`
+	MatchType ForeignKeyMatchType `json:"match_type,omitempty" yaml:"match_type,omitempty"`
 
 	// On delete behavior of the foreign key constraint
-	OnDelete ForeignKeyAction `json:"on_delete,omitempty"`
+	OnDelete ForeignKeyAction `json:"on_delete,omitempty" yaml:"on_delete,omitempty"`
 
 	// Columns to set to null or to default on delete
-	OnDeleteSetColumns []string `json:"on_delete_set_columns,omitempty"`
+	OnDeleteSetColumns []string `json:"on_delete_set_columns,omitempty" yaml:"on_delete_set_columns,omitempty"`
 
 	// On update behavior of the foreign key constraint
-	OnUpdate ForeignKeyAction `json:"on_update,omitempty"`
+	OnUpdate ForeignKeyAction `json:"on_update,omitempty" yaml:"on_update,omitempty"`
 
 	// Name of the table
-	Table string `json:"table"`
+	Table string `json:"table" yaml:"table"`
 }
 
 // Unique constraint definition
 type UniqueConstraint struct {
 	// Name of unique constraint
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 }
