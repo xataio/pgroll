@@ -91,6 +91,8 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:
 		return table, o.addForeignKeyConstraint(ctx, conn, table)
+	case OpCreateConstraintTypePrimaryKey:
+		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns))
 	}
 
 	return table, nil
@@ -126,6 +128,14 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 			},
 		}
 		err := fkOp.Complete(ctx, conn, s)
+		if err != nil {
+			return err
+		}
+	case OpCreateConstraintTypePrimaryKey:
+		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
+			pq.QuoteIdentifier(o.Table),
+			pq.QuoteIdentifier(o.Name),
+		))
 		if err != nil {
 			return err
 		}
