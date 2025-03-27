@@ -36,7 +36,7 @@ description: A create index operation creates a new index on a set of columns.
 * The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 * You can also specify storage parameters for the index in `storage_parameters`.
 * To create a unique index set `unique` to `true`.
-* If the index is unique, you can configure `nulls_not_distinct` in case of PG15+.
+* For `unique` indexes, `nulls_not_distinct` can be set to `true`. `nulls_not_distinct` is only supported in Postgres 15+.
 
 ## Examples
 
