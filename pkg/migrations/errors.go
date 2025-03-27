@@ -297,3 +297,11 @@ type UpSQLMustBeColumnDefaultError struct {
 func (e UpSQLMustBeColumnDefaultError) Error() string {
 	return fmt.Sprintf(`volatile default expression for column %q; "up" must be equal to "default"`, e.Column)
 }
+
+type NullsNotDistinctOnNotUniqueIndexError struct {
+	Name string
+}
+
+func (e NullsNotDistinctOnNotUniqueIndexError) Error() string {
+	return fmt.Sprintf("cannot set nulls not distinct on a non-unique index %q", e.Name)
+}

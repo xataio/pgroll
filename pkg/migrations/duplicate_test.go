@@ -197,11 +197,12 @@ func TestDuplicateStmtBuilderIndexes(t *testing.T) {
 
 func TestCreateIndexConcurrentlySqlGeneration(t *testing.T) {
 	for name, testCases := range map[string]struct {
-		indexName    string
-		schemaName   string
-		tableName    string
-		columns      []string
-		expectedStmt string
+		indexName        string
+		schemaName       string
+		tableName        string
+		columns          []string
+		nullsNotDistinct bool
+		expectedStmt     string
 	}{
 		"single column with schemaname": {
 			indexName:    "idx_email",
@@ -229,9 +230,39 @@ func TestCreateIndexConcurrentlySqlGeneration(t *testing.T) {
 			columns:      []string{"id", "name", "city"},
 			expectedStmt: `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_sch"."test_table" ("id", "name", "city")`,
 		},
+		"single column with schemaname nulls not distinct": {
+			indexName:        "idx_email",
+			schemaName:       "test_sch",
+			tableName:        "test_table",
+			columns:          []string{"email"},
+			nullsNotDistinct: true,
+			expectedStmt:     `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_sch"."test_table" ("email") NULLS NOT DISTINCT`,
+		},
+		"single column with no schema name nulls not distinct": {
+			indexName:        "idx_email",
+			tableName:        "test_table",
+			columns:          []string{"email"},
+			nullsNotDistinct: true,
+			expectedStmt:     `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_email" ON "test_table" ("email") NULLS NOT DISTINCT`,
+		},
+		"multi-column with no schema name nulls not distinct": {
+			indexName:        "idx_name_city",
+			tableName:        "test_table",
+			columns:          []string{"name", "city"},
+			nullsNotDistinct: true,
+			expectedStmt:     `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_table" ("name", "city") NULLS NOT DISTINCT`,
+		},
+		"multi-column with schema name nulls not distinct": {
+			indexName:        "idx_name_city",
+			schemaName:       "test_sch",
+			tableName:        "test_table",
+			columns:          []string{"id", "name", "city"},
+			nullsNotDistinct: true,
+			expectedStmt:     `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS "idx_name_city" ON "test_sch"."test_table" ("id", "name", "city") NULLS NOT DISTINCT`,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			action := NewCreateUniqueIndexConcurrentlyAction(nil, testCases.schemaName, testCases.indexName, false, testCases.tableName, testCases.columns...)
+			action := NewCreateUniqueIndexConcurrentlyAction(nil, testCases.schemaName, testCases.indexName, testCases.nullsNotDistinct, testCases.tableName, testCases.columns...)
 			stmt := action.getCreateUniqueIndexConcurrentlySQL()
 			assert.Equal(t, testCases.expectedStmt, stmt)
 		})

@@ -99,6 +99,10 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return err
 	}
 
+	if o.NullsNotDistinct && !o.Unique {
+		return NullsNotDistinctOnNotUniqueIndexError{Name: o.Name}
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}

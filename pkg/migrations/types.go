@@ -321,7 +321,7 @@ type OpCreateIndex struct {
 	// Index name
 	Name string `json:"name"`
 
-	// Nulls not distinct in unique index
+	// Are nulls distinct (valid for unique indexes only)
 	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty"`
 
 	// Conditional expression for defining a partial index
