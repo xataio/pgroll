@@ -54,6 +54,9 @@ $$
 LANGUAGE SQL
 STABLE;
 
+-- Check if nulls are distinct in the index. This function is required for backwards
+-- compatibility with PostgreSQL 14, where this setting is not available.
+-- If the column indnullsnotdistinct is missing, the nulls are distinct.
 CREATE OR REPLACE FUNCTION placeholder.indnullsnotdistinct (schemaname name, indname name)
     RETURNS boolean
     LANGUAGE plpgsql
@@ -70,6 +73,7 @@ BEGIN
             WHERE
                 pg_namespace.nspname = schemaname
                 AND pg_index.indisunique
+                AND pg_index.indnullsnotdistinct
                 AND pg_index.indexrelname = indname
                 AND NOT pg_index.indisvalid);
 EXCEPTION
