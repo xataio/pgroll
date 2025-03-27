@@ -31,6 +31,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS history_is_linear ON placeholder.migrations (s
 ALTER TABLE placeholder.migrations
     ADD COLUMN IF NOT EXISTS migration_type varchar(32) DEFAULT 'pgroll' CONSTRAINT migration_type_check CHECK (migration_type IN ('pgroll', 'inferred'));
 
+-- Change timestamp columns to use timestamptz
+ALTER TABLE placeholder.migrations
+    ALTER COLUMN created_at SET DATA TYPE timestamptz USING created_at AT TIME ZONE 'UTC',
+    ALTER COLUMN updated_at SET DATA TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
+
 -- Helper functions
 -- Are we in the middle of a migration?
 CREATE OR REPLACE FUNCTION placeholder.is_active_migration_period (schemaname name)
