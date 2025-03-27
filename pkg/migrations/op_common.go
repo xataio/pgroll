@@ -66,8 +66,8 @@ func CollectFilesFromDir(dir fs.FS) ([]string, error) {
 	}
 
 	// Order slice based on filename without extension
-	sort.Slice(migrationFiles, func(i, j int) bool {
-		return filepath.Base(migrationFiles[i]) < filepath.Base(migrationFiles[j])
+	slices.SortFunc(migrationFiles, func(f1, f2 string) int {
+		return strings.Compare(filepath.Base(f1), filepath.Base(f2))
 	})
 
 	return migrationFiles, nil
