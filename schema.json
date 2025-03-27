@@ -613,7 +613,7 @@
           "default": ""
         },
         "nulls_not_distinct": {
-          "description": "Nulls not distinct in unique index",
+          "description": "Are nulls distinct (valid for unique indexes only)",
           "type": "boolean",
           "default": false
         },
