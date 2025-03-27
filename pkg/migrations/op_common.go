@@ -11,7 +11,6 @@ import (
 	"maps"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
