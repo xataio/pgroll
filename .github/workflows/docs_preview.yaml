@@ -15,7 +15,7 @@ jobs:
             const pr = context.payload.pull_request;
             const prOwner = pr.head.repo.full_name === context.repo.full_name ? repoOwner : pr.head.repo.owner.login;
             const branch = pr.head.ref;
-            const previewUrl = `https://pgroll.com/next/preview-path?path=/docs/${prOwner}:${branch}/`
+            const previewUrl = `https://pgroll.com/next/preview-path?path=/docs-preview/${prOwner}:${branch}/`
 
             const deployment = await github.rest.repos.createDeployment({
               owner: repoOwner,
