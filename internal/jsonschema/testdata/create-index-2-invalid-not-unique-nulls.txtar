@@ -1,0 +1,21 @@
+This is an invalid 'create_index' migration.
+Only unique indexes can set null_not_distinct.
+
+-- create_index.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_index": {
+        "name": "reviews_index",
+        "columns": {
+            "my-column": {}
+        },
+        "nulls_not_distinct": true
+      }
+    }
+  ]
+}
+
+-- valid --
+false

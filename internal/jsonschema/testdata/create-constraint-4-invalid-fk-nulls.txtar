@@ -1,0 +1,35 @@
+This is an invalid 'create_constraint' migration.
+Foreign key constraints cannot configure nulls_not_distinct.
+
+-- create_constraint.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "my_invalid_check",
+        "table": "my_table",
+        "type": "foreign_key",
+        "nulls_not_distinct": true,
+        "references": {
+          "columns": ["title"],
+          "table": "referenced",
+          "on_delete": "CASCADE",
+          "on_update": "SET NULL"
+        },
+        "columns": [
+          "my_column"
+        ],
+        "up": {
+          "my_column": "my_column"
+        },
+        "down": {
+          "my_column": "my_column"
+        }
+      }
+    }
+  ]
+}
+
+-- valid --
+false

@@ -623,6 +623,24 @@
           "default": false
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "unique": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "nulls_not_distinct": {
+                "const": false
+              }
+            }
+          }
+        }
+      ],
       "required": ["columns", "name", "table"],
       "type": "object"
     },
