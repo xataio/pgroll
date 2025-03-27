@@ -57,25 +57,24 @@ STABLE;
 -- Check if nulls are distinct in the index. This function is required for backwards
 -- compatibility with PostgreSQL 14, where this setting is not available.
 -- If the column indnullsnotdistinct is missing, the nulls are distinct.
-CREATE OR REPLACE FUNCTION placeholder.indnullsnotdistinct (schemaname name, indname name)
+CREATE OR REPLACE FUNCTION placeholder.indnullsnotdistinct (schemaname name, idxoid oid)
     RETURNS boolean
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    SELECT
-        EXISTS (
-            SELECT
-                1
-            FROM
-                pg_index
-                JOIN pg_class ON pg_class.oid = pg_index.indexrelid
-                JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
-            WHERE
-                pg_namespace.nspname = schemaname
-                AND pg_index.indisunique
-                AND pg_index.indnullsnotdistinct
-                AND pg_index.indexrelname = indname
-                AND NOT pg_index.indisvalid);
+    RETURN (
+        SELECT
+            EXISTS (
+                SELECT
+                    1
+                FROM
+                    pg_index
+                    JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+                    JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+                WHERE
+                    pg_namespace.nspname = schemaname
+                    AND pg_index.indexrelid = idxoid
+                    AND pg_index.indnullsnotdistinct));
 EXCEPTION
     WHEN OTHERS THEN
         RETURN FALSE;
@@ -238,10 +237,10 @@ BEGIN
                                 AND pg_attribute.attnum = ANY (pg_index.indkey)
                                 AND indisprimary), 'indexes', (
                                 SELECT
-                                    COALESCE(json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'nullsNotDistinct', placeholder.indnullsnotdistinct (schemaname, ix_details.name), 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition)), '{}'::json)
+                                    COALESCE(json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'nullsNotDistinct', ix_details.nullsnotdistinct, 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition)), '{}'::json)
                             FROM (
                                 SELECT
-                                    replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') AS name, pi.indisunique, pi.indisexclusion, array_agg(a.attname) AS columns, pg_get_expr(pi.indpred, t.oid) AS predicate, am.amname AS method, pg_get_indexdef(pi.indexrelid) AS definition
+                                    replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') AS name, pi.indisunique, pi.indisexclusion, array_agg(a.attname) AS columns, pg_get_expr(pi.indpred, t.oid) AS predicate, am.amname AS method, pg_get_indexdef(pi.indexrelid) AS definition, placeholder.indnullsnotdistinct (schemaname, pi.indexrelid) AS nullsnotdistinct
                                 FROM pg_index pi
                                 JOIN pg_attribute a ON a.attrelid = pi.indrelid
                                     AND a.attnum = ANY (pi.indkey)
