@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -394,9 +396,10 @@ func TestReadSchema(t *testing.T) {
 		ctx := context.Background()
 
 		tests := []struct {
-			name       string
-			createStmt string
-			wantSchema *schema.Schema
+			minPgMajorVersion int
+			name              string
+			createStmt        string
+			wantSchema        *schema.Schema
 		}{
 			{
 				name:       "empty schema",
@@ -485,6 +488,43 @@ func TestReadSchema(t *testing.T) {
 									Columns: []string{"id"},
 								},
 							},
+							ExcludeConstraints: map[string]*schema.ExcludeConstraint{},
+							ForeignKeys:        map[string]*schema.ForeignKey{},
+						},
+					},
+				},
+			},
+			{
+				name:              "unique, nulls not distinct",
+				minPgMajorVersion: 15,
+				createStmt:        "CREATE TABLE public.table1 (id int NOT NULL); CREATE UNIQUE INDEX id_unique ON public.table1 (id) NULLS NOT DISTINCT",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"id": {
+									Name:         "id",
+									Type:         "integer",
+									Nullable:     false,
+									Unique:       true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes: map[string]*schema.Index{
+								"id_unique": {
+									Name:             "id_unique",
+									Unique:           true,
+									Columns:          []string{"id"},
+									Method:           string(migrations.OpCreateIndexMethodBtree),
+									Definition:       "CREATE UNIQUE INDEX id_unique ON public.table1 USING btree (id) NULLS NOT DISTINCT",
+									NullsNotDistinct: true,
+								},
+							},
+							CheckConstraints:   map[string]*schema.CheckConstraint{},
+							UniqueConstraints:  map[string]*schema.UniqueConstraint{},
 							ExcludeConstraints: map[string]*schema.ExcludeConstraint{},
 							ForeignKeys:        map[string]*schema.ForeignKey{},
 						},
@@ -1335,6 +1375,10 @@ func TestReadSchema(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
+				if isTestSkipped(t, tt.minPgMajorVersion) {
+					t.Skipf("Skipping test %q for PostgreSQL version %s", tt.name, os.Getenv("POSTGRES_VERSION"))
+				}
+
 				if _, err := db.ExecContext(ctx, "DROP SCHEMA public CASCADE; CREATE SCHEMA public"); err != nil {
 					t.Fatal(err)
 				}
@@ -1360,4 +1404,16 @@ func clearOIDS(s *schema.Schema) {
 		c.OID = ""
 		s.Tables[k] = c
 	}
+}
+
+func isTestSkipped(t *testing.T, minPgMajorVersion int) bool {
+	if minPgMajorVersion == 0 || os.Getenv("POSTGRES_VERSION") == "" || os.Getenv("POSTGRES_VERSION") == "latest" {
+		return false
+	}
+	pgMajorVersion := strings.Split(os.Getenv("POSTGRES_VERSION"), ".")[0]
+	version, err := strconv.Atoi(pgMajorVersion)
+	if err != nil {
+		return false
+	}
+	return version < minPgMajorVersion
 }
