@@ -205,7 +205,7 @@ func (v *Operations) UnmarshalYAML(value *yaml.Node) error {
 				return err
 			}
 
-			if err := v.Node.Decode(item); err != nil {
+			if err := v.Decode(item); err != nil {
 				return fmt.Errorf("decode migration [%v]: %w", opName, err)
 			}
 
