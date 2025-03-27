@@ -5,6 +5,7 @@ package migrations_test
 import (
 	"context"
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/pkg/migrations"
@@ -59,4 +60,46 @@ func TestOnCompleteSQLMigrationsAreNotIsolated(t *testing.T) {
 	}
 	err := migration.Validate(context.TODO(), schema.New())
 	assert.NoError(t, err)
+}
+
+func TestCollectFilesFromDir(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		dir           fstest.MapFS
+		expectedFiles []string
+	}{
+		"find all json files": {
+			dir: fstest.MapFS{
+				"01_migration_1.json": &fstest.MapFile{},
+				"03_migration_3.json": &fstest.MapFile{},
+				"02_migration_2.json": &fstest.MapFile{},
+			},
+			expectedFiles: []string{"01_migration_1.json", "02_migration_2.json", "03_migration_3.json"},
+		},
+		"find all yaml and yml files": {
+			dir: fstest.MapFS{
+				"01_migration_1.yaml": &fstest.MapFile{},
+				"03_migration_3.yaml": &fstest.MapFile{},
+				"02_migration_2.yml":  &fstest.MapFile{},
+			},
+			expectedFiles: []string{"01_migration_1.yaml", "02_migration_2.yml", "03_migration_3.yaml"},
+		},
+		"find all files": {
+			dir: fstest.MapFS{
+				"01_migration_1.json": &fstest.MapFile{},
+				"03_migration_3.yaml": &fstest.MapFile{},
+				"02_migration_2.yml":  &fstest.MapFile{},
+			},
+			expectedFiles: []string{"01_migration_1.json", "02_migration_2.yml", "03_migration_3.yaml"},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			files, err := migrations.CollectFilesFromDir(test.dir)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedFiles, files)
+		})
+	}
 }

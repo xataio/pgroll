@@ -7,9 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
+	"path/filepath"
 	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type OpName string
@@ -47,25 +51,58 @@ func DeletionName(name string) string {
 	return deletedPrefix + name
 }
 
-// ReadMigration reads a migration from an io.Reader, like a file.
-// If the migration doesn't have a name field, defaultName will be used as the name.
-func ReadMigration(r io.Reader, defaultName string) (*Migration, error) {
-	byteValue, err := io.ReadAll(r)
+// CollectFilesFromDir returns a list of migration files in a directory.
+// The files are ordered based on the filename without the extension name.
+func CollectFilesFromDir(dir fs.FS) ([]string, error) {
+	supportedExtensionsGlob := []string{"*.json", "*.yml", "*.yaml"}
+	var migrationFiles []string
+	for _, glob := range supportedExtensionsGlob {
+		files, err := fs.Glob(dir, glob)
+		if err != nil {
+			return nil, fmt.Errorf("reading directory: %w", err)
+		}
+		migrationFiles = append(migrationFiles, files...)
+	}
+
+	// Order slice based on filename without extension
+	slices.SortFunc(migrationFiles, func(f1, f2 string) int {
+		return strings.Compare(filepath.Base(f1), filepath.Base(f2))
+	})
+
+	return migrationFiles, nil
+}
+
+// ReadMigration opens the migration file and reads the migration.
+func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
+	file, err := dir.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("opening migration file: %w", err)
+	}
+	defer file.Close()
+
+	byteValue, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
 
-	dec := json.NewDecoder(bytes.NewReader(byteValue))
-	dec.DisallowUnknownFields()
-
 	mig := Migration{}
-	if err = dec.Decode(&mig); err != nil {
-		return nil, err
+	switch filepath.Ext(filename) {
+	case ".json":
+		dec := json.NewDecoder(bytes.NewReader(byteValue))
+		dec.DisallowUnknownFields()
+		err = dec.Decode(&mig)
+	case ".yaml", ".yml":
+		dec := yaml.NewDecoder(bytes.NewReader(byteValue))
+		dec.KnownFields(true)
+		err = dec.Decode(&mig)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("reading migration file: %w", err)
 	}
 
-	// Use the default name (filename without extension) if no name is provided
 	if mig.Name == "" {
-		mig.Name = defaultName
+		// Extract base filename without extension as the default migration name
+		mig.Name = strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 	}
 
 	return &mig, nil
@@ -96,55 +133,9 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 			logBody = v
 		}
 
-		var item Operation
-		switch opName {
-		case OpNameCreateTable:
-			item = &OpCreateTable{}
-
-		case OpNameRenameTable:
-			item = &OpRenameTable{}
-
-		case OpNameDropTable:
-			item = &OpDropTable{}
-
-		case OpNameAddColumn:
-			item = &OpAddColumn{}
-
-		case OpNameRenameColumn:
-			item = &OpRenameColumn{}
-
-		case OpNameDropColumn:
-			item = &OpDropColumn{}
-
-		case OpNameRenameConstraint:
-			item = &OpRenameConstraint{}
-
-		case OpNameDropConstraint:
-			item = &OpDropConstraint{}
-
-		case OpNameSetReplicaIdentity:
-			item = &OpSetReplicaIdentity{}
-
-		case OpNameAlterColumn:
-			item = &OpAlterColumn{}
-
-		case OpNameCreateIndex:
-			item = &OpCreateIndex{}
-
-		case OpNameDropIndex:
-			item = &OpDropIndex{}
-
-		case OpRawSQLName:
-			item = &OpRawSQL{}
-
-		case OpCreateConstraintName:
-			item = &OpCreateConstraint{}
-
-		case OpNameDropMultiColumnConstraint:
-			item = &OpDropMultiColumnConstraint{}
-
-		default:
-			return fmt.Errorf("unknown migration type: %v", opName)
+		item, err := operationFromName(opName)
+		if err != nil {
+			return err
 		}
 
 		dec := json.NewDecoder(bytes.NewReader(logBody))
@@ -185,6 +176,55 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 	}
 	buf.WriteByte(']')
 	return buf.Bytes(), nil
+}
+
+// UnmarshalYAML deserializes the list of operations from a YAML array.
+func (v *Operations) UnmarshalYAML(value *yaml.Node) error {
+	var tmp []map[string]*RawNode
+	if err := value.Decode(&tmp); err != nil {
+		return nil
+	}
+
+	if len(tmp) == 0 {
+		*v = Operations{}
+		return nil
+	}
+
+	ops := make([]Operation, len(tmp))
+	for i, opObj := range tmp {
+		var opName OpName
+		if len(opObj) != 1 {
+			return fmt.Errorf("multiple keys in operation object at index %d: %v",
+				i, strings.Join(slices.Collect(maps.Keys(opObj)), ", "))
+		}
+		for k, v := range opObj {
+			opName = OpName(k)
+			item, err := operationFromName(opName)
+			if err != nil {
+				return err
+			}
+
+			if err := v.Decode(item); err != nil {
+				return fmt.Errorf("decode migration [%v]: %w", opName, err)
+			}
+
+			ops[i] = item
+		}
+	}
+
+	*v = ops
+	return nil
+}
+
+// RawNode is a trick to postpone the unmarshalling of a YAML node.
+// It is used to unmarshal the operation body later.
+type RawNode struct {
+	*yaml.Node
+}
+
+func (n *RawNode) UnmarshalYAML(node *yaml.Node) error {
+	n.Node = node
+	return nil
 }
 
 // OperationName returns the name of the operation.
@@ -238,4 +278,55 @@ func OperationName(op Operation) OpName {
 	}
 
 	panic(fmt.Errorf("unknown operation for %T", op))
+}
+
+func operationFromName(name OpName) (Operation, error) {
+	switch name {
+	case OpNameCreateTable:
+		return &OpCreateTable{}, nil
+
+	case OpNameRenameTable:
+		return &OpRenameTable{}, nil
+
+	case OpNameDropTable:
+		return &OpDropTable{}, nil
+
+	case OpNameAddColumn:
+		return &OpAddColumn{}, nil
+
+	case OpNameRenameColumn:
+		return &OpRenameColumn{}, nil
+
+	case OpNameDropColumn:
+		return &OpDropColumn{}, nil
+
+	case OpNameRenameConstraint:
+		return &OpRenameConstraint{}, nil
+
+	case OpNameDropConstraint:
+		return &OpDropConstraint{}, nil
+
+	case OpNameSetReplicaIdentity:
+		return &OpSetReplicaIdentity{}, nil
+
+	case OpNameAlterColumn:
+		return &OpAlterColumn{}, nil
+
+	case OpNameCreateIndex:
+		return &OpCreateIndex{}, nil
+
+	case OpNameDropIndex:
+		return &OpDropIndex{}, nil
+
+	case OpRawSQLName:
+		return &OpRawSQL{}, nil
+
+	case OpCreateConstraintName:
+		return &OpCreateConstraint{}, nil
+
+	case OpNameDropMultiColumnConstraint:
+		return &OpDropMultiColumnConstraint{}, nil
+
+	}
+	return nil, fmt.Errorf("unknown migration type: %v", name)
 }

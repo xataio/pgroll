@@ -6,6 +6,8 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+
+	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 var (
@@ -16,9 +18,9 @@ var (
 // LatestVersionLocal returns the name of the last migration in `dir`, where the
 // migration files are lexicographically ordered by filename.
 func (m *Roll) LatestVersionLocal(ctx context.Context, dir fs.FS) (string, error) {
-	files, err := fs.Glob(dir, "*.json")
+	files, err := migrations.CollectFilesFromDir(dir)
 	if err != nil {
-		return "", fmt.Errorf("reading directory: %w", err)
+		return "", fmt.Errorf("getting migration files from dir: %w", err)
 	}
 
 	if len(files) == 0 {
@@ -27,7 +29,7 @@ func (m *Roll) LatestVersionLocal(ctx context.Context, dir fs.FS) (string, error
 
 	latest := files[len(files)-1]
 
-	migration, err := openAndReadMigrationFile(dir, latest)
+	migration, err := migrations.ReadMigration(dir, latest)
 	if err != nil {
 		return "", fmt.Errorf("reading migration file %q: %w", latest, err)
 	}
