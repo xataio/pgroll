@@ -1,4 +1,5 @@
-This is an valid 'create_constraint' migration.
+This is a valid 'create_constraint' migration.
+It is a unique constraint so can have `nulls_not_distinct` set to `true`.
 
 -- create_constraint.json --
 {
