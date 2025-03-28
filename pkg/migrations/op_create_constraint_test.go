@@ -173,6 +173,108 @@ func TestCreateConstraint(t *testing.T) {
 			},
 		},
 		{
+			name:              "create unique constraint on single column where nulls not distinct",
+			minPgMajorVersion: 15,
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "unique_name",
+							Table:   "users",
+							Type:    "unique",
+							Columns: []string{"name"},
+							Up: map[string]string{
+								"name": "random()",
+							},
+							Down: map[string]string{
+								"name": "name",
+							},
+							NullsNotDistinct: true,
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexUniqueNullsNotDistinctMustExist(t, db, schema, "users", "unique_name")
+
+				// Inserting values into the old schema that violate uniqueness should succeed.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "alice",
+				})
+				// NULLs are considered distinct, so this succeeds.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"id": "300",
+				})
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"id": "301",
+				})
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id": "102",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id": "103",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "uniue_name")
+
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "name")
+
+				// The index is transferred to a constraint.
+				UniqueNullsNotDistinctConstraintMustExist(t, db, schema, "users", "unique_name")
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "carol",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"name": "carol",
+				}, testutils.UniqueViolationErrorCode)
+
+				// Inserting values into the new schema that violate uniqueness should fail.
+				// Uniqueness violated because NULLs are not distinct.
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id": "200",
+				})
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id": "201",
+				}, testutils.UniqueViolationErrorCode)
+			},
+		},
+		{
 			name: "create unique constraint on multiple columns",
 			migrations: []migrations.Migration{
 				{
