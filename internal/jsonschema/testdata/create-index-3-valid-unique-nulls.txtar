@@ -1,0 +1,23 @@
+This is a valid 'create_index' migration.
+It is a unique index so can have `nulls_not_distinct` set to `true`.
+
+-- create_index.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_index": {
+        "name": "reviews_index",
+        "table": "my_table",
+        "columns": {
+            "my-column": {}
+        },
+        "unique": true,
+        "nulls_not_distinct": true
+      }
+    }
+  ]
+}
+
+-- valid --
+true

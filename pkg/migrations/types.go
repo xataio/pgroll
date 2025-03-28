@@ -288,6 +288,9 @@ type OpCreateConstraint struct {
 	// Do not propagate constraint to child tables
 	NoInherit bool `json:"no_inherit,omitempty" yaml:"no_inherit,omitempty"`
 
+	// Nulls not distinct constraint
+	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty" yaml:"nulls_not_distinct,omitempty"`
+
 	// Reference to the foreign key
 	References *TableForeignKeyReference `json:"references,omitempty" yaml:"references,omitempty"`
 
@@ -317,6 +320,9 @@ type OpCreateIndex struct {
 
 	// Index name
 	Name string `json:"name" yaml:"name"`
+
+	// Are nulls distinct (valid for unique indexes only)
+	NullsNotDistinct bool `json:"nulls_not_distinct,omitempty" yaml:"nulls_not_distinct,omitempty"`
 
 	// Conditional expression for defining a partial index
 	Predicate string `json:"predicate,omitempty" yaml:"predicate,omitempty"`

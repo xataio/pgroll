@@ -612,12 +612,35 @@
           "type": "string",
           "default": ""
         },
+        "nulls_not_distinct": {
+          "description": "Are nulls distinct (valid for unique indexes only)",
+          "type": "boolean",
+          "default": false
+        },
         "unique": {
           "description": "Indicates if the index is unique",
           "type": "boolean",
           "default": false
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "unique": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "nulls_not_distinct": {
+                "const": false
+              }
+            }
+          }
+        }
+      ],
       "required": ["columns", "name", "table"],
       "type": "object"
     },
@@ -848,6 +871,11 @@
           "type": "boolean",
           "default": false
         },
+        "nulls_not_distinct": {
+          "description": "Nulls not distinct constraint",
+          "type": "boolean",
+          "default": false
+        },
         "references": {
           "description": "Reference to the foreign key",
           "$ref": "#/$defs/TableForeignKeyReference"
@@ -877,6 +905,9 @@
               },
               "no_inherit": {
                 "const": false
+              },
+              "nulls_not_distinct": {
+                "const": false
               }
             },
             "required": ["columns", "references"]
@@ -897,6 +928,9 @@
               },
               "references": {
                 "const": {}
+              },
+              "nulls_not_distinct": {
+                "const": false
               }
             },
             "required": ["check"]

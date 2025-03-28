@@ -10,6 +10,7 @@
           "sellers_name",
           "sellers_zip"
         ],
+        "nulls_not_distinct": false,
         "up": {
           "sellers_name": "sellers_name",
           "sellers_zip": "sellers_zip"
