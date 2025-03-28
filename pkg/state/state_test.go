@@ -495,7 +495,7 @@ func TestReadSchema(t *testing.T) {
 				},
 			},
 			{
-				name:              "unique, nulls not distinct",
+				name:              "unique index, nulls not distinct",
 				minPgMajorVersion: 15,
 				createStmt:        "CREATE TABLE public.table1 (id int NOT NULL); CREATE UNIQUE INDEX id_unique ON public.table1 (id) NULLS NOT DISTINCT",
 				wantSchema: &schema.Schema{
@@ -939,6 +939,48 @@ func TestReadSchema(t *testing.T) {
 									Columns:    []string{"name"},
 									Method:     string(migrations.OpCreateIndexMethodBtree),
 									Definition: "CREATE UNIQUE INDEX name_unique ON public.table1 USING btree (name)",
+								},
+							},
+							ForeignKeys:      map[string]*schema.ForeignKey{},
+							CheckConstraints: map[string]*schema.CheckConstraint{},
+							UniqueConstraints: map[string]*schema.UniqueConstraint{
+								"name_unique": {
+									Name:    "name_unique",
+									Columns: []string{"name"},
+								},
+							},
+							ExcludeConstraints: map[string]*schema.ExcludeConstraint{},
+						},
+					},
+				},
+			},
+			{
+				name:              "unique constraint, nulls not distinct",
+				minPgMajorVersion: 15,
+				createStmt:        "CREATE TABLE public.table1 (name TEXT CONSTRAINT name_unique UNIQUE NULLS NOT DISTINCT);",
+				wantSchema: &schema.Schema{
+					Name: "public",
+					Tables: map[string]*schema.Table{
+						"table1": {
+							Name: "table1",
+							Columns: map[string]*schema.Column{
+								"name": {
+									Name:         "name",
+									Type:         "text",
+									Unique:       true,
+									Nullable:     true,
+									PostgresType: "base",
+								},
+							},
+							PrimaryKey: []string{},
+							Indexes: map[string]*schema.Index{
+								"name_unique": {
+									Name:             "name_unique",
+									Unique:           true,
+									Columns:          []string{"name"},
+									Method:           string(migrations.OpCreateIndexMethodBtree),
+									Definition:       "CREATE UNIQUE INDEX name_unique ON public.table1 USING btree (name) NULLS NOT DISTINCT",
+									NullsNotDistinct: true,
 								},
 							},
 							ForeignKeys:      map[string]*schema.ForeignKey{},
