@@ -26,30 +26,26 @@ func TestLatestVersionLocal(t *testing.T) {
 			"03_migration_3.json": &fstest.MapFile{Data: exampleMigration(t, "03_migration_3")},
 		}
 
-		testutils.WithMigratorAndConnectionToContainer(t, func(roll *roll.Roll, _ *sql.DB) {
-			ctx := context.Background()
+		ctx := context.Background()
 
-			// Get the latest migration in the directory
-			latest, err := roll.LatestVersionLocal(ctx, fs)
-			require.NoError(t, err)
+		// Get the latest migration in the directory
+		latest, err := roll.LatestVersionLocal(ctx, fs)
+		require.NoError(t, err)
 
-			// Assert last migration name
-			assert.Equal(t, "03_migration_3", latest)
-		})
+		// Assert last migration name
+		assert.Equal(t, "03_migration_3", latest)
 	})
 
 	t.Run("returns an error if the directory is empty", func(t *testing.T) {
 		fs := fstest.MapFS{}
 
-		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
-			ctx := context.Background()
+		ctx := context.Background()
 
-			// Get the latest migration in the directory
-			_, err := m.LatestVersionLocal(ctx, fs)
+		// Get the latest migration in the directory
+		_, err := roll.LatestVersionLocal(ctx, fs)
 
-			// Assert expected error
-			assert.ErrorIs(t, err, roll.ErrNoMigrationFiles)
-		})
+		// Assert expected error
+		assert.ErrorIs(t, err, roll.ErrNoMigrationFiles)
 	})
 }
 

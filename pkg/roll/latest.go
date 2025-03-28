@@ -17,7 +17,7 @@ var (
 
 // LatestVersionLocal returns the name of the last migration in `dir`, where the
 // migration files are lexicographically ordered by filename.
-func (m *Roll) LatestVersionLocal(ctx context.Context, dir fs.FS) (string, error) {
+func LatestVersionLocal(ctx context.Context, dir fs.FS) (string, error) {
 	files, err := migrations.CollectFilesFromDir(dir)
 	if err != nil {
 		return "", fmt.Errorf("getting migration files from dir: %w", err)

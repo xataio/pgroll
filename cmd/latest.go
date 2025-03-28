@@ -3,10 +3,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/cmd/flags"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func latestCmd() *cobra.Command {
@@ -21,48 +24,21 @@ func latestCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			m, err := NewRoll(ctx)
-			if err != nil {
-				return err
-			}
-			defer m.Close()
-
 			var latestVersion string
+			var err error
 			if migrationsDir != "" {
-				info, err := os.Stat(migrationsDir)
-				if err != nil {
-					return fmt.Errorf("failed to stat directory: %w", err)
-				}
-				if !info.IsDir() {
-					return fmt.Errorf("migrations directory %q is not a directory", migrationsDir)
-				}
-
-				latestVersion, err = m.LatestVersionLocal(ctx, os.DirFS(migrationsDir))
+				latestVersion, err = latestVersionLocal(ctx, migrationsDir, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
 			} else {
-				// Ensure that pgroll is initialized
-				ok, err := m.State().IsInitialized(cmd.Context())
-				if err != nil {
-					return err
-				}
-				if !ok {
-					return errPGRollNotInitialized
-				}
-
-				latestVersion, err = m.LatestVersionRemote(ctx)
+				latestVersion, err = latestVersionRemote(ctx, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from database: %w", err)
 				}
 			}
 
-			var prefix string
-			if withSchema {
-				prefix = m.Schema() + "_"
-			}
-
-			fmt.Printf("%s%s\n", prefix, latestVersion)
+			fmt.Println(latestVersion)
 
 			return nil
 		},
@@ -72,4 +48,63 @@ func latestCmd() *cobra.Command {
 	latestCmd.Flags().StringVarP(&migrationsDir, "local", "l", "", "retrieve the latest version from a local migration directory")
 
 	return latestCmd
+}
+
+// latestVersionLocal returns the latest migration version from a local
+// migration directory on disk, assuming the migration files are
+// lexicographically ordered by filename
+func latestVersionLocal(ctx context.Context, migrationsDir string, withSchema bool) (string, error) {
+	// Ensure that the directory exists
+	info, err := os.Stat(migrationsDir)
+	if err != nil {
+		return "", err
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("not a directory: %q", migrationsDir)
+	}
+
+	// Get the latest migration in the directory
+	latestVersion, err := roll.LatestVersionLocal(ctx, os.DirFS(migrationsDir))
+	if err != nil {
+		return "", err
+	}
+
+	// Prepend the schema name to the latest version if requested
+	if withSchema {
+		latestVersion = flags.Schema() + "_" + latestVersion
+	}
+
+	return latestVersion, nil
+}
+
+// latestVersionRemote returns the latest applied migration version on the target database
+func latestVersionRemote(ctx context.Context, withSchema bool) (string, error) {
+	// Create a new Roll instance
+	m, err := NewRoll(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer m.Close()
+
+	// Ensure that pgroll is initialized
+	ok, err := m.State().IsInitialized(ctx)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", errPGRollNotInitialized
+	}
+
+	// Get the latest version in the target schema
+	latestVersion, err := m.LatestVersionRemote(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	// Prepend the schema name to the latest version if requested
+	if withSchema {
+		latestVersion = m.Schema() + "_" + latestVersion
+	}
+
+	return latestVersion, nil
 }
