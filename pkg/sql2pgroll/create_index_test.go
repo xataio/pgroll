@@ -140,6 +140,10 @@ func TestConvertCreateIndexStatements(t *testing.T) {
 			sql:        "CREATE INDEX idx_name ON foo (bar opclass1, baz opclass2)",
 			expectedOp: expect.CreateIndexOp11,
 		},
+		{
+			sql:        "CREATE INDEX IF NOT EXISTS idx_name ON foo (bar)",
+			expectedOp: expect.CreateIndexOp1,
+		},
 	}
 
 	for _, tc := range tests {
@@ -166,8 +170,6 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 		"CREATE INDEX idx_name ON ONLY foo (bar)",
 		// Indexes with NULLS NOT DISTINCT are not supported
 		"CREATE INDEX idx_name ON foo(a) NULLS NOT DISTINCT",
-		// IF NOT EXISTS is unsupported
-		"CREATE INDEX IF NOT EXISTS idx_name ON foo(a)",
 		// Indexes defined on expressions are not supported
 		"CREATE INDEX idx_name ON foo(LOWER(a))",
 		"CREATE INDEX idx_name ON foo(a, LOWER(b))",

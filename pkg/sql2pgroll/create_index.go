@@ -145,10 +145,6 @@ func canConvertCreateIndexStmt(stmt *pgq.IndexStmt) bool {
 	if stmt.GetNullsNotDistinct() {
 		return false
 	}
-	// IF NOT EXISTS is unsupported
-	if stmt.GetIfNotExists() {
-		return false
-	}
 	// Indexes defined on expressions are not supported
 	for _, node := range stmt.GetIndexParams() {
 		if node.GetIndexElem().GetExpr() != nil {
