@@ -80,6 +80,10 @@ func (s *State) Init(ctx context.Context) error {
 	return tx.Commit()
 }
 
+func (s *State) PgConn() *sql.DB {
+	return s.pgConn
+}
+
 func (s *State) IsInitialized(ctx context.Context) (bool, error) {
 	var isInitialized bool
 	err := s.pgConn.QueryRowContext(ctx,
