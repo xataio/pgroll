@@ -764,6 +764,93 @@ func createTableOp(tableName string) *migrations.OpCreateTable {
 	}
 }
 
+// pgroll uses two Postgres connections:
+// - one for the migrator (used for DDL operations on the target schema)
+// - one for the state (used to update pgroll's internal state)
+// Both connections should have their application_name set to a specific value for easy identification in pg_stat_activity.
+func TestConnectionsSetPostgresApplicationName(t *testing.T) {
+	t.Parallel()
+
+	// Define an interface common to
+	// - *sql.DB (used by the state connection)
+	// - db.DB (used by the migrator connection)
+	type Execer interface {
+		ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	}
+
+	testCases := []struct {
+		name            string
+		connFn          func(mig *roll.Roll) Execer
+		query           string
+		expectedAppName string
+	}{
+		{
+			name: "migrator sets application name correctly",
+			connFn: func(mig *roll.Roll) Execer {
+				return mig.PgConn()
+			},
+			query:           "SELECT pg_sleep(2) -- migrator connection",
+			expectedAppName: "pgroll",
+		},
+		{
+			name: "state sets application name correctly",
+			connFn: func(mig *roll.Roll) Execer {
+				return mig.State().PgConn()
+			},
+			query:           "SELECT pg_sleep(2) -- state connection",
+			expectedAppName: "pgroll-state",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testutils.WithMigratorAndConnectionToContainer(t, func(roll *roll.Roll, db *sql.DB) {
+				ctx := context.Background()
+
+				// Get the connection under test; either the migrator or the state connection
+				conn := tc.connFn(roll)
+
+				// Start a long running query on the connection under test
+				// Use a buffered channel to ensure the goroutine can always signal completion
+				errCh := make(chan error, 1)
+				go func() {
+					_, err := conn.ExecContext(ctx, tc.query)
+					errCh <- err
+				}()
+
+				// Wait for the query, which must have the expected application_name, to appear in pg_stat_activity
+				require.Eventually(t, func() bool {
+					// Fail the test if the query under test has failed for any reason
+					select {
+					case err := <-errCh:
+						require.NoError(t, err, "query %q failed: %v", tc.query, err)
+					default:
+					}
+
+					// Query pg_stat_activity for queries with the expected application_name
+					rows, err := db.QueryContext(ctx,
+						"SELECT query FROM pg_stat_activity WHERE application_name = $1", tc.expectedAppName)
+					require.NoError(t, err)
+
+					defer rows.Close()
+
+					// Check if the query executed by this testcase is present in the result set
+					for rows.Next() {
+						var query string
+						require.NoError(t, rows.Scan(&query))
+						if query == tc.query {
+							return true
+						}
+					}
+					require.NoError(t, rows.Err())
+					return false
+				}, 3*time.Second, 100*time.Millisecond,
+					"expected query %q with application_name %q to be found in pg_stat_activity", tc.query, tc.expectedAppName)
+			})
+		})
+	}
+}
+
 func addColumnOp(tableName string) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: tableName,
