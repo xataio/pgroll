@@ -85,7 +85,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
-		return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns))
+		return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...).Execute(ctx)
 	case OpCreateConstraintTypeCheck:
 		return table, o.addCheckConstraint(ctx, conn, table.Name)
 	case OpCreateConstraintTypeForeignKey:

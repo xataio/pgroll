@@ -63,7 +63,9 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 	}
 
 	if o.Column.Unique {
-		if err := createUniqueIndexConcurrently(ctx, conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, []string{TemporaryName(o.Column.Name)}); err != nil {
+		createIndex := NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, TemporaryName(o.Column.Name))
+		err := createIndex.Execute(ctx)
+		if err != nil {
 			return nil, fmt.Errorf("failed to add unique index: %w", err)
 		}
 	}

@@ -31,7 +31,7 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	return table, createUniqueIndexConcurrently(ctx, conn, s.Name, o.Name, table.Name, []string{column.Name})
+	return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
