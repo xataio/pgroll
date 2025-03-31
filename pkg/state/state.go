@@ -20,6 +20,10 @@ import (
 //go:embed init.sql
 var sqlInit string
 
+// applicationName is the Postgres application_name set on the connection used
+// by the the State instance
+const applicationName = "pgroll-state"
+
 type State struct {
 	pgConn *sql.DB
 	schema string
@@ -31,7 +35,7 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 		dsn = pgURL
 	}
 
-	dsn += " search_path=" + stateSchema
+	dsn += fmt.Sprintf(" search_path=%s application_name=%s", stateSchema, applicationName)
 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {

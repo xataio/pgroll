@@ -18,6 +18,10 @@ type PGVersion int
 
 const (
 	PGVersion15 PGVersion = 15
+
+	// applicationName is the Postgres application_name set on the connection
+	// used by the the Roll instance
+	applicationName = "pgroll"
 )
 
 var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local migration")
@@ -77,7 +81,8 @@ func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql
 	}
 
 	searchPath := append([]string{schema}, options.searchPath...)
-	dsn += " search_path=" + strings.Join(searchPath, ",")
+	dsn += fmt.Sprintf(" search_path=%s application_name=%s",
+		strings.Join(searchPath, ","), applicationName)
 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
