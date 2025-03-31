@@ -309,3 +309,28 @@ func (a *createUniqueIndexConcurrentlyAction) isIndexValid(ctx context.Context, 
 
 	return isValid, nil
 }
+
+// createTableAction is a DBAction that creates a table.
+type createTableAction struct {
+	conn        db.DB
+	table       string
+	columns     string
+	constraints string
+}
+
+func NewCreateTableAction(conn db.DB, table, columns, constraints string) *createTableAction {
+	return &createTableAction{
+		conn:        conn,
+		table:       table,
+		columns:     columns,
+		constraints: constraints,
+	}
+}
+
+func (a *createTableAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
+		pq.QuoteIdentifier(a.table),
+		a.columns,
+		a.constraints))
+	return err
+}
