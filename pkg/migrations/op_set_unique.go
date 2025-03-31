@@ -30,13 +30,8 @@ func (o *OpSetUnique) Start(ctx context.Context, conn db.DB, latestSchema string
 	if column == nil {
 		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
-	createIndex := NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name)
-	err := createIndex.Execute(ctx)
-	if err != nil {
-		return table, fmt.Errorf("failed to create unique index: %w", err)
-	}
 
-	return table, nil
+	return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
