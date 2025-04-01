@@ -1,0 +1,209 @@
+---
+title: Writing up and down migrations
+description: Guide to writing up and down migrations
+---
+
+In this guide you will learn how to write `up` and `down` migrations in your pgroll operations. First, we are looking at how `up` and `down` migrations work. Then we are going through a few examples.
+
+## What is an `up` and `down` migration of a pgroll operation?
+
+Most pgroll migrations include `up` and `down` migrations. When `pgroll` is migrating tables, it creates `up` and `down` triggers. The `up` triggers backfill the records in the table. The `down` triggers are running during rollback.
+
+The expressions in `up` and `down` are PL/pgSQL assignments executed by the triggers. Thus, these are evaluated as an SQL `SELECT` statement.
+
+## Examples
+
+Now let's look at a few examples. We are performing different migrations on this table:
+
+```
+postgres=# \d employee
+                                 Table "public.employee"
+ Column |       Type       | Collation | Nullable |               Default
+--------+------------------+-----------+----------+--------------------------------------
+ id     | integer          |           | not null | nextval('employee_id_seq'::regclass)
+ name   | text             |           | not null |
+ nick   | text             |           | not null |
+ email  | text             |           |          |
+ salary | double precision |           | not null |
+ bio    | text             |           |          |
+Indexes:
+    "employee_pkey" PRIMARY KEY, btree (id)
+
+```
+
+With the following records:
+
+```
+ id | name  | nick |     email      | salary  |                 bio
+----+-------+------+----------------+---------+-------------------------------------
+  1 | Alice | al   | al@company.com |  5000.5 | hi, i am al
+  2 | Bob   | rob  |                |  5400.5 | i am bob aka rob. i love gardening.
+  3 | Carol | cat  |                | 6500.75 |
+```
+
+### Keep the value
+
+We are adding a new check constraint to the table to make sure all first names are capitalized. We inspected our table and know
+that the check is on the application side.
+
+```yaml
+operations:
+ - create_constraint:
+    name: capitalized_name
+    table: employee
+    type: check
+    columns:
+     - name
+    check: name = INITCAP(name)
+    up:
+     name: name
+    down:
+     name: name
+```
+
+Notice that both `up` and `down` migrations are set to `name` for `name` column. Thus, pgroll preserves the values in the column `name`.
+
+So after the migraton, the table remains unchanged:
+
+```
+ name  | nick |     email      | salary  |                 bio
+-------+------+----------------+---------+-------------------------------------
+ Alice | al   | al@company.com |  5000.5 | hi, i am al
+ Bob   | rob  |                |  5400.5 | i am bob aka rob. i love gardening.
+ Carol | cat  |                | 6500.75 |
+```
+
+### Convert type
+
+In this example we are changing the type of a column from float to int.
+
+Each person's salary is stored in a float. We are converting the `salary` column from float to integer.
+
+```yaml
+operations:
+ - alter_column:
+    table: employee
+    column: salary
+    type: integer
+    up: trunc(salary)
+    down: salary
+```
+
+After the migration, this is the contents of the table.
+
+```
+ name  | nick |     email      | salary |                 bio
+-------+------+----------------+--------+-------------------------------------
+ Alice | al   | al@company.com |   5000 | hi, i am al
+ Bob   | rob  |                |   5400 | i am bob aka rob. i love gardening.
+ Carol | cat  |                |   6500 |
+```
+
+### Add a random value
+
+We are adding a new column that cannot be null named `location`.
+
+```yaml
+operations:
+ - add_column:
+     table: employee
+     up: '''New York'''
+     column:
+       name: location
+       type: text
+       nullable: false
+```
+
+The table is backfilled:
+
+```
+ id | nick |     email      |                 bio                 | name  | salary | location
+----+------+----------------+-------------------------------------+-------+--------+----------
+  1 | al   | al@company.com | hi, i am al                         | Alice |   5000 | New York
+  2 | rob  |                | i am bob aka rob. i love gardening. | Bob   |   5400 | New York
+  3 | cat  |                |                                     | Carol |   6500 | New York
+```
+
+### Add a placeholder value if it is null
+
+We are adding a not null constraint to the `email` column. Any employee that does not have an email specified is automatically set the their default company email.
+
+```yaml
+operations:
+ - alter_column:
+    table: employee
+    column: email
+    nullable: false
+    up: SELECT CASE WHEN email IS NULL THEN nick || '@company.com' ELSE email END
+    down: email
+```
+
+After the migration is complete, everyone will have an email address:
+
+```
+ name  | nick |     email       | salary |                 bio
+-------+------+-----------------+--------+-------------------------------------
+ Alice | al   | al@company.com  |   5000 | hi, i am al
+ Bob   | rob  | rob@company.com |   5400 | i am bob aka rob. i love gardening.
+ Carol | cat  | cat@company.com |   6500 |
+```
+
+### Backfill based on column value
+
+Now let's add another constraint to the table. This time we make sure that everyone has a few words in their bio. If the user has a too short bio, we are appending a random string.
+
+```sql
+CREATE OR REPLACE FUNCTION random_bio(integer)
+    RETURNS TEXT AS
+    $BODY$
+        SELECT array_to_string(
+            ARRAY (
+                SELECT substring(
+                    'abcdefghijklmnopqrstuvwxyz'
+                    FROM (ceil(random()*26))::int FOR 1
+                )
+                FROM generate_series(1, $1)
+            ),
+            ''
+)
+$BODY$
+LANGUAGE sql VOLATILE;
+```
+
+Then we can call this function from the `up` migration:
+* if `bio` is null, we add a constant `'this employee did not provide a bio'`
+* if `bio` is shorter than 15 characters, we generate random characters to reach 15 characters using the function `random_bio`
+* if `bio` is longer than 100 characters, we truncate `bio` and add `...` to the end
+
+The complete migration is the following:
+
+```yaml
+operations:
+ - create_constraint:
+    name: limited_required_bio
+    table: employee
+    type: check
+    columns:
+     - bio
+    check: length(bio) > 15 AND length(bio) < 100
+    up:
+     bio: >
+       CASE
+         WHEN bio IS NULL THEN 'this employee did not provide a bio'
+         WHEN length(bio) <= 15 THEN bio || SELECT random_bio(16-length(bio))
+         WHEN length(bio) >= 100 THEN left(bio, 96) || '...'
+         ELSE bio
+       END
+    down:
+     bio: bio
+```
+
+The `bio` column for `Alice` now contains extra 5 characters (`aoivgz`) after the migration is complete:
+
+```
+ name  | nick |     email       | salary |                 bio
+-------+------+-----------------+--------+-------------------------------------
+ Alice | al   | al@company.com  |   5000 | hi, i am aloivgd
+ Bob   | rob  | rob@company.com |   5400 | i am bob aka rob. i love gardening.
+ Carol | cat  | cat@company.com |   6500 | this employee did not provide a bio
+```
