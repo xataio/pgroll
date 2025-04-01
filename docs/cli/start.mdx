@@ -6,10 +6,10 @@ description: Start a pgroll migration
 ## Command
 
 ```
-$ pgroll start sql/03_add_column.json
+$ pgroll start sql/03_add_column.yaml
 ```
 
-This starts the migration defined in the `sql/03_add_column.json` file.
+This starts the migration defined in the `sql/03_add_column.yaml` file.
 
 After starting a migration there will be two schema versions in the database; one for the old schema before the migration (e.g. `public_02_create_table`) and one for the new version with the schema changes (e.g. `public_03_add_column`). Each of these schemas merely contains views on the tables in the `public` schema.
 
@@ -18,7 +18,7 @@ After starting a migration there will be two schema versions in the database; on
 A migration can be started and completed with one command by specifying the `--complete` flag:
 
 ```
-$ pgroll start sql/03_add_column.json --complete
+$ pgroll start sql/03_add_column.yaml --complete
 ```
 
 This is equivalent to running `pgroll start` immediately followed by `pgroll complete`.

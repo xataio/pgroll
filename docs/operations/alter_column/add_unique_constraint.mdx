@@ -5,18 +5,14 @@ description: Add unique operations add a `UNIQUE` constraint to a column.
 
 ## Structure
 
-```json
-{
-  "alter_column": {
-    "table": "table name",
-    "column": "column name",
-    "unique": {
-      "name": "name of unique constraint"
-    },
-    "up": "SQL expression",
-    "down": "SQL expression"
-  }
-}
+```yaml
+alter_column:
+  table: table name
+  column: column name
+  unique:
+    name: name of unique constraint
+  up: SQL expression
+  down: SQL expression
 ```
 
 Use the `up` SQL expression to migrate values from the old non-unique column in the old schema to the `UNIQUE` column in the new schema.
