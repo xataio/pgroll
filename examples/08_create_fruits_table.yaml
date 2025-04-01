@@ -1,0 +1,16 @@
+name: 08_create_fruits_table
+operations:
+  - create_table:
+      name: fruits
+      columns:
+        - name: id
+          type: bigint
+          pk: true
+          generated:
+            identity:
+              user_specified_values: BY DEFAULT
+        - name: name
+          type: varchar(255)
+          unique: true
+        - name: price
+          type: decimal(10,2)

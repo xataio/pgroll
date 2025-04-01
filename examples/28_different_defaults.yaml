@@ -1,0 +1,17 @@
+name: 28_different_defaults
+operations:
+  - create_table:
+      name: items
+      columns:
+        - name: id
+          type: serial
+          pk: true
+        - name: name
+          type: varchar(255)
+          default: '''unnamed'''
+        - name: price
+          type: decimal(10,2)
+          default: "0.00"
+        - name: created_at
+          type: timestamptz
+          default: now()

@@ -1,0 +1,5 @@
+name: 05_sql
+operations:
+  - sql:
+      up: CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)
+      down: DROP TABLE users

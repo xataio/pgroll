@@ -1,0 +1,11 @@
+name: 26_add_column_with_check_constraint
+operations:
+  - add_column:
+      table: people
+      column:
+        name: age
+        type: integer
+        default: "18"
+        check:
+          name: age_check
+          constraint: age >= 18

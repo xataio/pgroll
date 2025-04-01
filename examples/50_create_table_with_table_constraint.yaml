@@ -1,0 +1,25 @@
+name: 50_create_table_with_table_constraint
+operations:
+  - create_table:
+      name: telephone_providers
+      columns:
+        - name: id
+          type: serial
+        - name: name
+          type: varchar(255)
+        - name: tax_id
+          type: varchar(255)
+        - name: headquarters
+          type: varchar(255)
+      constraints:
+        - name: provider_pk
+          type: primary_key
+          columns:
+            - id
+        - name: unique_tax_id
+          type: unique
+          columns:
+            - tax_id
+        - name: name_must_be_present
+          type: check
+          check: length(name) > 0
