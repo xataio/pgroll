@@ -13,7 +13,7 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 type OpName string
@@ -92,9 +92,7 @@ func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
 		dec.DisallowUnknownFields()
 		err = dec.Decode(&mig)
 	case ".yaml", ".yml":
-		dec := yaml.NewDecoder(bytes.NewReader(byteValue))
-		dec.KnownFields(true)
-		err = dec.Decode(&mig)
+		err = yaml.UnmarshalStrict(byteValue, &mig)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("reading migration file: %w", err)
@@ -176,55 +174,6 @@ func (v Operations) MarshalJSON() ([]byte, error) {
 	}
 	buf.WriteByte(']')
 	return buf.Bytes(), nil
-}
-
-// UnmarshalYAML deserializes the list of operations from a YAML array.
-func (v *Operations) UnmarshalYAML(value *yaml.Node) error {
-	var tmp []map[string]*RawNode
-	if err := value.Decode(&tmp); err != nil {
-		return nil
-	}
-
-	if len(tmp) == 0 {
-		*v = Operations{}
-		return nil
-	}
-
-	ops := make([]Operation, len(tmp))
-	for i, opObj := range tmp {
-		var opName OpName
-		if len(opObj) != 1 {
-			return fmt.Errorf("multiple keys in operation object at index %d: %v",
-				i, strings.Join(slices.Collect(maps.Keys(opObj)), ", "))
-		}
-		for k, v := range opObj {
-			opName = OpName(k)
-			item, err := operationFromName(opName)
-			if err != nil {
-				return err
-			}
-
-			if err := v.Decode(item); err != nil {
-				return fmt.Errorf("decode migration [%v]: %w", opName, err)
-			}
-
-			ops[i] = item
-		}
-	}
-
-	*v = ops
-	return nil
-}
-
-// RawNode is a trick to postpone the unmarshalling of a YAML node.
-// It is used to unmarshal the operation body later.
-type RawNode struct {
-	*yaml.Node
-}
-
-func (n *RawNode) UnmarshalYAML(node *yaml.Node) error {
-	n.Node = node
-	return nil
 }
 
 // OperationName returns the name of the operation.

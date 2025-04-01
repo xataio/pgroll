@@ -16,7 +16,7 @@ format:
 
 generate:
 	# Generate the types from the JSON schema
-	docker run --rm -v $$PWD/schema.json:/mnt/schema.json omissis/go-jsonschema:0.17.0 --only-models -p migrations --tags json,yaml /mnt/schema.json > pkg/migrations/types.go
+	docker run --rm -v $$PWD/schema.json:/mnt/schema.json omissis/go-jsonschema:0.17.0 --only-models -p migrations --tags json /mnt/schema.json > pkg/migrations/types.go
 	# Add the license header to the generated type file
 	echo "// SPDX-License-Identifier: Apache-2.0" | cat - pkg/migrations/types.go > pkg/migrations/types.go.tmp
 	mv pkg/migrations/types.go.tmp pkg/migrations/types.go
