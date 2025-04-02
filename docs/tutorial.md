@@ -40,39 +40,26 @@ You should see a success message indicating that `pgroll` has been configured.
 
 With `pgroll` initialized, let's run our first migration. Here is a migration to create a table:
 
-```json
-{
-  "name": "01_create_users_table",
-  "operations": [
-    {
-      "create_table": {
-        "name": "users",
-        "columns": [
-          {
-            "name": "id",
-            "type": "serial",
-            "pk": true
-          },
-          {
-            "name": "name",
-            "type": "varchar(255)",
-            "unique": true
-          },
-          {
-            "name": "description",
-            "type": "text",
-            "nullable": true
-          }
-        ]
-      }
-    }
-  ]
-}
+```yaml
+name: "01_create_users_table"
+operations:
+  - create_table:
+      name: users
+      columns:
+        - name: id
+          type: serial
+          pk: true
+        - name: name
+          type: varchar(255)
+          unique: true
+        - name: description
+          type: text
+          nullable: true
 ```
 
-Take this file and save it as `sql/01_create_users_table.json`.
+Take this file and save it as `sql/01_create_users_table.yaml`.
 
-> Note: The `name` field is optional. If not provided, `pgroll` will use the filename (without the `.json` extension) as the migration name. In this example, the file is saved as `sql/01_create_users_table.json`, so the name would be `01_create_users_table` if not explicitly provided.
+> Note: The `name` field is optional. If not provided, `pgroll` will use the filename (without the `.yaml` extension) as the migration name. In this example, the file is saved as `sql/01_create_users_table.yaml`, so the name would be `01_create_users_table` if not explicitly provided.
 
 The migration will create a `users` table with three columns. It is equivalent to the following SQL DDL statement:
 
@@ -87,7 +74,7 @@ CREATE TABLE users(
 To apply the migration to the database run:
 
 ```
-pgroll start sql/01_create_users_table.json --complete 
+pgroll start sql/01_create_users_table.yaml --complete 
 ```
 
 <details>
@@ -132,29 +119,23 @@ There are two things that make this migration difficult:
 
 Here is the `pgroll` migration that will perform the migration to make the `description` column `NOT NULL`:
 
-```json
-{
-  "name": "02_user_description_set_nullable",
-  "operations": [
-    {
-      "alter_column": {
-        "table": "users",
-        "column": "description",
-        "nullable": false,
-        "up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
-        "down": "description"
-      }
-    }
-  ]
-}
+```yaml
+name: "02_user_description_set_nullable"
+operations:
+  - alter_column:
+      table: users
+      column: description
+      nullable: false
+      up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
+      down: description
 ```
 
-> As mentioned earlier, the `name` field is optional. If the file is saved as `sql/02_user_description_set_nullable.json`, `pgroll` will use `02_user_description_set_nullable` as the migration name if the name field is not provided.
+> As mentioned earlier, the `name` field is optional. If the file is saved as `sql/02_user_description_set_nullable.yaml`, `pgroll` will use `02_user_description_set_nullable` as the migration name if the name field is not provided.
 
-Save this migration as `sql/02_user_description_set_nullable.json` and start the migration:
+Save this migration as `sql/02_user_description_set_nullable.yaml` and start the migration:
 
 ```
-pgroll start 02_user_description_set_nullable.json
+pgroll start 02_user_description_set_nullable.yaml
 ```
 
 After some progress updates you should see a message saying that the migration has been started successfully.
@@ -191,10 +172,10 @@ You should see something like this:
 +----+---------+------------------------+-------------------------+------------------------+
 ```
 
-This is the "expand" phase of the [expand/contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/) in action; `pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.json` file:
+This is the "expand" phase of the [expand/contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/) in action; `pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.yaml` file:
 
-```json
-"up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
+```yaml
+up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
 ```
 
 This has copied over all `description` values into the `_pgroll_new_description` field, rewriting any `NULL` values using the provided SQL.
@@ -441,23 +422,16 @@ The expand/contract approach to migrations means that the old version of the dat
 
 Looking at the second of these items, rollbacks, let's see how to roll back a `pgroll` migration. We can start another migration now that our last one is complete:
 
-```json
-{
-  "name": "03_add_is_active_column",
-  "operations": [
-    {
-      "add_column": {
-        "table": "users",
-        "column": {
-          "name": "is_atcive",
-          "type": "boolean",
-          "nullable": true,
-          "default": "true"
-        }
-      }
-    }
-  ]
-}
+```yaml
+name: "03_add_is_active_column"
+operations:
+  - add_column:
+      table: users
+      column:
+        name: is_atcive
+        type: boolean
+        nullable: true
+        default: "true"
 ```
 
 > Again, the `name` field is optional. The filename will be used as the default name if not specified.
@@ -467,7 +441,7 @@ Looking at the second of these items, rollbacks, let's see how to roll back a `p
 This migration adds a new column to the `users` table. As before, we can start the migration with this command:
 
 ```
-pgroll start 03_add_is_active_column.json
+pgroll start 03_add_is_active_column.yaml
 ```
 
 Once again, this creates a new version of the schema:
