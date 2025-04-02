@@ -1,0 +1,10 @@
+name: 30_add_column_simple_up
+operations:
+  - add_column:
+      table: people
+      up: '''temporary-description'''
+      column:
+        name: description
+        type: varchar(255)
+        nullable: false
+        comment: This is a comment for the description column

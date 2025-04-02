@@ -1,0 +1,5 @@
+name: 32_sql_on_complete
+operations:
+  - sql:
+      up: ALTER TABLE people ADD COLUMN birth_date timestamp
+      onComplete: true

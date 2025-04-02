@@ -1,0 +1,15 @@
+name: 43_create_tickets_table
+operations:
+  - create_table:
+      name: tickets
+      columns:
+        - name: ticket_id
+          type: serial
+          pk: true
+        - name: sellers_name
+          type: varchar(255)
+        - name: sellers_zip
+          type: integer
+        - name: ticket_type
+          type: varchar(255)
+          default: '''paper'''

@@ -1,0 +1,6 @@
+name: 13_rename_column
+operations:
+  - rename_column:
+      table: employees
+      from: role
+      to: job_title

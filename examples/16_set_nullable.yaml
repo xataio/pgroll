@@ -1,0 +1,8 @@
+name: 16_set_nullable
+operations:
+  - alter_column:
+      table: reviews
+      column: review
+      nullable: false
+      up: SELECT CASE WHEN review IS NULL THEN product || ' is good' ELSE review END
+      down: review

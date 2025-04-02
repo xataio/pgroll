@@ -1,0 +1,8 @@
+name: 17_add_rating_column
+operations:
+  - add_column:
+      table: reviews
+      column:
+        name: rating
+        type: text
+        default: "0"

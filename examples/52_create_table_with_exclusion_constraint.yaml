@@ -1,0 +1,24 @@
+name: 52_create_table_with_table_exclusion_constraint
+operations:
+  - create_table:
+      name: library
+      columns:
+        - name: id
+          type: serial
+        - name: returned
+          type: timestamp
+        - name: title
+          type: text
+        - name: summary
+          type: text
+      constraints:
+        - name: rooms_pk
+          type: primary_key
+          columns:
+            - id
+        - name: forbid_duplicated_titles
+          type: exclude
+          exclude:
+            index_method: btree
+            elements: title WITH =
+            predicate: title IS NOT NULL
