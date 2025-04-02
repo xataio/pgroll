@@ -7,7 +7,7 @@ In this guide, we will learn how to write `up` and `down` migrations in your `pg
 
 ## What is an `up` and `down` migration of a `pgroll` operation?
 
-Most `pgroll` migrations include `up` and `down` migrations. When `pgroll` migrates tables, it creates `up` and `down` triggers. The `up` triggers backfill the records in the table. The `down` triggers run during rollback.
+Most `pgroll` migrations include `up` and `down` migrations. When `pgroll` migrates tables, it creates `up` and `down` triggers. `up` triggers backfill existing columns with the new values during `start` phase. They also run when you insert new rows are into the old schema version or when you update any of the existing rows in the old schema version. `down` triggers run when you insert new rows or update existing rows in the new schema.
 
 The expressions in `up` and `down` are PL/pgSQL assignments executed by the triggers. Thus, these are evaluated as an SQL `SELECT` statement.
 
