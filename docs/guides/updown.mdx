@@ -3,11 +3,11 @@ title: Writing up and down migrations
 description: Guide to writing up and down migrations
 ---
 
-In this guide you will learn how to write `up` and `down` migrations in your pgroll operations. First, we are looking at how `up` and `down` migrations work. Then we are going through a few examples.
+In this guide, we will learn how to write `up` and `down` migrations in your `pgroll` operations. First, we are looking at how `up` and `down` migrations work. Then we will look at a few examples.
 
-## What is an `up` and `down` migration of a pgroll operation?
+## What is an `up` and `down` migration of a `pgroll` operation?
 
-Most pgroll migrations include `up` and `down` migrations. When `pgroll` is migrating tables, it creates `up` and `down` triggers. The `up` triggers backfill the records in the table. The `down` triggers are running during rollback.
+Most `pgroll` migrations include `up` and `down` migrations. When `pgroll` migrates tables, it creates `up` and `down` triggers. The `up` triggers backfill the records in the table. The `down` triggers run during rollback.
 
 The expressions in `up` and `down` are PL/pgSQL assignments executed by the triggers. Thus, these are evaluated as an SQL `SELECT` statement.
 
@@ -61,7 +61,7 @@ operations:
      name: name
 ```
 
-Notice that both `up` and `down` migrations are set to `name` for `name` column. Thus, pgroll preserves the values in the column `name`.
+Notice that both `up` and `down` migrations are set to `name` for `name` column. Thus, `pgroll` preserves the values in the column `name`.
 
 So after the migraton, the table remains unchanged:
 
