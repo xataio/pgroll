@@ -7,7 +7,7 @@ In this guide, we will learn how to write `up` and `down` migrations in your `pg
 
 ## What is an `up` and `down` migration of a `pgroll` operation?
 
-Most `pgroll` migrations include `up` and `down` migrations. When `pgroll` migrates tables, it creates `up` and `down` triggers. `up` triggers backfill existing columns with the new values during `start` phase. They also run when you insert new rows are into the old schema version or when you update any of the existing rows in the old schema version. `down` triggers run when you insert new rows or update existing rows in the new schema.
+Most `pgroll` migrations include `up` and `down` migrations. When `pgroll` migrates tables, it creates `up` and `down` triggers. `up` triggers backfill existing columns with the new values during `start` phase. They also run when you insert new rows into the old schema version or when you update any of the existing rows in the old schema version. `down` triggers run when you insert new rows or update existing rows in the new schema.
 
 The expressions in `up` and `down` are PL/pgSQL assignments executed by the triggers. Thus, these are evaluated as an SQL `SELECT` statement.
 
@@ -41,10 +41,10 @@ With the following records:
   3 | Carol | cat  |                | 6500.75 |
 ```
 
-### Keep the value
+### Keep the value from the application
 
 We are adding a new check constraint to the table to make sure all first names are capitalized. We inspected our table and know
-that the check is on the application side.
+that the check is on the application side. Thus, all data coming from it are valid.
 
 ```yaml
 operations:
@@ -63,7 +63,7 @@ operations:
 
 Notice that both `up` and `down` migrations are set to `name` for `name` column. Thus, `pgroll` preserves the values in the column `name`.
 
-So after the migraton, the table remains unchanged:
+So after the migraton, the rows stay the same:
 
 ```
  name  | nick |     email      | salary  |                 bio
@@ -77,7 +77,7 @@ So after the migraton, the table remains unchanged:
 
 In this example we are changing the type of a column from float to int.
 
-Each person's salary is stored in a float. We are converting the `salary` column from float to integer.
+Each person's salary is stored in a float. We are converting the `salary` column from float to integer using `trunc`.
 
 ```yaml
 operations:
@@ -89,7 +89,7 @@ operations:
     down: salary
 ```
 
-After the migration, this is the contents of the table.
+After the migration, the `salary` column contains only integers.
 
 ```
  name  | nick |     email      | salary |                 bio
@@ -99,9 +99,9 @@ After the migration, this is the contents of the table.
  Carol | cat  |                |   6500 |
 ```
 
-### Add a random value
+### Add a static value
 
-We are adding a new column that cannot be null named `location`.
+We are adding a new column that cannot be null named `location`. We are setting it to `New York` using the `up` expression.
 
 ```yaml
 operations:
@@ -124,9 +124,9 @@ The table is backfilled:
   3 | cat  |                |                                     | Carol |   6500 | New York
 ```
 
-### Add a placeholder value if it is null
+### Add a value if column is not set
 
-We are adding a not null constraint to the `email` column. Any employee that does not have an email specified is automatically set the their default company email.
+We are adding a not null constraint to the `email` column. If the `email` column is not set, we are concatenating the column `nick` and `@company.com`.
 
 ```yaml
 operations:
@@ -148,14 +148,14 @@ After the migration is complete, everyone will have an email address:
  Carol | cat  | cat@company.com |   6500 |
 ```
 
-### Backfill based on column value
+### Add a value based on column contents using an SQL function
 
 Now let's add another constraint to the table. This time we make sure that everyone has a few words in their bio. If the user has a too short bio, we are appending a random string.
 
 ```sql
 CREATE OR REPLACE FUNCTION random_bio(integer)
     RETURNS TEXT AS
-    $BODY$
+    $$
         SELECT array_to_string(
             ARRAY (
                 SELECT substring(
@@ -166,7 +166,7 @@ CREATE OR REPLACE FUNCTION random_bio(integer)
             ),
             ''
 )
-$BODY$
+$$
 LANGUAGE sql VOLATILE;
 ```
 
@@ -198,7 +198,7 @@ operations:
      bio: bio
 ```
 
-The `bio` column for `Alice` now contains extra 5 characters (`aoivgz`) after the migration is complete:
+The `bio` column for `Alice` now contains extra 5 characters (`oivgd`) after the migration is complete:
 
 ```
  name  | nick |     email       | salary |                 bio
