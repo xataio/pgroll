@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -128,12 +127,6 @@ func TestAddColumn(t *testing.T) {
 					},
 				},
 				{
-					// This column is NOT NULL and UNIQUE and is added to a table without
-					// a PK, so it could in theory be used as the identity column for a
-					// backfill. However, it shouldn't be used as the identity column for
-					// a backfill because it's a newly added column whose temporary
-					// `_pgroll_new_description` column will be full of NULLs for any
-					// existing rows in the table.
 					Name: "02_add_column",
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
@@ -149,7 +142,7 @@ func TestAddColumn(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: backfill.NotPossibleError{Table: "users"},
+			wantStartErr: nil,
 		},
 		{
 			name: "add serial columns",
@@ -1920,7 +1913,7 @@ func TestAddColumnValidation(t *testing.T) {
 			wantStartErr: nil,
 		},
 		{
-			name: "table must have a primary key on exactly one column or a unique not null if up is defined",
+			name: "table without a primary key on exactly one column or a unique can be backfilled",
 			migrations: []migrations.Migration{
 				addTableMigrationNoPKNullable,
 				{
@@ -1938,7 +1931,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: backfill.NotPossibleError{Table: "users"},
+			wantStartErr: nil,
 		},
 		{
 			name: "table with a unique not null column can be backfilled",

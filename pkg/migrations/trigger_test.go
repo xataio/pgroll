@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
@@ -30,7 +31,7 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "_pgroll_new_review",
-				NeedsBackfillColumn: CNeedsBackfillColumn,
+				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
 				SQL:                 "product || 'is good'",
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
@@ -73,7 +74,7 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "review",
-				NeedsBackfillColumn: CNeedsBackfillColumn,
+				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
 				SQL:                 `NEW."_pgroll_new_review"`,
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
@@ -117,7 +118,7 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "rating",
-				NeedsBackfillColumn: CNeedsBackfillColumn,
+				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
 				SQL:                 `CAST(rating as text)`,
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()

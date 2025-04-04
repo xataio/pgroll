@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -55,7 +56,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
@@ -72,7 +73,7 @@ func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schem
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err

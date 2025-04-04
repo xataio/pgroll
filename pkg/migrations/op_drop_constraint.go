@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -91,7 +92,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, conn db.DB, s *schema.S
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.S
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
 
 	return err
