@@ -5,31 +5,24 @@ description: A create index operation creates a new index on a set of columns.
 
 ## Structure
 
-```json
-{
-  "create_index": {
-    "table": "name of table on which to define the index",
-    "name": "index name",
-    "columns": [
-      "column_name": {
-        "collate": "collation name",
-        "sort": "ASC | DESC",
-        "nulls": "FIRST | LAST",
-        "opclass": {
-          "name": "operator_class_name",
-          "params": [
-             "param1=val",
-             "param2=val"
-          ]
-        }
-      }
-    ]
-    "predicate": "conditional expression for defining a partial index",
-    "storage_parameters": "comma-separated list of storage parameters",
-    "unique": true | false,
-    "method": "btree"
-  }
-}
+```yaml
+create_index:
+  table: name of table on which to define the index
+  name: index name
+  columns:
+    column_name:
+      collate: collation name
+      sort: ASC | DESC
+      nulls: FIRST | LAST
+      opclass:
+        name: operator_class_name
+        params:
+          - param1=val
+          - param2=val
+  predicate: conditional expression for defining a partial index
+  storage_parameters: comma-separated list of storage parameters
+  unique: true | false
+  method: btree
 ```
 
 * The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.

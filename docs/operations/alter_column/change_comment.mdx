@@ -5,16 +5,13 @@ description: A change comment operation changes the comment on a column.
 
 ## Structure
 
-```json
-{
-  "alter_column": {
-    "table": "table name",
-    "column": "column name",
-    "comment": "new comment for column" | null,
-    "up": "SQL expression",
-    "down": "SQL expression"
-  }
-}
+```yaml
+alter_column:
+  table: table name
+  column: column name
+  comment: new comment for column | null
+  up: SQL expression
+  down: SQL expression
 ```
 
 The comment is added directly to the column on migration start.

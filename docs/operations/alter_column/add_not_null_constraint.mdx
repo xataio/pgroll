@@ -5,16 +5,13 @@ description: Add not null operations add a `NOT NULL` constraint to a column.
 
 ## Structure
 
-```json
-{
-  "alter_column": {
-    "table": "table name",
-    "column": "column name",
-    "nullable": false,
-    "up": "SQL expression",
-    "down": "SQL expression"
-  }
-}
+```yaml
+alter_column:
+  table: table name
+  column: column name
+  nullable: false
+  up: SQL expression
+  down: SQL expression
 ```
 
 Use `up` to migrate values from the nullable column in the old schema view to the `NOT NULL` column in the new schema version. `down` is used to migrate values in the other direction.
