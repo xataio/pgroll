@@ -199,14 +199,14 @@ type needsBackfillColumnBatcher struct {
 
 func (b *needsBackfillColumnBatcher) updateBatch(ctx context.Context, conn db.DB) error {
 	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		stmt := "UPDATE ? SET ? = true WHERE ctid IN (SELECT ctid FROM ? WHERE ? = true LIMIT ?)"
-		res, err := tx.Exec(stmt,
+		//nolint:gosec // tablenames are column names are checked
+		stmt := fmt.Sprintf("UPDATE %s SET %s = true WHERE ctid IN (SELECT ctid FROM %s WHERE %s = true LIMIT %d)",
 			pq.QuoteIdentifier(b.table),
 			pq.QuoteIdentifier(b.needsBackfillColumn),
 			pq.QuoteIdentifier(b.table),
 			pq.QuoteIdentifier(b.needsBackfillColumn),
-			b.batchSize,
-		)
+			b.batchSize)
+		res, err := tx.Exec(stmt)
 		if err != nil {
 			return err
 		}
