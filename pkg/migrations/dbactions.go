@@ -182,14 +182,15 @@ func commentToSQL(comment *string) string {
 }
 
 type createUniqueIndexConcurrentlyAction struct {
-	conn        db.DB
-	schemaName  string
-	indexName   string
-	tableName   string
-	columnNames []string
+	conn             db.DB
+	schemaName       string
+	indexName        string
+	nullsNotDistinct bool
+	tableName        string
+	columnNames      []string
 }
 
-func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName bool, nullsNotDistinct bool, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
+func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName string, nullsNotDistinct bool, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
 	return &createUniqueIndexConcurrentlyAction{
 		conn:             conn,
 		schemaName:       schemaName,
