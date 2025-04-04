@@ -61,6 +61,10 @@ func (o *OpCreateIndex) Start(ctx context.Context, conn db.DB, latestSchema stri
 	}
 	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
 
+	if o.Unique && o.NullsNotDistinct {
+		stmt += " NULLS NOT DISTINCT"
+	}
+
 	if o.StorageParameters != "" {
 		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
 	}
@@ -93,6 +97,10 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 
 	if err := ValidateIdentifierLength(o.Name); err != nil {
 		return err
+	}
+
+	if o.NullsNotDistinct && !o.Unique {
+		return NullsNotDistinctOnNotUniqueIndexError{Name: o.Name}
 	}
 
 	table := s.GetTable(o.Table)

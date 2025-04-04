@@ -136,7 +136,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 			continue
 		}
 		if duplicatedMember, constraintColumns := d.stmtBuilder.allConstraintColumns(uc.Columns, colNames...); duplicatedMember {
-			action := NewCreateUniqueIndexConcurrentlyAction(d.conn, "", DuplicationName(uc.Name), d.stmtBuilder.table.Name, constraintColumns...)
+			action := NewCreateUniqueIndexConcurrentlyAction(d.conn, "", DuplicationName(uc.Name), uc.NullsNotDistinct, d.stmtBuilder.table.Name, constraintColumns...)
 			if err := action.Execute(ctx); err != nil {
 				return err
 			}

@@ -1,0 +1,29 @@
+This is a valid 'create_constraint' migration.
+It is a unique constraint so can have `nulls_not_distinct` set to `true`.
+
+-- create_constraint.json --
+{
+  "name": "migration_name",
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "my_invalid_check",
+        "table": "my_table",
+        "type": "unique",
+        "nulls_not_distinct": true,
+        "columns": [
+          "my_column"
+        ],
+        "up": {
+          "my_column": "my_column"
+        },
+        "down": {
+          "my_column": "my_column"
+        }
+      }
+    }
+  ]
+}
+
+-- valid --
+true

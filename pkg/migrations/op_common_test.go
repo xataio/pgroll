@@ -253,6 +253,13 @@ func UniqueConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constrai
 	}
 }
 
+func UniqueNullsNotDistinctConstraintMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
+	t.Helper()
+	if !uniqueNullsNotDistinctConstraintExists(t, db, schema, table, constraint) {
+		t.Fatalf("Expected unique constraint %q to exist", constraint)
+	}
+}
+
 func ValidatedForeignKeyMustExist(t *testing.T, db *sql.DB, schema, table, constraint string) {
 	t.Helper()
 	if !foreignKeyExists(t, db, schema, table, constraint, true, migrations.ForeignKeyActionNOACTION, migrations.ForeignKeyActionNOACTION) {
@@ -316,6 +323,13 @@ func IndexDescendingMustExist(t *testing.T, db *sql.DB, schema, table, index str
 	}
 }
 
+func IndexUniqueNullsNotDistinctMustExist(t *testing.T, db *sql.DB, schema, table, index string) {
+	t.Helper()
+	if !indexUniqueNullsNotDistinctExists(t, db, schema, table, index) {
+		t.Fatalf("Expected unique index with nulls not distinct %q to exist", index)
+	}
+}
+
 func IndexMustNotExist(t *testing.T, db *sql.DB, schema, table, index string) {
 	t.Helper()
 	if indexExists(t, db, schema, table, index) {
@@ -355,6 +369,33 @@ func indexExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
       WHERE schemaname = $1
       AND tablename = $2
       AND indexname = $3
+    )`,
+		schema, table, index).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func indexUniqueNullsNotDistinctExists(t *testing.T, db *sql.DB, schema, table, index string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+        SELECT EXISTS (
+          SELECT
+              1
+          FROM
+              pg_index
+              JOIN pg_class ON pg_class.oid = pg_index.indexrelid
+              JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+          WHERE
+              pg_namespace.nspname = $1
+			  AND pg_index.indrelid = $2::regclass
+              AND pg_index.indexrelid = $3::regclass
+			  AND pg_index.indisunique
+              AND pg_index.indnullsnotdistinct
     )`,
 		schema, table, index).Scan(&exists)
 	if err != nil {
@@ -436,6 +477,28 @@ func uniqueConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint 
       WHERE conrelid = $1::regclass
       AND conname = $2
       AND contype = 'u'
+    )`,
+		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return exists
+}
+
+func uniqueNullsNotDistinctConstraintExists(t *testing.T, db *sql.DB, schema, table, constraint string) bool {
+	t.Helper()
+
+	var exists bool
+	err := db.QueryRow(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+	  JOIN pg_index ON pg_index.indexrelid = pg_constraint.conindid
+      WHERE pg_constraint.conrelid = $1::regclass
+      AND pg_constraint.conname = $2
+      AND pg_constraint.contype = 'u'
+      AND pg_index.indnullsnotdistinct
     )`,
 		fmt.Sprintf("%s.%s", schema, table), constraint).Scan(&exists)
 	if err != nil {

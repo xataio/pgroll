@@ -182,20 +182,22 @@ func commentToSQL(comment *string) string {
 }
 
 type createUniqueIndexConcurrentlyAction struct {
-	conn        db.DB
-	schemaName  string
-	indexName   string
-	tableName   string
-	columnNames []string
+	conn             db.DB
+	schemaName       string
+	indexName        string
+	nullsNotDistinct bool
+	tableName        string
+	columnNames      []string
 }
 
-func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
+func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName string, nullsNotDistinct bool, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
 	return &createUniqueIndexConcurrentlyAction{
-		conn:        conn,
-		schemaName:  schemaName,
-		indexName:   indexName,
-		tableName:   tableName,
-		columnNames: columnNames,
+		conn:             conn,
+		schemaName:       schemaName,
+		indexName:        indexName,
+		tableName:        tableName,
+		columnNames:      columnNames,
+		nullsNotDistinct: nullsNotDistinct,
 	}
 }
 
@@ -264,6 +266,9 @@ func (a *createUniqueIndexConcurrentlyAction) getCreateUniqueIndexConcurrentlySQ
 		qualifiedTableName,
 		strings.Join(quoteColumnNames(a.columnNames), ", "),
 	)
+	if a.nullsNotDistinct {
+		indexQuery += " NULLS NOT DISTINCT"
+	}
 
 	return indexQuery
 }
