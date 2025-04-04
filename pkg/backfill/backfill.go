@@ -15,6 +15,8 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+const CNeedsBackfillColumn = "_pgroll_needs_backfill"
+
 type Backfill struct {
 	conn db.DB
 	*Config
@@ -48,14 +50,14 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 				TableName:           table.Name,
 				PrimaryKey:          identityColumns,
 				BatchSize:           bf.batchSize,
-				NeedsBackfillColumn: "_pgroll_needs_backfill",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
 			},
 		}
 	} else {
 		b = &needsBackfillColumnBatcher{
 			table:               table.Name,
 			batchSize:           bf.batchSize,
-			needsBackfillColumn: "_pgroll_needs_backfill",
+			needsBackfillColumn: CNeedsBackfillColumn,
 		}
 	}
 

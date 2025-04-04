@@ -11,6 +11,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/migrations/templates"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -22,8 +23,6 @@ const (
 	TriggerDirectionUp   TriggerDirection = "up"
 	TriggerDirectionDown TriggerDirection = "down"
 )
-
-const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 
 type triggerConfig struct {
 	Name                string
@@ -55,7 +54,7 @@ func (a *createTriggerAction) Execute(ctx context.Context) error {
 		a.cfg.SQL = "(" + a.cfg.SQL + ")"
 	}
 
-	a.cfg.NeedsBackfillColumn = CNeedsBackfillColumn
+	a.cfg.NeedsBackfillColumn = backfill.CNeedsBackfillColumn
 
 	funcSQL, err := buildFunction(a.cfg)
 	if err != nil {
@@ -71,7 +70,7 @@ func (a *createTriggerAction) Execute(ctx context.Context) error {
 		_, err := a.conn.ExecContext(ctx,
 			fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s boolean DEFAULT true",
 				pq.QuoteIdentifier(a.cfg.TableName),
-				pq.QuoteIdentifier(CNeedsBackfillColumn)))
+				pq.QuoteIdentifier(backfill.CNeedsBackfillColumn)))
 		if err != nil {
 			return err
 		}

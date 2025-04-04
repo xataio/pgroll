@@ -917,7 +917,7 @@ func TableMustBeCleanedUp(t *testing.T, db *sql.DB, schema, table string, column
 		ColumnMustNotExist(t, db, schema, table, migrations.TemporaryName(column))
 
 		// The _pgroll_needs_backfill column should not exist on the table.
-		ColumnMustNotExist(t, db, schema, table, migrations.CNeedsBackfillColumn)
+		ColumnMustNotExist(t, db, schema, table, backfill.CNeedsBackfillColumn)
 
 		// The up function for the column no longer exists.
 		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, column))
