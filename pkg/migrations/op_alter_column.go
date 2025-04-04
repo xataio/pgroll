@@ -8,7 +8,6 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -186,12 +185,6 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 	if table.GetColumn(o.Column) == nil {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-
-	// If the operation requires backfills (ie it isn't a rename-only operation),
-	// ensure that the column meets the requirements for backfilling.
-	if err := backfill.IsPossible(table); err != nil {
-		return err
 	}
 
 	ops := o.subOperations()

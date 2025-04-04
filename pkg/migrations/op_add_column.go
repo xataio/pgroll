@@ -11,7 +11,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/internal/defaults"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -239,14 +238,6 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 				Column: o.Column.Name,
 				Err:    err,
 			}
-		}
-	}
-
-	// Ensure backfill is possible
-	if o.Up != "" {
-		err := backfill.IsPossible(table)
-		if err != nil {
-			return err
 		}
 	}
 

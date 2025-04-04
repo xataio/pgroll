@@ -129,16 +129,6 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	return total, nil
 }
 
-// IsPossible will return an error if the backfill operation is not supported.
-func IsPossible(table *schema.Table) error {
-	cols := getIdentityColumns(table)
-	if cols == nil {
-		return NotPossibleError{Table: table.Name}
-	}
-
-	return nil
-}
-
 // getIdentityColumn will return a column suitable for use in a backfill operation.
 func getIdentityColumns(table *schema.Table) []string {
 	pks := table.GetPrimaryKey()
@@ -209,18 +199,18 @@ type needsBackfillColumnBatcher struct {
 
 func (b *needsBackfillColumnBatcher) updateBatch(ctx context.Context, conn db.DB) error {
 	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		stmt := fmt.Sprintf("UPDATE %s SET %s = true WHERE ctid IN (SELECT ctid FROM %s WHERE %s = true LIMIT %d)",
+		stmt := "UPDATE ? SET ? = true WHERE ctid IN (SELECT ctid FROM ? WHERE ? = true LIMIT ?)"
+		res, err := tx.Exec(stmt,
 			pq.QuoteIdentifier(b.table),
 			pq.QuoteIdentifier(b.needsBackfillColumn),
 			pq.QuoteIdentifier(b.table),
 			pq.QuoteIdentifier(b.needsBackfillColumn),
 			b.batchSize,
 		)
-		res, err := tx.Exec(stmt)
 		if err != nil {
 			return err
 		}
-		if count, err := res.RowsAffected(); err != nil && count == 0 {
+		if count, err := res.RowsAffected(); err != nil || count == 0 {
 			return sql.ErrNoRows
 		}
 		return nil
