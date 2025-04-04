@@ -117,7 +117,7 @@
     {
       "name": "rollback",
       "short": "Roll back an ongoing migration",
-      "use": "rollback <file>",
+      "use": "rollback",
       "example": "",
       "flags": [],
       "subcommands": [],
