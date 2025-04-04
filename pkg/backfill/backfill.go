@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/backfill/templates"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -39,25 +40,28 @@ func New(conn db.DB, c *Config) *Backfill {
 // 3. Update each row in the batch, setting the value of the primary key column to itself.
 // 4. Repeat steps 2 and 3 until no more rows are returned.
 func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
-	// get the backfill column
-	identityColumns := getIdentityColumns(table)
-	if identityColumns == nil {
-		return NotPossibleError{Table: table.Name}
+	// Create a batcher for the table.
+	var b batcher
+	if identityColumns := getIdentityColumns(table); identityColumns != nil {
+		b = &pkBatcher{
+			BatchConfig: templates.BatchConfig{
+				TableName:           table.Name,
+				PrimaryKey:          identityColumns,
+				BatchSize:           bf.batchSize,
+				NeedsBackfillColumn: "_pgroll_needs_backfill",
+			},
+		}
+	} else {
+		b = &needsBackfillColumnBatcher{
+			table:               table.Name,
+			batchSize:           bf.batchSize,
+			needsBackfillColumn: "_pgroll_needs_backfill",
+		}
 	}
 
 	total, err := getRowCount(ctx, bf.conn, table.Name)
 	if err != nil {
 		return fmt.Errorf("get row count for %q: %w", table.Name, err)
-	}
-
-	// Create a batcher for the table.
-	b := batcher{
-		BatchConfig: templates.BatchConfig{
-			TableName:           table.Name,
-			PrimaryKey:          identityColumns,
-			BatchSize:           bf.batchSize,
-			NeedsBackfillColumn: "_pgroll_needs_backfill",
-		},
 	}
 
 	// Update each batch of rows, invoking callbacks for each one.
@@ -158,12 +162,18 @@ func getIdentityColumns(table *schema.Table) []string {
 }
 
 // A batcher is responsible for updating a batch of rows in a table.
+type batcher interface {
+	updateBatch(context.Context, db.DB) error
+}
+
+// pkBatcher is responsible for updating a batch of rows in a table.
+// The table must have a PK or a unique column.
 // It holds the state necessary to update the next batch of rows.
-type batcher struct {
+type pkBatcher struct {
 	templates.BatchConfig
 }
 
-func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
+func (b *pkBatcher) updateBatch(ctx context.Context, conn db.DB) error {
 	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		// Build the query to update the next batch of rows
 		sql, err := templates.BuildSQL(b.BatchConfig)
@@ -185,6 +195,34 @@ func (b *batcher) updateBatch(ctx context.Context, conn db.DB) error {
 			return err
 		}
 
+		return nil
+	})
+}
+
+// needsBackfillColumnBatcher is responsible for updating a batch of rows in a table
+// if the table does not have a PK or a unique column.
+type needsBackfillColumnBatcher struct {
+	table               string
+	batchSize           int
+	needsBackfillColumn string
+}
+
+func (b *needsBackfillColumnBatcher) updateBatch(ctx context.Context, conn db.DB) error {
+	return conn.WithRetryableTransaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		stmt := fmt.Sprintf("UPDATE %s SET %s = true WHERE ctid IN (SELECT ctid FROM %s WHERE %s = true LIMIT %d)",
+			pq.QuoteIdentifier(b.table),
+			pq.QuoteIdentifier(b.needsBackfillColumn),
+			pq.QuoteIdentifier(b.table),
+			pq.QuoteIdentifier(b.needsBackfillColumn),
+			b.batchSize,
+		)
+		res, err := tx.Exec(stmt)
+		if err != nil {
+			return err
+		}
+		if count, err := res.RowsAffected(); err != nil && count == 0 {
+			return sql.ErrNoRows
+		}
 		return nil
 	})
 }
