@@ -11,6 +11,20 @@
       "file": "docs/tutorial.md"
     },
     {
+      "title": "Guides",
+      "href": "/guides",
+      "file": "docs/guides/README.md",
+      "noLink": true,
+      "items": [
+        {
+          "title": "Writing up and down migrations",
+          "href": "/guides/updown",
+          "file": "docs/guides/updown.mdx"
+        }
+      ]
+    },
+
+    {
       "title": "Command-line interface",
       "href": "/cli",
       "file": "docs/cli/README.md",
