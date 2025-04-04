@@ -739,7 +739,7 @@ func TestCreateConstraint(t *testing.T) {
 			},
 		},
 		{
-			name: "create primary constraint on multiple columns",
+			name: "create primary key constraint on multiple columns",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -797,18 +797,18 @@ func TestCreateConstraint(t *testing.T) {
 				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
 					"id1":  "00000000-0000-0000-0000-000000000001",
 					"id2":  "00000000-0000-0000-0000-000000000002",
-					"name": "alice",
+					"name": "bob",
 				})
 
-				// Inserting values into the new schema that violate uniqueness should fail.
 				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
 					"id1":  "00000000-0000-0000-0000-000000000003",
 					"id2":  "00000000-0000-0000-0000-000000000004",
-					"name": "bob",
+					"name": "alice",
 				})
+				// Inserting values into the new schema that violate uniqueness should fail.
 				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
-					"id1":  "00000000-0000-0000-0000-000000000001",
-					"id2":  "00000000-0000-0000-0000-000000000002",
+					"id1":  "00000000-0000-0000-0000-000000000003",
+					"id2":  "00000000-0000-0000-0000-000000000004",
 					"name": "bob",
 				}, testutils.UniqueViolationErrorCode)
 			},
