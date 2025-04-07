@@ -89,10 +89,12 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		table, err := op.Start(ctx, m.pgConn, latestSchema, newSchema)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
-
-			return nil, errors.Join(
-				fmt.Errorf("unable to execute start operation: %w", err),
-				errRollback)
+			if errRollback != nil {
+				return nil, errors.Join(
+					fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
+					fmt.Errorf("unable to roll back failed operation: %w", errRollback))
+			}
+			return nil, fmt.Errorf("rolled back %q because start command has failed: %w", migration.Name, err)
 		}
 		// refresh schema when the op is isolated and requires a refresh (for example raw sql)
 		// we don't want to refresh the schema if the operation is not isolated as it would
