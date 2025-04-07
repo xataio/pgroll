@@ -3,14 +3,14 @@ title: Raw SQL
 description: A raw SQL operation runs arbitrary SQL against the database.
 ---
 
-## Structure
-
-This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
-
 <Warning>
   `pgroll` is unable to guarantee that raw SQL migrations are safe and will not
   result in application downtime.
 </Warning>
+
+## Structure
+
+This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
 
 ```yaml
 sql:
@@ -29,6 +29,7 @@ sql:
   up: SQL expression
   onComplete: true
 ```
+
 
 <Warning>
   The `down` migration must be idempotent. When an `up` migration fails, `pgroll` automatically runs the corresponding `down` migration to clean up leftover objects. If the `down` migration is not idempotent (does not contain `IF EXISTS`), the rollback will fail.
