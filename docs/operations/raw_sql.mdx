@@ -30,6 +30,10 @@ sql:
   onComplete: true
 ```
 
+<Warning>
+  The `down` migration must be idempotent. When an `up` migration fails, `pgroll` automatically runs the corresponding `down` migration to clean up leftover objects. If the `down` migration is not idempotent (does not contain `IF EXISTS`), the rollback will fail.
+</Warning>
+
 ## Examples
 
 ### Create a table with a raw SQL migration
