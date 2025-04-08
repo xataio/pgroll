@@ -32,14 +32,7 @@ Set `search_path` in Python using `psycopg2` with the `options` attribute of `co
 ```python
 import psycopg2
 
-with psycopg2.connect(
-    dbname='postgres',
-    user='postgres',
-    password='postgres',
-    host="'ocalhost',
-    port=5432,
-    options='-c search_path=public_02_add_assignee_column'
-) as conn:
+with psycopg2.connect('dbname=postgres user=postgres password=postgres options=-c search_path=public_02_add_assignee_column') as conn:
     pass
 ```
 
@@ -49,10 +42,10 @@ Another example for setting `search_path` in Node.js:
 const { Client } = require('pg');
 
 const client = new Client({
-  user: postgres',
-  host: localhost',
-  database: postgres',
-  password: postgres',
+  user: 'postgres',
+  host: 'localhost',
+  database: 'postgres',
+  password: 'postgres',
   port: 5432,
 });
 
