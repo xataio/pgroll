@@ -27,7 +27,7 @@ if err != nil {
 ```
 In practice, the `searchPath` variable would be provided to the application as an environment variable.
 
-Set `search_path` in Python using `psycopg2` with the `options` attribute of `connection`:
+Set `search_path` in Python using `psycopg2` with the [`Connection` class](https://www.psycopg.org/psycopg3/docs/api/connections.html#psycopg.Connection):
 
 ```python
 import psycopg2
