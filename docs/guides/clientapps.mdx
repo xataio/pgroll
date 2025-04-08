@@ -23,6 +23,49 @@ if err != nil {
     return nil, fmt.Errorf("failed to set search path: %s", err)
 }
 ```
+Set `search_path` in Python using `psycopg2`:
+
+```python
+import psycopg2
+
+with psycopg2.connect(
+    dbname='postgres',
+    user='postgres',
+    password='postgres',
+    host="'ocalhost',
+    port=5432,
+    options='-c search_path=public_02_add_assignee_column'
+) as conn:
+    pass
+```
+
+Another example for setting `search_path` in Node.js:
+
+```js
+const { Client } = require('pg');
+
+const client = new Client({
+  user: postgres',
+  host: localhost',
+  database: postgres',
+  password: postgres',
+  port: 5432,
+});
+
+client.connect();
+
+client.query('SET search_path TO public_02_add_assignee_column', (err, res) => {
+  if (err) {
+    console.error('Error setting search_path', err.stack);
+  } else {
+    console.log('search_path set successfully');
+    // Perform your database operations here
+  }
+
+  // End the connection
+  client.end();
+});
+```
 
 In practice, the `searchPath` variable would be provided to the application as an environment variable.
 
