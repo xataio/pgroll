@@ -738,6 +738,92 @@ func TestCreateConstraint(t *testing.T) {
 				}, testutils.UniqueViolationErrorCode)
 			},
 		},
+		{
+			name: "create primary key constraint on multiple columns",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id1",
+									Type: "uuid",
+								},
+								{
+									Name: "id2",
+									Type: "uuid",
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_constraint",
+					Operations: migrations.Operations{
+						&migrations.OpCreateConstraint{
+							Name:    "id_pkey",
+							Table:   "users",
+							Type:    "primary_key",
+							Columns: []string{"id1", "id2"},
+							Up: map[string]string{
+								"id1": "gen_random_uuid()",
+								"id2": "gen_random_uuid()",
+							},
+							Down: map[string]string{
+								"id1": "id1",
+								"id2": "id2",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table.
+				IndexMustExist(t, db, schema, "users", "id_pkey")
+
+				// Inserting values into the old schema that violate uniqueness should succeed.
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"id1":  "00000000-0000-0000-0000-000000000001",
+					"id2":  "00000000-0000-0000-0000-000000000002",
+					"name": "alice",
+				})
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"id1":  "00000000-0000-0000-0000-000000000001",
+					"id2":  "00000000-0000-0000-0000-000000000002",
+					"name": "bob",
+				})
+
+				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id1":  "00000000-0000-0000-0000-000000000003",
+					"id2":  "00000000-0000-0000-0000-000000000004",
+					"name": "alice",
+				})
+				// Inserting values into the new schema that violate uniqueness should fail.
+				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+					"id1":  "00000000-0000-0000-0000-000000000003",
+					"id2":  "00000000-0000-0000-0000-000000000004",
+					"name": "bob",
+				}, testutils.UniqueViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "id_pkey")
+
+				// Functions, triggers and temporary columns are dropped.
+				TableMustBeCleanedUp(t, db, schema, "users", "id1")
+				TableMustBeCleanedUp(t, db, schema, "users", "id2")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "users", "id_pkey")
+			},
+		},
 	})
 }
 
