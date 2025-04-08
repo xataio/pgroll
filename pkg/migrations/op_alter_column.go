@@ -112,7 +112,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Sche
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
 	err = removeBackfillColumn.Execute(ctx)
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Sche
 		return err
 	}
 
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, CNeedsBackfillColumn)
+	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
 	return removeBackfillColumn.Execute(ctx)
 }
 
@@ -186,12 +186,6 @@ func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 	if table.GetColumn(o.Column) == nil {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-
-	// If the operation requires backfills (ie it isn't a rename-only operation),
-	// ensure that the column meets the requirements for backfilling.
-	if err := backfill.IsPossible(table); err != nil {
-		return err
 	}
 
 	ops := o.subOperations()
