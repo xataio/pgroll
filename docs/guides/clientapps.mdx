@@ -8,6 +8,8 @@ In order to work with the multiple versioned schema that `pgroll` creates, clien
 
 This is done by having client applications configure the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) when they connect to the Postgres database.
 
+### Examples
+
 For example, this fragment for a Go client application shows how to set the `search_path` after a connection is established:
 
 ```go
@@ -23,7 +25,9 @@ if err != nil {
     return nil, fmt.Errorf("failed to set search path: %s", err)
 }
 ```
-Set `search_path` in Python using `psycopg2`:
+In practice, the `searchPath` variable would be provided to the application as an environment variable.
+
+Set `search_path` in Python using `psycopg2` with the `options` attribute of `connection`:
 
 ```python
 import psycopg2
@@ -67,7 +71,6 @@ client.query('SET search_path TO public_02_add_assignee_column', (err, res) => {
 });
 ```
 
-In practice, the `searchPath` variable would be provided to the application as an environment variable.
 
 ## CI/CD pipelines
 
