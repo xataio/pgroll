@@ -17,6 +17,11 @@
       "noLink": true,
       "items": [
         {
+          "title": "Integrate `pgroll` into your project",
+          "href": "/guides/clientapps",
+          "file": "docs/guides/clientapps.mdx"
+        },
+        {
           "title": "Writing up and down migrations",
           "href": "/guides/updown",
           "file": "docs/guides/updown.mdx"
