@@ -15,6 +15,8 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+// CNeedsBackfillColumn is the name of the internal column created
+// by pgroll to mark rows that must be backfilled
 const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 
 type Backfill struct {

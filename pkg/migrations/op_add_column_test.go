@@ -110,7 +110,7 @@ func TestAddColumn(t *testing.T) {
 			},
 		},
 		{
-			name: "a newly added column can't be used as the identity column for a backfill",
+			name: "a newly added column does not have to be used as the identity column for a backfill",
 			migrations: []migrations.Migration{
 				{
 					Name: "01_add_table",
@@ -143,6 +143,93 @@ func TestAddColumn(t *testing.T) {
 				},
 			},
 			wantStartErr: nil,
+		},
+		{
+			name: "add column to table with no identity or unique column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name:   "name",
+									Type:   "varchar(255)",
+									Unique: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_add_column",
+					Operations: migrations.Operations{
+						&migrations.OpAddColumn{
+							Table: "users",
+							Column: migrations.Column{
+								Name:     "age",
+								Type:     "integer",
+								Nullable: false,
+								Default:  ptr("0"),
+								Comment:  ptr("the age of the user"),
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// old and new views of the table should exist
+				ViewMustExist(t, db, schema, "01_add_table", "users")
+				ViewMustExist(t, db, schema, "02_add_column", "users")
+
+				// inserting via both the old and the new views works
+				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+					"name": "Alice",
+				})
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "Bob",
+					"age":  "21",
+				})
+
+				// selecting from both the old and the new views works
+				resOld := MustSelect(t, db, schema, "01_add_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"name": "Alice"},
+					{"name": "Bob"},
+				}, resOld)
+				resNew := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"name": "Alice", "age": 0},
+					{"name": "Bob", "age": 21},
+				}, resNew)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has been dropped from the underlying table
+				columnName := migrations.TemporaryName("age")
+				ColumnMustNotExist(t, db, schema, "users", columnName)
+
+				// The table's column count reflects the drop of the new column
+				TableMustHaveColumnCount(t, db, schema, "users", 1)
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new view still exists
+				ViewMustExist(t, db, schema, "02_add_column", "users")
+
+				// Inserting into the new view still works
+				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+					"name": "Carl",
+					"age":  "31",
+				})
+
+				// Selecting from the new view still works
+				res := MustSelect(t, db, schema, "02_add_column", "users")
+				assert.Equal(t, []map[string]any{
+					{"name": "Alice", "age": 0},
+					{"name": "Bob", "age": 0},
+					{"name": "Carl", "age": 31},
+				}, res)
+			},
 		},
 		{
 			name: "add serial columns",
