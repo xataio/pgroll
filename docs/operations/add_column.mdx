@@ -29,6 +29,31 @@ add_column:
 
 ```
 ```json
+{
+  "add_column": {
+    "table": "name of table to which the column should be added",
+    "up": "SQL expression",
+    "column": {
+      "name": "name of column",
+      "type": "postgres type",
+      "comment": "postgres comment for the column",
+      "nullable": true|false,
+      "unique": true|false,
+      "pk": true|false,
+      "default": "default value for the column",
+      "check": {
+        "name": "name of check constraint",
+        "constraint": "constraint expression"
+      },
+      "references": {
+        "name": "name of foreign key constraint",
+        "table": "name of referenced table",
+        "column": "name of referenced column",
+        "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+      }
+    }
+  }
+}
 ```
 </YamlJsonTabs>
 
