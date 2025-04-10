@@ -99,9 +99,17 @@ func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string
 		tableToBackfill = table
 	}
 
-	table.AddColumn(o.Column.Name, &schema.Column{
-		Name: TemporaryName(o.Column.Name),
-	})
+	tmpColumn := &schema.Column{
+		Name:     TemporaryName(o.Column.Name),
+		Type:     o.Column.Type,
+		Default:  o.Column.Default,
+		Nullable: o.Column.Nullable,
+		Unique:   o.Column.Unique,
+	}
+	if o.Column.Comment != nil {
+		tmpColumn.Comment = *o.Column.Comment
+	}
+	table.AddColumn(o.Column.Name, tmpColumn)
 
 	return tableToBackfill, nil
 }
