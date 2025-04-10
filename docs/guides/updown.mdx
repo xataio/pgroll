@@ -62,6 +62,27 @@ operations:
      name: name
 ```
 ```json
+{
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "capitalized_name",
+        "table": "employee",
+        "type": "check",
+        "columns": [
+          "name"
+        ],
+        "check": "name = INITCAP(name)",
+        "up": {
+          "name": "name"
+        },
+        "down": {
+          "name": "name"
+        }
+      }
+    }
+  ]
+}
 ```
 </YamlJsonTabs>
 
@@ -95,6 +116,20 @@ operations:
 
 ```
 ```json
+{
+  "operations": [
+    {
+      "alter_column": {
+        "table": "employee",
+        "column": "salary",
+        "type": "integer",
+        "up": "trunc(salary)",
+        "down": "salary"
+      }
+    }
+  ]
+}
+
 ```
 </YamlJsonTabs>
 
@@ -125,6 +160,21 @@ operations:
 
 ```
 ```json
+{
+  "operations": [
+    {
+      "add_column": {
+        "table": "employee",
+        "up": "'New York'",
+        "column": {
+          "name": "location",
+          "type": "text",
+          "nullable": false
+        }
+      }
+    }
+  ]
+}
 ```
 </YamlJsonTabs>
 
@@ -154,6 +204,19 @@ operations:
 
 ```
 ```json
+{
+  "operations": [
+    {
+      "alter_column": {
+        "table": "employee",
+        "column": "email",
+        "nullable": false,
+        "up": "SELECT CASE WHEN email IS NULL THEN nick || '@company.com' ELSE email END",
+        "down": "email"
+      }
+    }
+  ]
+}
 ```
 </YamlJsonTabs>
 
@@ -219,6 +282,27 @@ operations:
 
 ```
 ```json
+{
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "limited_required_bio",
+        "table": "employee",
+        "type": "check",
+        "columns": [
+          "bio"
+        ],
+        "check": "length(bio) > 15 AND length(bio) < 100",
+        "up": {
+          "bio": "CASE WHEN bio IS NULL THEN 'this employee did not provide a bio' WHEN length(bio) <= 15 THEN bio || SELECT random_bio(16-length(bio)) WHEN length(bio) >= 100 THEN left(bio, 96) || '...' ELSE bio END"
+        },
+        "down": {
+          "bio": "bio"
+        }
+      }
+    }
+  ]
+}
 ```
 </YamlJsonTabs>
 
