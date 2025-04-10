@@ -11,7 +11,6 @@ create_table:
   name: name of new table
   columns: [...]
   constraints: [...]
-
 ```
 ```json
 {
@@ -51,7 +50,6 @@ Each `column` is defined as:
     on_delete: ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION
     on_update: ON UPDATE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION
     match_type: match type, can be SIMPLE or FULL. Default is SIMPLE
-
 ```
 ```json
 {
@@ -114,7 +112,6 @@ Each `constraint` is defined as:
     index_method: name of the index method, e.g. btree
     elements: exclude elements
     predicate: WHERE clause of the exclude constraint
-
 ```
 ```json
 {

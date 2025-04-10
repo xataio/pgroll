@@ -56,7 +56,6 @@ operations:
         - name: description
           type: text
           nullable: true
-
 ```
 ```json
 {
@@ -161,7 +160,6 @@ operations:
       nullable: false
       up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
       down: description
-
 ```
 ```json
 {
@@ -228,7 +226,6 @@ This is the "expand" phase of the [expand/contract pattern](https://openpractice
 <YamlJsonTabs>
 ```yaml
 up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
-
 ```
 ```json
 "up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
@@ -490,7 +487,6 @@ operations:
         type: boolean
         nullable: true
         default: "true"
-
 ```
 ```json
 {
