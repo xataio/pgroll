@@ -5,12 +5,24 @@ description: A drop column operation drops a column from an existing table.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 drop_column:
   table: name of table
   column: name of column to drop
   down: SQL expression
+
 ```
+```json
+{
+  "drop_column": {
+    "table": "name of table",
+    "column": "name of column to drop",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 The `down` field above is required in order to backfill the previous version of the schema during an active migration.
 

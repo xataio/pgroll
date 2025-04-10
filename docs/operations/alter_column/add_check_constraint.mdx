@@ -5,6 +5,7 @@ description: An add check constraint operation adds a `CHECK` constraint to a co
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 alter_column:
   table: table name
@@ -14,7 +15,23 @@ alter_column:
     constraint: constraint expression
   up: SQL expression
   down: SQL expression
+
 ```
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "check": {
+      "name": "check constraint name",
+      "constraint": "constraint expression"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 The `up` SQL expression is used to migrate values from the column in the old schema version that aren't subject to the constraint to values in the new schema version that are subject to the constraint.
 
@@ -22,7 +39,7 @@ The `up` SQL expression is used to migrate values from the column in the old sch
 
 ### Add a `CHECK` constraint
 
-Add a `CHECK` constraint to the `title` column in the `posts` table. 
+Add a `CHECK` constraint to the `title` column in the `posts` table.
 
 The `up` SQL migrates values to ensure they meet the constraint. The `down` SQL copies values without modification from column in the new schema version to the column in the old schema version:
 

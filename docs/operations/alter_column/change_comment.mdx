@@ -5,6 +5,7 @@ description: A change comment operation changes the comment on a column.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 alter_column:
   table: table name
@@ -12,7 +13,20 @@ alter_column:
   comment: new comment for column | null
   up: SQL expression
   down: SQL expression
+
 ```
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "comment": "new comment for column" | null,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 The comment is added directly to the column on migration start.
 
@@ -20,7 +34,7 @@ The comment is added directly to the column on migration start.
 
 ### Alter many column properties
 
-An alter column migration performs many operations, including setting a comment: 
+An alter column migration performs many operations, including setting a comment:
 
 <ExampleSnippet example="35_alter_column_multiple.yaml" languange="yaml" />
 

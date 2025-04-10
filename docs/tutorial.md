@@ -29,7 +29,7 @@ You should see a success message indicating that `pgroll` has been configured.
 
 <details>
   <summary>What data does <code>pgroll</code> store?</summary>
-  
+
   `pgroll` stores its data in the `pgroll` schema. In this schema it creates:
   * A `migrations` table containing the version history for each schema in the database
   * Functions to capture the current database schema for a given schema name
@@ -40,6 +40,7 @@ You should see a success message indicating that `pgroll` has been configured.
 
 With `pgroll` initialized, let's run our first migration. Here is a migration to create a table:
 
+<YamlJsonTabs>
 ```yaml
 name: "01_create_users_table"
 operations:
@@ -55,7 +56,38 @@ operations:
         - name: description
           type: text
           nullable: true
+
 ```
+```json
+{
+  "name": "01_create_users_table",
+  "operations": [
+    {
+      "create_table": {
+        "name": "users",
+        "columns": [
+          {
+            "name": "id",
+            "type": "serial",
+            "pk": true
+          },
+          {
+            "name": "name",
+            "type": "varchar(255)",
+            "unique": true
+          },
+          {
+            "name": "description",
+            "type": "text",
+            "nullable": true
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 Take this file and save it as `sql/01_create_users_table.yaml`.
 
@@ -74,12 +106,12 @@ CREATE TABLE users(
 To apply the migration to the database run:
 
 ```
-pgroll start sql/01_create_users_table.yaml --complete 
+pgroll start sql/01_create_users_table.yaml --complete
 ```
 
 <details>
   <summary>What does the <code>--complete</code> flag do here?</summary>
- 
+
   `pgroll` divides migration application into two steps: **start** and **complete**. During the **start** phase, both old and new versions of the database schema are available to client applications. After the **complete** phase, only the most recent schema is available.
 
   As this is the first migration there is no old schema to maintain, so the migration can safely be started and completed in one step.
@@ -119,6 +151,7 @@ There are two things that make this migration difficult:
 
 Here is the `pgroll` migration that will perform the migration to make the `description` column `NOT NULL`:
 
+<YamlJsonTabs>
 ```yaml
 name: "02_user_description_set_nullable"
 operations:
@@ -128,7 +161,25 @@ operations:
       nullable: false
       up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
       down: description
+
 ```
+```json
+{
+  "name": "02_user_description_set_nullable",
+  "operations": [
+    {
+      "alter_column": {
+        "table": "users",
+        "column": "description",
+        "nullable": false,
+        "up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
+        "down": "description"
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 > As mentioned earlier, the `name` field is optional. If the file is saved as `sql/02_user_description_set_nullable.yaml`, `pgroll` will use `02_user_description_set_nullable` as the migration name if the name field is not provided.
 
@@ -142,7 +193,7 @@ After some progress updates you should see a message saying that the migration h
 
 <details>
   <summary>What's happening behind the progress updates?</summary>
-  
+
   In order to add the new `description` column, `pgroll` creates a temporary `_pgroll_new_description` column and copies over the data from the existing `description` column, using the `up` SQL from the migration. As we have 10^5 rows in our table, this process takes some time. This process is called _backfilling_ and it is performed in batches to avoid locking all rows in the table simultaneously.
 
   The `_pgroll_needs_backfill` column in the `users` table is used to track which rows have been backfilled and which have not. This column is set to `true` for all rows at the start of the migration and set to `false` once the row has been backfilled. This ensures that rows inserted or updated while the backfill is in process aren't backfilled twice.
@@ -174,9 +225,15 @@ You should see something like this:
 
 This is the "expand" phase of the [expand/contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/) in action; `pgroll` has added a `_pgroll_new_description` field to the table and populated the field for all rows using the `up` SQL from the `02_user_description_set_nullable.yaml` file:
 
+<YamlJsonTabs>
 ```yaml
 up: "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END"
+
 ```
+```json
+"up": "SELECT CASE WHEN description IS NULL THEN 'description for ' || name ELSE description END",
+```
+</YamlJsonTabs>
 
 This has copied over all `description` values into the `_pgroll_new_description` field, rewriting any `NULL` values using the provided SQL.
 
@@ -212,7 +269,7 @@ The `_pgroll_new_description` column has a `NOT NULL` `CHECK` constraint, but th
 
 <details>
   <summary>Why is the <code>NOT NULL</code> constraint on the new <code>_pgroll_new_description</code> column <code>NOT VALID</code>?</summary>
-  
+
    Defining the constraint as `NOT VALID` means that the `users` table will not be scanned to enforce the `NOT NULL` constraint for existing rows. This means the constraint can be added quickly without locking rows in the table. `pgroll` assumes that the `up` SQL provided by the user will ensure that no `NULL` values are written to the `_pgroll_new_description` column.
 </details>
 
@@ -267,7 +324,7 @@ The output should contain something like this:
    FROM users;
 ```
 
-The second view exposes the same three columns as the first, but its `description` field is mapped to the `_pgroll_new_description` field in the underlying table. 
+The second view exposes the same three columns as the first, but its `description` field is mapped to the `_pgroll_new_description` field in the underlying table.
 
 By choosing to access the `users` table through either the `public_01_create_users_table.users` or `public_02_user_description_set_nullable.users` view, applications have a choice of which version of the schema they want to see; either the old version without the `NOT NULL` constraint on the `description` field or the new version with the constraint.
 
@@ -280,7 +337,7 @@ _pgroll_trigger_users_description BEFORE INSERT OR UPDATE ON users FOR EACH ROW 
 
 These triggers are used by `pgroll` to ensure that any values written into the old `description` column are copied over to the `_pgroll_new_description` column (rewriting values using the `up` SQL from the migration) and to copy values written to the `_pgroll_new_description` column back into the old `description` column (rewriting values using the`down` SQL from the migration).
 
-Let's see the first of those triggers in action. 
+Let's see the first of those triggers in action.
 
 First set the [search path](https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-PATH) for your Postgres session to use the old schema:
 
@@ -313,7 +370,7 @@ Running this query should show:
 +--------+-------+---------------------+
 ```
 
-The trigger should have copied the data that was just written into the old `description` column (without the `NOT NULL` constraint) into the `_pgroll_new_description` column (with the `NOT NULL` constraint )using the `up` SQL from the migration. 
+The trigger should have copied the data that was just written into the old `description` column (without the `NOT NULL` constraint) into the `_pgroll_new_description` column (with the `NOT NULL` constraint )using the `up` SQL from the migration.
 
 Let's check. Set the search path to the new version of the schema:
 
@@ -342,7 +399,7 @@ Notice that the trigger installed by `pgroll` has rewritten the `NULL` value ins
 
 <details>
   <summary>How do applications configure which version of the schema to use</summary>
-  
+
   `pgroll` allows old and new versions of an application to exist side-by-side during a migration. Each version of the application should be configured with the name of the correct version schema, so that the application sees the database schema that it expects.
 
   This is done by setting the Postgres **search_path** for the client's session and is described in more detail in the **Client applications** section below.
@@ -409,7 +466,7 @@ A few things have happened:
 
 <details>
   <summary>How is the column made <code>NOT NULL</code> without locking?</summary>
-  
+
   Because there is an existing `NOT NULL` constraint on the column, created when the migration was started, making the column `NOT NULL` when the migration is completed does not require a full table scan. See the Postgres [docs](https://www.postgresql.org/docs/current/sql-altertable.html#SQL-ALTERTABLE-DESC-SET-DROP-NOT-NULL) for `SET NOT NULL`.
 </details>
 
@@ -422,6 +479,7 @@ The expand/contract approach to migrations means that the old version of the dat
 
 Looking at the second of these items, rollbacks, let's see how to roll back a `pgroll` migration. We can start another migration now that our last one is complete:
 
+<YamlJsonTabs>
 ```yaml
 name: "03_add_is_active_column"
 operations:
@@ -432,7 +490,27 @@ operations:
         type: boolean
         nullable: true
         default: "true"
+
 ```
+```json
+{
+  "name": "03_add_is_active_column",
+  "operations": [
+    {
+      "add_column": {
+        "table": "users",
+        "column": {
+          "name": "is_atcive",
+          "type": "boolean",
+          "nullable": true,
+          "default": "true"
+        }
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 > Again, the `name` field is optional. The filename will be used as the default name if not specified.
 

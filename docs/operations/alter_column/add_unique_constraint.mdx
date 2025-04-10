@@ -5,6 +5,7 @@ description: Add unique operations add a `UNIQUE` constraint to a column.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 alter_column:
   table: table name
@@ -13,7 +14,22 @@ alter_column:
     name: name of unique constraint
   up: SQL expression
   down: SQL expression
+
 ```
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "unique": {
+      "name": "name of unique constraint"
+    },
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 Use the `up` SQL expression to migrate values from the old non-unique column in the old schema to the `UNIQUE` column in the new schema.
 

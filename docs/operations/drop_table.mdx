@@ -5,10 +5,20 @@ description: A drop table operation drops a table.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 drop_table:
   name: name of table to drop
+
 ```
+```json
+{
+  "drop_table": {
+    "name": "name of table to drop"
+  }
+}
+```
+</YamlJsonTabs>
 
 The table is not visible in the new version of the schema created when the migration is started, but remains visible to the old version of the schema. The table is dropped on migration completion.
 

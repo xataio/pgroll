@@ -13,13 +13,26 @@ description: A drop constraint operation drops a single-column constraint from a
 
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
+<YamlJsonTabs>
 ```yaml
 drop_constraint:
   table: name of table
   name: name of constraint to drop
   up: SQL expression
   down: SQL expression
+
 ```
+```json
+{
+  "drop_constraint": {
+    "table": "name of table",
+    "name": "name of constraint to drop",
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 ## Examples
 

@@ -5,6 +5,7 @@ description: An add column operation creates a new column on an existing table.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 add_column:
   table: name of table to which the column should be added
@@ -25,7 +26,11 @@ add_column:
       table: name of referenced table
       column: name of referenced column
       on_delete: ON DELETE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION
+
 ```
+```json
+```
+</YamlJsonTabs>
 
 The `up` SQL is used when a row is added to the old version of the table (ie, without the new column). In the new version of the table, the row's value for the new column is determined by the `up` SQL expression. The `up` SQL can be omitted if the new column is nullable or has a `DEFAULT` defined.
 
