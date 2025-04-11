@@ -124,6 +124,24 @@
       "args": []
     },
     {
+      "name": "sqlmigrate",
+      "short": "Run SQL migration scripts",
+      "use": "sqlmigrate <path to file with migrations>",
+      "example": "",
+      "flags": [
+        {
+          "name": "name",
+          "shorthand": "n",
+          "description": "Name of the migration",
+          "default": "{current_timestamp}"
+        }
+      ],
+      "subcommands": [],
+      "args": [
+        "migration-file"
+      ]
+    },
+    {
       "name": "start",
       "short": "Start a migration for the operations present in the given file",
       "use": "start <file>",
