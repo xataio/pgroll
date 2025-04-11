@@ -207,9 +207,13 @@ func (o *OpCreateTable) updateSchema(s *schema.Schema) *schema.Schema {
 			Unique:   col.Unique,
 			Nullable: col.Nullable,
 			Type:     col.Type,
+			Default:  col.Default,
 		}
 		if col.Pk {
 			primaryKeys = append(primaryKeys, col.Name)
+		}
+		if col.Comment != nil {
+			columns[col.Name].Comment = *col.Comment
 		}
 	}
 
