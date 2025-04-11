@@ -46,6 +46,7 @@ With the following records:
 We are adding a new check constraint to the table to make sure all first names are capitalized. We inspected our table and know
 that the check is on the application side. Thus, all data coming from it are valid.
 
+<YamlJsonTabs>
 ```yaml
 operations:
  - create_constraint:
@@ -60,6 +61,30 @@ operations:
     down:
      name: name
 ```
+```json
+{
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "capitalized_name",
+        "table": "employee",
+        "type": "check",
+        "columns": [
+          "name"
+        ],
+        "check": "name = INITCAP(name)",
+        "up": {
+          "name": "name"
+        },
+        "down": {
+          "name": "name"
+        }
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 Notice that both `up` and `down` migrations are set to `name` for `name` column. Thus, `pgroll` preserves the values in the column `name`.
 
@@ -79,6 +104,7 @@ In this example we are changing the type of a column from float to int.
 
 Each person's salary is stored in a float. We are converting the `salary` column from float to integer using `trunc`.
 
+<YamlJsonTabs>
 ```yaml
 operations:
  - alter_column:
@@ -88,6 +114,23 @@ operations:
     up: trunc(salary)
     down: salary
 ```
+```json
+{
+  "operations": [
+    {
+      "alter_column": {
+        "table": "employee",
+        "column": "salary",
+        "type": "integer",
+        "up": "trunc(salary)",
+        "down": "salary"
+      }
+    }
+  ]
+}
+
+```
+</YamlJsonTabs>
 
 After the migration, the `salary` column contains only integers.
 
@@ -103,6 +146,7 @@ After the migration, the `salary` column contains only integers.
 
 We are adding a new column that cannot be null named `location`. We are setting it to `New York` using the `up` expression.
 
+<YamlJsonTabs>
 ```yaml
 operations:
  - add_column:
@@ -113,6 +157,24 @@ operations:
        type: text
        nullable: false
 ```
+```json
+{
+  "operations": [
+    {
+      "add_column": {
+        "table": "employee",
+        "up": "'New York'",
+        "column": {
+          "name": "location",
+          "type": "text",
+          "nullable": false
+        }
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 The table is backfilled:
 
@@ -128,6 +190,7 @@ The table is backfilled:
 
 We are adding a not null constraint to the `email` column. If the `email` column is not set, we are concatenating the column `nick` and `@company.com`.
 
+<YamlJsonTabs>
 ```yaml
 operations:
  - alter_column:
@@ -137,6 +200,22 @@ operations:
     up: SELECT CASE WHEN email IS NULL THEN nick || '@company.com' ELSE email END
     down: email
 ```
+```json
+{
+  "operations": [
+    {
+      "alter_column": {
+        "table": "employee",
+        "column": "email",
+        "nullable": false,
+        "up": "SELECT CASE WHEN email IS NULL THEN nick || '@company.com' ELSE email END",
+        "down": "email"
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 After the migration is complete, everyone will have an email address:
 
@@ -177,6 +256,7 @@ Then we can call this function from the `up` migration:
 
 The complete migration is the following:
 
+<YamlJsonTabs>
 ```yaml
 operations:
  - create_constraint:
@@ -197,6 +277,30 @@ operations:
     down:
      bio: bio
 ```
+```json
+{
+  "operations": [
+    {
+      "create_constraint": {
+        "name": "limited_required_bio",
+        "table": "employee",
+        "type": "check",
+        "columns": [
+          "bio"
+        ],
+        "check": "length(bio) > 15 AND length(bio) < 100",
+        "up": {
+          "bio": "CASE WHEN bio IS NULL THEN 'this employee did not provide a bio' WHEN length(bio) <= 15 THEN bio || SELECT random_bio(16-length(bio)) WHEN length(bio) >= 100 THEN left(bio, 96) || '...' ELSE bio END"
+        },
+        "down": {
+          "bio": "bio"
+        }
+      }
+    }
+  ]
+}
+```
+</YamlJsonTabs>
 
 The `bio` column for `Alice` now contains extra 5 characters (`oivgd`) after the migration is complete:
 

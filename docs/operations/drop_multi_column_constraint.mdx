@@ -7,6 +7,7 @@ description: A drop constraint operation drops a multi-column constraint from an
 
 Only `CHECK`, `FOREIGN KEY`, and `UNIQUE` constraints can be dropped.
 
+<YamlJsonTabs>
 ```yaml
 drop_multicolumn_constraint:
   table: name of table
@@ -18,11 +19,29 @@ drop_multicolumn_constraint:
     column1: down SQL expressions for each column covered by the constraint
     ...
 ```
+```json
+{
+  "drop_multicolumn_constraint": {
+    "table": "name of table",
+    "name": "name of constraint to drop",
+    "up": {
+      "column1": "up SQL expressions for each column covered by the constraint",
+      ...
+    },
+    "down": {
+      "column1": "down SQL expressions for each column covered by the constraint",
+      ...
+    }
+  }
+}
+```
+</YamlJsonTabs>
 
 This operation can also be used to drop single-column constraints and replaces the deprecated (#drop-constraint) operation.
 
 An `up` and `down` SQL expression is required for each column covered by the constraint, and no other column names are permitted. For example, when droping a constraint covering columns `a` and `b` the `up` and `down` fields should look like:
 
+<YamlJsonTabs>
 ```yaml
 up:
   a: up SQL expression for column a
@@ -31,6 +50,19 @@ down:
   a: down SQL expression for column a
   b: down SQL expression for column b
 ```
+```json
+{
+  "up": {
+    "a": "up SQL expression for column a",
+    "b": "up SQL expression for column b",
+  },
+  "down": {
+    "a": "down SQL expression for column a",
+    "b": "down SQL expression for column b",
+  }
+}
+```
+</YamlJsonTabs>
 
 The new versions of the columns will no longer have the constraint, but in the old view of the table the columns will still be covered by the constraint; the `down` expressions should therefore be used to ensure that the combination of values meets the constraint being dropped.
 

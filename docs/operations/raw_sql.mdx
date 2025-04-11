@@ -12,11 +12,21 @@ description: A raw SQL operation runs arbitrary SQL against the database.
 
 This is intended as an 'escape hatch' to allow a migration to perform operations that are otherwise not supported by `pgroll`.
 
+<YamlJsonTabs>
 ```yaml
 sql:
   up: SQL expression
   down: SQL expression
 ```
+```json
+{
+  "sql": {
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 By default, a `sql` operation cannot run together with other operations in the same migration. This is to ensure pgroll can correctly track the state of the database. However, it is possible to run a `sql` operation together with other operations by setting the `onComplete` flag to `true`.
 
@@ -24,11 +34,21 @@ The `onComplete` flag will make this operation run the `up` expression on the co
 
 `onComplete` flag is incompatible with `down` expression, as `pgroll` does not support running rollback after complete was executed.
 
+<YamlJsonTabs>
 ```yaml
 sql:
   up: SQL expression
   onComplete: true
 ```
+```json
+{
+  "sql": {
+    "up": "SQL expression",
+    "onComplete": true
+  }
+}
+```
+</YamlJsonTabs>
 
 
 <Warning>

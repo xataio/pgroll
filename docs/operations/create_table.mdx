@@ -5,15 +5,27 @@ description: A create table operation creates a new table in the database.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 create_table:
   name: name of new table
   columns: [...]
   constraints: [...]
 ```
+```json
+{
+  "create_table": {
+    "name": "name of new table",
+    "columns": [...],
+    "constraints": [...]
+  }
+}
+```
+</YamlJsonTabs>
 
 Each `column` is defined as:
 
+<YamlJsonTabs>
 ```yaml
 - name: column name
   type: postgres type
@@ -39,9 +51,42 @@ Each `column` is defined as:
     on_update: ON UPDATE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION
     match_type: match type, can be SIMPLE or FULL. Default is SIMPLE
 ```
+```json
+{
+  "name": "column name",
+  "type": "postgres type",
+  "comment": "postgres comment for the column",
+  "nullable": true|false,
+  "unique": true|false,
+  "pk": true|false,
+  "default": "default value",
+  "check": {
+    "name": "name of check constraint",
+    "constraint": "constraint expression",
+    "no_inherit": "true|false"
+  },
+  "generated": {
+    "expression": "expression for stored column",
+    "identity": {
+      "user_specified_values": "user specified values can be used, can be ALWAYS and BY DEFAULT. Default is ALWAYS",
+      "sequence_options": "sequence options for identity columns"
+    }
+  },
+  "references": {
+    "name": "name of foreign key constraint",
+    "table": "name of referenced table",
+    "column": "name of referenced column",
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_update": "ON UPDATE behaviour, can be CASCADE, SET NULL, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "match_type": "match type, can be SIMPLE or FULL. Default is SIMPLE"
+  }
+}
+```
+</YamlJsonTabs>
 
 Each `constraint` is defined as:
 
+<YamlJsonTabs>
 ```yaml
 - name: constraint name
   type: constraint type
@@ -68,6 +113,38 @@ Each `constraint` is defined as:
     elements: exclude elements
     predicate: WHERE clause of the exclude constraint
 ```
+```json
+{
+  "name": "constraint name",
+  "type": "constraint type",
+  "columns": ["list", "of", "columns"],
+  "check": "condition of CHECK constraint",
+  "nulls_not_distinct": true|false,
+  "deferrable": true|false,
+  "initially_deferred": true|false,
+  "no_inherit": true|false,
+  "references": {
+    "name": "name of foreign key constraint",
+    "table": "name of referenced table",
+    "columns": ["list", "of", "referenced", "columns"],
+    "on_delete": "ON DELETE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "on_delete_set_columns": ["list of FKs to set", "in on delete operation on SET NULL or SET DEFAULT"],
+    "on_update": "ON UPDATE behaviour, can be CASCADE, SET NULL, SET DEFAULT, RESTRICT, or NO ACTION. Default is NO ACTION",
+    "match_type": "match type, can be SIMPLE, FULL or PARTIAL. Default is SIMPLE"
+  },
+  "index_parameters": {
+    "tablespace": "index_tablespace",
+    "storage_parameters": "parameter=value",
+    "include_columns": ["list", "of", "columns", "included in index"]
+  },
+  "exclude": {
+    "index_method": "name of the index method, e.g. btree",
+    "elements": "exclude elements",
+    "predicate": "WHERE clause of the exclude constraint"
+  }
+}
+```
+</YamlJsonTabs>
 
 Default values are subject to the usual rules for quoting SQL expressions. In particular, string literals should be surrounded with single quotes.
 
@@ -104,7 +181,7 @@ Create one table:
 
 <ExampleSnippet example="20_create_posts_table.yaml" languange="yaml" />
 
-### Create a table with a comment 
+### Create a table with a comment
 
 Create a table with a comment on the table:
 

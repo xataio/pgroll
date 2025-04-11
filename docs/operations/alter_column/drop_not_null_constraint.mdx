@@ -5,6 +5,7 @@ description: Drop not null operations drop a `NOT NULL` constraint from a column
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 alter_column:
   table: table name
@@ -13,6 +14,18 @@ alter_column:
   up: SQL expression
   down: SQL expression
 ```
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "nullable": true,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 ## Examples
 

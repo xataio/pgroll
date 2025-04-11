@@ -5,6 +5,7 @@ description: A change default operation changes the default value of a column.
 
 ## Structure
 
+<YamlJsonTabs>
 ```yaml
 alter_column:
   table: table name
@@ -13,6 +14,18 @@ alter_column:
   up: SQL expression
   down: SQL expression
 ```
+```json
+{
+  "alter_column": {
+    "table": "table name",
+    "column": "column name",
+    "default": "new default value" | null,
+    "up": "SQL expression",
+    "down": "SQL expression"
+  }
+}
+```
+</YamlJsonTabs>
 
 The `default` expression is subject to the usual SQL quoting rules. In particular, string literals should be surrounded with `''`.
 
