@@ -1225,6 +1225,105 @@ func TestCreateConstraintInMultiOperationMigrations(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "products", "name")
 			},
 		},
+		{
+			name: "create table with comment and default on column, add unique constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:    "name",
+									Type:    "text",
+									Default: ptr("'Pixel'"),
+									Comment: ptr("my important comment"),
+								},
+							},
+						},
+						&migrations.OpCreateConstraint{
+							Table:   "items",
+							Type:    migrations.OpCreateConstraintTypeUnique,
+							Name:    "unique_item_name",
+							Columns: []string{"name"},
+							Up: map[string]string{
+								"name": "name",
+							},
+							Down: map[string]string{
+								"name": "name",
+							},
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Column must have comment set
+				ColumnMustHaveComment(t, db, schema, "items", "name", "my important comment")
+				// Column must have default value
+				ColumnMustHaveDefault(t, db, schema, "items", "name", "'Pixel'::text")
+				// Can insert a row into the new schema
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "1",
+					"name": "apple",
+				})
+
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "2",
+					"name": "banana",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "3",
+					"name": "apple",
+				}, testutils.UniqueViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": "banana"},
+				}, rows)
+
+				// The old view has the expected rows
+				rows = MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "apple"},
+					{"id": 2, "name": "banana"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Column comment must be preserved
+				ColumnMustHaveComment(t, db, schema, "items", "name", "my important comment")
+				// Column must have default value
+				ColumnMustHaveDefault(t, db, schema, "items", "name", "'Pixel'::text")
+				// Can insert a row into the new schema that meets the constraint
+				MustInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "3",
+					"name": "carrot",
+				})
+
+				// Can't insert a row into the new schema that violates the constraint
+				MustNotInsert(t, db, schema, "01_create_table", "items", map[string]string{
+					"id":   "4",
+					"name": "carrot",
+				}, testutils.UniqueViolationErrorCode)
+
+				// The new view has the expected rows
+				rows := MustSelect(t, db, schema, "01_create_table", "items")
+				assert.Equal(t, []map[string]any{
+					{"id": 3, "name": "carrot"},
+				}, rows)
+			},
+		},
 	})
 }
 

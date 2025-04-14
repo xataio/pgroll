@@ -190,6 +190,13 @@ func ColumnMustNotHaveComment(t *testing.T, db *sql.DB, schema, table, column st
 	}
 }
 
+func ColumnMustHaveDefault(t *testing.T, db *sql.DB, schema, table, column, expectedDefault string) {
+	t.Helper()
+	if !columnHasDefault(t, db, schema, table, column, &expectedDefault) {
+		t.Fatalf("Expected column %q to have default value %q", column, expectedDefault)
+	}
+}
+
 func ColumnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) {
 	t.Helper()
 	if !columnMustBePK(t, db, schema, table, column) {
@@ -708,6 +715,27 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column string, ex
 		return actualComment == nil
 	}
 	return actualComment != nil && *expectedComment == *actualComment
+}
+
+func columnHasDefault(t *testing.T, db *sql.DB, schema, table, column string, expectedDefault *string) bool {
+	t.Helper()
+
+	var actualDefault *string
+	err := db.QueryRow(`
+    SELECT column_default
+    FROM information_schema.columns
+    WHERE table_schema = $1
+    AND table_name = $2
+    AND column_name = $3
+  `,
+		schema, table, column).Scan(&actualDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expectedDefault == nil {
+		return actualDefault == nil
+	}
+	return actualDefault != nil && *expectedDefault == *actualDefault
 }
 
 func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool {
