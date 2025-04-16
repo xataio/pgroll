@@ -334,3 +334,22 @@ func (a *createTableAction) Execute(ctx context.Context) error {
 		a.constraints))
 	return err
 }
+
+// dropIndexAction is a DBAction that drops an index.
+type dropIndexAction struct {
+	conn db.DB
+	name string
+}
+
+func NewDropIndexAction(conn db.DB, name string) *dropIndexAction {
+	return &dropIndexAction{
+		conn: conn,
+		name: name,
+	}
+}
+
+func (a *dropIndexAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
+		pq.QuoteIdentifier(a.name)))
+	return err
+}
