@@ -353,3 +353,22 @@ func (a *dropIndexAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.name)))
 	return err
 }
+
+// DropTableAction is a DBAction that drops a table.
+type DropTableAction struct {
+	conn  db.DB
+	table string
+}
+
+func NewDropTableAction(conn db.DB, table string) *DropTableAction {
+	return &DropTableAction{
+		conn:  conn,
+		table: table,
+	}
+}
+
+func (a *DropTableAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
+		pq.QuoteIdentifier(a.table)))
+	return err
+}
