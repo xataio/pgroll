@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -36,9 +35,7 @@ func (o *OpDropTable) Complete(ctx context.Context, conn db.DB, s *schema.Schema
 	deletionName := DeletionName(o.Name)
 
 	// Perform the actual deletion of the soft-deleted table
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", pq.QuoteIdentifier(deletionName)))
-
-	return err
+	return NewDropTableAction(conn, deletionName).Execute(ctx)
 }
 
 func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
@@ -54,7 +51,6 @@ func (o *OpDropTable) Rollback(ctx context.Context, conn db.DB, s *schema.Schema
 	if err != nil {
 		return fmt.Errorf("failed to rename table %s: %w", o.Name, err)
 	}
-
 	return nil
 }
 
