@@ -4,9 +4,7 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/lib/pq"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -19,11 +17,7 @@ func (o *OpDropIndex) Start(ctx context.Context, conn db.DB, latestSchema string
 }
 
 func (o *OpDropIndex) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	// drop the index concurrently
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
-		pq.QuoteIdentifier(o.Name)))
-
-	return err
+	return NewDropIndexAction(conn, o.Name).Execute(ctx)
 }
 
 func (o *OpDropIndex) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
