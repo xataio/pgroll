@@ -763,6 +763,24 @@
       ],
       "type": "object"
     },
+    "OpSQLInTransaction": {
+      "additionalProperties": false,
+      "description": "This operation type is used for SQL migration files. It is not intended to be used in JSON or YAML. It is different from raw SQL operations because it runs in a separate transaction",
+      "properties": {
+        "down": {
+          "default": "",
+          "description": "SQL expression for down migration",
+          "type": "string"
+        },
+        "up": {
+          "default": "",
+          "description": "SQL expression for up migration",
+          "type": "string"
+        }
+      },
+      "required": ["up"],
+      "type": "object"
+    },
     "OpRenameConstraint": {
       "additionalProperties": false,
       "description": "Rename constraint operation",

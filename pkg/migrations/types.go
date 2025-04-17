@@ -472,6 +472,17 @@ type OpRenameTable struct {
 	To string `json:"to"`
 }
 
+// This operation type is used for SQL migration files. It is not intended to be
+// used in JSON or YAML. It is different from raw SQL operations because it runs in
+// a separate transaction
+type OpSQLInTransaction struct {
+	// SQL expression for down migration
+	Down string `json:"down,omitempty"`
+
+	// SQL expression for up migration
+	Up string `json:"up"`
+}
+
 // Set replica identity operation
 type OpSetReplicaIdentity struct {
 	// Replica identity to set
