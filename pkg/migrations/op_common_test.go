@@ -68,8 +68,15 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 				// start the last migration
 				err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1], config)
 				if tt.wantStartErr != nil {
-					if !errors.Is(err, tt.wantStartErr) {
-						t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
+					var pqErr *pq.Error
+					if ok := errors.As(err, &pqErr); ok {
+						if !strings.Contains(tt.wantStartErr.Error(), pqErr.Message) {
+							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
+						}
+					} else {
+						if !errors.Is(err, tt.wantStartErr) {
+							t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)
+						}
 					}
 					return
 				}

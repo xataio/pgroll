@@ -52,3 +52,4 @@
 52_create_table_with_exclusion_constraint.yaml
 53_add_column_with_volatile_default.yaml
 54_create_index_with_opclass.yaml
+55_sql_migration.up.sql

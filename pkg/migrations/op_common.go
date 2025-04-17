@@ -33,6 +33,7 @@ const (
 	OpNameSetReplicaIdentity        OpName = "set_replica_identity"
 	OpNameDropMultiColumnConstraint OpName = "drop_multicolumn_constraint"
 	OpRawSQLName                    OpName = "sql"
+	OpSQLInTransactionName          OpName = "sql_in_transaction"
 	OpCreateConstraintName          OpName = "create_constraint"
 )
 
@@ -54,7 +55,7 @@ func DeletionName(name string) string {
 // CollectFilesFromDir returns a list of migration files in a directory.
 // The files are ordered based on the filename without the extension name.
 func CollectFilesFromDir(dir fs.FS) ([]string, error) {
-	supportedExtensionsGlob := []string{"*.json", "*.yml", "*.yaml"}
+	supportedExtensionsGlob := []string{"*.json", "*.yml", "*.yaml", "*.up.sql"}
 	var migrationFiles []string
 	for _, glob := range supportedExtensionsGlob {
 		files, err := fs.Glob(dir, glob)
@@ -93,6 +94,8 @@ func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
 		err = dec.Decode(&mig)
 	case ".yaml", ".yml":
 		err = yaml.UnmarshalStrict(byteValue, &mig)
+	case ".sql":
+		err = readSQLMigrationFile(dir, filename, byteValue, &mig)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("reading migration file: %w", err)
@@ -104,6 +107,29 @@ func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
 	}
 
 	return &mig, nil
+}
+
+func readSQLMigrationFile(dir fs.FS, filename string, upMigration []byte, mig *Migration) error {
+	mig.Name = strings.TrimSuffix(filename, ".up.sql")
+	// find down migration if exists
+	downName := mig.Name + ".down.sql"
+	downFile, err := dir.Open(downName)
+	if err != nil {
+		mig.Operations = Operations{
+			&OpSQLInTransaction{Up: string(upMigration)},
+		}
+		return nil
+	}
+	defer downFile.Close()
+
+	downMigration, err := io.ReadAll(downFile)
+	if err != nil {
+		return err
+	}
+	mig.Operations = Operations{
+		&OpSQLInTransaction{Up: string(upMigration), Down: string(downMigration)},
+	}
+	return nil
 }
 
 // UnmarshalJSON deserializes the list of operations from a JSON array.
@@ -218,6 +244,9 @@ func OperationName(op Operation) OpName {
 	case *OpRawSQL:
 		return OpRawSQLName
 
+	case *OpSQLInTransaction:
+		return OpSQLInTransactionName
+
 	case *OpCreateConstraint:
 		return OpCreateConstraintName
 
@@ -269,6 +298,9 @@ func operationFromName(name OpName) (Operation, error) {
 
 	case OpRawSQLName:
 		return &OpRawSQL{}, nil
+
+	case OpSQLInTransactionName:
+		return &OpSQLInTransaction{}, nil
 
 	case OpCreateConstraintName:
 		return &OpCreateConstraint{}, nil
