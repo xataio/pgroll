@@ -56,32 +56,6 @@ In practice, the `searchPath` variable would be provided to the application as a
 
 If an application doesn't set the `search_path` for the connection, the `search_path` defaults to the `public` schema, meaning that the application will be working with the underlying tables directly rather than accessing them through the versioned views.
 
-## Installation
-
-### Binaries
-
-Binaries are available for Linux, macOS & Windows on our [Releases](https://github.com/xataio/pgroll/releases) page.
-
-### From source
-
-To install `pgroll` from source, run the following command:
-
-```sh
-go install github.com/xataio/pgroll@latest
-```
-
-Note: requires [Go 1.24](https://golang.org/doc/install) or later.
-
-### From package manager - Homebrew
-
-To install `pgroll` with homebrew, run the following command:
-
-```sh
-# macOS or Linux
-brew tap xataio/pgroll
-brew install pgroll
-```
-
 ## Supported Postgres versions
 
 `pgroll` supports Postgres versions >= 14.
