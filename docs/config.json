@@ -11,6 +11,11 @@
       "file": "docs/install-pgroll.md"
     },
     {
+      "title": "Concepts",
+      "href": "/concepts",
+      "file": "docs/concepts.md"
+    },
+    {
       "title": "Tutorial",
       "href": "/tutorial",
       "file": "docs/tutorial.md"
