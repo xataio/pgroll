@@ -167,31 +167,5 @@
       "args": []
     }
   ],
-  "flags": [
-    {
-      "name": "lock-timeout",
-      "description": "Postgres lock timeout in milliseconds for pgroll DDL operations",
-      "default": "500"
-    },
-    {
-      "name": "pgroll-schema",
-      "description": "Postgres schema to use for pgroll internal state",
-      "default": "pgroll"
-    },
-    {
-      "name": "postgres-url",
-      "description": "Postgres URL",
-      "default": "postgres://postgres:postgres@localhost?sslmode=disable"
-    },
-    {
-      "name": "role",
-      "description": "Optional postgres role to set when executing migrations",
-      "default": ""
-    },
-    {
-      "name": "schema",
-      "description": "Postgres schema to use for the migration",
-      "default": "public"
-    }
-  ]
+  "flags": []
 }

@@ -44,6 +44,8 @@ func latestCmd() *cobra.Command {
 		},
 	}
 
+	flags.PgConnectionFlags(latestCmd)
+
 	latestCmd.Flags().BoolVarP(&withSchema, "with-schema", "s", false, "prefix the version with the schema name")
 	latestCmd.Flags().StringVarP(&migrationsDir, "local", "l", "", "retrieve the latest version from a local migration directory")
 

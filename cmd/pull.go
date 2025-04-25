@@ -60,6 +60,8 @@ func pullCmd() *cobra.Command {
 		},
 	}
 
+	flags.PgConnectionFlags(pullCmd)
+
 	pullCmd.Flags().BoolVarP(&withPrefixes, "with-prefixes", "p", false, opts["p"])
 
 	return pullCmd

@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/xataio/pgroll/cmd/flags"
 	"github.com/xataio/pgroll/pkg/backfill"
 )
 
@@ -90,6 +91,8 @@ func migrateCmd() *cobra.Command {
 			return runMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig)
 		},
 	}
+
+	flags.PgConnectionFlags(migrateCmd)
 
 	migrateCmd.Flags().IntVar(&batchSize, "backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
 	migrateCmd.Flags().DurationVar(&batchDelay, "backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")

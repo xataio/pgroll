@@ -62,6 +62,8 @@ func startCmd() *cobra.Command {
 	startCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Mark the migration as complete")
 	startCmd.Flags().BoolP("skip-validation", "s", false, "skip migration validation")
 
+	flags.PgConnectionFlags(startCmd)
+
 	viper.BindPFlag("SKIP_VALIDATION", startCmd.Flags().Lookup("skip-validation"))
 
 	return startCmd

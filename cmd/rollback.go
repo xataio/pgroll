@@ -7,35 +7,42 @@ import (
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/cmd/flags"
 )
 
-var rollbackCmd = &cobra.Command{
-	Use:   "rollback",
-	Short: "Roll back an ongoing migration",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		m, err := NewRoll(cmd.Context())
-		if err != nil {
-			return err
-		}
-		defer m.Close()
+func rollbackCmd() *cobra.Command {
+	rollbackCmd := &cobra.Command{
+		Use:   "rollback",
+		Short: "Roll back an ongoing migration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			m, err := NewRoll(cmd.Context())
+			if err != nil {
+				return err
+			}
+			defer m.Close()
 
-		// Ensure that pgroll is initialized
-		ok, err := m.State().IsInitialized(cmd.Context())
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return errPGRollNotInitialized
-		}
+			// Ensure that pgroll is initialized
+			ok, err := m.State().IsInitialized(cmd.Context())
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errPGRollNotInitialized
+			}
 
-		sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
-		err = m.Rollback(cmd.Context())
-		if err != nil {
-			sp.Fail(fmt.Sprintf("Failed to roll back migration: %s", err))
-			return err
-		}
+			sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
+			err = m.Rollback(cmd.Context())
+			if err != nil {
+				sp.Fail(fmt.Sprintf("Failed to roll back migration: %s", err))
+				return err
+			}
 
-		sp.Success("Migration rolled back. Changes made since the last version have been reverted")
-		return nil
-	},
+			sp.Success("Migration rolled back. Changes made since the last version have been reverted")
+			return nil
+		},
+	}
+
+	flags.PgConnectionFlags(rollbackCmd)
+
+	return rollbackCmd
 }
