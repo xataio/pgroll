@@ -6,6 +6,11 @@
       "file": "docs/getting-started.md"
     },
     {
+      "title": "Installation",
+      "href": "/installation",
+      "file": "docs/install-pgroll.md"
+    },
+    {
       "title": "Tutorial",
       "href": "/tutorial",
       "file": "docs/tutorial.md"
