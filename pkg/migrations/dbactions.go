@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: Apache-2.0
-
 package migrations
 
 import (
@@ -370,5 +368,61 @@ func NewDropTableAction(conn db.DB, table string) *DropTableAction {
 func (a *DropTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
 		pq.QuoteIdentifier(a.table)))
+	return err
+}
+
+// createIndexAction is a DBAction that creates an index.
+type createIndexAction struct {
+	conn             db.DB
+	table            string
+	indexName        string
+	columns          []string
+	method           string
+	unique           bool
+	storageParams    string
+	predicate        string
+}
+
+func NewCreateIndexAction(conn db.DB, table, indexName string, columns []string, method string, unique bool, storageParams, predicate string) *createIndexAction {
+	return &createIndexAction{
+		conn:          conn,
+		table:         table,
+		indexName:     indexName,
+		columns:       columns,
+		method:        method,
+		unique:        unique,
+		storageParams: storageParams,
+		predicate:     predicate,
+	}
+}
+
+func (a *createIndexAction) Execute(ctx context.Context) error {
+	stmtFmt := "CREATE INDEX %s ON %s"
+	if a.unique {
+		stmtFmt = "CREATE UNIQUE INDEX %s ON %s"
+	}
+	stmt := fmt.Sprintf(stmtFmt,
+		pq.QuoteIdentifier(a.indexName),
+		pq.QuoteIdentifier(a.table))
+
+	if a.method != "" {
+		stmt += fmt.Sprintf(" USING %s", a.method)
+	}
+
+	colSQLs := make([]string, 0, len(a.columns))
+	for _, columnName := range a.columns {
+		colSQLs = append(colSQLs, pq.QuoteIdentifier(columnName))
+	}
+	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
+
+	if a.storageParams != "" {
+		stmt += fmt.Sprintf(" WITH (%s)", a.storageParams)
+	}
+
+	if a.predicate != "" {
+		stmt += fmt.Sprintf(" WHERE %s", a.predicate)
+	}
+
+	_, err := a.conn.ExecContext(ctx, stmt)
 	return err
 }
