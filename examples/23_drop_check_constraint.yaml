@@ -1,4 +1,3 @@
-name: 23_drop_check_constraint
 operations:
   - drop_constraint:
       table: posts

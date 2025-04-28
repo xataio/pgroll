@@ -1,4 +1,3 @@
-name: 19_create_orders_table
 operations:
   - create_table:
       name: orders

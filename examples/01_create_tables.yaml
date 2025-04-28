@@ -1,4 +1,3 @@
-name: 01_create_tables
 operations:
   - create_table:
       name: customers

@@ -1,4 +1,3 @@
-name: 50_create_table_with_table_constraint
 operations:
   - create_table:
       name: telephone_providers

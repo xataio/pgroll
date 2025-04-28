@@ -1,4 +1,3 @@
-name: 53_add_column_with_volatile_default
 operations:
   - add_column:
       table: library

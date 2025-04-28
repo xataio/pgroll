@@ -1,4 +1,3 @@
-name: 21_add_foreign_key_constraint
 operations:
   - alter_column:
       table: posts

@@ -1,4 +1,3 @@
-name: 52_create_table_with_table_exclusion_constraint
 operations:
   - create_table:
       name: library

@@ -1,4 +1,3 @@
-name: 41_add_enum_column
 operations:
   - add_column:
       table: fruits

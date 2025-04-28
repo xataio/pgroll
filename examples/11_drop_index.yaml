@@ -1,4 +1,3 @@
-name: 11_drop_index
 operations:
   - drop_index:
       name: idx_fruits_name

@@ -1,4 +1,3 @@
-name: 02_create_another_table
 operations:
   - create_table:
       name: products

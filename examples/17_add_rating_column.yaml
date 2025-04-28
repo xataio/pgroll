@@ -1,4 +1,3 @@
-name: 17_add_rating_column
 operations:
   - add_column:
       table: reviews

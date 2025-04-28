@@ -1,4 +1,3 @@
-name: 33_rename_check_constraint
 operations:
   - rename_constraint:
       table: people

@@ -1,4 +1,3 @@
-name: 29_set_replica_identity
 operations:
   - set_replica_identity:
       table: fruits

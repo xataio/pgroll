@@ -1,4 +1,3 @@
-name: 14_add_reviews_table
 operations:
   - create_table:
       name: reviews
