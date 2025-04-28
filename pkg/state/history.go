@@ -6,11 +6,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/lib/pq"
+	"sigs.k8s.io/yaml"
 
 	"github.com/xataio/pgroll/pkg/migrations"
 )
@@ -63,14 +65,20 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 }
 
 // WriteToFile writes the migration to a file in `targetDir`, prefixing the
-// filename with `prefix`.
-func (m *Migration) WriteToFile(targetDir, prefix string) error {
+// filename with `prefix`. The output format defaults to YAML, but can
+// be changed to JSON by setting `useJSON` to true.
+func (m *Migration) WriteToFile(targetDir, prefix string, useJSON bool) error {
 	err := os.MkdirAll(targetDir, 0o755)
 	if err != nil {
 		return err
 	}
 
-	fileName := fmt.Sprintf("%s%s.json", prefix, m.Migration.Name)
+	suffix := "yaml"
+	if useJSON {
+		suffix = "json"
+	}
+
+	fileName := fmt.Sprintf("%s%s.%s", prefix, m.Migration.Name, suffix)
 	filePath := filepath.Join(targetDir, fileName)
 
 	file, err := os.Create(filePath)
@@ -79,8 +87,26 @@ func (m *Migration) WriteToFile(targetDir, prefix string) error {
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
+	if useJSON {
+		return m.writeAsJSON(file)
+	} else {
+		return m.writeAsYAML(file)
+	}
+}
+
+func (m *Migration) writeAsJSON(w io.Writer) error {
+	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 
 	return encoder.Encode(m.Migration)
+}
+
+func (m *Migration) writeAsYAML(w io.Writer) error {
+	yml, err := yaml.Marshal(m.Migration)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(yml)
+	return err
 }

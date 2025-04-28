@@ -14,8 +14,9 @@ import (
 func pullCmd() *cobra.Command {
 	opts := map[string]string{
 		"p": "prefix each migration filename with its position in the schema history",
+		"j": "output each migration in JSON format instead of YAML",
 	}
-	var withPrefixes bool
+	var withPrefixes, useJSON bool
 
 	pullCmd := &cobra.Command{
 		Use:       "pull <target directory>",
@@ -51,7 +52,7 @@ func pullCmd() *cobra.Command {
 				if withPrefixes {
 					prefix = fmt.Sprintf("%04d", i+1) + "_"
 				}
-				err := mig.WriteToFile(targetDir, prefix)
+				err := mig.WriteToFile(targetDir, prefix, useJSON)
 				if err != nil {
 					return fmt.Errorf("failed to write migration %q: %w", mig.Migration.Name, err)
 				}
@@ -61,6 +62,7 @@ func pullCmd() *cobra.Command {
 	}
 
 	pullCmd.Flags().BoolVarP(&withPrefixes, "with-prefixes", "p", false, opts["p"])
+	pullCmd.Flags().BoolVarP(&useJSON, "json", "j", false, opts["j"])
 
 	return pullCmd
 }
