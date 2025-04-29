@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -17,8 +16,8 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type
 	identitySQL := strings.ToUpper(o.Identity.Type)
@@ -33,14 +32,16 @@ func (o *OpSetReplicaIdentity) Start(ctx context.Context, logger pterm.Logger, c
 	return nil, err
 }
 
-func (o *OpSetReplicaIdentity) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetReplicaIdentity) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
+
 	// No-op
 	return nil
 }
 
-func (o *OpSetReplicaIdentity) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetReplicaIdentity) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
+
 	// No-op
 	return nil
 }
@@ -65,13 +66,4 @@ func (o *OpSetReplicaIdentity) Validate(ctx context.Context, s *schema.Schema) e
 	}
 
 	return nil
-}
-
-func (o *OpSetReplicaIdentity) loggerArgs() []any {
-	return []any{
-		"operation", OpNameSetReplicaIdentity,
-		"table", o.Table,
-		"identity_type", o.Identity.Type,
-		"identity_index", o.Identity.Index,
-	}
 }

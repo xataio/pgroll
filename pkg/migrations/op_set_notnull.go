@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -22,8 +21,8 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -42,8 +41,8 @@ func (o *OpSetNotNull) Start(ctx context.Context, logger pterm.Logger, conn db.D
 	return table, nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	// Validate the NOT NULL constraint on the old column.
 	// The constraint must be valid because:
@@ -75,8 +74,8 @@ func (o *OpSetNotNull) Complete(ctx context.Context, logger pterm.Logger, conn d
 	return nil
 }
 
-func (o *OpSetNotNull) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetNotNull) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	return nil
 }
@@ -93,13 +92,4 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
-}
-
-func (o *OpSetNotNull) loggerArgs() []any {
-	return []any{
-		"operation", OpNameAlterColumn,
-		"column", o.Column,
-		"table", o.Table,
-		"nullable", false,
-	}
 }

@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -15,13 +14,15 @@ import (
 
 var _ Operation = (*OpRenameTable)(nil)
 
-func (o *OpRenameTable) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
+
 	return nil, s.RenameTable(o.From, o.To)
 }
 
-func (o *OpRenameTable) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(o.From),
 		pq.QuoteIdentifier(o.To)))
@@ -29,8 +30,9 @@ func (o *OpRenameTable) Complete(ctx context.Context, logger pterm.Logger, conn 
 	return err
 }
 
-func (o *OpRenameTable) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
+
 	s.RenameTable(o.To, o.From)
 	return nil
 }
@@ -48,12 +50,4 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	s.RenameTable(o.From, o.To)
 	return nil
-}
-
-func (o *OpRenameTable) loggerArgs() []any {
-	return []any{
-		"operation", OpNameRenameTable,
-		"from", o.From,
-		"to", o.To,
-	}
 }

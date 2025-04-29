@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -23,8 +22,8 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -38,8 +37,8 @@ func (o *OpSetUnique) Start(ctx context.Context, logger pterm.Logger, conn db.DB
 	return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
-func (o *OpSetUnique) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetUnique) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	// Create a unique constraint using the unique index
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
@@ -53,8 +52,8 @@ func (o *OpSetUnique) Complete(ctx context.Context, logger pterm.Logger, conn db
 	return err
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetUnique) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	return nil
 }
@@ -81,13 +80,4 @@ func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
-}
-
-func (o *OpSetUnique) loggerArgs() []any {
-	return []any{
-		"operation", OpNameAlterColumn,
-		"column", o.Column,
-		"table", o.Table,
-		"unique", true,
-	}
 }

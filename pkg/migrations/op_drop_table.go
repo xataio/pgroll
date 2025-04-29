@@ -6,15 +6,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpDropTable)(nil)
 
-func (o *OpDropTable) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Name)
 	if table == nil {
@@ -34,8 +33,8 @@ func (o *OpDropTable) Start(ctx context.Context, logger pterm.Logger, conn db.DB
 	return nil, nil
 }
 
-func (o *OpDropTable) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	deletionName := DeletionName(o.Name)
 
@@ -43,8 +42,8 @@ func (o *OpDropTable) Complete(ctx context.Context, logger pterm.Logger, conn db
 	return NewDropTableAction(conn, deletionName).Execute(ctx)
 }
 
-func (o *OpDropTable) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	// Mark the table as no longer deleted so that it is visible to preceding
 	// Rollbacks in the same migration
@@ -70,11 +69,4 @@ func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	s.RemoveTable(table.Name)
 	return nil
-}
-
-func (o *OpDropTable) loggerArgs() []any {
-	return []any{
-		"operation", OpNameDropTable,
-		"name", o.Name,
-	}
 }
