@@ -1,4 +1,3 @@
-name: 22_add_check_constraint
 operations:
   - alter_column:
       table: posts

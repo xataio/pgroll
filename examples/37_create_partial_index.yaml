@@ -1,4 +1,3 @@
-name: 37_create_partial_index
 operations:
   - create_index:
       name: idx_fruits_id_gt_10

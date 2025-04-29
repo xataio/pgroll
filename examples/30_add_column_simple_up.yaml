@@ -1,4 +1,3 @@
-name: 30_add_column_simple_up
 operations:
   - add_column:
       table: people

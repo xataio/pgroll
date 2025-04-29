@@ -1,4 +1,3 @@
-name: 43_create_tickets_table
 operations:
   - create_table:
       name: tickets

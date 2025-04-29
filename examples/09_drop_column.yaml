@@ -1,4 +1,3 @@
-name: 09_drop_column
 operations:
   - drop_column:
       table: fruits

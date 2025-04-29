@@ -90,7 +90,7 @@ operations:
 
 Take this file and save it as `sql/01_create_users_table.yaml`.
 
-> Note: The `name` field is optional. If not provided, `pgroll` will use the filename (without the `.yaml` extension) as the migration name. In this example, the file is saved as `sql/01_create_users_table.yaml`, so the name would be `01_create_users_table` if not explicitly provided.
+> Note: The `name` field is optional. If not provided, `pgroll` will use the filename (without the `.yaml` extension) as the migration name. In this example, the file is saved as `sql/01_create_users_table.yaml`, so the name would be `01_create_users_table` if not explicitly provided. It's recommended to write migrations without an explicit `name` field and allow the filename to determine the name of the migration.
 
 The migration will create a `users` table with three columns. It is equivalent to the following SQL DDL statement:
 

@@ -1,4 +1,3 @@
-name: 27_drop_unique_constraint
 operations:
   - drop_constraint:
       table: reviews

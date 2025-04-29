@@ -1,4 +1,3 @@
-name: 36_set_comment_to_null
 operations:
   - alter_column:
       table: events

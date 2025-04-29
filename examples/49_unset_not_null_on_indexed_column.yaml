@@ -1,4 +1,3 @@
-name: 49_unset_not_null_on_indexed_column
 operations:
   - alter_column:
       table: fruits

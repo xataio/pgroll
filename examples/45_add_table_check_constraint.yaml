@@ -1,4 +1,3 @@
-name: 45_add_table_check_constraint
 operations:
   - create_constraint:
       type: check

@@ -1,4 +1,3 @@
-name: 18_change_column_type
 operations:
   - alter_column:
       table: reviews

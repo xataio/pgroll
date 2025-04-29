@@ -1,4 +1,3 @@
-name: 28_different_defaults
 operations:
   - create_table:
       name: items

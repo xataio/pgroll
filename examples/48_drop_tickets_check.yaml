@@ -1,4 +1,3 @@
-name: 48_drop_tickets_check
 operations:
   - drop_multicolumn_constraint:
       table: tickets

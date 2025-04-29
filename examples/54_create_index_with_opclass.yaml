@@ -1,4 +1,3 @@
-name: 54_create_index_with_opclass
 operations:
   - create_index:
       name: idx_fruits_custom_opclass

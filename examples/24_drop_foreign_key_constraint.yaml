@@ -1,4 +1,3 @@
-name: 24_drop_foreign_key_constraint
 operations:
   - drop_constraint:
       table: posts

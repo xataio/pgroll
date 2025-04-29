@@ -1,4 +1,3 @@
-name: 12_create_employees_table
 operations:
   - create_table:
       name: employees

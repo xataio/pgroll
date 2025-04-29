@@ -1,4 +1,3 @@
-name: 26_add_column_with_check_constraint
 operations:
   - add_column:
       table: people

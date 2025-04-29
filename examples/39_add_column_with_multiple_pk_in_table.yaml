@@ -1,4 +1,3 @@
-name: 39_add_column_with_multiple_pk_in_table
 operations:
   - add_column:
       table: sellers
