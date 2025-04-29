@@ -102,3 +102,13 @@ func (m *Migration) ContainsRawSQLOperation() bool {
 	}
 	return false
 }
+
+// IsSQLMigration returns true if the migration is an SQL migration in a transaction
+func (m *Migration) IsSQLInTransaction() bool {
+	for _, op := range m.Operations {
+		if _, ok := op.(*OpSQLInTransaction); ok {
+			return true
+		}
+	}
+	return false
+}

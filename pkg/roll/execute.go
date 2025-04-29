@@ -112,7 +112,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		}
 	}
 
-	if m.disableVersionSchemas || migration.ContainsRawSQLOperation() && m.noVersionSchemaForRawSQL {
+	if m.disableVersionSchemas || isSQLOperation(migration) && m.noVersionSchemaForRawSQL {
 		// skip creating version schemas
 		return tablesToBackfill, nil
 	}
@@ -123,6 +123,10 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	return tablesToBackfill, nil
+}
+
+func isSQLOperation(m *migrations.Migration) bool {
+	return m.ContainsRawSQLOperation() || m.IsSQLInTransaction()
 }
 
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
