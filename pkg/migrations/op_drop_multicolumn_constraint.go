@@ -8,6 +8,8 @@ import (
 	"slices"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
+
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -15,7 +17,9 @@ import (
 
 var _ Operation = (*OpDropMultiColumnConstraint)(nil)
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -91,7 +95,9 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, conn db.DB, lat
 	return table, nil
 }
 
-func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
@@ -127,7 +133,9 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, conn db.DB, 
 	return nil
 }
 
-func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
@@ -204,4 +212,12 @@ func (o *OpDropMultiColumnConstraint) upSQL(column string) string {
 	}
 
 	return pq.QuoteIdentifier(column)
+}
+
+func (o *OpDropMultiColumnConstraint) loggerArgs() []any {
+	return []any{
+		"operation", OpNameDropMultiColumnConstraint,
+		"constraint", o.Name,
+		"table", o.Table,
+	}
 }

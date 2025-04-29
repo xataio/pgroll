@@ -27,3 +27,5 @@ func SkipValidation() bool { return viper.GetBool("SKIP_VALIDATION") }
 func Role() string {
 	return viper.GetString("ROLE")
 }
+
+func Verbose() bool { return viper.GetBool("VERBOSE") }

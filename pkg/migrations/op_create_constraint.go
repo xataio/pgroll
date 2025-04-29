@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -15,7 +16,9 @@ import (
 
 var _ Operation = (*OpCreateConstraint)(nil)
 
-func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -96,14 +99,16 @@ func (o *OpCreateConstraint) Start(ctx context.Context, conn db.DB, latestSchema
 	return table, nil
 }
 
-func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateConstraint) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
 			Name:  o.Name,
 		}
-		err := uniqueOp.Complete(ctx, conn, s)
+		err := uniqueOp.Complete(ctx, logger, conn, s)
 		if err != nil {
 			return err
 		}
@@ -114,7 +119,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 				Name: o.Name,
 			},
 		}
-		err := checkOp.Complete(ctx, conn, s)
+		err := checkOp.Complete(ctx, logger, conn, s)
 		if err != nil {
 			return err
 		}
@@ -125,7 +130,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 				Name: o.Name,
 			},
 		}
-		err := fkOp.Complete(ctx, conn, s)
+		err := fkOp.Complete(ctx, logger, conn, s)
 		if err != nil {
 			return err
 		}
@@ -176,7 +181,9 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, conn db.DB, s *schema
 	return err
 }
 
-func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateConstraint) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
@@ -196,6 +203,14 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, conn db.DB, s *schema
 	err = removeBackfillColumn.Execute(ctx)
 
 	return err
+}
+
+func (o *OpCreateConstraint) loggerArgs() []any {
+	return []any{
+		"operation", OpCreateConstraintName,
+		"table", o.Table,
+		"name", o.Name,
+	}
 }
 
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {

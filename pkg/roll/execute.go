@@ -17,6 +17,8 @@ import (
 
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
+	m.logger.Info("starting migration", m.logger.Args("name", migration.Name), m.logger.Args("operation_count", len(migration.Operations)))
+
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
 		return err
@@ -86,7 +88,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.pgConn, latestSchema, newSchema)
+		table, err := op.Start(ctx, m.logger, m.pgConn, latestSchema, newSchema)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 			if errRollback != nil {
@@ -144,6 +146,8 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 		}
 	}
 
+	m.logger.Info("created versioned schema for migration", m.logger.Args("migration", version, "schema_name", versionSchema))
+
 	return nil
 }
 
@@ -154,6 +158,8 @@ func (m *Roll) Complete(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
+
+	m.logger.Info("completing migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
 
 	// Drop the old schema
 	if !m.disableVersionSchemas && (!migration.ContainsRawSQLOperation() || !m.noVersionSchemaForRawSQL) {
@@ -191,7 +197,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.pgConn, currentSchema)
+		err := op.Complete(ctx, m.logger, m.pgConn, currentSchema)
 		if err != nil {
 			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
@@ -227,6 +233,8 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to complete migration: %w", err)
 	}
 
+	m.logger.Info("completed migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+
 	return nil
 }
 
@@ -238,6 +246,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
+	m.logger.Info("rolling back migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+
 	if !m.disableVersionSchemas {
 		// delete the schema and view for the new version
 		versionSchema := VersionedSchemaName(m.schema, migration.Name)
@@ -245,6 +255,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		m.logger.Info("dropped versioned schema for migration", m.logger.Args("migration", migration.Name, "schema_name", versionSchema))
 	}
 
 	// get the name of the previous version of the schema
@@ -269,7 +281,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	// roll back operations in reverse order
 	for i := len(migration.Operations) - 1; i >= 0; i-- {
-		err := migration.Operations[i].Rollback(ctx, m.pgConn, schema)
+		err := migration.Operations[i].Rollback(ctx, m.logger, m.pgConn, schema)
 		if err != nil {
 			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
@@ -280,6 +292,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to rollback migration: %w", err)
 	}
+
+	m.logger.Info("rolled back migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
 
 	return nil
 }
@@ -322,6 +336,7 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg
 	bf := backfill.New(m.pgConn, cfg)
 
 	for _, table := range tables {
+		m.logger.Info("backfilling started", m.logger.Args("table", table.Name))
 		if err := bf.Start(ctx, table); err != nil {
 			errRollback := m.Rollback(ctx)
 
@@ -329,6 +344,7 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg
 				fmt.Errorf("unable to backfill table %q: %w", table.Name, err),
 				errRollback)
 		}
+		m.logger.Info("backfilling completed", m.logger.Args("table", table.Name))
 	}
 
 	return nil

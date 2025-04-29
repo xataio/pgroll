@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -15,7 +16,9 @@ import (
 
 var _ Operation = (*OpAlterColumn)(nil)
 
-func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -78,7 +81,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 
 	// perform any operation specific start steps
 	for _, op := range ops {
-		if _, err := op.Start(ctx, conn, latestSchema, s); err != nil {
+		if _, err := op.Start(ctx, logger, conn, latestSchema, s); err != nil {
 			return nil, err
 		}
 	}
@@ -86,12 +89,13 @@ func (o *OpAlterColumn) Start(ctx context.Context, conn db.DB, latestSchema stri
 	return table, nil
 }
 
-func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpAlterColumn) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
 	ops := o.subOperations()
 
 	// Perform any operation specific completion steps
 	for _, op := range ops {
-		if err := op.Complete(ctx, conn, s); err != nil {
+		if err := op.Complete(ctx, logger, conn, s); err != nil {
 			return err
 		}
 	}
@@ -134,7 +138,8 @@ func (o *OpAlterColumn) Complete(ctx context.Context, conn db.DB, s *schema.Sche
 	return nil
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpAlterColumn) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
@@ -147,7 +152,7 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Sche
 	// Perform any operation specific rollback steps
 	ops := o.subOperations()
 	for _, ops := range ops {
-		if err := ops.Rollback(ctx, conn, nil); err != nil {
+		if err := ops.Rollback(ctx, logger, conn, nil); err != nil {
 			return err
 		}
 	}
@@ -340,4 +345,12 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 	}
 
 	return ""
+}
+
+func (o *OpAlterColumn) loggerArgs() []any {
+	return []any{
+		"operation", OpNameAlterColumn,
+		"column", o.Column,
+		"table", o.Table,
+	}
 }

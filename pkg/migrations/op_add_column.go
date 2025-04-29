@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/internal/defaults"
 	"github.com/xataio/pgroll/pkg/backfill"
@@ -18,7 +19,9 @@ import (
 
 var _ Operation = (*OpAddColumn)(nil)
 
-func (o *OpAddColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -120,7 +123,9 @@ func toSchemaColumn(c Column) *schema.Column {
 	return tmpColumn
 }
 
-func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	err := NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name).Execute(ctx)
 	if err != nil {
 		return err
@@ -189,7 +194,9 @@ func (o *OpAddColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema
 	return nil
 }
 
-func (o *OpAddColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
@@ -391,6 +398,17 @@ func NotNullConstraintName(columnName string) string {
 // IsNotNullConstraintName returns true if the given name is a NOT NULL constraint name
 func IsNotNullConstraintName(name string) bool {
 	return strings.HasPrefix(name, "_pgroll_check_not_null_")
+}
+
+func (o *OpAddColumn) loggerArgs() []any {
+	return []any{
+		"operation", OpNameAddColumn,
+		"name", o.Column.Name,
+		"type", o.Column.Type,
+		"table", o.Table,
+		"nullable", o.Column.Nullable,
+		"unique", o.Column.Unique,
+	}
 }
 
 // ColumnSQLWriter writes a column to SQL

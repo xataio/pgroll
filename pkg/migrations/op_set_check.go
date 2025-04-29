@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -23,7 +24,9 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -37,7 +40,9 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, conn db.DB, latestSche
 	return table, nil
 }
 
-func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	// Validate the check constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -49,7 +54,8 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, conn db.DB, s *sche
 	return nil
 }
 
-func (o *OpSetCheckConstraint) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
@@ -109,4 +115,14 @@ func rewriteCheckExpression(check string, columns ...string) string {
 		check = strings.ReplaceAll(check, col, TemporaryName(col))
 	}
 	return check
+}
+
+func (o *OpSetCheckConstraint) loggerArgs() []any {
+	return []any{
+		"operation", OpNameAlterColumn,
+		"column", o.Column,
+		"table", o.Table,
+		"constraint", o.Check.Name,
+		"check", o.Check.Constraint,
+	}
 }

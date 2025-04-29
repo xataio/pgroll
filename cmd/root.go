@@ -23,6 +23,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	lockTimeout := flags.LockTimeout()
 	role := flags.Role()
 	skipValidation := flags.SkipValidation()
+	verbose := flags.Verbose()
 
 	state, err := state.New(ctx, pgURL, stateSchema)
 	if err != nil {
@@ -33,6 +34,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 		roll.WithLockTimeoutMs(lockTimeout),
 		roll.WithRole(role),
 		roll.WithSkipValidation(skipValidation),
+		roll.WithLogging(verbose),
 	)
 }
 
@@ -52,12 +54,14 @@ func Prepare() *cobra.Command {
 	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
 	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")
 	rootCmd.PersistentFlags().String("role", "", "Optional postgres role to set when executing migrations")
+	rootCmd.PersistentFlags().Bool("verbose", false, "Enable verbose logging")
 
 	viper.BindPFlag("PG_URL", rootCmd.PersistentFlags().Lookup("postgres-url"))
 	viper.BindPFlag("SCHEMA", rootCmd.PersistentFlags().Lookup("schema"))
 	viper.BindPFlag("STATE_SCHEMA", rootCmd.PersistentFlags().Lookup("pgroll-schema"))
 	viper.BindPFlag("LOCK_TIMEOUT", rootCmd.PersistentFlags().Lookup("lock-timeout"))
 	viper.BindPFlag("ROLE", rootCmd.PersistentFlags().Lookup("role"))
+	viper.BindPFlag("VERBOSE", rootCmd.PersistentFlags().Lookup("verbose"))
 
 	// register subcommands
 	rootCmd.AddCommand(startCmd())

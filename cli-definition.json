@@ -192,6 +192,11 @@
       "name": "schema",
       "description": "Postgres schema to use for the migration",
       "default": "public"
+    },
+    {
+      "name": "verbose",
+      "description": "Enable verbose logging",
+      "default": "false"
     }
   ]
 }

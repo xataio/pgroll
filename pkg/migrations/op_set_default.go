@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -22,7 +23,9 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetDefault) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -50,14 +53,28 @@ func (o *OpSetDefault) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return table, nil
 }
 
-func (o *OpSetDefault) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetDefault) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
-func (o *OpSetDefault) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetDefault) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
 func (o *OpSetDefault) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
+}
+
+func (o *OpSetDefault) loggerArgs() []any {
+	args := []any{
+		"operation", OpNameAlterColumn,
+		"table", o.Table,
+		"column", o.Column,
+	}
+	if o.Default != nil {
+		args = append(args, "default", *o.Default)
+	}
+	return args
 }
