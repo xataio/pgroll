@@ -1,6 +1,31 @@
-# Getting started
+# Welcome to pgroll's documentation
 
-This guide covers the key concepts of `pgroll` and how to get started with it.
+`pgroll` ensures 100% uptime during schema changes in your application. It is an open source command line interface for developers using [PostgreSQL](https://postgresql.org) as their data layer.
+
+## Getting started
+
+Learn how `pgroll` simplifies zero-downtime migrations for you
+
+* [Why use `pgroll`](why-use-pgroll)
+* [Installation](installation)
+* [Concepts](concepts)
+* [Write your first migration](tutorial)
+
+## Guides
+
+Learn how to use `pgroll` in your developer workflow
+
+* [Integrate `pgroll` into your project](guides/clientapps)
+* [Writing `up` and `down` migrations](guides/updown)
+
+## Connect with us
+
+If you have questions reach out to us on our
+* [Discord server](https://xata.io/discord)
+* [Github Discussion board](https://github.com/xataio/pgroll/discussions)
+
+If you want to report issues or submit feedback visit
+* [Github Issues](https://github.com/xataio/pgroll/issues)
 
 ## Supported Postgres versions
 
