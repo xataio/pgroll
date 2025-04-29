@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -22,7 +23,9 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 
 	// Create a NOT VALID foreign key constraint on the new column.
@@ -33,7 +36,9 @@ func (o *OpSetForeignKey) Start(ctx context.Context, conn db.DB, latestSchema st
 	return table, nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetForeignKey) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
 		pq.QuoteIdentifier(o.Table),
@@ -45,7 +50,8 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, conn db.DB, s *schema.Sc
 	return nil
 }
 
-func (o *OpSetForeignKey) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpSetForeignKey) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
@@ -116,4 +122,13 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 
 	_, err := conn.ExecContext(ctx, sql)
 	return err
+}
+
+func (o *OpSetForeignKey) loggerArgs() []any {
+	return []any{
+		"operation", OpNameAlterColumn,
+		"table", o.Table,
+		"column", o.Column,
+		"references", o.References.Name,
+	}
 }

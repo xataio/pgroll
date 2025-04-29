@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/state"
@@ -28,6 +29,8 @@ var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local m
 
 type Roll struct {
 	pgConn db.DB
+
+	logger pterm.Logger
 
 	// schema we are acting on
 	schema string
@@ -62,8 +65,12 @@ func New(ctx context.Context, pgURL, schema string, state *state.State, opts ...
 		return nil, fmt.Errorf("unable to retrieve postgres version: %w", err)
 	}
 
+	logger := pterm.DefaultLogger
+	logger.Level = rollOpts.logLevel
+
 	return &Roll{
 		pgConn:                   &db.RDB{DB: conn},
+		logger:                   logger,
 		schema:                   schema,
 		state:                    state,
 		pgVersion:                pgMajorVersion,

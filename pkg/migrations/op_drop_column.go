@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -12,7 +13,9 @@ import (
 
 var _ Operation = (*OpDropColumn)(nil)
 
-func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	if o.Down != "" {
 		err := NewCreateTriggerAction(conn,
 			triggerConfig{
@@ -44,7 +47,9 @@ func (o *OpDropColumn) Start(ctx context.Context, conn db.DB, latestSchema strin
 	return nil, nil
 }
 
-func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropColumn) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+
 	removeColumn := NewDropColumnAction(conn, o.Table, o.Column)
 	err := removeColumn.Execute(ctx)
 	if err != nil {
@@ -65,7 +70,9 @@ func (o *OpDropColumn) Complete(ctx context.Context, conn db.DB, s *schema.Schem
 	return nil
 }
 
-func (o *OpDropColumn) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropColumn) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 
 	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
@@ -96,4 +103,12 @@ func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 	return nil
+}
+
+func (o *OpDropColumn) loggerArgs() []any {
+	return []any{
+		"operation", OpNameDropColumn,
+		"column", o.Column,
+		"table", o.Table,
+	}
 }

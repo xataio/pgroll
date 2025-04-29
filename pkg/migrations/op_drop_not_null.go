@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -19,7 +20,9 @@ type OpDropNotNull struct {
 
 var _ Operation = (*OpDropNotNull)(nil)
 
-func (o *OpDropNotNull) Start(ctx context.Context, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropNotNull) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -28,11 +31,13 @@ func (o *OpDropNotNull) Start(ctx context.Context, conn db.DB, latestSchema stri
 	return table, nil
 }
 
-func (o *OpDropNotNull) Complete(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropNotNull) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
-func (o *OpDropNotNull) Rollback(ctx context.Context, conn db.DB, s *schema.Schema) error {
+func (o *OpDropNotNull) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 	return nil
 }
 
@@ -47,4 +52,12 @@ func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
+}
+
+func (o *OpDropNotNull) loggerArgs() []any {
+	return []any{
+		"operation", OpNameAlterColumn,
+		"column", o.Column,
+		"table", o.Table,
+	}
 }
