@@ -195,7 +195,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, logger pterm.Logger, conn db
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
 
 	table := s.GetTable(o.Table)
 	if table == nil {
