@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -62,3 +63,9 @@ func (o *OpRawSQL) IsIsolated() bool {
 }
 
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
+
+func (o *OpRawSQL) Create() {
+	o.Up, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
+	o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
+	o.OnComplete, _ = pterm.DefaultInteractiveConfirm.WithDefaultValue(true).WithDefaultText("on_complete").Show()
+}

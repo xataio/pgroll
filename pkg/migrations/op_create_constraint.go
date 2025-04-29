@@ -5,8 +5,10 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -321,4 +323,39 @@ func temporaryNames(columns []string) []string {
 		names[i] = TemporaryName(col)
 	}
 	return names
+}
+
+func (o *OpCreateConstraint) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	columnsStr, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("columns").Show()
+	o.Columns = strings.Split(columnsStr, ",")
+	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
+	constraintType, _ := pterm.DefaultInteractiveSelect.
+		WithDefaultText("type").
+		WithOptions([]string{"unique", "primary_key", "foreign_key", "check"}).
+		Show()
+	o.Type = OpCreateConstraintType(constraintType)
+	switch o.Type {
+	case OpCreateConstraintTypeCheck:
+		check, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("check").Show()
+		if check != "" {
+			o.Check = &check
+		}
+	case OpCreateConstraintTypeForeignKey:
+		var reference TableForeignKeyReference
+		reference.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("references.table").Show()
+		referencedColumns, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("references.columns").Show()
+		reference.Columns = strings.Split(referencedColumns, ",")
+		o.References = &reference
+	}
+	upMigrations := make(map[string]string, len(o.Columns))
+	downMigrations := make(map[string]string, len(o.Columns))
+	for _, columnName := range o.Columns {
+		up, _ := pterm.DefaultInteractiveTextInput.WithDefaultText(fmt.Sprintf("up migration for %s", columnName)).Show()
+		upMigrations[columnName] = up
+		down, _ := pterm.DefaultInteractiveTextInput.WithDefaultText(fmt.Sprintf("down migration for %s", columnName)).Show()
+		downMigrations[columnName] = down
+	}
+	o.Up = upMigrations
+	o.Down = downMigrations
 }

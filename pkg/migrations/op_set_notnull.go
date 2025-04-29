@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -92,4 +93,11 @@ func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
+}
+
+func (o *OpSetNotNull) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.Column, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("column").Show()
+	o.Up, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
+	o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
 }

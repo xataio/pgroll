@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -52,4 +53,10 @@ func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	}
 
 	return nil
+}
+
+func (o *OpRenameConstraint) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.From, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("from").Show()
+	o.To, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("to").Show()
 }

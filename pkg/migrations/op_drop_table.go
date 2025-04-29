@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -69,4 +70,8 @@ func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	s.RemoveTable(table.Name)
 	return nil
+}
+
+func (o *OpDropTable) Create() {
+	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 }

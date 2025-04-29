@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -211,4 +212,20 @@ func (o *OpDropMultiColumnConstraint) upSQL(column string) string {
 	}
 
 	return pq.QuoteIdentifier(column)
+}
+
+func (o *OpDropMultiColumnConstraint) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
+	o.Up = make(map[string]string)
+	o.Down = make(map[string]string)
+	addColumns, _ := pterm.DefaultInteractiveConfirm.WithDefaultValue(true).WithDefaultText("Add columns").Show()
+	for addColumns {
+		columnName, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("column name").Show()
+		up, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
+		down, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
+		o.Up[columnName] = up
+		o.Down[columnName] = down
+		addColumns, _ = pterm.DefaultInteractiveConfirm.WithDefaultValue(true).WithDefaultText("Add more columns").Show()
+	}
 }

@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -102,4 +103,10 @@ func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 	return nil
+}
+
+func (o *OpDropColumn) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.Column, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("column").Show()
+	o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
 }

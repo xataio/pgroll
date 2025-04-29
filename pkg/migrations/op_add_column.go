@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/lib/pq"
+	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/internal/defaults"
 	"github.com/xataio/pgroll/pkg/backfill"
@@ -449,4 +451,54 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 		sql += " " + writer.WriteCheck(col.Check.Constraint, col.Check.NoInherit)
 	}
 	return sql, nil
+}
+
+func (o *OpAddColumn) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.Column = getColumnFromCLI()
+	o.Up, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
+}
+
+func getColumnFromCLI() Column {
+	var c Column
+	c.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
+	c.Type, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("type").Show()
+	comment, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("comment").Show()
+	if comment != "" {
+		c.Comment = &comment
+	}
+	c.Pk = getBooleanOptionForColumnAttr("pk")
+	c.Nullable = getBooleanOptionForColumnAttr("nullable")
+	c.Unique = getBooleanOptionForColumnAttr("unique")
+
+	if getBooleanOptionForColumnAttr("generated") {
+		expression, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("expression").Show()
+		generated := ColumnGenerated{Expression: expression}
+		if getBooleanOptionForColumnAttr("identity") {
+			seqOptions, _ := pterm.DefaultInteractiveTextInput.
+				WithDefaultText("sequence_options").
+				Show()
+			identityType, _ := pterm.DefaultInteractiveSelect.
+				WithDefaultText("user_specified_values").
+				WithOptions([]string{"ALWAYS", "BY DEFAULT"}).
+				Show()
+			if seqOptions != "" || identityType != "" {
+				generated.Identity = &ColumnGeneratedIdentity{
+					SequenceOptions:     seqOptions,
+					UserSpecifiedValues: ColumnGeneratedIdentityUserSpecifiedValues(identityType),
+				}
+			}
+		}
+		c.Generated = &generated
+	}
+	return c
+}
+
+func getBooleanOptionForColumnAttr(name string) bool {
+	val, _ := pterm.DefaultInteractiveContinue.
+		WithDefaultText(name).
+		WithOptions([]string{"true", "false"}).
+		WithDefaultValueIndex(1).Show()
+	boolVal, _ := strconv.ParseBool(val)
+	return boolVal
 }

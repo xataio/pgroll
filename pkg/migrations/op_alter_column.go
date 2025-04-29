@@ -5,9 +5,11 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/lib/pq"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -346,4 +348,60 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 	}
 
 	return ""
+}
+
+func (o *OpAlterColumn) Create() {
+	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+	o.Column, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("column").Show()
+	newType, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("type").Show()
+	if newType != "" {
+		o.Type = &newType
+	}
+	unique, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("unique_constraint").Show()
+	if unique != "" {
+		o.Unique = &UniqueConstraint{Name: unique}
+	}
+	nullableStr, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("nullable").Show()
+	if nullableStr != "" {
+		nullable, _ := strconv.ParseBool(nullableStr)
+		o.Nullable = &nullable
+	}
+	addCheckConstraint, _ := pterm.DefaultInteractiveConfirm.
+		WithDefaultText("Add check constraint").
+		WithDefaultValue(false).
+		Show()
+	if addCheckConstraint {
+		var c CheckConstraint
+		c.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
+		c.Constraint, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("constraint").Show()
+		c.NoInherit, _ = pterm.DefaultInteractiveConfirm.WithDefaultText("no_inherit").WithDefaultValue(false).Show()
+		o.Check = &c
+	}
+	addForeignKey, _ := pterm.DefaultInteractiveConfirm.
+		WithDefaultText("Add foreign key constraint").
+		WithDefaultValue(false).
+		Show()
+	if addForeignKey {
+		var r ForeignKeyReference
+		r.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
+		r.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+		r.Column, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("column").Show()
+		r.Deferrable, _ = pterm.DefaultInteractiveConfirm.WithDefaultText("deferrable").WithDefaultValue(false).Show()
+		r.InitiallyDeferred, _ = pterm.DefaultInteractiveConfirm.WithDefaultText("initially_deferred").WithDefaultValue(false).Show()
+		onDelete, _ := pterm.DefaultInteractiveSelect.
+			WithDefaultText("on_delete").
+			WithOptions([]string{"CASCADE", "SET NULL", "RESTRICT", "NO ACTION"}).
+			WithDefaultOption("NO ACTION").
+			Show()
+		r.OnDelete = ForeignKeyAction(onDelete)
+		onUpdate, _ := pterm.DefaultInteractiveSelect.
+			WithDefaultText("on_update").
+			WithOptions([]string{"CASCADE", "SET NULL", "RESTRICT", "NO ACTION"}).
+			WithDefaultOption("NO ACTION").
+			Show()
+		r.OnUpdate = ForeignKeyAction(onUpdate)
+		o.References = &r
+	}
+	o.Up, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
+	o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
 }

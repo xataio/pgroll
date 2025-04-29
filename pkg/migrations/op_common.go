@@ -36,6 +36,25 @@ const (
 	OpCreateConstraintName          OpName = "create_constraint"
 )
 
+// AllNonDeprecatedOperations contains the list of operations
+// that are not deprecated. These operations must implement
+// migrations.Createable interface.
+var AllNonDeprecatedOperations = []string{
+	string(OpNameCreateTable),
+	string(OpNameRenameTable),
+	string(OpNameRenameColumn),
+	string(OpNameDropTable),
+	string(OpNameAddColumn),
+	string(OpNameDropColumn),
+	string(OpNameAlterColumn),
+	string(OpNameCreateIndex),
+	string(OpNameDropIndex),
+	string(OpNameRenameConstraint),
+	string(OpNameDropMultiColumnConstraint),
+	string(OpRawSQLName),
+	string(OpCreateConstraintName),
+}
+
 const (
 	temporaryPrefix = "_pgroll_new_"
 	deletedPrefix   = "_pgroll_del_"
@@ -155,7 +174,7 @@ func (v *Operations) UnmarshalJSON(data []byte) error {
 			logBody = v
 		}
 
-		item, err := operationFromName(opName)
+		item, err := OperationFromName(opName)
 		if err != nil {
 			return err
 		}
@@ -253,7 +272,7 @@ func OperationName(op Operation) OpName {
 	panic(fmt.Errorf("unknown operation for %T", op))
 }
 
-func operationFromName(name OpName) (Operation, error) {
+func OperationFromName(name OpName) (Operation, error) {
 	switch name {
 	case OpNameCreateTable:
 		return &OpCreateTable{}, nil

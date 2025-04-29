@@ -34,6 +34,10 @@ type Operation interface {
 	Validate(ctx context.Context, s *schema.Schema) error
 }
 
+type Createable interface {
+	Create()
+}
+
 // IsolatedOperation is an operation that cannot be executed with other operations
 // in the same migration.
 type IsolatedOperation interface {

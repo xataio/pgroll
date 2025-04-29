@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -39,4 +40,8 @@ func (o *OpDropIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 	return IndexDoesNotExistError{Name: o.Name}
+}
+
+func (o *OpDropIndex) Create() {
+	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 }

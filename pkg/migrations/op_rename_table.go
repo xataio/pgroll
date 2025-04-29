@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -50,4 +51,9 @@ func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	s.RenameTable(o.From, o.To)
 	return nil
+}
+
+func (o *OpRenameTable) Create() {
+	o.From, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("from").Show()
+	o.To, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("to").Show()
 }
