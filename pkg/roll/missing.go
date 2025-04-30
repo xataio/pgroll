@@ -12,9 +12,7 @@ import (
 
 // MissingMigrations returns the slice of migrations that have been applied to
 // the target database but are missing from the local migrations directory
-// `dir`. If the local order of migrations does not match the order of
-// migrations in the schema history, an `ErrMismatchedMigration` error is
-// returned.
+// `dir`.
 func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.Migration, error) {
 	// Determine the latest version of the database
 	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
@@ -33,34 +31,30 @@ func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.
 		return nil, fmt.Errorf("reading migration files: %w", err)
 	}
 
+	// Create a set of local migration names for fast lookup
+	localMigNames := make(map[string]struct{}, len(files))
+	for _, file := range files {
+		mig, err := migrations.ReadMigration(dir, file)
+		if err != nil {
+			return nil, fmt.Errorf("reading migration file %s: %w", file, err)
+		}
+		localMigNames[mig.Name] = struct{}{}
+	}
+
 	// Get the full schema history from the database
 	history, err := m.State().SchemaHistory(ctx, m.Schema())
 	if err != nil {
 		return nil, fmt.Errorf("reading schema history: %w", err)
 	}
 
-	// Ensure that the schema history and the local migration files are in the
-	// same order up to the latest version applied to the database
-	for idx, h := range history {
-		if idx >= len(files) {
-			break
-		}
-
-		localMigration, err := migrations.ReadMigration(dir, files[idx])
-		if err != nil {
-			return nil, fmt.Errorf("failed to read migration file %q: %w", h.Migration.Name, err)
-		}
-		remoteMigration := h.Migration
-
-		if remoteMigration.Name != localMigration.Name {
-			return nil, fmt.Errorf("%w: remote=%q, local=%q", ErrMismatchedMigration, remoteMigration.Name, localMigration.Name)
-		}
-	}
-
-	// Return all the missing migrations
+	// Find all migrations that have been applied to the database but are missing
+	// from the local directory
 	migs := make([]*migrations.Migration, 0, len(history))
-	for i := len(files); i < len(history); i++ {
-		migs = append(migs, &history[i].Migration)
+	for _, h := range history {
+		if _, ok := localMigNames[h.Migration.Name]; ok {
+			continue
+		}
+		migs = append(migs, &h.Migration)
 	}
 
 	return migs, nil

@@ -135,10 +135,10 @@ func TestMissingMigrations(t *testing.T) {
 		})
 	})
 
-	t.Run("remote migration history does not match local directory migration history", func(t *testing.T) {
+	t.Run("a migration earlier in the schema history is missing locally", func(t *testing.T) {
 		fs := fstest.MapFS{
 			"01_migration_1.json": &fstest.MapFile{Data: exampleMigJSON(t, "01_migration_1")},
-			"05_migration_5.json": &fstest.MapFile{Data: exampleMigJSON(t, "05_migration_5")},
+			"03_migration_3.json": &fstest.MapFile{Data: exampleMigJSON(t, "03_migration_3")},
 		}
 
 		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
@@ -148,6 +148,7 @@ func TestMissingMigrations(t *testing.T) {
 			for _, migration := range []*migrations.Migration{
 				exampleMig(t, "01_migration_1"),
 				exampleMig(t, "02_migration_2"),
+				exampleMig(t, "03_migration_3"),
 			} {
 				err := m.Start(ctx, migration, backfill.NewConfig())
 				require.NoError(t, err)
@@ -156,10 +157,12 @@ func TestMissingMigrations(t *testing.T) {
 			}
 
 			// Get missing migrations
-			_, err := m.MissingMigrations(ctx, fs)
+			migs, err := m.MissingMigrations(ctx, fs)
+			require.NoError(t, err)
 
-			// Assert that a mismatched migration error is returned
-			require.ErrorIs(t, err, roll.ErrMismatchedMigration)
+			// Assert that 02_migration_2 is missing in the local directory
+			require.Len(t, migs, 1)
+			require.Equal(t, "02_migration_2", migs[0].Name)
 		})
 	})
 

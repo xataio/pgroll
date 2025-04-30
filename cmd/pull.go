@@ -4,11 +4,11 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/xataio/pgroll/cmd/flags"
-	"github.com/xataio/pgroll/pkg/state"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/pkg/migrations"
 )
 
 func pullCmd() *cobra.Command {
@@ -27,14 +27,14 @@ func pullCmd() *cobra.Command {
 			ctx := cmd.Context()
 			targetDir := args[0]
 
-			state, err := state.New(ctx, flags.PostgresURL(), flags.StateSchema())
+			m, err := NewRoll(ctx)
 			if err != nil {
 				return err
 			}
-			defer state.Close()
+			defer m.Close()
 
 			// Ensure that pgroll is initialized
-			ok, err := state.IsInitialized(cmd.Context())
+			ok, err := m.State().IsInitialized(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -42,19 +42,36 @@ func pullCmd() *cobra.Command {
 				return errPGRollNotInitialized
 			}
 
-			migs, err := state.SchemaHistory(ctx, flags.Schema())
+			// Ensure that the target directory is valid, creating it if it doesn't
+			// exist
+			_, err = os.Stat(targetDir)
 			if err != nil {
-				return fmt.Errorf("failed to read schema history: %w", err)
+				if os.IsNotExist(err) {
+					err := os.MkdirAll(targetDir, 0o755)
+					if err != nil {
+						return fmt.Errorf("failed to create target directory: %w", err)
+					}
+				} else {
+					return fmt.Errorf("failed to stat directory: %w", err)
+				}
 			}
 
+			// Get the list of missing migrations (those that have been applied to
+			// the target database but are missing in the local directory).
+			migs, err := m.MissingMigrations(ctx, os.DirFS(targetDir))
+			if err != nil {
+				return fmt.Errorf("failed to read migrations from target directory: %w", err)
+			}
+
+			// Write the missing migrations to the target directory
 			for i, mig := range migs {
 				prefix := ""
 				if withPrefixes {
 					prefix = fmt.Sprintf("%04d", i+1) + "_"
 				}
-				err := mig.WriteToFile(targetDir, prefix, useJSON)
+				err := writeMigrationToFile(mig, targetDir, prefix, useJSON)
 				if err != nil {
-					return fmt.Errorf("failed to write migration %q: %w", mig.Migration.Name, err)
+					return fmt.Errorf("failed to write migration %q: %w", mig.Name, err)
 				}
 			}
 			return nil
@@ -65,4 +82,34 @@ func pullCmd() *cobra.Command {
 	pullCmd.Flags().BoolVarP(&useJSON, "json", "j", false, opts["j"])
 
 	return pullCmd
+}
+
+// WriteToFile writes the migration to a file in `targetDir`, prefixing the
+// filename with `prefix`. The output format defaults to YAML, but can
+// be changed to JSON by setting `useJSON` to true.
+func writeMigrationToFile(m *migrations.Migration, targetDir, prefix string, useJSON bool) error {
+	err := os.MkdirAll(targetDir, 0o755)
+	if err != nil {
+		return err
+	}
+
+	suffix := "yaml"
+	if useJSON {
+		suffix = "json"
+	}
+
+	fileName := fmt.Sprintf("%s%s.%s", prefix, m.Name, suffix)
+	filePath := filepath.Join(targetDir, fileName)
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if useJSON {
+		return m.WriteAsJSON(file)
+	} else {
+		return m.WriteAsYAML(file)
+	}
 }
