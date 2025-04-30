@@ -17,7 +17,7 @@ import (
 
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
-	m.logger.Info("starting migration", m.logger.Args("name", migration.Name), m.logger.Args("operation_count", len(migration.Operations)))
+	m.logger.LogMigrationStart(migration)
 
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
@@ -146,7 +146,7 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 		}
 	}
 
-	m.logger.Info("created versioned schema for migration", m.logger.Args("migration", version, "schema_name", versionSchema))
+	m.logger.LogSchemaCreation(version, versionSchema)
 
 	return nil
 }
@@ -159,7 +159,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
-	m.logger.Info("completing migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+	m.logger.LogMigrationComplete(migration)
 
 	// Drop the old schema
 	if !m.disableVersionSchemas && (!migration.ContainsRawSQLOperation() || !m.noVersionSchemaForRawSQL) {
@@ -233,7 +233,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 		return fmt.Errorf("unable to complete migration: %w", err)
 	}
 
-	m.logger.Info("completed migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+	m.logger.LogMigrationComplete(migration)
 
 	return nil
 }
@@ -246,7 +246,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		return fmt.Errorf("unable to get active migration: %w", err)
 	}
 
-	m.logger.Info("rolling back migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+	m.logger.LogMigrationRollback(migration)
 
 	if !m.disableVersionSchemas {
 		// delete the schema and view for the new version
@@ -256,7 +256,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 			return err
 		}
 
-		m.logger.Info("dropped versioned schema for migration", m.logger.Args("migration", migration.Name, "schema_name", versionSchema))
+		m.logger.LogSchemaDeletion(migration.Name, versionSchema)
 	}
 
 	// get the name of the previous version of the schema
@@ -293,7 +293,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		return fmt.Errorf("unable to rollback migration: %w", err)
 	}
 
-	m.logger.Info("rolled back migration", m.logger.Args("migration", migration.Name, "operation_count", len(migration.Operations)))
+	m.logger.LogMigrationRollbackComplete(migration)
 
 	return nil
 }
@@ -336,7 +336,8 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg
 	bf := backfill.New(m.pgConn, cfg)
 
 	for _, table := range tables {
-		m.logger.Info("backfilling started", m.logger.Args("table", table.Name))
+		m.logger.LogBackfillStart(table.Name)
+
 		if err := bf.Start(ctx, table); err != nil {
 			errRollback := m.Rollback(ctx)
 
@@ -344,7 +345,8 @@ func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg
 				fmt.Errorf("unable to backfill table %q: %w", table.Name, err),
 				errRollback)
 		}
-		m.logger.Info("backfilling completed", m.logger.Args("table", table.Name))
+
+		m.logger.LogBackfillComplete(table.Name)
 	}
 
 	return nil

@@ -5,27 +5,29 @@ package migrations
 import (
 	"context"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRenameConstraint)(nil)
 
-func (o *OpRenameConstraint) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
+
 	// no-op
 	return nil, nil
 }
 
-func (o *OpRenameConstraint) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
+
 	// rename the constraint in the underlying table
 	return NewRenameConstraintAction(conn, o.Table, o.From, o.To).Execute(ctx)
 }
 
-func (o *OpRenameConstraint) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpRenameConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
+
 	// no-op
 	return nil
 }
@@ -50,13 +52,4 @@ func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	}
 
 	return nil
-}
-
-func (o *OpRenameConstraint) loggerArgs() []any {
-	return []any{
-		"operation", OpNameRenameConstraint,
-		"from", o.From,
-		"to", o.To,
-		"table", o.Table,
-	}
 }

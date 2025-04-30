@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -17,8 +16,8 @@ import (
 
 var _ Operation = (*OpCreateTable)(nil)
 
-func (o *OpCreateTable) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns)
@@ -60,14 +59,16 @@ func (o *OpCreateTable) Start(ctx context.Context, logger pterm.Logger, conn db.
 	return nil, nil
 }
 
-func (o *OpCreateTable) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
+
 	// No-op
 	return nil
 }
 
-func (o *OpCreateTable) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
+
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
 		pq.QuoteIdentifier(o.Name)))
 	return err
@@ -338,30 +339,4 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		return "", nil
 	}
 	return ", " + strings.Join(constraintsSQL, ", "), nil
-}
-
-func (o *OpCreateTable) loggerArgs() []any {
-	return []any{
-		"operation", OpNameCreateTable,
-		"name", o.Name,
-		"columns", getColumnNames(o.Columns),
-		"comment", o.Comment,
-		"constraints", getConstraintNames(o.Constraints),
-	}
-}
-
-func getColumnNames(cols []Column) []string {
-	columns := make([]string, len(cols))
-	for i, c := range cols {
-		columns[i] = c.Name
-	}
-	return columns
-}
-
-func getConstraintNames(cons []Constraint) []string {
-	constraints := make([]string, len(cons))
-	for i, c := range cons {
-		constraints[i] = c.Name
-	}
-	return constraints
 }

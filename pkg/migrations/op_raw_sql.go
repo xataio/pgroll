@@ -5,15 +5,14 @@ package migrations
 import (
 	"context"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRawSQL)(nil)
 
-func (o *OpRawSQL) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	if o.OnComplete {
 		return nil, nil
@@ -23,8 +22,8 @@ func (o *OpRawSQL) Start(ctx context.Context, logger pterm.Logger, conn db.DB, l
 	return nil, err
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpRawSQL) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	if !o.OnComplete {
 		return nil
@@ -34,8 +33,8 @@ func (o *OpRawSQL) Complete(ctx context.Context, logger pterm.Logger, conn db.DB
 	return err
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpRawSQL) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	if o.Down == "" {
 		return nil
@@ -63,11 +62,3 @@ func (o *OpRawSQL) IsIsolated() bool {
 }
 
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
-
-func (o *OpRawSQL) loggerArgs() []any {
-	return []any{
-		"operation", OpRawSQLName,
-		"up_expression", o.Up,
-		"down_expression", o.Down,
-	}
-}

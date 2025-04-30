@@ -2,8 +2,6 @@
 
 package roll
 
-import "github.com/pterm/pterm"
-
 type options struct {
 	// lock timeout in milliseconds for pgroll DDL operations
 	lockTimeoutMs int
@@ -25,7 +23,7 @@ type options struct {
 
 	migrationHooks MigrationHooks
 
-	logLevel pterm.LogLevel
+	verbose bool
 }
 
 // MigrationHooks defines hooks that can be set to be called at various points
@@ -101,7 +99,7 @@ func WithSkipValidation(skip bool) Option {
 func WithLogging(enabled bool) Option {
 	return func(o *options) {
 		if enabled {
-			o.logLevel = pterm.LogLevelInfo
+			o.verbose = enabled
 		}
 	}
 }

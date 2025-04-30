@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -23,8 +22,8 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 
@@ -36,8 +35,8 @@ func (o *OpSetForeignKey) Start(ctx context.Context, logger pterm.Logger, conn d
 	return table, nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetForeignKey) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	// Validate the foreign key constraint
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
@@ -50,8 +49,9 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, logger pterm.Logger, con
 	return nil
 }
 
-func (o *OpSetForeignKey) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpSetForeignKey) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
+
 	return nil
 }
 
@@ -122,13 +122,4 @@ func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.D
 
 	_, err := conn.ExecContext(ctx, sql)
 	return err
-}
-
-func (o *OpSetForeignKey) loggerArgs() []any {
-	return []any{
-		"operation", OpNameAlterColumn,
-		"table", o.Table,
-		"column", o.Column,
-		"references", o.References.Name,
-	}
 }

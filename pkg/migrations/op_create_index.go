@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -16,8 +15,8 @@ import (
 
 var _ Operation = (*OpCreateIndex)(nil)
 
-func (o *OpCreateIndex) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -76,15 +75,15 @@ func (o *OpCreateIndex) Start(ctx context.Context, logger pterm.Logger, conn db.
 	return nil, err
 }
 
-func (o *OpCreateIndex) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completed operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateIndex) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	// No-op
 	return nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpCreateIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	// drop the index concurrently
 	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
@@ -148,14 +147,5 @@ func ParseCreateIndexMethod(method string) (OpCreateIndexMethod, error) {
 		return OpCreateIndexMethodBrin, nil
 	default:
 		return OpCreateIndexMethodBtree, fmt.Errorf("unknown method: %s", method)
-	}
-}
-
-func (o *OpCreateIndex) loggerArgs() []any {
-	return []any{
-		"operation", OpNameCreateIndex,
-		"name", o.Name,
-		"table", o.Table,
-		"index_type", o.Method,
 	}
 }

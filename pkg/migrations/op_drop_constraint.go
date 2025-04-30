@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -16,8 +15,8 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, logger pterm.Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
-	logger.Info("starting operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
@@ -80,8 +79,8 @@ func (o *OpDropConstraint) Start(ctx context.Context, logger pterm.Logger, conn 
 	return table, nil
 }
 
-func (o *OpDropConstraint) Complete(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("completing operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationComplete(o)
 
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
@@ -119,8 +118,8 @@ func (o *OpDropConstraint) Complete(ctx context.Context, logger pterm.Logger, co
 	return err
 }
 
-func (o *OpDropConstraint) Rollback(ctx context.Context, logger pterm.Logger, conn db.DB, s *schema.Schema) error {
-	logger.Info("rolling back operation", logger.Args(o.loggerArgs()...))
+func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+	l.LogOperationRollback(o)
 
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
@@ -192,12 +191,4 @@ func (o *OpDropConstraint) upSQL(column string) string {
 	}
 
 	return pq.QuoteIdentifier(column)
-}
-
-func (o *OpDropConstraint) loggerArgs() []any {
-	return []any{
-		"operation", OpNameDropConstraint,
-		"constraint", o.Name,
-		"table", o.Table,
-	}
 }
