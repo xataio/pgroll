@@ -6,10 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	_ "github.com/lib/pq"
-	"sigs.k8s.io/yaml"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -54,9 +52,12 @@ type RequiresSchemaRefreshOperation interface {
 type (
 	Operations []Operation
 	Migration  struct {
-		Name string `json:"name,omitempty"`
-
+		Name       string     `json:"name,omitempty"`
 		Operations Operations `json:"operations"`
+	}
+	RawMigration struct {
+		Name       string          `json:"name"`
+		Operations json.RawMessage `json:"operations"`
 	}
 )
 
@@ -104,23 +105,4 @@ func (m *Migration) ContainsRawSQLOperation() bool {
 		}
 	}
 	return false
-}
-
-// WriteAsJSON writes the migration to the given writer in JSON format
-func (m *Migration) WriteAsJSON(w io.Writer) error {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "  ")
-
-	return encoder.Encode(m)
-}
-
-// WriteAsYAML writes the migration to the given writer in YAML format
-func (m *Migration) WriteAsYAML(w io.Writer) error {
-	yml, err := yaml.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(yml)
-	return err
 }

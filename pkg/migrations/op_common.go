@@ -72,8 +72,9 @@ func CollectFilesFromDir(dir fs.FS) ([]string, error) {
 	return migrationFiles, nil
 }
 
-// ReadMigration opens the migration file and reads the migration.
-func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
+// ReadMigration opens the migration file and reads the migration as a
+// RawMigration.
+func ReadRawMigration(dir fs.FS, filename string) (*RawMigration, error) {
 	file, err := dir.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("opening migration file: %w", err)
@@ -85,7 +86,7 @@ func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
 		return nil, err
 	}
 
-	mig := Migration{}
+	mig := RawMigration{}
 	switch filepath.Ext(filename) {
 	case ".json":
 		dec := json.NewDecoder(bytes.NewReader(byteValue))
@@ -104,6 +105,29 @@ func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
 	}
 
 	return &mig, nil
+}
+
+// ParseMigration converts a RawMigration to a fully parsed Migration
+func ParseMigration(raw *RawMigration) (*Migration, error) {
+	var ops Operations
+	if err := json.Unmarshal(raw.Operations, &ops); err != nil {
+		return nil, fmt.Errorf("parsing operations: %w", err)
+	}
+
+	return &Migration{
+		Name:       raw.Name,
+		Operations: ops,
+	}, nil
+}
+
+// ReadMigration reads and parses a migration file
+func ReadMigration(dir fs.FS, filename string) (*Migration, error) {
+	raw, err := ReadRawMigration(dir, filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseMigration(raw)
 }
 
 // UnmarshalJSON deserializes the list of operations from a JSON array.
@@ -278,4 +302,23 @@ func operationFromName(name OpName) (Operation, error) {
 
 	}
 	return nil, fmt.Errorf("unknown migration type: %v", name)
+}
+
+// WriteAsJSON writes the migration to the given writer in JSON format
+func (m *RawMigration) WriteAsJSON(w io.Writer) error {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+
+	return encoder.Encode(m)
+}
+
+// WriteAsYAML writes the migration to the given writer in YAML format
+func (m *RawMigration) WriteAsYAML(w io.Writer) error {
+	yml, err := yaml.Marshal(m)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(yml)
+	return err
 }
