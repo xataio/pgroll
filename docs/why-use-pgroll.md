@@ -12,4 +12,4 @@ Making a schema change with `pgroll` results in two versions of the schema; the 
 
 Migrations using `pgroll` are expressed declaratively, rather than using SQL directly. This allows `pgroll` to implement the steps required to perform the schema change in a safe manner, ensuring that any locks required on the affected objects are held for the shortest possible time.
 
-If you want to avoid worring about schema changes, intall `pgroll` and create your next migration with us.
+If you want to avoid worrying about schema changes, install `pgroll` and create your next migration with us.
