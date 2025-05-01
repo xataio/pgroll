@@ -9,20 +9,19 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
-// Migration represents a single migration in the migration history
+// HistoryEntry represents a single migration in the migration history
 // of a schema
-type Migration struct {
-	Migration migrations.Migration
+type HistoryEntry struct {
+	Migration migrations.RawMigration
 	CreatedAt time.Time
 }
 
 // SchemaHistory returns all migrations applied to a schema in ascending
 // timestamp order
-func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, error) {
+func (s *State) SchemaHistory(ctx context.Context, schema string) ([]HistoryEntry, error) {
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
 			FROM %s.migrations
@@ -32,7 +31,7 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 		return nil, err
 	}
 
-	var entries []Migration
+	var entries []HistoryEntry
 	for rows.Next() {
 		var name, rawMigration string
 		var createdAt time.Time
@@ -41,13 +40,13 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]Migration, 
 			return nil, fmt.Errorf("row scan: %w", err)
 		}
 
-		var mig migrations.Migration
+		var mig migrations.RawMigration
 		err = json.Unmarshal([]byte(rawMigration), &mig)
 		if err != nil {
 			return nil, err
 		}
 
-		entries = append(entries, Migration{
+		entries = append(entries, HistoryEntry{
 			Migration: mig,
 			CreatedAt: createdAt,
 		})
