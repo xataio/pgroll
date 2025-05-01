@@ -103,6 +103,12 @@
       "example": "",
       "flags": [
         {
+          "name": "json",
+          "shorthand": "j",
+          "description": "output each migration in JSON format instead of YAML",
+          "default": "false"
+        },
+        {
           "name": "with-prefixes",
           "shorthand": "p",
           "description": "prefix each migration filename with its position in the schema history",

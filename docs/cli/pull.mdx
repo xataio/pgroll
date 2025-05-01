@@ -1,6 +1,6 @@
 ---
 title: Pull
-description: Pull the complete schema history of applied migrations from the target database and write the migrations to disk.
+description: Pull migrations from the target database into a local migrations directory
 ---
 
 ## Command
@@ -11,17 +11,17 @@ Assuming that all [example migrations](https://github.com/xataio/pgroll/tree/mai
 $ pgroll pull migrations/
 ```
 
-will write the complete schema history as `.json` files to the `migrations/` directory:
+will write the complete schema history as `.yaml` files to the `migrations/` directory:
 
 ```
 $ ls migrations/
 
-01_create_tables.json
-02_create_another_table.json
-03_add_column_to_products.json
-04_rename_table.json
-05_sql.json
-06_add_column_to_sql_table.json
+01_create_tables.yaml
+02_create_another_table.yaml
+03_add_column_to_products.yaml
+04_rename_table.yaml
+05_sql.yaml
+06_add_column_to_sql_table.yaml
 ...
 ```
 
@@ -30,15 +30,19 @@ The command takes an optional `--with-prefixes` flag which will write each filen
 ```
 $ ls migrations/
 
-0001_01_create_tables.json
-0002_02_create_another_table.json
-0003_03_add_column_to_products.json
-0004_04_rename_table.json
-0005_05_sql.json
-0006_06_add_column_to_sql_table.json
+0001_01_create_tables.yaml
+0002_02_create_another_table.yaml
+0003_03_add_column_to_products.yaml
+0004_04_rename_table.yaml
+0005_05_sql.yaml
+0006_06_add_column_to_sql_table.yaml
 ...
 ```
 
 The `--with-prefixes` flag ensures that files are sorted lexicographically by their time of application.
 
-If the directory specified as the required argument to `pgroll pull` does not exist, `pgroll pull` will create it.
+Use the `--json` flag to pull migrations in JSON format rather than YAML.
+
+If the target directory given to `pgroll pull` does not exist, `pgroll pull` will create it.
+
+If the target directory is empty, `pgroll pull` will pull all migrations from the target database. If the target directory contains migration files, `pgroll pull` will pull only those migrations that don't already exist in the directory.
