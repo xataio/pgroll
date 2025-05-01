@@ -87,7 +87,7 @@ func pullCmd() *cobra.Command {
 // WriteToFile writes the migration to a file in `targetDir`, prefixing the
 // filename with `prefix`. The output format defaults to YAML, but can
 // be changed to JSON by setting `useJSON` to true.
-func writeMigrationToFile(m *migrations.Migration, targetDir, prefix string, useJSON bool) error {
+func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, useJSON bool) error {
 	err := os.MkdirAll(targetDir, 0o755)
 	if err != nil {
 		return err
