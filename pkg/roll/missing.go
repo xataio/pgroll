@@ -13,7 +13,7 @@ import (
 // MissingMigrations returns the slice of migrations that have been applied to
 // the target database but are missing from the local migrations directory
 // `dir`.
-func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.Migration, error) {
+func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.RawMigration, error) {
 	// Determine the latest version of the database
 	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
 	if err != nil {
@@ -34,7 +34,7 @@ func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.
 	// Create a set of local migration names for fast lookup
 	localMigNames := make(map[string]struct{}, len(files))
 	for _, file := range files {
-		mig, err := migrations.ReadMigration(dir, file)
+		mig, err := migrations.ReadRawMigration(dir, file)
 		if err != nil {
 			return nil, fmt.Errorf("reading migration file %s: %w", file, err)
 		}
@@ -49,7 +49,7 @@ func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.
 
 	// Find all migrations that have been applied to the database but are missing
 	// from the local directory
-	migs := make([]*migrations.Migration, 0, len(history))
+	migs := make([]*migrations.RawMigration, 0, len(history))
 	for _, h := range history {
 		if _, ok := localMigNames[h.Migration.Name]; ok {
 			continue
