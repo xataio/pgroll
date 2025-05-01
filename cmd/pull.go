@@ -60,7 +60,7 @@ func pullCmd() *cobra.Command {
 			// the target database but are missing in the local directory).
 			migs, err := m.MissingMigrations(ctx, os.DirFS(targetDir))
 			if err != nil {
-				return fmt.Errorf("failed to read migrations from target directory: %w", err)
+				return fmt.Errorf("failed to get missing migrations: %w", err)
 			}
 
 			// Write the missing migrations to the target directory
