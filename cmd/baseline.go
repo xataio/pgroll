@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: Apache-2.0
+
+package cmd
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+
+	"github.com/pterm/pterm"
+	"github.com/spf13/cobra"
+	"github.com/xataio/pgroll/pkg/migrations"
+)
+
+func baselineCmd() *cobra.Command {
+	var useJSON bool
+
+	baselineCmd := &cobra.Command{
+		Use:    "baseline <version> <target directory>",
+		Short:  "Create a baseline migration for an existing database schema",
+		Args:   cobra.ExactArgs(2),
+		Hidden: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			version := args[0]
+			targetDir := args[1]
+
+			ctx := cmd.Context()
+
+			// Create a roll instance
+			m, err := NewRoll(ctx)
+			if err != nil {
+				return err
+			}
+			defer m.Close()
+
+			// Ensure that pgroll is initialized
+			ok, err := m.State().IsInitialized(ctx)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return errPGRollNotInitialized
+			}
+
+			// Ensure that the target directory is valid, creating it if it doesn't
+			// exist
+			_, err = os.Stat(targetDir)
+			if err != nil {
+				if os.IsNotExist(err) {
+					err := os.MkdirAll(targetDir, 0o755)
+					if err != nil {
+						return fmt.Errorf("failed to create target directory: %w", err)
+					}
+				} else {
+					return fmt.Errorf("failed to stat directory: %w", err)
+				}
+			}
+
+			// Prompt for confirmation
+			fmt.Println("Creating a baseline migration will restart the migration history.")
+			ok, _ = pterm.DefaultInteractiveConfirm.Show()
+			if !ok {
+				return nil
+			}
+
+			// Create a placeholder baseline migration
+			ops := migrations.Operations{&migrations.OpRawSQL{Up: ""}}
+			opsJSON, err := json.Marshal(ops)
+			if err != nil {
+				return fmt.Errorf("failed to marshal operations: %w", err)
+			}
+			mig := &migrations.RawMigration{
+				Name:       version,
+				Operations: opsJSON,
+			}
+
+			// Write the placeholder migration to disk
+			err = writeMigrationToFile(mig, targetDir, "", useJSON)
+			if err != nil {
+				return fmt.Errorf("failed to write placeholder baseline migration: %w", err)
+			}
+
+			sp, _ := pterm.DefaultSpinner.WithText(fmt.Sprintf("Creating baseline migration %q...", version)).Start()
+
+			// Create the baseline in the target database
+			err = m.CreateBaseline(ctx, version)
+			if err != nil {
+				sp.Fail(fmt.Sprintf("Failed to create baseline: %s", err))
+				return err
+			}
+
+			sp.Success(fmt.Sprintf("Baseline %q created successfully", version))
+			return nil
+		},
+	}
+
+	baselineCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "output in JSON format instead of YAML")
+
+	return baselineCmd
+}
