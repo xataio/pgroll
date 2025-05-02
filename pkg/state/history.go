@@ -24,8 +24,15 @@ type HistoryEntry struct {
 func (s *State) SchemaHistory(ctx context.Context, schema string) ([]HistoryEntry, error) {
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
-			FROM %s.migrations
-			WHERE schema=$1 ORDER BY created_at`,
+			FROM %[1]s.migrations
+			WHERE schema=$1
+			AND created_at > COALESCE(
+			(
+				SELECT MAX(created_at) FROM %[1]s.migrations
+				WHERE schema = $1 AND migration_type = 'baseline'
+			),
+			'-infinity'::timestamptz
+			) ORDER BY created_at`,
 			pq.QuoteIdentifier(s.schema)), schema)
 	if err != nil {
 		return nil, err
