@@ -221,6 +221,11 @@
           "file": "docs/operations/set_replica_identity.mdx"
         }
       ]
+    },
+    {
+      "title": "Release notes",
+      "href": "/releases",
+      "file": "docs/releases/README.md"
     }
   ]
 }
