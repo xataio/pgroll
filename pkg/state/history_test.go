@@ -61,16 +61,21 @@ func TestSchemaHistoryReturnsFullSchemaHistory(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		// Ensure that the schema history is correct
+		// Get the schema history
 		res, err := state.SchemaHistory(ctx, "public")
 		require.NoError(t, err)
 
-		assert.Equal(t, 2, len(res))
-		assert.Equal(t, migs[0].Name, res[0].Migration.Name)
-		assert.Equal(t, migs[1].Name, res[1].Migration.Name)
+		// Parse the raw migrations from the schema history into actual migrations
+		actualMigs := make([]migrations.Migration, len(migs))
+		for i := range res {
+			m, err := migrations.ParseMigration(&res[i].Migration)
+			require.NoError(t, err)
+			actualMigs[i] = *m
+		}
 
-		assert.Equal(t, migs[0].Operations, res[0].Migration.Operations)
-		assert.Equal(t, migs[1].Operations, res[1].Migration.Operations)
+		// Assert that the schema history is correct
+		assert.Equal(t, 2, len(res))
+		assert.Equal(t, migs, actualMigs)
 	})
 }
 

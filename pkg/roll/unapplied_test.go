@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -176,6 +177,70 @@ func TestUnappliedMigrations(t *testing.T) {
 	})
 }
 
+func TestUnappliedMigrationsWithOldMigrationFormats(t *testing.T) {
+	t.Parallel()
+
+	t.Run("local directory contains an un-deserializable migration", func(t *testing.T) {
+		fs := fstest.MapFS{
+			"01_migration_1.json": &fstest.MapFile{Data: unDeserializableMigration(t, "01_migration_1")},
+			"02_migration_2.json": &fstest.MapFile{Data: exampleMigration(t, "02_migration_2")},
+		}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(roll *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Get unapplied migrations
+			migs, err := roll.UnappliedMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that both migrations are unapplied
+			require.Len(t, migs, 2)
+			require.Equal(t, "01_migration_1", migs[0].Name)
+			require.Equal(t, "02_migration_2", migs[1].Name)
+		})
+	})
+
+	t.Run("remote migration history contains an un-deserializable migration", func(t *testing.T) {
+		fs := fstest.MapFS{
+			"01_migration_1.json": &fstest.MapFile{Data: exampleMigration(t, "01_migration_1")},
+			"02_migration_2.json": &fstest.MapFile{Data: exampleMigration(t, "02_migration_2")},
+			"03_migration_3.json": &fstest.MapFile{Data: exampleMigration(t, "03_migration_3")},
+		}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(roll *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// Unmarshal the first migration from the migrations directory
+			var migration migrations.Migration
+			err := json.Unmarshal(fs["01_migration_1.json"].Data, &migration)
+			require.NoError(t, err)
+
+			// Apply the first migration
+			err = roll.Start(ctx, &migration, backfill.NewConfig())
+			require.NoError(t, err)
+			err = roll.Complete(ctx)
+			require.NoError(t, err)
+
+			// Modify the first migration in the schema history to be un-deserializable; in
+			// practice this could happen if the migration was applied with an older
+			// version of pgroll that had a different migration format
+			_, err = db.ExecContext(ctx, `UPDATE pgroll.migrations
+				SET migration = REPLACE(migration::text, '"up"', '"upxxx"')::jsonb
+				WHERE name = '01_migration_1'`)
+			require.NoError(t, err)
+
+			// Get unapplied migrations
+			migs, err := roll.UnappliedMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that the second and third migrations are unapplied
+			require.Len(t, migs, 2)
+			require.Equal(t, "02_migration_2", migs[0].Name)
+			require.Equal(t, "03_migration_3", migs[1].Name)
+		})
+	})
+}
+
 func exampleMigration(t *testing.T, name string) []byte {
 	t.Helper()
 
@@ -190,4 +255,26 @@ func exampleMigration(t *testing.T, name string) []byte {
 	require.NoError(t, err)
 
 	return bytes
+}
+
+// unDeserializableMigration creates a migration JSON that is valid but
+// contains an operation with invalid fields; this could happen if the
+// migration wasa created by an older version of `pgroll` before a breaking
+// change to the migration format.
+func unDeserializableMigration(t *testing.T, name string) []byte {
+	t.Helper()
+
+	migJSON := fmt.Sprintf(`{
+		"name": "%s",
+		"operations": [
+			{
+				"sql": {
+					"upxxx": "SELECT 1"
+				}
+			}
+		]
+	}
+	`, name)
+
+	return []byte(migJSON)
 }
