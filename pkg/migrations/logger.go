@@ -38,31 +38,31 @@ func NewNoopLogger() Logger {
 }
 
 func (l *migrationLogger) LogMigrationStart(m *Migration) {
-	l.logger.Info("starting migration", l.logger.Args([]any{
+	l.logger.Info("starting migration", l.logger.Args(
 		"name", m.Name,
 		"operation_count", len(m.Operations),
-	}))
+	))
 }
 
 func (l *migrationLogger) LogMigrationComplete(m *Migration) {
-	l.logger.Info("completing migration", l.logger.Args([]any{
+	l.logger.Info("completing migration", l.logger.Args(
 		"name", m.Name,
 		"operation_count", len(m.Operations),
-	}))
+	))
 }
 
 func (l *migrationLogger) LogMigrationRollback(m *Migration) {
-	l.logger.Info("rolling back migration", l.logger.Args([]any{
+	l.logger.Info("rolling back migration", l.logger.Args(
 		"name", m.Name,
 		"operation_count", len(m.Operations),
-	}))
+	))
 }
 
 func (l *migrationLogger) LogMigrationRollbackComplete(m *Migration) {
-	l.logger.Info("rolled back migration", l.logger.Args([]any{
+	l.logger.Info("rolled back migration", l.logger.Args(
 		"name", m.Name,
 		"operation_count", len(m.Operations),
-	}))
+	))
 }
 
 func (l *migrationLogger) LogBackfillStart(table string) {
@@ -82,15 +82,15 @@ func (l *migrationLogger) LogSchemaDeletion(migration, schema string) {
 }
 
 func (l migrationLogger) LogOperationStart(op Operation) {
-	l.logger.Info("starting operation", l.logger.Args(l.extractOpArgs(op)))
+	l.logger.Info("starting operation", l.logger.Args(l.extractOpArgs(op)...))
 }
 
 func (l migrationLogger) LogOperationComplete(op Operation) {
-	l.logger.Info("completing operation", l.logger.Args(l.extractOpArgs(op)))
+	l.logger.Info("completing operation", l.logger.Args(l.extractOpArgs(op)...))
 }
 
 func (l migrationLogger) LogOperationRollback(op Operation) {
-	l.logger.Info("rolling back operation", l.logger.Args(l.extractOpArgs(op)))
+	l.logger.Info("rolling back operation", l.logger.Args(l.extractOpArgs(op)...))
 }
 
 func (l migrationLogger) Info(msg string, args ...any) {
