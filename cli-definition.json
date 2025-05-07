@@ -50,16 +50,16 @@
           "default": "false"
         },
         {
+          "name": "json",
+          "shorthand": "j",
+          "description": "Output migration file in JSON format instead of YAML",
+          "default": "false"
+        },
+        {
           "name": "name",
           "shorthand": "n",
           "description": "Migration name",
           "default": ""
-        },
-        {
-          "name": "output",
-          "shorthand": "o",
-          "description": "Output format: yaml or json",
-          "default": "yaml"
         }
       ],
       "subcommands": [],

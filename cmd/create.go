@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -17,18 +16,13 @@ import (
 
 func createCmd() *cobra.Command {
 	var isEmpty bool
+	var useJSON bool
 	var name string
-	var outputFormat string
 
 	createCmd := &cobra.Command{
 		Use:   "create",
 		Short: "Create a new migration interactively",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			outputFormat := strings.ToLower(outputFormat)
-			if outputFormat != "yaml" && outputFormat != "json" {
-				return fmt.Errorf("invalid migration format: %q", outputFormat)
-			}
-
 			if name == "" {
 				name, _ = pterm.DefaultInteractiveTextInput.
 					WithDefaultText("Set the name of your migration").
@@ -54,6 +48,10 @@ func createCmd() *cobra.Command {
 					Show()
 			}
 
+			outputFormat := "yaml"
+			if useJSON {
+				outputFormat = "json"
+			}
 			migrationFileName := fmt.Sprintf("%s.%s", name, outputFormat)
 			file, err := os.Create(migrationFileName)
 			if err != nil {
@@ -87,8 +85,8 @@ func createCmd() *cobra.Command {
 		},
 	}
 	createCmd.Flags().BoolVarP(&isEmpty, "empty", "e", false, "Create empty migration file")
+	createCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "Output migration file in JSON format instead of YAML")
 	createCmd.Flags().StringVarP(&name, "name", "n", "", "Migration name")
-	createCmd.Flags().StringVarP(&outputFormat, "output", "o", "yaml", "Output format: yaml or json")
 
 	return createCmd
 }
