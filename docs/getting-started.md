@@ -6,7 +6,7 @@
 
 Learn how `pgroll` simplifies zero-downtime migrations for you
 
-* [Why use `pgroll`](why-use-pgroll)
+* [Why use pgroll](why-use-pgroll)
 * [Installation](installation)
 * [Concepts](concepts)
 * [Write your first migration](tutorial)
