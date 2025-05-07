@@ -5,12 +5,14 @@ package migrations
 import (
 	"context"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpRawSQL)(nil)
+var (
+	_ Operation  = (*OpRawSQL)(nil)
+	_ Createable = (*OpRawSQL)(nil)
+)
 
 func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
@@ -63,9 +65,3 @@ func (o *OpRawSQL) IsIsolated() bool {
 }
 
 func (o *OpRawSQL) RequiresSchemaRefresh() {}
-
-func (o *OpRawSQL) Create() {
-	o.Up, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("up").Show()
-	o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
-	o.OnComplete, _ = pterm.DefaultInteractiveConfirm.WithDefaultValue(true).WithDefaultText("on_complete").Show()
-}

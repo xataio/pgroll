@@ -57,9 +57,9 @@
         },
         {
           "name": "output",
-          "shorthand": "0",
+          "shorthand": "o",
           "description": "Output format: yaml or json",
-          "default": ""
+          "default": "yaml"
         }
       ],
       "subcommands": [],

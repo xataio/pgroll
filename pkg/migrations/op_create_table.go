@@ -9,13 +9,15 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpCreateTable)(nil)
+var (
+	_ Operation  = (*OpCreateTable)(nil)
+	_ Createable = (*OpCreateTable)(nil)
+)
 
 func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
@@ -340,57 +342,4 @@ func constraintsToSQL(constraints []Constraint) (string, error) {
 		return "", nil
 	}
 	return ", " + strings.Join(constraintsSQL, ", "), nil
-}
-
-func (o *OpCreateTable) Create() {
-	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
-
-	addColumns, _ := pterm.DefaultInteractiveConfirm.
-		WithDefaultText("Add columns").
-		Show()
-	for addColumns {
-		o.Columns = append(o.Columns, getColumnFromCLI())
-
-		addColumns, _ = pterm.DefaultInteractiveConfirm.
-			WithDefaultText("Add more columns").
-			Show()
-	}
-
-	addConstraints, _ := pterm.DefaultInteractiveConfirm.
-		WithDefaultText("Add constraints").
-		Show()
-	for addConstraints {
-		var c Constraint
-		c.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
-		columns, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("columns").Show()
-		c.Columns = strings.Split(columns, ",")
-		constraintType, _ := pterm.DefaultInteractiveSelect.
-			WithDefaultText("type").
-			WithOptions([]string{"unique", "primary_key", "foreign_key", "check", "exclude"}).
-			Show()
-		c.Type = ConstraintType(constraintType)
-		switch c.Type {
-		case ConstraintTypeCheck:
-			c.Check, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("check").Show()
-			c.NoInherit = getBooleanOptionForColumnAttr("no_inherit")
-		case ConstraintTypeUnique:
-			c.NullsNotDistinct = getBooleanOptionForColumnAttr("null_not_distinct")
-		case ConstraintTypeForeignKey:
-			var reference TableForeignKeyReference
-			reference.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("references.table").Show()
-			referencedColumns, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("references.columns").Show()
-			reference.Columns = strings.Split(referencedColumns, ",")
-			c.References = &reference
-		}
-		o.Constraints = append(o.Constraints, c)
-
-		addConstraints, _ = pterm.DefaultInteractiveConfirm.
-			WithDefaultText("Add more constraints").
-			Show()
-	}
-
-	comment, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("comment").Show()
-	if comment != "" {
-		o.Comment = &comment
-	}
 }

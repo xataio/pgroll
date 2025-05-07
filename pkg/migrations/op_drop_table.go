@@ -6,12 +6,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpDropTable)(nil)
+var (
+	_ Operation  = (*OpDropTable)(nil)
+	_ Createable = (*OpDropTable)(nil)
+)
 
 func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
@@ -70,8 +72,4 @@ func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {
 
 	s.RemoveTable(table.Name)
 	return nil
-}
-
-func (o *OpDropTable) Create() {
-	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 }

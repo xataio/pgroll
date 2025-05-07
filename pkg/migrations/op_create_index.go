@@ -8,13 +8,15 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.com/pterm/pterm"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpCreateIndex)(nil)
+var (
+	_ Operation  = (*OpCreateIndex)(nil)
+	_ Createable = (*OpCreateIndex)(nil)
+)
 
 func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
@@ -122,62 +124,6 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 	}
 
 	return nil
-}
-
-func (o *OpCreateIndex) Create() {
-	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
-	o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
-	addColumns, _ := pterm.DefaultInteractiveConfirm.
-		WithDefaultText("Add columns").
-		WithDefaultValue(true).
-		Show()
-	columns := make(map[string]IndexField)
-	for addColumns {
-		name, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
-		var indexField IndexField
-		indexField.Collate, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("collate").Show()
-		nulls, _ := pterm.DefaultInteractiveSelect.
-			WithDefaultText("null").
-			WithOptions([]string{"", "FIRST", "LAST"}).
-			WithDefaultOption("").
-			Show()
-		if nulls != "" {
-			n := IndexFieldNulls(nulls)
-			indexField.Nulls = &n
-		}
-		sort, _ := pterm.DefaultInteractiveSelect.
-			WithDefaultText("sort").
-			WithOptions([]string{"", "ASC", "DESC"}).
-			WithDefaultOption("").
-			Show()
-		if sort != "" {
-			indexField.Sort = IndexFieldSort(sort)
-		}
-		addOpclass, _ := pterm.DefaultInteractiveConfirm.
-			WithDefaultText("Add opclass").
-			WithDefaultValue(false).
-			Show()
-		if addOpclass {
-			name, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
-			params, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("params").Show()
-			indexField.Opclass = &IndexFieldOpclass{Name: name, Params: strings.Split(params, ",")}
-		}
-
-		columns[name] = indexField
-		addColumns, _ = pterm.DefaultInteractiveConfirm.
-			WithDefaultText("Add more columns").
-			Show()
-	}
-	o.Columns = columns
-	o.Unique = getBooleanOptionForColumnAttr("unique")
-	indexMethod, _ := pterm.DefaultInteractiveSelect.
-		WithDefaultText("method").
-		WithDefaultOption("btree").
-		WithOptions([]string{"btree", "hash", "gist", "spgist", "gin", "brin"}).
-		Show()
-	o.Method, _ = ParseCreateIndexMethod(indexMethod)
-	o.Predicate, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("predicate").Show()
-	o.StorageParameters, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("storage_parameters").Show()
 }
 
 func quoteColumnNames(columns []string) (quoted []string) {

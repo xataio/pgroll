@@ -5,12 +5,14 @@ package migrations
 import (
 	"context"
 
-	"github.com/pterm/pterm"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpDropIndex)(nil)
+var (
+	_ Operation  = (*OpDropIndex)(nil)
+	_ Createable = (*OpDropIndex)(nil)
+)
 
 func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
@@ -40,8 +42,4 @@ func (o *OpDropIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		}
 	}
 	return IndexDoesNotExistError{Name: o.Name}
-}
-
-func (o *OpDropIndex) Create() {
-	o.Name, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 }
