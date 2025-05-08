@@ -32,9 +32,14 @@
       "noLink": true,
       "items": [
         {
-          "title": "Integrate `pgroll` into your project",
+          "title": "Integrate pgroll into your project",
           "href": "/guides/clientapps",
           "file": "docs/guides/clientapps.mdx"
+        },
+        {
+          "title": "Use pgroll with ORMs",
+          "href": "/guides/orms",
+          "file": "docs/guides/orms.mdx"
         },
         {
           "title": "Writing up and down migrations",
