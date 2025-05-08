@@ -166,6 +166,24 @@ func TestMissingMigrations(t *testing.T) {
 		})
 	})
 
+	t.Run("no migrations have been applied to the target database", func(t *testing.T) {
+		fs := fstest.MapFS{
+			"01_migration_1.json": &fstest.MapFile{Data: exampleMigJSON(t, "01_migration_1")},
+			"02_migration_2.json": &fstest.MapFile{Data: exampleMigJSON(t, "02_migration_2")},
+		}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Get missing migrations
+			migs, err := m.MissingMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that no migrations are missing from the local directory
+			require.Len(t, migs, 0)
+		})
+	})
+
 	t.Run("migrations with no name use filename as migration name", func(t *testing.T) {
 		fs := fstest.MapFS{
 			"01_migration_1.json": &fstest.MapFile{Data: exampleMigJSON(t, "")},
