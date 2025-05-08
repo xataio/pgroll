@@ -30,20 +30,12 @@ func migrateCmd() *cobra.Command {
 			ctx := cmd.Context()
 			migrationsDir := args[0]
 
-			m, err := NewRoll(ctx)
+			// Create a roll instance and check if pgroll is initialized
+			m, err := NewRollWithInitCheck(ctx)
 			if err != nil {
 				return err
 			}
 			defer m.Close()
-
-			// Ensure that pgroll is initialized
-			ok, err := m.State().IsInitialized(cmd.Context())
-			if err != nil {
-				return err
-			}
-			if !ok {
-				return errPGRollNotInitialized
-			}
 
 			latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
 			if err != nil {

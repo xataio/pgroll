@@ -79,21 +79,12 @@ func latestVersionLocal(ctx context.Context, migrationsDir string, withSchema bo
 
 // latestVersionRemote returns the latest applied migration version on the target database
 func latestVersionRemote(ctx context.Context, withSchema bool) (string, error) {
-	// Create a new Roll instance
-	m, err := NewRoll(ctx)
+	// Create a roll instance and check if pgroll is initialized
+	m, err := NewRollWithInitCheck(ctx)
 	if err != nil {
 		return "", err
 	}
 	defer m.Close()
-
-	// Ensure that pgroll is initialized
-	ok, err := m.State().IsInitialized(ctx)
-	if err != nil {
-		return "", err
-	}
-	if !ok {
-		return "", errPGRollNotInitialized
-	}
 
 	// Get the latest version in the target schema
 	latestVersion, err := m.LatestVersionRemote(ctx)

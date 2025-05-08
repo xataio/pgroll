@@ -33,20 +33,12 @@ func startCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fileName := args[0]
 
-			m, err := NewRoll(cmd.Context())
+			// Create a roll instance and check if pgroll is initialized
+			m, err := NewRollWithInitCheck(cmd.Context())
 			if err != nil {
 				return err
 			}
 			defer m.Close()
-
-			// Ensure that pgroll is initialized
-			ok, err := m.State().IsInitialized(cmd.Context())
-			if err != nil {
-				return err
-			}
-			if !ok {
-				return errPGRollNotInitialized
-			}
 
 			c := backfill.NewConfig(
 				backfill.WithBatchSize(batchSize),
