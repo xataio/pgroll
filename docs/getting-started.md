@@ -16,6 +16,7 @@ Learn how `pgroll` simplifies zero-downtime migrations for you
 Learn how to use `pgroll` in your developer workflow
 
 * [Integrate pgroll into your project](guides/clientapps)
+* [Use pgroll with ORMs](guides/orms)
 * [Writing up and down migrations](guides/updown)
 
 ## Connect with us
