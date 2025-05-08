@@ -13,20 +13,12 @@ var rollbackCmd = &cobra.Command{
 	Use:   "rollback",
 	Short: "Roll back an ongoing migration",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		m, err := NewRoll(cmd.Context())
+		// Create a roll instance and check if pgroll is initialized
+		m, err := NewRollWithInitCheck(cmd.Context())
 		if err != nil {
 			return err
 		}
 		defer m.Close()
-
-		// Ensure that pgroll is initialized
-		ok, err := m.State().IsInitialized(cmd.Context())
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return errPGRollNotInitialized
-		}
 
 		sp, _ := pterm.DefaultSpinner.WithText("Rolling back migration...").Start()
 		err = m.Rollback(cmd.Context())

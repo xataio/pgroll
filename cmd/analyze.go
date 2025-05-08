@@ -26,12 +26,8 @@ var analyzeCmd = &cobra.Command{
 		defer state.Close()
 
 		// Ensure that pgroll is initialized
-		ok, err := state.IsInitialized(cmd.Context())
-		if err != nil {
+		if err := EnsureInitialized(ctx, state); err != nil {
 			return err
-		}
-		if !ok {
-			return errPGRollNotInitialized
 		}
 
 		schema, err := state.ReadSchema(ctx, flags.Schema())

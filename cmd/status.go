@@ -25,12 +25,8 @@ var statusCmd = &cobra.Command{
 		defer state.Close()
 
 		// Ensure that pgroll is initialized
-		ok, err := state.IsInitialized(ctx)
-		if err != nil {
+		if err := EnsureInitialized(ctx, state); err != nil {
 			return err
-		}
-		if !ok {
-			return errPGRollNotInitialized
 		}
 
 		status, err := state.Status(ctx, flags.Schema())

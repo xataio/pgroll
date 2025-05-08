@@ -27,20 +27,12 @@ func pullCmd() *cobra.Command {
 			ctx := cmd.Context()
 			targetDir := args[0]
 
-			m, err := NewRoll(ctx)
+			// Create a roll instance and check if pgroll is initialized
+			m, err := NewRollWithInitCheck(ctx)
 			if err != nil {
 				return err
 			}
 			defer m.Close()
-
-			// Ensure that pgroll is initialized
-			ok, err := m.State().IsInitialized(cmd.Context())
-			if err != nil {
-				return err
-			}
-			if !ok {
-				return errPGRollNotInitialized
-			}
 
 			// Ensure that the target directory is valid, creating it if it doesn't
 			// exist

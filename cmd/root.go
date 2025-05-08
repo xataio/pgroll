@@ -38,6 +38,37 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	)
 }
 
+// EnsureInitialized checks if the pgroll state schema is initialized.
+// Returns an error if the check fails or if pgroll is not initialized.
+func EnsureInitialized(ctx context.Context, state *state.State) error {
+	ok, err := state.IsInitialized(ctx)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errPGRollNotInitialized
+	}
+	return nil
+}
+
+// NewRollWithInitCheck creates a roll instance and checks if pgroll is initialized.
+// Returns the roll instance and an error if creation fails or if pgroll is not initialized.
+func NewRollWithInitCheck(ctx context.Context) (*roll.Roll, error) {
+	// Create a roll instance
+	m, err := NewRoll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure that pgroll is initialized
+	if err := EnsureInitialized(ctx, m.State()); err != nil {
+		m.Close()
+		return nil, err
+	}
+
+	return m, nil
+}
+
 func Prepare() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:          "pgroll",
