@@ -1,6 +1,32 @@
-# Getting started
+# Welcome to pgroll's documentation
 
-This guide covers the key concepts of `pgroll` and how to get started with it.
+`pgroll` is a migration tool for PostgreSQL that makes it easy to apply schema changes safely, without application downtime. It supports instant rollbacks and helps ensure applications stay available during database schema changes by allowing applications to access different versions of your database schema.
+
+## Getting started
+
+Learn how `pgroll` simplifies zero-downtime migrations for you
+
+* [Why use pgroll](why-use-pgroll)
+* [Installation](installation)
+* [Concepts](concepts)
+* [Write your first migration](tutorial)
+
+## Guides
+
+Learn how to use `pgroll` in your developer workflow
+
+* [Integrate pgroll into your project](guides/clientapps)
+* [Use pgroll with ORMs](guides/orms)
+* [Writing up and down migrations](guides/updown)
+
+## Connect with us
+
+If you have questions reach out to us on our
+* [Discord server](https://xata.io/discord)
+* [Github Discussion board](https://github.com/xataio/pgroll/discussions)
+
+If you want to report issues or submit feedback visit
+* [Github Issues](https://github.com/xataio/pgroll/issues)
 
 ## Supported Postgres versions
 
