@@ -5,7 +5,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -42,18 +41,9 @@ func baselineCmd() *cobra.Command {
 				return errPGRollNotInitialized
 			}
 
-			// Ensure that the target directory is valid, creating it if it doesn't
-			// exist
-			_, err = os.Stat(targetDir)
-			if err != nil {
-				if os.IsNotExist(err) {
-					err := os.MkdirAll(targetDir, 0o755)
-					if err != nil {
-						return fmt.Errorf("failed to create target directory: %w", err)
-					}
-				} else {
-					return fmt.Errorf("failed to stat directory: %w", err)
-				}
+			// Ensure that the target directory exists
+			if err := ensureDirectoryExists(targetDir); err != nil {
+				return err
 			}
 
 			// Prompt for confirmation
