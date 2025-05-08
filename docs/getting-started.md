@@ -1,6 +1,6 @@
 # Welcome to pgroll's documentation
 
-`pgroll` ensures 100% uptime during schema changes in your application. It is an open source command line interface for developers using [PostgreSQL](https://postgresql.org) as their data layer.
+`pgroll` is a migration tool for PostgreSQL that makes it easy to apply schema changes safely, without application downtime. It supports instant rollbacks and helps ensure applications stay available during database schema changes by allowing applications to access different versions of your database schema.
 
 ## Getting started
 
