@@ -103,3 +103,14 @@ func TestCollectFilesFromDir(t *testing.T) {
 		})
 	}
 }
+
+func TestAllNonDeprecatedOperationsAreCreateable(t *testing.T) {
+	for _, opName := range migrations.AllNonDeprecatedOperations {
+		t.Run(opName, func(t *testing.T) {
+			op, err := migrations.OperationFromName(migrations.OpName(opName))
+			assert.NoError(t, err)
+			_, ok := op.(migrations.Createable)
+			assert.True(t, ok, "operation %q must have a Create function", opName)
+		})
+	}
+}

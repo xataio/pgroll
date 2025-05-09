@@ -34,6 +34,22 @@ type Operation interface {
 	Validate(ctx context.Context, s *schema.Schema) error
 }
 
+// Createable interface must be implemented for all operations
+// that can be created using the CLI create command.
+//
+// The function must prompt users to configure all attributes of an operation.
+//
+// Example implementation for OpMyOperation that has 3 attributes: table, column and down:
+//
+//	func (o *OpMyOperation) Create() {
+//		o.Table, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("table").Show()
+//		o.Column, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("column").Show()
+//		o.Down, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("down").Show()
+//	}
+type Createable interface {
+	Create()
+}
+
 // IsolatedOperation is an operation that cannot be executed with other operations
 // in the same migration.
 type IsolatedOperation interface {

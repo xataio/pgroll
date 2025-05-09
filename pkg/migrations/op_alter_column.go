@@ -13,7 +13,10 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpAlterColumn)(nil)
+var (
+	_ Operation  = (*OpAlterColumn)(nil)
+	_ Createable = (*OpAlterColumn)(nil)
+)
 
 func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)

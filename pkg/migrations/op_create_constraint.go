@@ -13,7 +13,10 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpCreateConstraint)(nil)
+var (
+	_ Operation  = (*OpCreateConstraint)(nil)
+	_ Createable = (*OpCreateConstraint)(nil)
+)
 
 func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)

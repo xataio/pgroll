@@ -38,6 +38,34 @@
       ]
     },
     {
+      "name": "create",
+      "short": "Create a new migration interactively",
+      "use": "create",
+      "example": "",
+      "flags": [
+        {
+          "name": "empty",
+          "shorthand": "e",
+          "description": "Create empty migration file",
+          "default": "false"
+        },
+        {
+          "name": "json",
+          "shorthand": "j",
+          "description": "Output migration file in JSON format instead of YAML",
+          "default": "false"
+        },
+        {
+          "name": "name",
+          "shorthand": "n",
+          "description": "Migration name",
+          "default": ""
+        }
+      ],
+      "subcommands": [],
+      "args": []
+    },
+    {
       "name": "init",
       "short": "Initialize pgroll in the target database",
       "use": "init <file>",

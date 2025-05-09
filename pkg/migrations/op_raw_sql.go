@@ -9,7 +9,10 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpRawSQL)(nil)
+var (
+	_ Operation  = (*OpRawSQL)(nil)
+	_ Createable = (*OpRawSQL)(nil)
+)
 
 func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)

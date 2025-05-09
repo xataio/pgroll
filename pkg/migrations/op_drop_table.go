@@ -10,7 +10,10 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-var _ Operation = (*OpDropTable)(nil)
+var (
+	_ Operation  = (*OpDropTable)(nil)
+	_ Createable = (*OpDropTable)(nil)
+)
 
 func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
 	l.LogOperationStart(o)
