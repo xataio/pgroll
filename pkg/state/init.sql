@@ -471,12 +471,36 @@ BEGIN
         AND migration_type = 'inferred'
         AND migration -> 'operations' -> 0 -> 'sql' ->> 'up' = current_query();
     -- Someone did a schema change without pgroll, include it in the history
-    SELECT
-        INTO migration_id pg_catalog.format('sql_%s', pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15));
+    -- Get the latest non-inferred migration name with microsecond timestamp for ordering
+    WITH latest_non_inferred AS (
+        SELECT
+            name
+        FROM
+            placeholder.migrations
+        WHERE
+            SCHEMA = schemaname
+            AND migration_type != 'inferred'
+        ORDER BY
+            created_at DESC
+        LIMIT 1
+)
+SELECT
+    INTO migration_id CASE WHEN EXISTS (
+        SELECT
+            1
+        FROM
+            latest_non_inferred) THEN
+        pg_catalog.format('%s_%s', (
+                SELECT
+                    name
+                FROM latest_non_inferred), pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
+    ELSE
+        pg_catalog.format('00000_initial_%s', pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
+    END;
     INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
-        VALUES (schemaname, migration_id, pg_catalog.json_build_object('operations', (
-                    SELECT
-                        pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
+        VALUES (schemaname, migration_id, pg_catalog.json_build_object('version_schema', 'sql_' || substring(md5(random()::text), 1, 8), 'operations', (
+                SELECT
+                    pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
             placeholder.read_schema (schemaname),
             TRUE,
             placeholder.latest_migration (schemaname),
