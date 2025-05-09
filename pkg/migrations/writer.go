@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package migrations
 
 import (
@@ -17,9 +19,7 @@ const (
 	JSONMigrationFormat
 )
 
-var (
-	ErrInvalidMigrationFormat = errors.New("invalid migration format")
-)
+var ErrInvalidMigrationFormat = errors.New("invalid migration format")
 
 // MigrationWriter is responsible for writing Migrations and RawMigrations
 // to the configured io.Writer instance in either YAML or JSON.
@@ -82,5 +82,4 @@ func (w *MigrationWriter) writeAny(migration any) error {
 		return ErrInvalidMigrationFormat
 	}
 	return nil
-
 }

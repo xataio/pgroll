@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-//nolint:goconst
 package cmd
 
 import (
