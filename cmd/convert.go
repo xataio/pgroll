@@ -4,7 +4,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +15,7 @@ import (
 
 func convertCmd() *cobra.Command {
 	var migrationName string
+	var useJSON bool
 
 	convertCmd := &cobra.Command{
 		Use:       "convert <path to file with migrations>",
@@ -34,16 +34,16 @@ func convertCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			enc := json.NewEncoder(os.Stdout)
-			enc.SetIndent("", "  ")
-			if err := enc.Encode(migration); err != nil {
-				return fmt.Errorf("encode migration: %w", err)
+			err = migrations.NewWriter(os.Stdout, migrations.NewMigrationFormat(useJSON)).Write(&migration)
+			if err != nil {
+				return fmt.Errorf("failed to write migration to stdout: %w", err)
 			}
 			return nil
 		},
 	}
 
 	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "", "Name of the migration")
+	convertCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "Output migration file in JSON format instead of YAML")
 
 	return convertCmd
 }
