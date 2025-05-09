@@ -1,0 +1,39 @@
+---
+title: Create
+description: Create migration files interactively
+---
+
+## Command
+
+```
+$ pgroll create
+```
+
+This command helps you generate `pgroll` migrations interactively, and saves the file to disk in YAML format.
+
+The optional `--name` flag can be used to specify the name of the migration.
+
+The optional `--empty` flag can be used to generate empty migration files.
+
+The optional `--json` flag can be used to write migration files in JSON.
+
+If both `--name` and `--empty` flags are set, the command does not prompt you for anything. So it can be used to generate initialize new migrations from scripts.
+
+
+### Examples
+
+#### Generate empty YAML migrations
+
+```
+pgroll create --name my_migration --empty
+```
+
+#### Generate empty JSON migrations
+
+```
+pgroll create --name my_migration --empty --json
+```
+
+<Warning>
+The generated migration files are not validated. It is possible that depending on the user input, the command produces invalid migrations. For example, required fields might not be set. Please, always validate the generated migration file.
+</Warning>

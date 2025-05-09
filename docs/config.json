@@ -75,6 +75,11 @@
           "file": "docs/cli/rollback.mdx"
         },
         {
+          "title": "Create",
+          "href": "/cli/create",
+          "file": "docs/cli/create.mdx"
+        },
+        {
           "title": "Status",
           "href": "/cli/status",
           "file": "docs/cli/status.mdx"
