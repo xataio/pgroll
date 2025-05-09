@@ -4,14 +4,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"sigs.k8s.io/yaml"
 )
 
 func createCmd() *cobra.Command {
@@ -48,35 +46,17 @@ func createCmd() *cobra.Command {
 					Show()
 			}
 
-			outputFormat := "yaml"
-			if useJSON {
-				outputFormat = "json"
-			}
-			migrationFileName := fmt.Sprintf("%s.%s", name, outputFormat)
+			format := migrations.NewMigrationFormat(useJSON)
+			migrationFileName := fmt.Sprintf("%s.%s", name, format.Extension())
 			file, err := os.Create(migrationFileName)
 			if err != nil {
 				return fmt.Errorf("failed to create migration file: %w", err)
 			}
 			defer file.Close()
 
-			switch outputFormat {
-			case "json":
-				enc := json.NewEncoder(file)
-				enc.SetIndent("", "  ")
-				if err := enc.Encode(mig); err != nil {
-					return fmt.Errorf("failed to encode migration: %w", err)
-				}
-			case "yaml":
-				out, err := yaml.Marshal(mig)
-				if err != nil {
-					return fmt.Errorf("failed to encode migration: %w", err)
-				}
-				_, err = file.Write(out)
-				if err != nil {
-					return fmt.Errorf("failed to write migration: %w", err)
-				}
-			default:
-				return fmt.Errorf("invalid output format: %q", outputFormat)
+			err = migrations.NewWriter(file, format).Write(mig)
+			if err != nil {
+				return fmt.Errorf("failed to write migration to file: %w", err)
 			}
 
 			pterm.Success.Println("Migration written to " + migrationFileName)
