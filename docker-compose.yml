@@ -1,6 +1,7 @@
 services:
   db:
     image: 'postgres:17'
+    user: postgres
     restart: always
     environment:
       - POSTGRES_USER=postgres
