@@ -317,10 +317,6 @@ DECLARE
     schemaname text;
     migration_id text;
 BEGIN
-    -- Ignore migrations done by pgroll
-    IF (pg_catalog.current_setting('pgroll.internal', 'TRUE') <> 'TRUE') THEN
-        RETURN;
-    END IF;
     IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN
         -- Take the schema name from the drop schema command
         SELECT
