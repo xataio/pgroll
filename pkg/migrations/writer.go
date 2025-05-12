@@ -14,8 +14,7 @@ import (
 type MigrationFormat int
 
 const (
-	InvalidMigrationFormat MigrationFormat = iota
-	YAMLMigrationFormat
+	YAMLMigrationFormat MigrationFormat = iota
 	JSONMigrationFormat
 )
 
@@ -55,10 +54,12 @@ func NewWriter(w io.Writer, f MigrationFormat) *MigrationWriter {
 	}
 }
 
+// Write writes a migration.Migration to the configured writer.
 func (w *MigrationWriter) Write(m *Migration) error {
 	return w.writeAny(m)
 }
 
+// Write writes a migration.RawMigration to the configured writer.
 func (w *MigrationWriter) WriteRaw(m *RawMigration) error {
 	return w.writeAny(m)
 }
@@ -71,7 +72,9 @@ func (w *MigrationWriter) writeAny(migration any) error {
 			return err
 		}
 		_, err = w.writer.Write(yml)
-		return fmt.Errorf("encode yaml migration: %w", err)
+		if err != nil {
+			return fmt.Errorf("encode yaml migration: %w", err)
+		}
 	case JSONMigrationFormat:
 		enc := json.NewEncoder(w.writer)
 		enc.SetIndent("", "  ")
