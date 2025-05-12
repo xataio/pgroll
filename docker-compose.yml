@@ -1,6 +1,7 @@
 services:
   db:
     image: 'postgres:17'
+    user: postgres
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -11,6 +12,7 @@ services:
       - /var/lib/postgresql/data
     healthcheck:
       test: "pg_isready -h localhost"
-      interval: 200ms
+      start_period: 30s
+      start_interval: 100ms
+      interval: 24h
       timeout: 5s
-      retries: 10
