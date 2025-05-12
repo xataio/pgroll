@@ -7,7 +7,7 @@
   <a href="https://github.com/xataio/pgroll/actions?query=branch%3Amain"><img src="https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg" alt="CI Build"></a> &nbsp;
   <a href="https://github.com/xataio/pgroll/releases"><img src="https://img.shields.io/github/release/xataio/pgroll.svg?label=Release" alt="Release"></a> &nbsp;
   <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/xataio/pgroll/total"> &nbsp;
-  <img alt="Static Badge" src="https://img.shields.io/badge/pgroll-documentation-page?style=flat&link=https%3A%2F%2Fpgroll.com%2Fdocs%2Flatest%2Fgetting-started"> &nbsp;
+  <a href="https://pgroll.com/docs"><img alt="Static Badge" src="https://img.shields.io/badge/pgroll-documentation-page?style=flat&link=https%3A%2F%2Fpgroll.com%2Fdocs%2Flatest%2Fgetting-started"></a> &nbsp;
   <a href="https://xata.io/discord"><img src="https://img.shields.io/discord/996791218879086662?label=Discord" alt="Discord"></a> &nbsp;
   <a href="https://twitter.com/xata"><img src="https://img.shields.io/twitter/follow/xata?style=flat" alt="X (formerly Twitter) Follow" /> </a>
 </p>
