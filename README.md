@@ -3,9 +3,11 @@
 </div>
 
 <p align="center">
-  <a href="https://github.com/xataio/pgroll/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a>&nbsp;
+  <a href="https://github.com/xataio/pgroll/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green" alt="License - Apache 2.0"></a> &nbsp;
   <a href="https://github.com/xataio/pgroll/actions?query=branch%3Amain"><img src="https://github.com/xataio/pgroll/actions/workflows/build.yml/badge.svg" alt="CI Build"></a> &nbsp;
   <a href="https://github.com/xataio/pgroll/releases"><img src="https://img.shields.io/github/release/xataio/pgroll.svg?label=Release" alt="Release"></a> &nbsp;
+  <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/xataio/pgroll/total"> &nbsp;
+  <img alt="Static Badge" src="https://img.shields.io/badge/pgroll-documentation-page?style=flat&link=https%3A%2F%2Fpgroll.com%2Fdocs%2Flatest%2Fgetting-started"> &nbsp;
   <a href="https://xata.io/discord"><img src="https://img.shields.io/discord/996791218879086662?label=Discord" alt="Discord"></a> &nbsp;
   <a href="https://twitter.com/xata"><img src="https://img.shields.io/twitter/follow/xata?style=flat" alt="X (formerly Twitter) Follow" /> </a>
 </p>
@@ -26,23 +28,6 @@ See the [introductory blog post](https://pgroll.com/blog/introducing-pgroll-zero
 - Works with Postgres 14.0 or later.
 - Works with any Postgres service (including RDS and Aurora).
 - Written in Go, cross-platform single binary with no external dependencies.
-
-## How pgroll works
-
-`pgroll` works by creating virtual schemas by using views on top of the physical tables. This allows for performing all the necessary changes needed for a migration without affecting the existing clients.
-
-![Multiple schema versions with pgroll](docs/img/schema-changes-flow@2x.png)
-
-
-`pgroll` follows a [expand/contract workflow](https://openpracticelibrary.com/practice/expand-and-contract-pattern/). On migration start, it will perform all the additive changes (create tables, add columns, etc) in the physical schema, without breaking it.
-
-When a breaking change is required on a column, it will create a new column in the physical schema, and backfill it from the old column. Also, configure triggers to make sure all writes to the old/new column get propagated to its counterpart during the whole active migration period. The new column will be then exposed in the new version of the schema.
-
-Once the start phase is complete, the new schema version is ready, mapping all the views to the proper tables & columns. Client applications can then access the new schema version, while the old one is still available. This is the moment to start rolling out the new version of the client application.
-
-![Multiple schema versions with pgroll](docs/img/migration-schemas@2x.png?c=0)
-
-When no more client applications are using the old schema version, the migration can be completed. This will remove the old schema, and the new one will be the only one available. No longer needed tables & columns will be removed (no client is using this at this point), and the new ones will be renamed to their final names. Client applications still work during this phase, as the views are still mapping to the proper tables & columns.
 
 ## Table of Contents
 
