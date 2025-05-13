@@ -575,7 +575,7 @@ func triggerExists(t *testing.T, db *sql.DB, schema, table, trigger string) bool
       WHERE tgrelid = $1::regclass
       AND tgname = $2
     )`,
-		fmt.Sprintf("%s.%s", schema, table), trigger).Scan(&exists)
+		fmt.Sprintf("%s.%s", pq.QuoteIdentifier(schema), pq.QuoteIdentifier(table)), trigger).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
 	}
