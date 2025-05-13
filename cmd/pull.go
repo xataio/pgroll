@@ -34,18 +34,9 @@ func pullCmd() *cobra.Command {
 			}
 			defer m.Close()
 
-			// Ensure that the target directory is valid, creating it if it doesn't
-			// exist
-			_, err = os.Stat(targetDir)
-			if err != nil {
-				if os.IsNotExist(err) {
-					err := os.MkdirAll(targetDir, 0o755)
-					if err != nil {
-						return fmt.Errorf("failed to create target directory: %w", err)
-					}
-				} else {
-					return fmt.Errorf("failed to stat directory: %w", err)
-				}
+			// Ensure that the target directory exists
+			if err := ensureDirectoryExists(targetDir); err != nil {
+				return err
 			}
 
 			// Get the list of missing migrations (those that have been applied to
@@ -76,12 +67,28 @@ func pullCmd() *cobra.Command {
 	return pullCmd
 }
 
+// ensureDirectoryExists ensures that the target directory exists, creating it if it doesn't.
+// Returns an error if the directory cannot be created or if there's an issue checking its existence.
+func ensureDirectoryExists(targetDir string) error {
+	_, err := os.Stat(targetDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err := os.MkdirAll(targetDir, 0o755)
+			if err != nil {
+				return fmt.Errorf("failed to create target directory: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to stat directory: %w", err)
+		}
+	}
+	return nil
+}
+
 // WriteToFile writes the migration to a file in `targetDir`, prefixing the
 // filename with `prefix`. The output format defaults to YAML, but can
 // be changed to JSON by setting `useJSON` to true.
 func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, useJSON bool) error {
-	err := os.MkdirAll(targetDir, 0o755)
-	if err != nil {
+	if err := ensureDirectoryExists(targetDir); err != nil {
 		return err
 	}
 
