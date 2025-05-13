@@ -11,6 +11,25 @@
       "args": []
     },
     {
+      "name": "baseline",
+      "short": "Create a baseline migration for an existing database schema",
+      "use": "baseline <version> <target directory>",
+      "example": "",
+      "flags": [
+        {
+          "name": "json",
+          "shorthand": "j",
+          "description": "output in JSON format instead of YAML",
+          "default": "false"
+        }
+      ],
+      "subcommands": [],
+      "args": [
+        "version",
+        "directory"
+      ]
+    },
+    {
       "name": "complete",
       "short": "Complete an ongoing migration with the operations present in the given file",
       "use": "complete <file>",

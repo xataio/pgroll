@@ -303,3 +303,53 @@ func (s *State) Rollback(ctx context.Context, schema, name string) error {
 
 	return nil
 }
+
+// CreateBaseline creates a baseline migration that captures the current state of the schema.
+// It marks the migration as 'baseline' type and completed (done=true).
+// This is used when you want to start using pgroll with an existing database.
+func (s *State) CreateBaseline(ctx context.Context, schemaName, baselineVersion string) error {
+	// Check if baseline can be created (no active migrations, etc)
+	isActive, err := s.IsActiveMigrationPeriod(ctx, schemaName)
+	if err != nil {
+		return fmt.Errorf("failed to check for active migrations: %w", err)
+	}
+	if isActive {
+		return fmt.Errorf("cannot create baseline while a migration is in progress")
+	}
+
+	// Read the current schema
+	schema, err := s.ReadSchema(ctx, schemaName)
+	if err != nil {
+		return fmt.Errorf("failed to read schema: %w", err)
+	}
+
+	// Create an empty migration with just a name
+	emptyMigration := migrations.Migration{
+		Name:       baselineVersion,
+		Operations: migrations.Operations{},
+	}
+
+	rawMigration, err := json.Marshal(emptyMigration)
+	if err != nil {
+		return fmt.Errorf("unable to marshal migration: %w", err)
+	}
+
+	rawSchema, err := json.Marshal(schema)
+	if err != nil {
+		return fmt.Errorf("unable to marshal schema: %w", err)
+	}
+
+	// Insert a baseline migration record
+	stmt := fmt.Sprintf(`
+		INSERT INTO %[1]s.migrations 
+		(schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, TRUE,  %[1]s.latest_version($1), 'baseline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		pq.QuoteIdentifier(s.schema))
+
+	_, err = s.pgConn.ExecContext(ctx, stmt, schemaName, baselineVersion, rawMigration, rawSchema)
+	if err != nil {
+		return fmt.Errorf("failed to insert baseline migration: %w", err)
+	}
+
+	return nil
+}
