@@ -4,7 +4,9 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -68,6 +70,7 @@ func baselineCmd() *cobra.Command {
 			err = m.CreateBaseline(ctx, version)
 			if err != nil {
 				sp.Fail(fmt.Sprintf("Failed to create baseline: %s", err))
+				err = errors.Join(err, os.Remove(filePath))
 				return err
 			}
 
