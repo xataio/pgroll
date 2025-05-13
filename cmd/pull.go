@@ -85,12 +85,8 @@ func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, 
 		return err
 	}
 
-	suffix := "yaml"
-	if useJSON {
-		suffix = "json"
-	}
-
-	fileName := fmt.Sprintf("%s%s.%s", prefix, m.Name, suffix)
+	format := migrations.NewMigrationFormat(useJSON)
+	fileName := fmt.Sprintf("%s%s.%s", prefix, m.Name, format.Extension())
 	filePath := filepath.Join(targetDir, fileName)
 
 	file, err := os.Create(filePath)
@@ -99,9 +95,5 @@ func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, 
 	}
 	defer file.Close()
 
-	if useJSON {
-		return m.WriteAsJSON(file)
-	} else {
-		return m.WriteAsYAML(file)
-	}
+	return migrations.NewWriter(file, format).WriteRaw(m)
 }

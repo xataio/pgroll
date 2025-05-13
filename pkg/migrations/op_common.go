@@ -322,22 +322,3 @@ func OperationFromName(name OpName) (Operation, error) {
 	}
 	return nil, fmt.Errorf("unknown migration type: %v", name)
 }
-
-// WriteAsJSON writes the migration to the given writer in JSON format
-func (m *RawMigration) WriteAsJSON(w io.Writer) error {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "  ")
-
-	return encoder.Encode(m)
-}
-
-// WriteAsYAML writes the migration to the given writer in YAML format
-func (m *RawMigration) WriteAsYAML(w io.Writer) error {
-	yml, err := yaml.Marshal(m)
-	if err != nil {
-		return err
-	}
-
-	_, err = w.Write(yml)
-	return err
-}
