@@ -122,7 +122,7 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	}
 
 	// If the estimate is zero, fall back to full count
-	rows, err = conn.QueryContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, tableName))
+	rows, err = conn.QueryContext(ctx, fmt.Sprintf(`SELECT count(*) from %s`, pq.QuoteIdentifier(tableName)))
 	if err != nil {
 		return 0, fmt.Errorf("getting row count for %q: %w", tableName, err)
 	}

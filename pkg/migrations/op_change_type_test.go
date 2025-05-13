@@ -649,6 +649,54 @@ func TestChangeColumnType(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "users", "username", "the name of the user")
 			},
 		},
+		{
+			name: "can change the type of a column on a table with a case-sensitive name",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "Users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name: "name",
+									Type: "varchar(255)",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_change_type",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "Users",
+							Column: "name",
+							Type:   ptr("text"),
+							Up:     "name",
+							Down:   "name",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has the expected type
+				ColumnMustHaveType(t, db, schema, "Users", migrations.TemporaryName("name"), "text")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The table has been cleaned up
+				TableMustBeCleanedUp(t, db, schema, "Users", "name")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The new column has the expected type
+				ColumnMustHaveType(t, db, schema, "Users", "name", "text")
+			},
+		},
 	})
 }
 
