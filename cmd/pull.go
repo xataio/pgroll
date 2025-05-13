@@ -52,9 +52,9 @@ func pullCmd() *cobra.Command {
 				if withPrefixes {
 					prefix = fmt.Sprintf("%04d", i+1) + "_"
 				}
-				err := writeMigrationToFile(mig, targetDir, prefix, useJSON)
+				filePath, err := writeMigrationToFile(mig, targetDir, prefix, useJSON)
 				if err != nil {
-					return fmt.Errorf("failed to write migration %q: %w", mig.Name, err)
+					return fmt.Errorf("failed to write migration %q: %w", filePath, err)
 				}
 			}
 			return nil
@@ -86,10 +86,11 @@ func ensureDirectoryExists(targetDir string) error {
 
 // WriteToFile writes the migration to a file in `targetDir`, prefixing the
 // filename with `prefix`. The output format defaults to YAML, but can
-// be changed to JSON by setting `useJSON` to true.
-func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, useJSON bool) error {
+// be changed to JSON by setting `useJSON` to true. The function returns
+// the full path of the created file or an error if the operation fails.
+func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, useJSON bool) (string, error) {
 	if err := ensureDirectoryExists(targetDir); err != nil {
-		return err
+		return "", err
 	}
 
 	format := migrations.NewMigrationFormat(useJSON)
@@ -98,9 +99,13 @@ func writeMigrationToFile(m *migrations.RawMigration, targetDir, prefix string, 
 
 	file, err := os.Create(filePath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
-	return migrations.NewWriter(file, format).WriteRaw(m)
+	err = migrations.NewWriter(file, format).WriteRaw(m)
+	if err != nil {
+		return "", err
+	}
+	return filePath, nil
 }
