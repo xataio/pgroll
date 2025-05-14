@@ -29,3 +29,7 @@ This is equivalent to running `pgroll start` immediately followed by `pgroll com
   workflow is to run `pgroll start`, then gracefully shut down old applications
   before running `pgroll complete` as a separate step.
 </Warning>
+
+## Existing Database Schema
+
+If you attempt to run `pgroll start` against a database that has existing tables but no migration history, the command will fail with an error message. In this case, you should first run `pgroll baseline` to establish a baseline migration that captures the current schema state before starting any new migrations.
