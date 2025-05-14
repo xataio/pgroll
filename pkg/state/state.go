@@ -104,6 +104,43 @@ func (s *State) Schema() string {
 	return s.schema
 }
 
+// HasExistingSchemaWithoutHistory checks if there's an existing schema with
+// tables but no migration history. Returns true if the schema exists, has
+// tables, but has no pgroll migration history
+func (s *State) HasExistingSchemaWithoutHistory(ctx context.Context, schemaName string) (bool, error) {
+	// Check if pgroll is initialized
+	ok, err := s.IsInitialized(ctx)
+	if err != nil {
+		return false, err
+	}
+	if !ok {
+		return false, nil
+	}
+
+	// Check if there's any migration history for this schema
+	var migrationCount int
+	err = s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT COUNT(*) FROM %s.migrations WHERE schema=$1", pq.QuoteIdentifier(s.schema)),
+		schemaName).Scan(&migrationCount)
+	if err != nil {
+		return false, fmt.Errorf("failed to check migration history: %w", err)
+	}
+
+	// If there's migration history, return false
+	if migrationCount > 0 {
+		return false, nil
+	}
+
+	// Check if the schema is empty or not, as determined by ReadSchema
+	schema, err := s.ReadSchema(ctx, schemaName)
+	if err != nil {
+		return false, fmt.Errorf("failed to read schema: %w", err)
+	}
+
+	// Return true if there are tables but no migration history
+	return len(schema.Tables) > 0, nil
+}
+
 // IsActiveMigrationPeriod returns true if there is an active migration
 func (s *State) IsActiveMigrationPeriod(ctx context.Context, schema string) (bool, error) {
 	var isActive bool
