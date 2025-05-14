@@ -29,8 +29,8 @@ type BaselineMigration struct {
 	SchemaSnapshot schema.Schema
 }
 
-// SchemaHistory returns all migrations applied to a schema in ascending
-// timestamp order
+// SchemaHistory returns all migrations applied to a schema since the most
+// recent baseline in ascending timestamp order
 func (s *State) SchemaHistory(ctx context.Context, schema string) ([]HistoryEntry, error) {
 	rows, err := s.pgConn.QueryContext(ctx,
 		fmt.Sprintf(`SELECT name, migration, created_at
