@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -112,16 +113,16 @@ func migrateCmd() *cobra.Command {
 // if any.
 func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, error) {
 	parsedMigrations := make([]*migrations.Migration, len(migs))
-	var errs []error
+	var errs error
 	for i, rawMigration := range migs {
 		m, err := migrations.ParseMigration(rawMigration)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("migration %q: %w", rawMigration.Name, err))
+			errs = errors.Join(errs, err)
 		}
 		parsedMigrations[i] = m
 	}
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("incompatible migration(s) found: %v. please update the files.", errs)
+	if errs != nil {
+		return nil, fmt.Errorf("incompatible migration(s) found: %w. please update the files.", errs)
 	}
 	return parsedMigrations, nil
 }
