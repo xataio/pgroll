@@ -372,3 +372,25 @@ func (a *DropTableAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.table)))
 	return err
 }
+
+// validateConstraintAction is a DBAction that validates a constraint in a table.
+type validateConstraintAction struct {
+	conn       db.DB
+	table      string
+	constraint string
+}
+
+func NewValidateConstraintAction(conn db.DB, table, constraint string) *validateConstraintAction {
+	return &validateConstraintAction{
+		conn:       conn,
+		table:      table,
+		constraint: constraint,
+	}
+}
+
+func (a *validateConstraintAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.constraint)))
+	return err
+}

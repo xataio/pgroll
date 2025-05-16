@@ -39,9 +39,7 @@ func (o *OpSetForeignKey) Complete(ctx context.Context, l Logger, conn db.DB, s 
 	l.LogOperationComplete(o)
 
 	// Validate the foreign key constraint
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.References.Name)))
+	err := NewValidateConstraintAction(conn, o.Table, o.References.Name).Execute(ctx)
 	if err != nil {
 		return err
 	}

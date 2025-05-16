@@ -48,9 +48,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *sc
 	// The constraint must be valid because:
 	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
 	// * New NULL values written to the old column during the migration period were also rewritten using `up` SQL.
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(NotNullConstraintName(o.Column))))
+	err := NewValidateConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
