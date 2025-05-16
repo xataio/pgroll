@@ -59,13 +59,23 @@ func migrateCmd() *cobra.Command {
 				return fmt.Errorf("migrations directory %q is not a directory", migrationsDir)
 			}
 
+			// Check whether the schema needs an initial baseline migration
+			needsBaseline, err := m.State().HasExistingSchemaWithoutHistory(ctx, m.Schema())
+			if err != nil {
+				return fmt.Errorf("failed to check for existing schema: %w", err)
+			}
+			if needsBaseline {
+				fmt.Printf("Schema %q is non-empty but has no migration history. Run `pgroll baseline` first\n", m.Schema())
+				return nil
+			}
+
 			migs, err := m.UnappliedMigrations(ctx, os.DirFS(migrationsDir))
 			if err != nil {
 				return fmt.Errorf("failed to get migrations to apply: %w", err)
 			}
 
 			if len(migs) == 0 {
-				fmt.Println("database is up to date; no migrations to apply")
+				fmt.Println("Database is up to date; no migrations to apply")
 				return nil
 			}
 
