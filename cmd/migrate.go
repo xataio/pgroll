@@ -112,7 +112,7 @@ func migrateCmd() *cobra.Command {
 // parseMigrations tries to parse all RawMigrations and collects all the errors
 // if any.
 func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, error) {
-	parsedMigrations := make([]*migrations.Migration, len(migs))
+	var parsedMigrations []*migrations.Migration
 	var errs error
 	for _, rawMigration := range migs {
 		m, err := migrations.ParseMigration(rawMigration)
