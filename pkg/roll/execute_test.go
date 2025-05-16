@@ -851,6 +851,35 @@ func TestConnectionsSetPostgresApplicationName(t *testing.T) {
 	}
 }
 
+func TestStartFailsWithExistingSchemaWithoutHistory(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithUninitializedStateAndConnectionInfo(t, func(st *state.State, connStr string, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create a table to before initializing `pgroll`
+		_, err := db.ExecContext(ctx, "CREATE TABLE existing_table (id int)")
+		require.NoError(t, err)
+
+		// Initialize `pgroll`
+		err = st.Init(ctx)
+		require.NoError(t, err)
+
+		// Create a Roll instance
+		m, err := roll.New(ctx, connStr, "public", st)
+		require.NoError(t, err)
+
+		// Attempt to start a migration
+		err = m.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("new_table")},
+		}, backfill.NewConfig())
+
+		// Verify that the error is ErrExistingSchemaWithoutHistory
+		assert.ErrorIs(t, err, roll.ErrExistingSchemaWithoutHistory)
+	})
+}
+
 func addColumnOp(tableName string) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: tableName,

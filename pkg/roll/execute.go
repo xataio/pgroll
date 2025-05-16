@@ -17,6 +17,15 @@ import (
 
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
+	// Fail early if we have existing schema without migration history
+	hasExistingSchema, err := m.state.HasExistingSchemaWithoutHistory(ctx, m.schema)
+	if err != nil {
+		return fmt.Errorf("failed to check for existing schema: %w", err)
+	}
+	if hasExistingSchema {
+		return ErrExistingSchemaWithoutHistory
+	}
+
 	m.logger.LogMigrationStart(migration)
 
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)

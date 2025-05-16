@@ -25,7 +25,10 @@ const (
 	applicationName = "pgroll"
 )
 
-var ErrMismatchedMigration = fmt.Errorf("remote migration does not match local migration")
+var (
+	ErrMismatchedMigration          = fmt.Errorf("remote migration does not match local migration")
+	ErrExistingSchemaWithoutHistory = fmt.Errorf("schema has existing tables but no migration history - baseline required")
+)
 
 type Roll struct {
 	pgConn db.DB

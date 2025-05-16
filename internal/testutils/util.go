@@ -145,6 +145,20 @@ func WithUninitializedState(t *testing.T, fn func(*state.State)) {
 	fn(st)
 }
 
+func WithUninitializedStateAndConnectionInfo(t *testing.T, fn func(*state.State, string, *sql.DB)) {
+	t.Helper()
+	ctx := context.Background()
+
+	db, connStr, _ := setupTestDatabase(t)
+
+	st, err := state.New(ctx, connStr, "pgroll")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fn(st, connStr, db)
+}
+
 func WithMigratorInSchemaAndConnectionToContainerWithOptions(t testing.TB, schema string, opts []roll.Option, fn func(mig *roll.Roll, db *sql.DB)) {
 	t.Helper()
 	ctx := context.Background()
