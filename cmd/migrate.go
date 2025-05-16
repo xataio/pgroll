@@ -114,12 +114,12 @@ func migrateCmd() *cobra.Command {
 func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, error) {
 	parsedMigrations := make([]*migrations.Migration, len(migs))
 	var errs error
-	for i, rawMigration := range migs {
+	for _, rawMigration := range migs {
 		m, err := migrations.ParseMigration(rawMigration)
 		if err != nil {
 			errs = errors.Join(errs, err)
 		}
-		parsedMigrations[i] = m
+		parsedMigrations = append(parsedMigrations, m)
 	}
 	if errs != nil {
 		return nil, fmt.Errorf("incompatible migration(s) found: %w. please update the files.", errs)
