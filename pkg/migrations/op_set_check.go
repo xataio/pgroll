@@ -43,9 +43,7 @@ func (o *OpSetCheckConstraint) Complete(ctx context.Context, l Logger, conn db.D
 	l.LogOperationComplete(o)
 
 	// Validate the check constraint
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.Check.Name)))
+	err := NewValidateConstraintAction(conn, o.Table, o.Check.Name).Execute(ctx)
 	if err != nil {
 		return err
 	}

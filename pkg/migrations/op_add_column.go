@@ -152,9 +152,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 	}
 
 	if o.Column.Check != nil {
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Column.Check.Name)))
+		err = NewValidateConstraintAction(conn, o.Table, o.Column.Check.Name).Execute(ctx)
 		if err != nil {
 			return err
 		}
@@ -348,9 +346,7 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 // constraint to a NOT NULL column attribute. The constraint is removed after
 // the column attribute is added.
 func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB, tableName, columnName string) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
-		pq.QuoteIdentifier(tableName),
-		pq.QuoteIdentifier(NotNullConstraintName(columnName))))
+	err := NewValidateConstraintAction(conn, tableName, NotNullConstraintName(columnName)).Execute(ctx)
 	if err != nil {
 		return err
 	}

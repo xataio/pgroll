@@ -19,7 +19,6 @@ import (
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
 func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
 	const (
-		cValidateConstraintSQL     = `ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s`
 		cSetNotNullSQL             = `ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL`
 		cDropConstraintSQL         = `ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s`
 		cCreateUniqueConstraintSQL = `ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s`
@@ -55,12 +54,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 		}
 
 		if slices.Contains(cc.Columns, TemporaryName(column.Name)) {
-			validateConstraintSQL := fmt.Sprintf(cValidateConstraintSQL,
-				pq.QuoteIdentifier(table.Name),
-				pq.QuoteIdentifier(cc.Name),
-			)
-
-			_, err = conn.ExecContext(ctx, validateConstraintSQL)
+			err := NewValidateConstraintAction(conn, table.Name, cc.Name).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to validate check constraint %q: %w", cc.Name, err)
 			}
