@@ -3,7 +3,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"time"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
-	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func migrateCmd() *cobra.Command {
@@ -69,14 +67,20 @@ func migrateCmd() *cobra.Command {
 				return nil
 			}
 
-			migs, err := m.UnappliedMigrations(ctx, os.DirFS(migrationsDir))
+			rawMigs, err := m.UnappliedMigrations(ctx, os.DirFS(migrationsDir))
 			if err != nil {
 				return fmt.Errorf("failed to get migrations to apply: %w", err)
 			}
 
-			if len(migs) == 0 {
+			if len(rawMigs) == 0 {
 				fmt.Println("Database is up to date; no migrations to apply")
 				return nil
+			}
+
+			// fail early if there is an incompatible migration
+			migs, err := parseMigrations(rawMigs)
+			if err != nil {
+				return fmt.Errorf("failed to run migrate: %w", err)
 			}
 
 			backfillConfig := backfill.NewConfig(
@@ -87,13 +91,13 @@ func migrateCmd() *cobra.Command {
 			// Run all migrations after the latest version up to the final migration,
 			// completing each one.
 			for _, mig := range migs[:len(migs)-1] {
-				if err := runRawMigration(ctx, m, mig, true, backfillConfig); err != nil {
+				if err := runMigration(ctx, m, mig, true, backfillConfig); err != nil {
 					return fmt.Errorf("failed to run migration file %q: %w", mig.Name, err)
 				}
 			}
 
 			// Run the final migration, completing it only if requested.
-			return runRawMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig)
+			return runMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig)
 		},
 	}
 
@@ -104,11 +108,20 @@ func migrateCmd() *cobra.Command {
 	return migrateCmd
 }
 
-func runRawMigration(ctx context.Context, m *roll.Roll, migration *migrations.RawMigration, complete bool, c *backfill.Config) error {
-	parsedMigration, err := migrations.ParseMigration(migration)
-	if err != nil {
-		return fmt.Errorf("failed to parse migration %q: %w", migration.Name, err)
+// parseMigrations tries to parse all RawMigrations and collects all the errors
+// if any.
+func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, error) {
+	parsedMigrations := make([]*migrations.Migration, len(migs))
+	var errs []error
+	for i, rawMigration := range migs {
+		m, err := migrations.ParseMigration(rawMigration)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("migration %q: %w", rawMigration.Name, err))
+		}
+		parsedMigrations[i] = m
 	}
-
-	return runMigration(ctx, m, parsedMigration, complete, c)
+	if len(errs) > 0 {
+		return nil, fmt.Errorf("incompatible migration(s) found: %v. please update the files.", errs)
+	}
+	return parsedMigrations, nil
 }
