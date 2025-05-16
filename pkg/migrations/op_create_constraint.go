@@ -93,7 +93,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:
 		return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...).Execute(ctx)
 	case OpCreateConstraintTypeCheck:
-		return table, o.addCheckConstraint(ctx, conn, table.Name)
+		return table, NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true).Execute(ctx)
 	case OpCreateConstraintTypeForeignKey:
 		return table, o.addForeignKeyConstraint(ctx, conn, table)
 	}
@@ -282,18 +282,6 @@ func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) err
 	}
 
 	return nil
-}
-
-func (o *OpCreateConstraint) addCheckConstraint(ctx context.Context, conn db.DB, tableName string) error {
-	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(tableName))
-
-	writer := &ConstraintSQLWriter{
-		Name:           o.Name,
-		SkipValidation: true,
-	}
-	sql += writer.WriteCheck(rewriteCheckExpression(*o.Check, o.Columns...), o.NoInherit)
-	_, err := conn.ExecContext(ctx, sql)
-	return err
 }
 
 func (o *OpCreateConstraint) addForeignKeyConstraint(ctx context.Context, conn db.DB, table *schema.Table) error {
