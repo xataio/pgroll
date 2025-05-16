@@ -80,6 +80,7 @@ func migrateCmd() *cobra.Command {
 
 			// fail early if there is an incompatible migration
 			migs, err := parseMigrations(rawMigs)
+			fmt.Println(migs)
 			if err != nil {
 				return fmt.Errorf("failed to run migrate: %w", err)
 			}
@@ -112,7 +113,7 @@ func migrateCmd() *cobra.Command {
 // parseMigrations tries to parse all RawMigrations and collects all the errors
 // if any.
 func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, error) {
-	var parsedMigrations []*migrations.Migration
+	parsedMigrations := make([]*migrations.Migration, 0, len(migs))
 	var errs error
 	for _, rawMigration := range migs {
 		m, err := migrations.ParseMigration(rawMigration)
