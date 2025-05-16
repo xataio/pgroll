@@ -394,3 +394,50 @@ func (a *validateConstraintAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.constraint)))
 	return err
 }
+
+// CreateCheckConstraintAction creates a check constraint on a table.
+type CreateCheckConstraintAction struct {
+	conn           db.DB
+	table          string
+	columns        []string
+	constraint     string
+	check          string
+	noInherit      bool
+	skipValidation bool
+}
+
+func NewCreateCheckConstraintAction(conn db.DB, table, constraint, check string, columns []string, noInherit, skipValidation bool) *CreateCheckConstraintAction {
+	return &CreateCheckConstraintAction{
+		conn:           conn,
+		table:          table,
+		columns:        columns,
+		check:          check,
+		constraint:     constraint,
+		noInherit:      noInherit,
+		skipValidation: skipValidation,
+	}
+}
+
+func (a *CreateCheckConstraintAction) Execute(ctx context.Context) error {
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(a.table))
+
+	writer := &ConstraintSQLWriter{
+		Name:           a.constraint,
+		SkipValidation: a.skipValidation,
+	}
+	sql += writer.WriteCheck(rewriteCheckExpression(a.check, a.columns...), a.noInherit)
+	_, err := a.conn.ExecContext(ctx, sql)
+	return err
+}
+
+// In order for the `check` expression to be easy to write, migration authors specify
+// the check expression as though it were being applied to the old column,
+// On migration start, however, the check is actually applied to the new (temporary)
+// column.
+// This function naively rewrites the check expression to apply to the new column.
+func rewriteCheckExpression(check string, columns ...string) string {
+	for _, col := range columns {
+		check = strings.ReplaceAll(check, col, TemporaryName(col))
+	}
+	return check
+}
