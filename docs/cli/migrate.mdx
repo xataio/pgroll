@@ -15,6 +15,8 @@ will apply migrations from `41_add_enum_column` onwards to the target database.
 
 If the `--complete` flag is passed to `pgroll migrate` the final migration to be applied will be completed. Otherwise the final migration will be left active (started but not completed).
 
+If any of the migration files are incompatible with your `pgroll` version, the command will report the errors and exit before running any migrations.
+
 ## Existing Database Schema
 
 If you attempt to run `pgroll migrate` against a database that has existing tables but no migration history, the command will fail with an error message. In this case, you should first run `pgroll baseline` to establish a baseline migration that captures the current schema state before applying any new migrations.
