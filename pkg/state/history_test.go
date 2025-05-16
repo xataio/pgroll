@@ -79,6 +79,85 @@ func TestSchemaHistoryReturnsFullSchemaHistory(t *testing.T) {
 	})
 }
 
+func TestSchemaHistoryDoesNotReturnBaselineMigrations(t *testing.T) {
+	t.Parallel()
+
+	t.Run("baseline migration does not appear in schema history", func(t *testing.T) {
+		testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+			ctx := context.Background()
+
+			// Create a baseline migration
+			err := state.CreateBaseline(ctx, "public", "01_initial_version")
+			require.NoError(t, err)
+
+			// Get the schema history
+			res, err := state.SchemaHistory(ctx, "public")
+			require.NoError(t, err)
+
+			// Assert that the schema history is empty
+			assert.Equal(t, 0, len(res))
+		})
+	})
+
+	t.Run("migrations before the most recent baseline do not appear in the schema history", func(t *testing.T) {
+		testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+			ctx := context.Background()
+
+			// Execute DDL to create an inferred migration
+			_, err := db.ExecContext(ctx, "CREATE TABLE users (id int)")
+			require.NoError(t, err)
+
+			// Create a baseline migration
+			err = state.CreateBaseline(ctx, "public", "01_initial_version")
+			require.NoError(t, err)
+
+			// Get the schema history
+			res, err := state.SchemaHistory(ctx, "public")
+			require.NoError(t, err)
+
+			// Assert that the schema history is empty
+			assert.Equal(t, 0, len(res))
+		})
+	})
+
+	t.Run("migrations after the most recent baseline are included in the history", func(t *testing.T) {
+		testutils.WithStateAndConnectionToContainer(t, func(state *state.State, db *sql.DB) {
+			ctx := context.Background()
+
+			// Execute DDL to create an inferred migration
+			_, err := db.ExecContext(ctx, "CREATE TABLE users (id int)")
+			require.NoError(t, err)
+
+			// Create a baseline migration
+			err = state.CreateBaseline(ctx, "public", "01_initial_version")
+			require.NoError(t, err)
+
+			// Execute DDL to create another inferred migration
+			_, err = db.ExecContext(ctx, "CREATE TABLE fruits (id int)")
+			require.NoError(t, err)
+
+			// Get the schema history
+			res, err := state.SchemaHistory(ctx, "public")
+			require.NoError(t, err)
+
+			// Assert that one migration is present in the schema history
+			require.Equal(t, 1, len(res))
+
+			// Deserialize the migration from the history.
+			mig, err := migrations.ParseMigration(&res[0].Migration)
+			require.NoError(t, err)
+
+			// Assert that the migration is the one that was created after the baseline
+			expectedOperations := migrations.Operations{
+				&migrations.OpRawSQL{
+					Up: "CREATE TABLE fruits (id int)",
+				},
+			}
+			assert.Equal(t, expectedOperations, mig.Operations)
+		})
+	})
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }

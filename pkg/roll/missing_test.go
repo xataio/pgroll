@@ -211,6 +211,61 @@ func TestMissingMigrations(t *testing.T) {
 			require.Len(t, migs, 0)
 		})
 	})
+
+	t.Run("baseline migrations are not considered missing", func(t *testing.T) {
+		fs := fstest.MapFS{}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Create a baseline migration
+			err := m.CreateBaseline(ctx, "01_initial_version")
+			require.NoError(t, err)
+
+			// Get missing migrations
+			migs, err := m.MissingMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that there are no migrations missing
+			require.Len(t, migs, 0)
+		})
+	})
+
+	t.Run("migrations before a baseline migration are not considered missing", func(t *testing.T) {
+		fs := fstest.MapFS{}
+
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Apply a migration to the target database
+			err := m.Start(ctx, exampleMig(t, "01_migration_1"), backfill.NewConfig())
+			require.NoError(t, err)
+			err = m.Complete(ctx)
+			require.NoError(t, err)
+
+			// Create a baseline migration
+			err = m.CreateBaseline(ctx, "01_initial_version")
+			require.NoError(t, err)
+
+			// Apply another migration to the target database
+			err = m.Start(ctx, exampleMig(t, "02_migration_2"), backfill.NewConfig())
+			require.NoError(t, err)
+			err = m.Complete(ctx)
+			require.NoError(t, err)
+
+			// Get missing migrations
+			migs, err := m.MissingMigrations(ctx, fs)
+			require.NoError(t, err)
+
+			// Assert that there is one migration missing from the local directory
+			require.Len(t, migs, 1)
+
+			// Assert that the missing migration is the one that was applied after the baseline
+			mig, err := migrations.ParseMigration(migs[0])
+			require.NoError(t, err)
+			require.Equal(t, exampleMig(t, "02_migration_2"), mig)
+		})
+	})
 }
 
 func TestMissingMigrationsWithOldMigrationFormats(t *testing.T) {
