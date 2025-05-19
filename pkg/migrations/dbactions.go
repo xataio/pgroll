@@ -441,3 +441,49 @@ func rewriteCheckExpression(check string, columns ...string) string {
 	}
 	return check
 }
+
+// createFKConstraintAction is a DBAction that creates a new foreign key constraint
+type createFKConstraintAction struct {
+	conn              db.DB
+	table             string
+	constraint        string
+	columns           []string
+	initiallyDeferred bool
+	deferrable        bool
+	reference         *TableForeignKeyReference
+	skipValidation    bool
+}
+
+func NewCreateFKConstraintAction(conn db.DB, table, constraint string, columns []string, reference *TableForeignKeyReference, initiallyDeferred, deferrable, skipValidation bool) *createFKConstraintAction {
+	return &createFKConstraintAction{
+		conn:              conn,
+		table:             table,
+		constraint:        constraint,
+		columns:           columns,
+		reference:         reference,
+		initiallyDeferred: initiallyDeferred,
+		deferrable:        deferrable,
+		skipValidation:    skipValidation,
+	}
+}
+
+func (a *createFKConstraintAction) Execute(ctx context.Context) error {
+	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(a.table))
+	writer := &ConstraintSQLWriter{
+		Name:              a.constraint,
+		Columns:           a.columns,
+		InitiallyDeferred: a.initiallyDeferred,
+		Deferrable:        a.deferrable,
+		SkipValidation:    a.skipValidation,
+	}
+	sql += writer.WriteForeignKey(
+		a.reference.Table,
+		a.reference.Columns,
+		a.reference.OnDelete,
+		a.reference.OnUpdate,
+		a.reference.OnDeleteSetColumns,
+		a.reference.MatchType)
+
+	_, err := a.conn.ExecContext(ctx, sql)
+	return err
+}
