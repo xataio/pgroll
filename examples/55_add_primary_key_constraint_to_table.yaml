@@ -1,0 +1,25 @@
+operations:
+  - create_table:
+      name: tasks
+      comment: This is a comment for the tasks table
+      columns:
+        - name: id
+          type: serial
+        - name: title
+          type: varchar(255)
+          nullable: false
+        - name: description
+          type: varchar(255)
+        - name: deadline
+          type: time with time zone
+  - create_constraint:
+      name: tasks_pkey
+      table: tasks
+      columns: [id]
+      type: primary_key
+      up:
+        id: id
+      down:
+        id: id
+
+
