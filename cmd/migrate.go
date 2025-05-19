@@ -123,7 +123,7 @@ func parseMigrations(migs []*migrations.RawMigration) ([]*migrations.Migration, 
 		parsedMigrations = append(parsedMigrations, m)
 	}
 	if errs != nil {
-		return nil, fmt.Errorf("incompatible migration(s) found: %w. please update the files.", errs)
+		return nil, fmt.Errorf("incompatible migration(s): %w", errs)
 	}
 	return parsedMigrations, nil
 }
