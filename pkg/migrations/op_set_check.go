@@ -5,9 +5,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"strings"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -32,7 +29,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, 
 	}
 
 	// Add the check constraint to the new column as NOT VALID.
-	if err := o.addCheckConstraint(ctx, conn, s); err != nil {
+	if err := NewCreateCheckConstraintAction(conn, table.Name, o.Check.Name, o.Check.Constraint, []string{o.Column}, o.Check.NoInherit, true).Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to add check constraint: %w", err)
 	}
 
@@ -87,30 +84,4 @@ func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) e
 	}
 
 	return nil
-}
-
-func (o *OpSetCheckConstraint) addCheckConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
-	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(table.Name))
-
-	writer := &ConstraintSQLWriter{
-		Name:           o.Check.Name,
-		SkipValidation: true,
-	}
-	sql += writer.WriteCheck(rewriteCheckExpression(o.Check.Constraint, o.Column), o.Check.NoInherit)
-	_, err := conn.ExecContext(ctx, sql)
-
-	return err
-}
-
-// In order for the `check` expression to be easy to write, migration authors specify
-// the check expression as though it were being applied to the old column,
-// On migration start, however, the check is actually applied to the new (temporary)
-// column.
-// This function naively rewrites the check expression to apply to the new column.
-func rewriteCheckExpression(check string, columns ...string) string {
-	for _, col := range columns {
-		check = strings.ReplaceAll(check, col, TemporaryName(col))
-	}
-	return check
 }
