@@ -115,7 +115,7 @@
           "name": "with-schema",
           "shorthand": "s",
           "description": "prefix the version with the schema name",
-          "default": "false"
+          "default": "true"
         }
       ],
       "subcommands": [],
