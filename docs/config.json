@@ -103,6 +103,11 @@
           "title": "Convert",
           "href": "/cli/convert",
           "file": "docs/cli/convert.mdx"
+        },
+        {
+          "title": "Baseline",
+          "href": "/cli/baseline",
+          "file": "docs/cli/baseline.mdx"
         }
       ]
     },
