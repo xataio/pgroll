@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lib/pq"
-
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -26,9 +24,39 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, lates
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+	column := table.GetColumn(o.Column)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
+	referencedTable := s.GetTable(o.References.Table)
+	if referencedTable == nil {
+		return nil, TableDoesNotExistError{Name: o.References.Table}
+	}
+
+	referencedColumn := referencedTable.GetColumn(o.References.Column)
+	if referencedColumn == nil {
+		return nil, ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
+	}
 
 	// Create a NOT VALID foreign key constraint on the new column.
-	if err := o.addForeignKeyConstraint(ctx, conn, s); err != nil {
+	if err := NewCreateFKConstraintAction(conn,
+		table.Name,
+		o.References.Name,
+		[]string{column.Name},
+		&TableForeignKeyReference{
+			Table:     referencedTable.Name,
+			Columns:   []string{referencedColumn.Name},
+			MatchType: o.References.MatchType,
+			OnDelete:  o.References.OnDelete,
+			OnUpdate:  o.References.OnUpdate,
+		},
+		o.References.InitiallyDeferred,
+		o.References.Deferrable,
+		true,
+	).Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to add foreign key constraint: %w", err)
 	}
 
@@ -83,41 +111,4 @@ func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error 
 	}
 
 	return nil
-}
-
-func (o *OpSetForeignKey) addForeignKeyConstraint(ctx context.Context, conn db.DB, s *schema.Schema) error {
-	table := s.GetTable(o.Table)
-	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
-	}
-	column := table.GetColumn(o.Column)
-	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-	referencedTable := s.GetTable(o.References.Table)
-	if referencedTable == nil {
-		return TableDoesNotExistError{Name: o.References.Table}
-	}
-
-	referencedColumn := referencedTable.GetColumn(o.References.Column)
-	if referencedColumn == nil {
-		return ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
-	}
-
-	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(table.Name))
-	writer := &ConstraintSQLWriter{
-		Name:           o.References.Name,
-		Columns:        []string{column.Name},
-		SkipValidation: true,
-	}
-	sql += writer.WriteForeignKey(
-		referencedTable.Name,
-		[]string{referencedColumn.Name},
-		o.References.OnDelete,
-		o.References.OnUpdate,
-		nil,
-		o.References.MatchType)
-
-	_, err := conn.ExecContext(ctx, sql)
-	return err
 }
