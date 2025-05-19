@@ -1,7 +1,6 @@
 operations:
   - create_table:
       name: tasks
-      comment: This is a comment for the tasks table
       columns:
         - name: id
           type: serial
@@ -21,5 +20,3 @@ operations:
         id: id
       down:
         id: id
-
-
