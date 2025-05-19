@@ -5,7 +5,7 @@ description: A create constraint operation adds a new constraint to an existing 
 
 ## Structure
 
-`UNIQUE`, `CHECK` and `FOREIGN KEY` constraints are supported.
+`UNIQUE`, `CHECK`, `PRIMARY KEY` and `FOREIGN KEY` constraints are supported.
 
 Required fields: `name`, `table`, `type`, `up`, `down`.
 
@@ -15,7 +15,7 @@ create_constraint:
   table: name of table
   name: my_unique_constraint
   columns: [column1, column2]
-  type: unique | check | foreign_key
+  type: unique | check | primary_key | foreign_key
   check: SQL expression for CHECK constraint
   no_inherit: true|false
   references:
@@ -102,6 +102,15 @@ Add a multi-column unique constraint on the `tickets` table:
 Add a check constraint on the `sellers_name` and `sellers_zip` fields on the `ticket` table. The `up` SQL expression ensures that pairs of values not meeting the new constraint on the old columns are data migrated to values that meet the new constraint in the new columns:
 
 <ExampleSnippet example="45_add_table_check_constraint.yaml" languange="yaml" />
+
+### Add a `PRIMARY KEY` constraint
+
+Add a primary key constraint to the the `tasks` table:
+
+<ExampleSnippet
+  example="55_add_primary_key_constraint_to_table.yaml"
+  languange="yaml"
+/>
 
 ### Add a `FOREIGN KEY` constraint
 
