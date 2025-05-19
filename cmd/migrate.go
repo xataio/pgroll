@@ -80,7 +80,6 @@ func migrateCmd() *cobra.Command {
 
 			// fail early if there is an incompatible migration
 			migs, err := parseMigrations(rawMigs)
-			fmt.Println(migs)
 			if err != nil {
 				return fmt.Errorf("failed to run migrate: %w", err)
 			}
