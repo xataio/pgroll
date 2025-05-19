@@ -7,7 +7,7 @@ description: Prints the latest schema version in either the target database or a
 
 By default, `pgroll latest` prints the latest version in the target database. Use the `--local` flag to print the latest version in a local directory of migration files instead.
 
-In both cases, the `--with-schema` flag can be used to prefix the latest version with the schema name.
+In both cases, it prints the latest schema version with the schema name prefix by default. To remove the schema prefix, `--with-schema=false` flag can be used.
 
 ### Database
 
