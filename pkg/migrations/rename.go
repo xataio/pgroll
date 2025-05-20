@@ -81,12 +81,7 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 				}
 
 				// Drop the constraint
-				dropConstraintSQL := fmt.Sprintf(cDropConstraintSQL,
-					pq.QuoteIdentifier(table.Name),
-					pq.QuoteIdentifier(NotNullConstraintName(column.Name)),
-				)
-
-				_, err = conn.ExecContext(ctx, dropConstraintSQL)
+				err = NewDropConstraintAction(conn, table.Name, NotNullConstraintName(column.Name)).Execute(ctx)
 				if err != nil {
 					return fmt.Errorf("failed to drop not null constraint: %w", err)
 				}
