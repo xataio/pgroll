@@ -487,3 +487,51 @@ func (a *createFKConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, sql)
 	return err
 }
+
+type alterSequenceOwnerAction struct {
+	conn  db.DB
+	table string
+	from  string
+	to    string
+}
+
+func NewAlterSequenceOwnerAction(conn db.DB, table, from, to string) *alterSequenceOwnerAction {
+	return &alterSequenceOwnerAction{
+		conn:  conn,
+		table: table,
+		from:  from,
+		to:    to,
+	}
+}
+
+func (a *alterSequenceOwnerAction) Execute(ctx context.Context) error {
+	sequence := getSequenceNameForColumn(ctx, a.conn, a.table, a.from)
+	if sequence == "" {
+		return nil
+	}
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+		sequence,
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.to),
+	))
+
+	return err
+}
+
+func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, columnName string) string {
+	var sequenceName string
+	query := fmt.Sprintf(`
+		SELECT pg_get_serial_sequence('%s', '%s')
+	`, pq.QuoteIdentifier(tableName), columnName)
+	rows, err := conn.QueryContext(ctx, query)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+
+	if err := db.ScanFirstValue(rows, &sequenceName); err != nil {
+		return ""
+	}
+
+	return sequenceName
+}
