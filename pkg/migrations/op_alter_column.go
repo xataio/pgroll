@@ -103,7 +103,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *s
 		}
 	}
 
-	if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, o.Column); err != nil {
+	if err := NewAlterSequenceOwnerAction(conn, o.Table, o.Column, TemporaryName(o.Column)).Execute(ctx); err != nil {
 		return err
 	}
 

@@ -92,7 +92,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s
 		return err
 	}
 
-	if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, column.Name); err != nil {
+	if err := NewAlterSequenceOwnerAction(conn, o.Table, column.Name, TemporaryName(column.Name)).Execute(ctx); err != nil {
 		return err
 	}
 

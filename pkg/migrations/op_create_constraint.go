@@ -147,7 +147,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB,
 	}
 
 	for _, col := range o.Columns {
-		if err := alterSequenceOwnerToDuplicatedColumn(ctx, conn, o.Table, col); err != nil {
+		if err := NewAlterSequenceOwnerAction(conn, o.Table, col, TemporaryName(col)).Execute(ctx); err != nil {
 			return err
 		}
 	}
