@@ -21,7 +21,6 @@ func baselineCmd() *cobra.Command {
 		Short:     "Create a baseline migration for an existing database schema",
 		Args:      cobra.ExactArgs(2),
 		ValidArgs: []string{"version", "directory"},
-		Hidden:    true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version := args[0]
 			targetDir := args[1]
