@@ -15,7 +15,6 @@
       "name": "baseline",
       "short": "Create a baseline migration for an existing database schema",
       "use": "baseline <version> <target directory>",
-      "hidden": true,
       "example": "",
       "flags": [
         {
