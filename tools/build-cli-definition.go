@@ -23,6 +23,7 @@ type Command struct {
 	Name        string    `json:"name"`
 	Short       string    `json:"short"`
 	Use         string    `json:"use"`
+	Hidden      bool      `json:"hidden,omitempty"`
 	Example     string    `json:"example"`
 	Flags       []Flag    `json:"flags"`
 	Subcommands []Command `json:"subcommands"`
@@ -71,6 +72,7 @@ func processCommand(cmd *cobra.Command) Command {
 		Name:        cmd.Name(),
 		Short:       cmd.Short,
 		Use:         cmd.Use,
+		Hidden:      cmd.Hidden,
 		Example:     cmd.Example,
 		Args:        validateArgs(cmd),
 		Flags:       extractFlags(cmd.Flags()),
