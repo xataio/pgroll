@@ -1,0 +1,61 @@
+---
+title: Baseline
+description: Create a baseline migration for an existing database schema
+---
+
+## Command
+
+```
+$ pgroll baseline <version> <target directory>
+```
+
+This command creates a baseline migration for an existing database schema. It captures the current schema state without applying any changes, providing a starting point for future migrations.
+
+Use `pgroll baseline` when:
+- Starting to use pgroll with an existing database that already has a schema
+- You want to consolidate a long migration history into a clean starting point
+
+The command requires two arguments:
+1. `version` - The version name for the baseline (e.g., "01_initial_schema")
+2. `target directory` - The directory where the placeholder migration file will be written
+
+The optional `--json` flag can be used to write the placeholder migration file in JSON format instead of YAML.
+
+### How it works
+
+When the `pgroll baseline` command is run, it:
+1. Captures the current database schema state in pgroll's internal tracking
+2. Creates an empty placeholder migration file in the target directory
+3. Records the baseline in `pgroll`'s internal state
+
+**Important**: After running the command, you should manually complete the placeholder migration file:
+1. Use a tool like `pg_dump` to extract the DDL statements for your schema
+2. Copy those statements (CREATE TABLE, CREATE INDEX, etc.) into the placeholder migration file's raw SQL section
+3. This completed migration file can then be used to reconstruct the schema in other environments
+
+Future migrations will build upon this baseline.
+
+<Warning>
+Creating a baseline will restart your migration history. The command will prompt for confirmation before proceeding.
+</Warning>
+
+### Effects on migration history
+
+Creating a baseline:
+- Creates a "reset point" in your migration history
+- Previous migrations become part of the baseline and are no longer individually visible
+- When using commands like `pull` and `migrate`, only migrations after the most recent baseline are considered
+
+### Examples
+
+#### Create a baseline with default YAML format
+
+```
+pgroll baseline 01_initial_schema ./migrations
+```
+
+#### Create a baseline with JSON format
+
+```
+pgroll baseline 01_initial_schema ./migrations --json
+```
