@@ -5,6 +5,7 @@
       "name": "analyze",
       "short": "Analyze the SQL schema of the target database",
       "use": "analyze",
+      "hidden": true,
       "example": "",
       "flags": [],
       "subcommands": [],
@@ -14,6 +15,7 @@
       "name": "baseline",
       "short": "Create a baseline migration for an existing database schema",
       "use": "baseline <version> <target directory>",
+      "hidden": true,
       "example": "",
       "flags": [
         {
