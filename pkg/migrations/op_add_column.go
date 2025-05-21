@@ -358,9 +358,7 @@ func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB,
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
-		pq.QuoteIdentifier(tableName),
-		pq.QuoteIdentifier(NotNullConstraintName(columnName))))
+	err = NewDropConstraintAction(conn, tableName, NotNullConstraintName(columnName)).Execute(ctx)
 
 	return err
 }

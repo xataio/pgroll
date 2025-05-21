@@ -535,3 +535,24 @@ func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, column
 
 	return sequenceName
 }
+
+type dropConstraintAction struct {
+	conn       db.DB
+	table      string
+	constraint string
+}
+
+func NewDropConstraintAction(conn db.DB, table, constraint string) *dropConstraintAction {
+	return &dropConstraintAction{
+		conn:       conn,
+		table:      table,
+		constraint: constraint,
+	}
+}
+
+func (a *dropConstraintAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.constraint)))
+	return err
+}

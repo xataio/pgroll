@@ -62,9 +62,7 @@ func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *sc
 	}
 
 	// Drop the NOT NULL constraint
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(NotNullConstraintName(o.Column))))
+	err = NewDropConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
