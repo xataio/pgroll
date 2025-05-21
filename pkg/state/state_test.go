@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -259,10 +258,6 @@ func TestInferredMigration(t *testing.T) {
 
 				for i, wantMigration := range tt.wantMigrations {
 					gotMigration := gotMigrations[i]
-
-					// test there is a name for the migration, then remove it for the comparison
-					assert.True(t, strings.HasPrefix(gotMigration.Name, "sql_") && len(gotMigration.Name) > 10)
-					gotMigration.Name = ""
 
 					assert.Equal(t, wantMigration, gotMigration)
 				}
