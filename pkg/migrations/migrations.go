@@ -68,11 +68,11 @@ type RequiresSchemaRefreshOperation interface {
 type (
 	Operations []Operation
 	Migration  struct {
-		Name       string     `json:"name,omitempty"`
+		Name       string     `json:"-"`
 		Operations Operations `json:"operations"`
 	}
 	RawMigration struct {
-		Name       string          `json:"name"`
+		Name       string          `json:"-"`
 		Operations json.RawMessage `json:"operations"`
 	}
 )
