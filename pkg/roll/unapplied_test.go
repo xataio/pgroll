@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -460,8 +459,7 @@ func exampleMigration(t *testing.T, name string) []byte {
 func unDeserializableMigration(t *testing.T, name string) []byte {
 	t.Helper()
 
-	migJSON := fmt.Sprintf(`{
-		"name": "%s",
+	migJSON := `{
 		"operations": [
 			{
 				"sql": {
@@ -469,8 +467,7 @@ func unDeserializableMigration(t *testing.T, name string) []byte {
 				}
 			}
 		]
-	}
-	`, name)
+	}`
 
 	return []byte(migJSON)
 }
