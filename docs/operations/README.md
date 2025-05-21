@@ -5,7 +5,6 @@
 YAML migration:
 
 ```yaml
-name: "0x_migration_name"
 operations: [...]
 ```
 
@@ -13,7 +12,6 @@ JSON migration:
 
 ```json
 {
-  "name": "0x_migration_name",
   "operations": [...]
 }
 ```
