@@ -168,6 +168,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal migration: %w", err)
 	}
+	migration.Name = name
 
 	return &migration, nil
 }
