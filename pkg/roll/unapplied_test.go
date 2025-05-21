@@ -6,7 +6,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -54,12 +53,11 @@ func TestUnappliedMigrations(t *testing.T) {
 			ctx := context.Background()
 
 			// Unmarshal the first migration from the migrations directory
-			var migration migrations.Migration
-			err := json.Unmarshal(fs["01_migration_1.json"].Data, &migration)
+			migration, err := migrations.ReadMigration(fs, "01_migration_1.json")
 			require.NoError(t, err)
 
 			// Apply the first migration
-			err = roll.Start(ctx, &migration, backfill.NewConfig())
+			err = roll.Start(ctx, migration, backfill.NewConfig())
 			require.NoError(t, err)
 			err = roll.Complete(ctx)
 			require.NoError(t, err)
@@ -87,11 +85,10 @@ func TestUnappliedMigrations(t *testing.T) {
 
 			// Unmarshal and apply all migrations from the migrations directory
 			for _, filename := range slices.Sorted(maps.Keys(fs)) {
-				var migration migrations.Migration
-				err := json.Unmarshal(fs[filename].Data, &migration)
+				migration, err := migrations.ReadMigration(fs, filename)
 				require.NoError(t, err)
 
-				err = roll.Start(ctx, &migration, backfill.NewConfig())
+				err = roll.Start(ctx, migration, backfill.NewConfig())
 				require.NoError(t, err)
 				err = roll.Complete(ctx)
 				require.NoError(t, err)
@@ -284,12 +281,11 @@ func TestUnappliedMigrationsWithBaselines(t *testing.T) {
 			require.NoError(t, err)
 
 			// Unmarshal the migration that comes after the baseline version
-			var migration migrations.Migration
-			err = json.Unmarshal(fs["03_migration_3.json"].Data, &migration)
+			migration, err := migrations.ReadMigration(fs, "03_migration_3.json")
 			require.NoError(t, err)
 
 			// Apply the migration
-			err = roll.Start(ctx, &migration, backfill.NewConfig())
+			err = roll.Start(ctx, migration, backfill.NewConfig())
 			require.NoError(t, err)
 			err = roll.Complete(ctx)
 			require.NoError(t, err)
@@ -353,10 +349,9 @@ func TestUnappliedMigrationsWithBaselines(t *testing.T) {
 			require.NoError(t, err)
 
 			// Apply a migration after the first baseline
-			var migration migrations.Migration
-			err = json.Unmarshal(fs["03_migration_3.json"].Data, &migration)
+			migration, err := migrations.ReadMigration(fs, "03_migration_3.json")
 			require.NoError(t, err)
-			err = roll.Start(ctx, &migration, backfill.NewConfig())
+			err = roll.Start(ctx, migration, backfill.NewConfig())
 			require.NoError(t, err)
 			err = roll.Complete(ctx)
 			require.NoError(t, err)
@@ -412,12 +407,11 @@ func TestUnappliedMigrationsWithOldMigrationFormats(t *testing.T) {
 			ctx := context.Background()
 
 			// Unmarshal the first migration from the migrations directory
-			var migration migrations.Migration
-			err := json.Unmarshal(fs["01_migration_1.json"].Data, &migration)
+			migration, err := migrations.ReadMigration(fs, "01_migration_1.json")
 			require.NoError(t, err)
 
 			// Apply the first migration
-			err = roll.Start(ctx, &migration, backfill.NewConfig())
+			err = roll.Start(ctx, migration, backfill.NewConfig())
 			require.NoError(t, err)
 			err = roll.Complete(ctx)
 			require.NoError(t, err)
@@ -465,8 +459,7 @@ func exampleMigration(t *testing.T, name string) []byte {
 func unDeserializableMigration(t *testing.T, name string) []byte {
 	t.Helper()
 
-	migJSON := fmt.Sprintf(`{
-		"name": "%s",
+	migJSON := `{
 		"operations": [
 			{
 				"sql": {
@@ -474,8 +467,7 @@ func unDeserializableMigration(t *testing.T, name string) []byte {
 				}
 			}
 		]
-	}
-	`, name)
+	}`
 
 	return []byte(migJSON)
 }
