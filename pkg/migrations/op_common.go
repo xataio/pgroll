@@ -118,7 +118,7 @@ func ReadRawMigration(dir fs.FS, filename string) (*RawMigration, error) {
 		return nil, fmt.Errorf("reading migration file: %w", err)
 	}
 
-	// Extract base filename wiahout extension as the migration name
+	// Extract base filename without extension as the migration name
 	mig.Name = strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
 
 	return &mig, nil
