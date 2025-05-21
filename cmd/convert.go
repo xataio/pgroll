@@ -14,7 +14,6 @@ import (
 )
 
 func convertCmd() *cobra.Command {
-	var migrationName string
 	var useJSON bool
 
 	convertCmd := &cobra.Command{
@@ -30,7 +29,7 @@ func convertCmd() *cobra.Command {
 			}
 			defer reader.Close()
 
-			migration, err := sqlStatementsToMigration(reader, migrationName)
+			migration, err := sqlStatementsToMigration(reader)
 			if err != nil {
 				return err
 			}
@@ -42,7 +41,6 @@ func convertCmd() *cobra.Command {
 		},
 	}
 
-	convertCmd.Flags().StringVarP(&migrationName, "name", "n", "", "Name of the migration")
 	convertCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "Output migration file in JSON format instead of YAML")
 
 	return convertCmd
@@ -55,7 +53,7 @@ func openSQLReader(args []string) (io.ReadCloser, error) {
 	return os.Open(args[0])
 }
 
-func sqlStatementsToMigration(reader io.Reader, name string) (migrations.Migration, error) {
+func sqlStatementsToMigration(reader io.Reader) (migrations.Migration, error) {
 	var buf bytes.Buffer
 	_, err := io.Copy(&buf, reader)
 	if err != nil {
@@ -66,7 +64,6 @@ func sqlStatementsToMigration(reader io.Reader, name string) (migrations.Migrati
 		return migrations.Migration{}, err
 	}
 	return migrations.Migration{
-		Name:       name,
 		Operations: ops,
 	}, nil
 }
