@@ -68,14 +68,25 @@ type RequiresSchemaRefreshOperation interface {
 type (
 	Operations []Operation
 	Migration  struct {
-		Name       string     `json:"-"`
-		Operations Operations `json:"operations"`
+		Name          string     `json:"-"`
+		VersionSchema string     `json:"versionSchema,omitempty"`
+		Operations    Operations `json:"operations"`
 	}
 	RawMigration struct {
-		Name       string          `json:"-"`
-		Operations json.RawMessage `json:"operations"`
+		Name          string          `json:"-"`
+		VersionSchema string          `json:"versionSchema,omitempty"`
+		Operations    json.RawMessage `json:"operations"`
 	}
 )
+
+// VersionSchemaName returns the version schema name for the migration.
+// It defaults to the migration name if no version schema is set.
+func (m *Migration) VersionSchemaName() string {
+	if m.VersionSchema != "" {
+		return m.VersionSchema
+	}
+	return m.Name
+}
 
 // Validate will check that the migration can be applied to the given schema
 // returns a descriptive error if the migration is invalid
