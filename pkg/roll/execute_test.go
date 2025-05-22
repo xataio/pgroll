@@ -155,6 +155,49 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("when the previous version sets a non-default version schema name", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			migs := []migrations.Migration{
+				{
+					Name:          "01_create_table",
+					VersionSchema: "01_foo",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_another_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+			}
+
+			// Start and complete both migrations
+			for _, mig := range migs {
+				err := m.Start(ctx, &mig, backfill.NewConfig())
+				require.NoError(t, err)
+				err = m.Complete(ctx)
+				require.NoError(t, err)
+			}
+
+			// Ensure that the schema for the first migration has been dropped
+			require.False(t, schemaExists(t, db, roll.VersionedSchemaName("public", "01_foo")))
+		})
+	})
 }
 
 func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
