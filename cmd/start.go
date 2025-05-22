@@ -105,8 +105,7 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 		}
 	}
 
-	version := migration.Name
-	viewName := roll.VersionedSchemaName(flags.Schema(), version)
+	viewName := roll.VersionedSchemaName(flags.Schema(), migration.VersionSchemaName())
 	msg := fmt.Sprintf("New version of the schema available under the postgres %q schema", viewName)
 	sp.Success(msg)
 
