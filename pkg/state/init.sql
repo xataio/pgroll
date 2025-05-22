@@ -61,14 +61,14 @@ $$
 LANGUAGE SQL
 STABLE;
 
--- Get the latest version name (this is the one with child migrations)
+-- Get the latest version schema name
 CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
     RETURNS text
     SECURITY DEFINER
     SET search_path = placeholder, pg_catalog, pg_temp
     AS $$
     SELECT
-        p.name
+        COALESCE(p.migration ->> 'versionSchema', p.name)
     FROM
         placeholder.migrations p
     WHERE
