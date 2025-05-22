@@ -132,8 +132,9 @@ func ParseMigration(raw *RawMigration) (*Migration, error) {
 	}
 
 	return &Migration{
-		Name:       raw.Name,
-		Operations: ops,
+		Name:          raw.Name,
+		VersionSchema: raw.VersionSchema,
+		Operations:    ops,
 	}, nil
 }
 
