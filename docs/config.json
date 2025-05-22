@@ -108,6 +108,11 @@
           "title": "Baseline",
           "href": "/cli/baseline",
           "file": "docs/cli/baseline.mdx"
+        },
+        {
+          "title": "Update",
+          "href": "/cli/update",
+          "file": "docs/cli/update.mdx"
         }
       ]
     },
