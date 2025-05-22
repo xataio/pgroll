@@ -383,7 +383,7 @@ BEGIN
     SELECT
         INTO migration_id pg_catalog.format('sql_%s', pg_catalog.substr(pg_catalog.md5(pg_catalog.random()::text), 0, 15));
     INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
-        VALUES (schemaname, migration_id, pg_catalog.json_build_object('name', migration_id, 'operations', (
+        VALUES (schemaname, migration_id, pg_catalog.json_build_object('operations', (
                     SELECT
                         pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
             placeholder.read_schema (schemaname),
