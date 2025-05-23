@@ -776,7 +776,7 @@ func TestDropNotNullValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "down"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "down"},
 		},
 		{
 			name: "can't remove not null from a column that is already nullable",
@@ -814,7 +814,7 @@ func TestDropNotNullValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsNullableError{Table: "users", Name: "name"},
+			wantValidateErr: migrations.ColumnIsNullableError{Table: "users", Name: "name"},
 		},
 	})
 }

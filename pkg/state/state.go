@@ -236,24 +236,29 @@ func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
 // This method will return the current schema (before the migration is applied)
-func (s *State) Start(ctx context.Context, schemaname string, migration *migrations.Migration) (*schema.Schema, error) {
+func (s *State) Start(ctx context.Context, schemaname string, migration *migrations.Migration) error {
 	rawMigration, err := json.Marshal(migration)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal migration: %w", err)
+		return fmt.Errorf("unable to marshal migration: %w", err)
 	}
 
 	// create a new migration object and return the previous known schema
 	// if there is no previous migration, read the schema from postgres
-	stmt := fmt.Sprintf(`
-		INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)
-		RETURNING (
-			SELECT COALESCE(
-				(SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=%[1]s.latest_version($1)),
-				%[1]s.read_schema($1))
-		)`, pq.QuoteIdentifier(s.schema))
+	stmt := fmt.Sprintf(`INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)`,
+		pq.QuoteIdentifier(s.schema))
+
+	_, err = s.pgConn.ExecContext(ctx, stmt, schemaname, migration.Name, rawMigration)
+	return err
+}
+
+func (s *State) LastSchema(ctx context.Context, schemaname string) (*schema.Schema, error) {
+	stmt := fmt.Sprintf(`SELECT COALESCE(
+		(SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=%[1]s.latest_version($1)),
+		%[1]s.read_schema($1))`,
+		pq.QuoteIdentifier(s.schema))
 
 	var rawSchema string
-	err = s.pgConn.QueryRowContext(ctx, stmt, schemaname, migration.Name, rawMigration).Scan(&rawSchema)
+	err := s.pgConn.QueryRowContext(ctx, stmt, schemaname).Scan(&rawSchema)
 	if err != nil {
 		return nil, err
 	}

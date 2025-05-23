@@ -107,6 +107,7 @@ func Prepare() *cobra.Command {
 	rootCmd.AddCommand(latestCmd())
 	rootCmd.AddCommand(convertCmd())
 	rootCmd.AddCommand(baselineCmd())
+	rootCmd.AddCommand(validateCmd)
 
 	return rootCmd
 }

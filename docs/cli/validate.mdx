@@ -1,0 +1,18 @@
+---
+title: Validate
+description: Validate a pgroll migration
+---
+
+## Command
+
+```
+$ pgroll validate sql/03_add_column.yaml
+```
+
+This validates the migration defined in the `sql/03_add_column.yaml` file.
+
+The command can detect the following errors:
+
+* syntax error in pgroll migration format
+* unknown/invalid configuration options and settings in the migration file
+* reference to unknown database objects

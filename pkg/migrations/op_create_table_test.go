@@ -1291,7 +1291,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnReferenceError{
+			wantValidateErr: migrations.ColumnReferenceError{
 				Table:  "orders",
 				Column: "user_id",
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
@@ -1321,7 +1321,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
+			wantValidateErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 		{
 			name: "column definition missing a name",
@@ -1346,7 +1346,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsInvalidError{Table: "orders", Name: ""},
+			wantValidateErr: migrations.ColumnIsInvalidError{Table: "orders", Name: ""},
 		},
 		{
 			name: "column definition missing a type",
@@ -1371,7 +1371,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsInvalidError{Table: "orders", Name: "name"},
+			wantValidateErr: migrations.ColumnIsInvalidError{Table: "orders", Name: "name"},
 		},
 		{
 			name: "invalid column name",
@@ -1397,7 +1397,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
+			wantValidateErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 		{
 			name: "missing column list in unique constraint",
@@ -1429,7 +1429,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "columns"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "columns"},
 		},
 		{
 			name: "check constraint missing expression",
@@ -1461,7 +1461,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "check"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "check"},
 		},
 		{
 			name: "multiple primary key definitions",
@@ -1494,7 +1494,7 @@ func TestCreateTableValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.PrimaryKeysAreAlreadySetError{Table: "table1"},
+			wantValidateErr: migrations.PrimaryKeysAreAlreadySetError{Table: "table1"},
 		},
 	})
 }
@@ -1545,7 +1545,7 @@ func TestCreateTableValidationInMultiOperationMigrations(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableAlreadyExistsError{Name: "products"},
+			wantValidateErr: migrations.TableAlreadyExistsError{Name: "products"},
 		},
 	})
 }

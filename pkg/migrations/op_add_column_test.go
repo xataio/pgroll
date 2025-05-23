@@ -1865,7 +1865,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "column must not exist",
@@ -1884,7 +1884,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "name"},
+			wantValidateErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "name"},
 		},
 		{
 			name: "column must be valid (not missing its type)",
@@ -1903,7 +1903,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: "description"},
+			wantValidateErr: migrations.ColumnIsInvalidError{Table: "users", Name: "description"},
 		},
 		{
 			name: "column must be valid (not missing its name)",
@@ -1922,7 +1922,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsInvalidError{Table: "users", Name: ""},
+			wantValidateErr: migrations.ColumnIsInvalidError{Table: "users", Name: ""},
 		},
 		{
 			name: "up SQL is mandatory when adding a NOT NULL column with no DEFAULT",
@@ -1942,7 +1942,7 @@ func TestAddColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "up"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
 			name: "table can have multiple primary keys",
@@ -2386,7 +2386,7 @@ func TestAddColumnValidationInMultiOperationMigrations(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "items", Name: "description"},
+			wantValidateErr: migrations.ColumnAlreadyExistsError{Table: "items", Name: "description"},
 		},
 	})
 }
@@ -2428,10 +2428,10 @@ func TestAddColumnInvalidNameLength(t *testing.T) {
 					},
 				},
 			},
-			afterStart:    func(t *testing.T, db *sql.DB, schema string) {},
-			afterRollback: func(t *testing.T, db *sql.DB, schema string) {},
-			afterComplete: func(t *testing.T, db *sql.DB, schema string) {},
-			wantStartErr:  migrations.ValidateIdentifierLength(invalidName),
+			afterStart:      func(t *testing.T, db *sql.DB, schema string) {},
+			afterRollback:   func(t *testing.T, db *sql.DB, schema string) {},
+			afterComplete:   func(t *testing.T, db *sql.DB, schema string) {},
+			wantValidateErr: migrations.ValidateIdentifierLength(invalidName),
 		},
 	})
 }

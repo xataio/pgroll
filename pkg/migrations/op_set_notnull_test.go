@@ -868,7 +868,7 @@ func TestSetNotNullValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "up"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
 			name: "column is nullable",
@@ -916,7 +916,7 @@ func TestSetNotNullValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnIsNotNullableError{Table: "reviews", Name: "review"},
+			wantValidateErr: migrations.ColumnIsNotNullableError{Table: "reviews", Name: "review"},
 		},
 	})
 }
