@@ -55,7 +55,7 @@ func TestSchemaHistoryReturnsFullSchemaHistory(t *testing.T) {
 
 		// Start and complete both migrations
 		for _, mig := range migs {
-			_, err := state.Start(ctx, "public", &mig)
+			err := state.Start(ctx, "public", &mig)
 			require.NoError(t, err)
 			err = state.Complete(ctx, "public", mig.Name)
 			require.NoError(t, err)

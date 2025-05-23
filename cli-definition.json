@@ -219,6 +219,17 @@
       "flags": [],
       "subcommands": [],
       "args": []
+    },
+    {
+      "name": "validate",
+      "short": "Validate a migration file",
+      "use": "validate <file>",
+      "example": "validate migrations/03_my_migration.yaml",
+      "flags": [],
+      "subcommands": [],
+      "args": [
+        "file"
+      ]
     }
   ],
   "flags": [
