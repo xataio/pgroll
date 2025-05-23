@@ -688,7 +688,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "constraint must exist",
@@ -711,7 +711,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ConstraintDoesNotExistError{Table: "posts", Constraint: "doesntexist"},
+			wantValidateErr: migrations.ConstraintDoesNotExistError{Table: "posts", Constraint: "doesntexist"},
 		},
 		{
 			name: "name is mandatory",
@@ -733,7 +733,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "name"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "name"},
 		},
 		{
 			name: "down SQL is mandatory",
@@ -753,7 +753,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.FieldRequiredError{Name: "down"},
+			wantValidateErr: migrations.FieldRequiredError{Name: "down"},
 		},
 		{
 			name: "down SQL must be present for all columns covered by the constraint",
@@ -774,7 +774,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnMigrationMissingError{Table: "posts", Name: "title"},
+			wantValidateErr: migrations.ColumnMigrationMissingError{Table: "posts", Name: "title"},
 		},
 		{
 			name: "down SQL for columns not covered by the constraint is not allowed",
@@ -795,7 +795,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnMigrationRedundantError{Table: "posts", Name: "not_covered"},
+			wantValidateErr: migrations.ColumnMigrationRedundantError{Table: "posts", Name: "not_covered"},
 		},
 		{
 			name: "up SQL for columns not covered by the constraint is not allowed",
@@ -818,7 +818,7 @@ func TestDropMultiColumnConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.ColumnMigrationRedundantError{Table: "posts", Name: "not_covered"},
+			wantValidateErr: migrations.ColumnMigrationRedundantError{Table: "posts", Name: "not_covered"},
 		},
 	})
 }

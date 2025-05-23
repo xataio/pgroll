@@ -179,7 +179,7 @@ func TestSetReplicaIdentityValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "identity must be valid",
@@ -195,7 +195,7 @@ func TestSetReplicaIdentityValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.InvalidReplicaIdentityError{Table: "users", Identity: "invalid_identity"},
+			wantValidateErr: migrations.InvalidReplicaIdentityError{Table: "users", Identity: "invalid_identity"},
 		},
 		{
 			name: "index name must be valid",
@@ -211,7 +211,7 @@ func TestSetReplicaIdentityValidation(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.IndexDoesNotExistError{Name: "invalid_index"},
+			wantValidateErr: migrations.IndexDoesNotExistError{Name: "invalid_index"},
 		},
 	})
 }

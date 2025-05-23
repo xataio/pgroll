@@ -129,7 +129,7 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableAlreadyExistsError{Name: "other_table"},
+			wantValidateErr: migrations.TableAlreadyExistsError{Name: "other_table"},
 		},
 		{
 			name: "rename table validation: invalid name",
@@ -157,7 +157,7 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
+			wantValidateErr: migrations.InvalidIdentifierLengthError{Name: invalidName},
 		},
 	})
 }

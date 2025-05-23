@@ -358,7 +358,7 @@ func TestDropTableValidationInMultiOperationMigrations(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "items"},
+			wantValidateErr: migrations.TableDoesNotExistError{Name: "items"},
 		},
 		{
 			name: "drop table, rename table fails to validate",
@@ -395,7 +395,7 @@ func TestDropTableValidationInMultiOperationMigrations(t *testing.T) {
 					},
 				},
 			},
-			wantStartErr: migrations.TableDoesNotExistError{Name: "items"},
+			wantValidateErr: migrations.TableDoesNotExistError{Name: "items"},
 		},
 	})
 }
