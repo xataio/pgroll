@@ -1,42 +1,75 @@
 ---
 title: Latest
-description: Prints the latest schema version in either the target database or a local directory of migration files.
+description: Prints the latest schema version or migration name in either the target database or a local directory of migration files.
 ---
 
 ## Command
 
-By default, `pgroll latest` prints the latest version in the target database. Use the `--local` flag to print the latest version in a local directory of migration files instead.
+The `pgroll latest` command has two subcommands:
 
-In both cases, the `--with-schema` flag can be used to prefix the latest version with the schema name.
+- `pgroll latest schema` - prints the latest schema version (migration name prefixed with schema name)
+- `pgroll latest migration` - prints the latest migration name (without schema prefix)
 
-### Database
+Both subcommands support the `--local` flag to retrieve the latest version from a local directory of migration files instead of the target database.
+
+### Schema Command
+
+#### Database
 
 Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied to the `public` schema in the target database, running:
 
 ```
-$ pgroll latest
+$ pgroll latest schema
 ```
 
-will print the latest version in the target database:
+will print the latest schema version in the target database:
 
 ```
-45_add_table_check_constraint
+public_55_add_primary_key_constraint_to_table
 ```
 
-The exact output will vary as the `examples/` directory is updated.
-
-### Local
+#### Local
 
 Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) are on disk in a directory called `examples`, running:
 
 ```
-$ pgroll latest --local examples/
+$ pgroll latest schema --local examples/
 ```
 
-will print the latest migration in the directory:
+will print the latest schema version in the directory:
 
 ```
-45_add_table_check_constraint
+public_55_add_primary_key_constraint_to_table
+```
+
+### Migration Command
+
+#### Database
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied to the `public` schema in the target database, running:
+
+```
+$ pgroll latest migration
+```
+
+will print the latest migration name in the target database:
+
+```
+55_add_primary_key_constraint_to_table
+```
+
+#### Local
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) are on disk in a directory called `examples`, running:
+
+```
+$ pgroll latest migration --local examples/
+```
+
+will print the latest migration name in the directory:
+
+```
+55_add_primary_key_constraint_to_table
 ```
 
 The exact output will vary as the `examples/` directory is updated.

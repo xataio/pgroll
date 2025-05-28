@@ -13,13 +13,26 @@ import (
 )
 
 func latestCmd() *cobra.Command {
-	var withSchema bool
+	latestCmd := &cobra.Command{
+		Use:   "latest",
+		Short: "Print the name of the latest schema version or migration",
+		Long:  "Print the name of the latest schema version or migration, either in the target database or a local directory",
+	}
+
+	// Add subcommands
+	latestCmd.AddCommand(latestSchemaCmd())
+	latestCmd.AddCommand(latestMigrationCmd())
+
+	return latestCmd
+}
+
+func latestSchemaCmd() *cobra.Command {
 	var migrationsDir string
 
-	latestCmd := &cobra.Command{
-		Use:     "latest",
-		Short:   "Print the name of the latest schema version, either in the target database or a local directory",
-		Example: "latest --local ./migrations",
+	schemaCmd := &cobra.Command{
+		Use:     "schema",
+		Short:   "Print the latest schema version (migration name prefixed with schema)",
+		Example: "latest schema --local ./migrations",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
@@ -27,12 +40,12 @@ func latestCmd() *cobra.Command {
 			var latestVersion string
 			var err error
 			if migrationsDir != "" {
-				latestVersion, err = latestVersionLocal(ctx, migrationsDir, withSchema)
+				latestVersion, err = latestVersionLocal(ctx, migrationsDir, true)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
 			} else {
-				latestVersion, err = latestVersionRemote(ctx, withSchema)
+				latestVersion, err = latestVersionRemote(ctx, true)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from database: %w", err)
 				}
@@ -44,10 +57,45 @@ func latestCmd() *cobra.Command {
 		},
 	}
 
-	latestCmd.Flags().BoolVarP(&withSchema, "with-schema", "s", false, "prefix the version with the schema name")
-	latestCmd.Flags().StringVarP(&migrationsDir, "local", "l", "", "retrieve the latest version from a local migration directory")
+	schemaCmd.Flags().StringVarP(&migrationsDir, "local", "l", "", "retrieve the latest version from a local migration directory")
 
-	return latestCmd
+	return schemaCmd
+}
+
+func latestMigrationCmd() *cobra.Command {
+	var migrationsDir string
+
+	migrationCmd := &cobra.Command{
+		Use:     "migration",
+		Short:   "Print the latest migration name (without schema prefix)",
+		Example: "latest migration --local ./migrations",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+
+			var latestVersion string
+			var err error
+			if migrationsDir != "" {
+				latestVersion, err = latestVersionLocal(ctx, migrationsDir, false)
+				if err != nil {
+					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
+				}
+			} else {
+				latestVersion, err = latestVersionRemote(ctx, false)
+				if err != nil {
+					return fmt.Errorf("failed to get latest version from database: %w", err)
+				}
+			}
+
+			fmt.Println(latestVersion)
+
+			return nil
+		},
+	}
+
+	migrationCmd.Flags().StringVarP(&migrationsDir, "local", "l", "", "retrieve the latest version from a local migration directory")
+
+	return migrationCmd
 }
 
 // latestVersionLocal returns the latest migration version from a local
