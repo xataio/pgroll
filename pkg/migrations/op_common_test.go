@@ -783,6 +783,50 @@ func MustInsert(t *testing.T, db *sql.DB, schema, version, table string, record 
 	}
 }
 
+func MustUpdate(t *testing.T, db *sql.DB, schema, version, table string, record, condition map[string]string) {
+	t.Helper()
+
+	if err := update(t, db, schema, version, table, record, condition); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func update(t *testing.T, db *sql.DB, schema, version, table string, record, condition map[string]string) error {
+	t.Helper()
+	versionSchema := roll.VersionedSchemaName(schema, version)
+
+	mustSetSearchPath(t, db, versionSchema)
+
+	cols := slices.Collect(maps.Keys(record))
+	slices.Sort(cols)
+
+	conds := slices.Collect(maps.Keys(condition))
+	slices.Sort(conds)
+
+	recordStr := "SET "
+	for i, c := range cols {
+		if i > 0 {
+			recordStr += ", "
+		}
+		recordStr += c + "=" + record[c]
+	}
+	if len(conds) > 0 {
+		recordStr += " WHERE "
+		for i, c := range conds {
+			if i > 0 {
+				recordStr += " AND "
+			}
+			recordStr += c + "=" + condition[c]
+		}
+	}
+
+	//nolint:gosec // this is a test so we don't care about SQL injection
+	stmt := fmt.Sprintf("UPDATE %s.%s %s", versionSchema, table, recordStr)
+
+	_, err := db.Exec(stmt)
+	return err
+}
+
 func MustNotInsert(t *testing.T, db *sql.DB, schema, version, table string, record map[string]string, errorCode string) {
 	t.Helper()
 

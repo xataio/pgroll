@@ -39,11 +39,15 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT`,
 			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(column.Name)))
+
+		column.Default = nil
 	} else {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
 			pq.QuoteIdentifier(table.Name),
 			pq.QuoteIdentifier(column.Name),
 			*o.Default))
+
+		column.Default = o.Default
 	}
 	if err != nil {
 		return nil, err
