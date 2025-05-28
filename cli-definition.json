@@ -96,24 +96,44 @@
     },
     {
       "name": "latest",
-      "short": "Print the name of the latest schema version, either in the target database or a local directory",
+      "short": "Print the name of the latest schema version or migration",
       "use": "latest",
-      "example": "latest --local ./migrations",
-      "flags": [
+      "example": "",
+      "flags": [],
+      "subcommands": [
         {
-          "name": "local",
-          "shorthand": "l",
-          "description": "retrieve the latest version from a local migration directory",
-          "default": ""
+          "name": "migration",
+          "short": "Print the latest migration name (without schema prefix)",
+          "use": "migration",
+          "example": "latest migration --local ./migrations",
+          "flags": [
+            {
+              "name": "local",
+              "shorthand": "l",
+              "description": "retrieve the latest version from a local migration directory",
+              "default": ""
+            }
+          ],
+          "subcommands": [],
+          "args": []
         },
         {
-          "name": "with-schema",
-          "shorthand": "s",
-          "description": "prefix the version with the schema name",
-          "default": "false"
+          "name": "schema",
+          "short": "Print the latest schema version (migration name prefixed with schema)",
+          "use": "schema",
+          "example": "latest schema --local ./migrations",
+          "flags": [
+            {
+              "name": "local",
+              "shorthand": "l",
+              "description": "retrieve the latest version from a local migration directory",
+              "default": ""
+            }
+          ],
+          "subcommands": [],
+          "args": []
         }
       ],
-      "subcommands": [],
       "args": []
     },
     {
