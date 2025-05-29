@@ -19,14 +19,13 @@ func latestCmd() *cobra.Command {
 		Long:  "Print the name of the latest schema version or migration, either in the target database or a local directory",
 	}
 
-	// Add subcommands
-	latestCmd.AddCommand(latestSchemaCmd())
-	latestCmd.AddCommand(latestMigrationCmd())
+	latestCmd.AddCommand(latestSchemaCmd(true))
+	latestCmd.AddCommand(latestMigrationCmd(false))
 
 	return latestCmd
 }
 
-func latestSchemaCmd() *cobra.Command {
+func latestSchemaCmd(withSchema bool) *cobra.Command {
 	var migrationsDir string
 
 	schemaCmd := &cobra.Command{
@@ -40,12 +39,12 @@ func latestSchemaCmd() *cobra.Command {
 			var latestVersion string
 			var err error
 			if migrationsDir != "" {
-				latestVersion, err = latestVersionLocal(ctx, migrationsDir, true)
+				latestVersion, err = latestVersionLocal(ctx, migrationsDir, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
 			} else {
-				latestVersion, err = latestVersionRemote(ctx, true)
+				latestVersion, err = latestVersionRemote(ctx, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from database: %w", err)
 				}
@@ -62,7 +61,7 @@ func latestSchemaCmd() *cobra.Command {
 	return schemaCmd
 }
 
-func latestMigrationCmd() *cobra.Command {
+func latestMigrationCmd(withSchema bool) *cobra.Command {
 	var migrationsDir string
 
 	migrationCmd := &cobra.Command{
@@ -76,12 +75,12 @@ func latestMigrationCmd() *cobra.Command {
 			var latestVersion string
 			var err error
 			if migrationsDir != "" {
-				latestVersion, err = latestVersionLocal(ctx, migrationsDir, false)
+				latestVersion, err = latestVersionLocal(ctx, migrationsDir, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from directory %q: %w", migrationsDir, err)
 				}
 			} else {
-				latestVersion, err = latestVersionRemote(ctx, false)
+				latestVersion, err = latestVersionRemote(ctx, withSchema)
 				if err != nil {
 					return fmt.Errorf("failed to get latest version from database: %w", err)
 				}
