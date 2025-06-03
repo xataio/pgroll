@@ -778,6 +778,43 @@ func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 	})
 }
 
+func TestLatestVersionAndLatestMigrationMethodsRespectVersionSchemaAndName(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(r *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create a migration with an explicit version schema
+		mig := &migrations.Migration{
+			Name:          "01_create_table",
+			VersionSchema: "01_foo",
+			Operations:    migrations.Operations{createTableOp("table1")},
+		}
+
+		// Start and complete a migration
+		err := r.Start(ctx, mig, backfill.NewConfig())
+		require.NoError(t, err)
+		err = r.Complete(ctx)
+		require.NoError(t, err)
+
+		// Get the latest version
+		latestVersion, err := r.State().LatestVersion(ctx, "public")
+		require.NoError(t, err)
+
+		// Get the latest migration name
+		latestMigration, err := r.State().LatestMigration(ctx, "public")
+		require.NoError(t, err)
+
+		// Assert that the latest version is correct
+		require.NotNil(t, latestVersion)
+		require.Equal(t, "01_foo", *latestVersion)
+
+		// Assert that the latest migration name is correct
+		require.NotNil(t, latestMigration)
+		require.Equal(t, "01_create_table", *latestMigration)
+	})
+}
+
 func TestWithSearchPathOptionIsRespected(t *testing.T) {
 	t.Parallel()
 
