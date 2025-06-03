@@ -174,8 +174,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 }
 
 // LatestVersion returns the name of the latest version schema, or nil if there
-// is none. No active version occurs after initialization, but before the first
-// migration is started.
+// is none.
 func (s *State) LatestVersion(ctx context.Context, schema string) (*string, error) {
 	var version *string
 	err := s.pgConn.QueryRowContext(ctx,
@@ -186,6 +185,20 @@ func (s *State) LatestVersion(ctx context.Context, schema string) (*string, erro
 	}
 
 	return version, nil
+}
+
+// LatestMigration returns the name of the latest migration, or nil if there
+// is none.
+func (s *State) LatestMigration(ctx context.Context, schema string) (*string, error) {
+	var migration *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.latest_migration($1)", pq.QuoteIdentifier(s.schema)),
+		schema).Scan(&migration)
+	if err != nil {
+		return nil, err
+	}
+
+	return migration, nil
 }
 
 // PreviousVersion returns the name of the previous version schema
