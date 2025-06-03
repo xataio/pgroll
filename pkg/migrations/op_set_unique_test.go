@@ -569,7 +569,7 @@ func TestSetColumnUnique(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintAlreadyExistsError{
+			wantStartErr: migrations.ConstraintAlreadyExistsError{
 				Table:      "reviews",
 				Constraint: "reviews_username_key",
 			},

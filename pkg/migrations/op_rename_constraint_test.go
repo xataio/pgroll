@@ -126,7 +126,7 @@ func TestRenameConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "the from constraint must exist",
@@ -143,7 +143,7 @@ func TestRenameConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintDoesNotExistError{Table: "users", Constraint: "doesntexist"},
+			wantStartErr: migrations.ConstraintDoesNotExistError{Table: "users", Constraint: "doesntexist"},
 		},
 		{
 			name: "the to constraint must not exist",
@@ -160,7 +160,7 @@ func TestRenameConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintAlreadyExistsError{Table: "users", Constraint: "users_text_length_username"},
+			wantStartErr: migrations.ConstraintAlreadyExistsError{Table: "users", Constraint: "users_text_length_username"},
 		},
 		{
 			name: "the new name must be valid",
@@ -177,7 +177,7 @@ func TestRenameConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ValidateIdentifierLength(invalidName),
+			wantStartErr: migrations.ValidateIdentifierLength(invalidName),
 		},
 	})
 }

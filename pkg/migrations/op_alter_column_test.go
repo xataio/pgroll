@@ -553,7 +553,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "column must exist",
@@ -570,7 +570,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
+			wantStartErr: migrations.ColumnDoesNotExistError{Table: "posts", Name: "doesntexist"},
 		},
 		{
 			name: "cant make no changes",
@@ -586,7 +586,7 @@ func TestAlterColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
+			wantStartErr: migrations.AlterColumnNoChangesError{Table: "posts", Column: "title"},
 		},
 		{
 			name: "backfill with multiple primary keys",

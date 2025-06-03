@@ -956,7 +956,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "up"},
+			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
 			name: "down SQL is mandatory",
@@ -974,7 +974,7 @@ func TestChangeColumnTypeValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "down"},
+			wantStartErr: migrations.FieldRequiredError{Name: "down"},
 		},
 	})
 }

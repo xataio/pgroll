@@ -598,7 +598,7 @@ func TestSetCheckConstraint(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintAlreadyExistsError{
+			wantStartErr: migrations.ConstraintAlreadyExistsError{
 				Table:      "posts",
 				Constraint: "check_title_length",
 			},
@@ -868,7 +868,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "name"},
+			wantStartErr: migrations.FieldRequiredError{Name: "name"},
 		},
 		{
 			name: "up SQL is mandatory",
@@ -889,7 +889,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "up"},
+			wantStartErr: migrations.FieldRequiredError{Name: "up"},
 		},
 		{
 			name: "down SQL is mandatory",
@@ -910,7 +910,7 @@ func TestSetCheckConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "down"},
+			wantStartErr: migrations.FieldRequiredError{Name: "down"},
 		},
 	})
 }

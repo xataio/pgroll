@@ -934,7 +934,7 @@ func TestDropConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "constraint must exist",
@@ -953,7 +953,7 @@ func TestDropConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintDoesNotExistError{Table: "posts", Constraint: "doesntexist"},
+			wantStartErr: migrations.ConstraintDoesNotExistError{Table: "posts", Constraint: "doesntexist"},
 		},
 		{
 			name: "name is mandatory",
@@ -971,7 +971,7 @@ func TestDropConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "name"},
+			wantStartErr: migrations.FieldRequiredError{Name: "name"},
 		},
 		{
 			name: "down SQL is mandatory",
@@ -989,7 +989,7 @@ func TestDropConstraintValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "down"},
+			wantStartErr: migrations.FieldRequiredError{Name: "down"},
 		},
 	})
 }

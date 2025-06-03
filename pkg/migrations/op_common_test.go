@@ -27,7 +27,6 @@ type TestCase struct {
 	name              string
 	minPgMajorVersion int
 	migrations        []migrations.Migration
-	wantValidateErr   error
 	wantStartErr      error
 	wantRollbackErr   error
 	wantCompleteErr   error
@@ -66,20 +65,8 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 					}
 				}
 
-				// validate the last migration
-				err := mig.Validate(ctx, &tt.migrations[len(tt.migrations)-1])
-				if tt.wantValidateErr != nil {
-					if !errors.Is(err, tt.wantValidateErr) {
-						t.Fatalf("Expected error %q, got %q", tt.wantValidateErr, err)
-					}
-					return
-				}
-				if err != nil {
-					t.Fatalf("Failed to validate migration: %v", err)
-				}
-
 				// start the last migration
-				err = mig.Start(ctx, &tt.migrations[len(tt.migrations)-1], config)
+				err := mig.Start(ctx, &tt.migrations[len(tt.migrations)-1], config)
 				if tt.wantStartErr != nil {
 					if !errors.Is(err, tt.wantStartErr) {
 						t.Fatalf("Expected error %q, got %q", tt.wantStartErr, err)

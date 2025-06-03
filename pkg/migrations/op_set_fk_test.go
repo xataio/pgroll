@@ -1191,7 +1191,7 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ConstraintAlreadyExistsError{
+			wantStartErr: migrations.ConstraintAlreadyExistsError{
 				Table:      "posts",
 				Constraint: "fk_users_id",
 			},
@@ -1807,7 +1807,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnReferenceError{
+			wantStartErr: migrations.ColumnReferenceError{
 				Table:  "posts",
 				Column: "user_id",
 				Err:    migrations.FieldRequiredError{Name: "name"},
@@ -1834,7 +1834,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnReferenceError{
+			wantStartErr: migrations.ColumnReferenceError{
 				Table:  "posts",
 				Column: "user_id",
 				Err:    migrations.TableDoesNotExistError{Name: "doesntexist"},
@@ -1861,7 +1861,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnReferenceError{
+			wantStartErr: migrations.ColumnReferenceError{
 				Table:  "posts",
 				Column: "user_id",
 				Err:    migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
@@ -1889,7 +1889,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.InvalidOnDeleteSettingError{
+			wantStartErr: migrations.InvalidOnDeleteSettingError{
 				Name:    "fk_users_doesntexist",
 				Setting: "invalid",
 			},
@@ -1916,6 +1916,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
+			wantStartErr: nil,
 		},
 		{
 			name: "on_delete can be specified as uppercase",
@@ -1939,6 +1940,7 @@ func TestSetForeignKeyValidation(t *testing.T) {
 					},
 				},
 			},
+			wantStartErr: nil,
 		},
 	})
 }

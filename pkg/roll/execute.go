@@ -31,7 +31,6 @@ func (m *Roll) Validate(ctx context.Context, migration *migrations.Migration) er
 }
 
 // Start will apply the required changes to enable supporting the new schema version
-// Migrations must be validated before running Start.
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
 	// Fail early if we have existing schema without migration history
 	hasExistingSchema, err := m.state.HasExistingSchemaWithoutHistory(ctx, m.schema)
@@ -43,6 +42,10 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 	}
 
 	m.logger.LogMigrationStart(migration)
+
+	if err := m.Validate(ctx, migration); err != nil {
+		return err
+	}
 
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {

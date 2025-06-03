@@ -427,7 +427,7 @@ func TestOpRenameColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "from"},
+			wantStartErr: migrations.FieldRequiredError{Name: "from"},
 		},
 		{
 			name: "to field must be specified",
@@ -443,7 +443,7 @@ func TestOpRenameColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.FieldRequiredError{Name: "to"},
+			wantStartErr: migrations.FieldRequiredError{Name: "to"},
 		},
 		{
 			name: "table must exist",
@@ -460,7 +460,7 @@ func TestOpRenameColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
+			wantStartErr: migrations.TableDoesNotExistError{Name: "doesntexist"},
 		},
 		{
 			name: "source column must exist",
@@ -477,7 +477,7 @@ func TestOpRenameColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
+			wantStartErr: migrations.ColumnDoesNotExistError{Table: "users", Name: "doesntexist"},
 		},
 		{
 			name: "target column must not exist",
@@ -494,7 +494,7 @@ func TestOpRenameColumnValidation(t *testing.T) {
 					},
 				},
 			},
-			wantValidateErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
+			wantStartErr: migrations.ColumnAlreadyExistsError{Table: "users", Name: "id"},
 		},
 	})
 }
