@@ -258,23 +258,48 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
+	t.Run("when the migration does not set an explicit version schema name ", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+			version := "1_create_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-		if err := mig.Rollback(ctx); err != nil {
-			t.Fatalf("Failed to rollback migration: %v", err)
-		}
+			if err := mig.Start(ctx, &migrations.Migration{
+				Name:       version,
+				Operations: migrations.Operations{createTableOp("table1")},
+			}, backfill.NewConfig()); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
+			}
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to rollback migration: %v", err)
+			}
 
-		//
-		// Check that the schema has been dropped
-		//
-		if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
-			t.Errorf("Expected schema %q to not exist", version)
-		}
+			// Check that the schema has been dropped
+			if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
+				t.Errorf("Expected schema %q to not exist", version)
+			}
+		})
+	})
+
+	t.Run("when the migration does set an explicit version schema name ", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			if err := mig.Start(ctx, &migrations.Migration{
+				Name:          "1_create_table",
+				VersionSchema: "1_foo",
+				Operations:    migrations.Operations{createTableOp("table1")},
+			}, backfill.NewConfig()); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
+			}
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to rollback migration: %v", err)
+			}
+
+			// Check that the schema has been dropped
+			if schemaExists(t, db, roll.VersionedSchemaName(cSchema, "1_foo")) {
+				t.Errorf("Expected schema %q to not exist", "1_foo")
+			}
+		})
 	})
 }
 

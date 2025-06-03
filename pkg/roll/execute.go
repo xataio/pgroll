@@ -265,7 +265,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	if !m.disableVersionSchemas {
 		// delete the schema and view for the new version
-		versionSchema := VersionedSchemaName(m.schema, migration.Name)
+		versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
 		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 		if err != nil {
 			return err
