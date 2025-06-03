@@ -15,6 +15,21 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
+func (m *Roll) Validate(ctx context.Context, migration *migrations.Migration) error {
+	if m.skipValidation {
+		return nil
+	}
+	lastSchema, err := m.state.LastSchema(ctx, m.schema)
+	if err != nil {
+		return err
+	}
+	err = migration.Validate(ctx, lastSchema)
+	if err != nil {
+		return fmt.Errorf("migration '%s' is invalid: %w", migration.Name, err)
+	}
+	return nil
+}
+
 // Start will apply the required changes to enable supporting the new schema version
 func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *backfill.Config) error {
 	// Fail early if we have existing schema without migration history
@@ -27,6 +42,10 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 	}
 
 	m.logger.LogMigrationStart(migration)
+
+	if err := m.Validate(ctx, migration); err != nil {
+		return err
+	}
 
 	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
@@ -50,20 +69,8 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// create a new active migration (guaranteed to be unique by constraints)
-	newSchema, err := m.state.Start(ctx, m.schema, migration)
-	if err != nil {
+	if err = m.state.Start(ctx, m.schema, migration); err != nil {
 		return nil, fmt.Errorf("unable to start migration: %w", err)
-	}
-
-	// validate migration
-	if !m.skipValidation {
-		err = migration.Validate(ctx, newSchema)
-		if err != nil {
-			if err := m.state.Rollback(ctx, m.schema, migration.Name); err != nil {
-				fmt.Printf("failed to rollback migration: %s\n", err)
-			}
-			return nil, fmt.Errorf("migration is invalid: %w", err)
-		}
 	}
 
 	// run any BeforeStartDDL hooks
@@ -89,7 +96,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 
 	// Reread the latest schema as validation may have updated the schema object
 	// in memory.
-	newSchema, err = m.state.ReadSchema(ctx, m.schema)
+	newSchema, err := m.state.ReadSchema(ctx, m.schema)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read schema: %w", err)
 	}

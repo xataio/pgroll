@@ -35,8 +35,15 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// check that starting a new migration returns the already existing table
-		currentSchema, err := state.Start(ctx, "public", &migrations.Migration{
+		// check that we can retrieve the already existing table
+		currentSchema, err := state.LastSchema(ctx, "public")
+		assert.NoError(t, err)
+
+		assert.Equal(t, 1, len(currentSchema.Tables))
+		assert.Equal(t, "public", currentSchema.Name)
+
+		// check that we can start the migration
+		err = state.Start(ctx, "public", &migrations.Migration{
 			Name: "1_add_column",
 			Operations: migrations.Operations{
 				&migrations.OpAddColumn{
@@ -49,9 +56,6 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 			},
 		})
 		assert.NoError(t, err)
-
-		assert.Equal(t, 1, len(currentSchema.Tables))
-		assert.Equal(t, "public", currentSchema.Name)
 	})
 }
 
