@@ -244,7 +244,7 @@ func (s *State) Start(ctx context.Context, schemaname string, migration *migrati
 
 	// create a new migration object and return the previous known schema
 	// if there is no previous migration, read the schema from postgres
-	stmt := fmt.Sprintf(`INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)`,
+	stmt := fmt.Sprintf(`INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_migration($1), $3)`,
 		pq.QuoteIdentifier(s.schema))
 
 	_, err = s.pgConn.ExecContext(ctx, stmt, schemaname, migration.Name, rawMigration)
@@ -386,7 +386,7 @@ func (s *State) CreateBaseline(ctx context.Context, schemaName, baselineVersion 
 	stmt := fmt.Sprintf(`
 		INSERT INTO %[1]s.migrations 
 		(schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, TRUE,  %[1]s.latest_version($1), 'baseline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		VALUES ($1, $2, $3, $4, TRUE,  %[1]s.latest_migration($1), 'baseline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
 		pq.QuoteIdentifier(s.schema))
 
 	_, err = s.pgConn.ExecContext(ctx, stmt, schemaName, baselineVersion, rawMigration, rawSchema)
