@@ -120,6 +120,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
     WITH RECURSIVE ancestors AS (
         SELECT
             name,
+            migration ->> 'versionSchema' AS versionSchema,
             schema,
             parent,
             migration_type,
@@ -132,6 +133,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
         UNION ALL
         SELECT
             m.name,
+            m.migration ->> 'versionSchema' AS versionSchema,
             m.schema,
             m.parent,
             m.migration_type,
@@ -142,7 +144,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
                 AND m.schema = a.schema
 )
         SELECT
-            a.name
+            COALESCE(a.versionSchema, a.name)
         FROM
             ancestors a
     WHERE
@@ -155,7 +157,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
                     FROM
                         information_schema.schemata s
                     WHERE
-                        s.schema_name = schemaname || '_' || a.name)))
+                        s.schema_name = schemaname || '_' || COALESCE(a.versionSchema, a.name))))
     ORDER BY
         a.depth ASC
     LIMIT 1;
