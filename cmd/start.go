@@ -94,7 +94,7 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 
 	err := m.Validate(ctx, migration)
 	if err != nil {
-		sp.Fail(fmt.Sprintf("Failed to start migration: %s", err))
+		sp.Fail(fmt.Sprintf("Failed to validate migration: %s", err))
 		return err
 	}
 
