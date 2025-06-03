@@ -85,7 +85,33 @@ $$
 LANGUAGE SQL
 STABLE;
 
--- Get the name of the previous version of the schema, or NULL if there is none.
+-- Get the name of the latest version schema, or NULL if there is none.
+-- This will be the same as the version-schema name of the migration in most
+-- cases, unless the migration sets its `versionSchema` field.
+CREATE OR REPLACE FUNCTION placeholder.latest_migration (schemaname name)
+    RETURNS text
+    SECURITY DEFINER
+    SET search_path = placeholder, pg_catalog, pg_temp
+    AS $$
+    SELECT
+        p.name
+    FROM
+        placeholder.migrations p
+    WHERE
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                placeholder.migrations c
+            WHERE
+                SCHEMA = schemaname
+                AND c.parent = p.name)
+        AND SCHEMA = schemaname
+$$
+LANGUAGE SQL
+STABLE;
+
+-- Get the previous version schema name, or NULL if there is none.
 -- This ignores previous versions for which no version schema exists, such as
 -- versions corresponding to inferred migrations.
 CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includeInferred boolean)
@@ -101,7 +127,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
         FROM
             placeholder.migrations
         WHERE
-            name = placeholder.latest_version (schemaname)
+            name = placeholder.latest_migration (schemaname)
             AND SCHEMA = schemaname
         UNION ALL
         SELECT
@@ -388,7 +414,7 @@ BEGIN
                         pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
             placeholder.read_schema (schemaname),
             TRUE,
-            placeholder.latest_version (schemaname),
+            placeholder.latest_migration (schemaname),
             'inferred',
             statement_timestamp(),
             statement_timestamp());
