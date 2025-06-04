@@ -56,10 +56,17 @@ jobs:
         go-version-file: 'go.mod'
 
     - name: Run tests
-      run: go test ./...
+      run: go test -cover -coverprofile=coverage.out ./...
       env:
         POSTGRES_VERSION: ${{ matrix.pgVersion }}
         PGROLL_TEST_SCHEMA: ${{ matrix.testSchema }}
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v4
+      if: matrix.pgVersion == 'latest' && matrix.testSchema == 'public'
+      with:
+        name: code-coverage
+        path: coverage.out
 
   lint:
     name: lint
@@ -123,6 +130,21 @@ jobs:
             echo "run 'make format' to reformat"
             exit 1
           fi
+
+  coverage:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - uses: fgrosse/go-coverage-report@v1.2.0
+        with:
+          coverage-artifact-name: "code-coverage"
+          coverage-file-name: "coverage.out"
+          root-package: "github.com/xataio/pgroll"
 
   code-generation:
     name: code generation

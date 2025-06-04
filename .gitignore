@@ -4,5 +4,6 @@ bin/license-header-checker
 .DS_Store
 .env
 pgroll
+coverage.out
 
 dist/
