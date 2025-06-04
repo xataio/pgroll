@@ -36,7 +36,7 @@ examples: ledger
 	@go clean
 
 test:
-	go test ./...
+	go test -coverprofile=coverage.out -cover ./...
 
 bench:
 	go test ./internal/benchmarks -v -benchtime=1x -bench .
