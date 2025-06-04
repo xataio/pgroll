@@ -54,7 +54,7 @@ func TestFileUpdater(t *testing.T) {
 			t.Fatal("expected columns to be a map, got nil")
 		}
 
-		var expectedColumns = migrations.OpCreateIndexColumns{
+		expectedColumns := migrations.OpCreateIndexColumns{
 			"col1": migrations.IndexField{},
 			"col2": migrations.IndexField{},
 		}
@@ -132,7 +132,7 @@ func TestFileUpdater(t *testing.T) {
 			t.Fatal("expected columns to be a map, got nil")
 		}
 
-		var expectedColumns = migrations.OpCreateIndexColumns{
+		expectedColumns := migrations.OpCreateIndexColumns{
 			"col1": migrations.IndexField{},
 			"col2": migrations.IndexField{},
 		}
