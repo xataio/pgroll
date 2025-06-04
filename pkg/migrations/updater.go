@@ -67,6 +67,9 @@ func updateCreateIndexColumnsList(op map[string]any) (map[string]any, error) {
 			Columns []string `json:"columns"`
 		} `json:"create_index"`
 	}
+
+	// error is ignored here, because it can only happend if the create_index
+	// operation does not contain the expected, outdated structure
 	if err := json.Unmarshal(body, &createIndexOp); err == nil {
 		if createIndexOper, ok := op["create_index"].(map[string]any); ok {
 			delete(createIndexOper, "columns")
