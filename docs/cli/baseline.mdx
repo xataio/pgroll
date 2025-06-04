@@ -19,7 +19,9 @@ The command requires two arguments:
 1. `version` - The version name for the baseline (e.g., "01_initial_schema")
 2. `target directory` - The directory where the placeholder migration file will be written
 
-The optional `--json` flag can be used to write the placeholder migration file in JSON format instead of YAML.
+Optional flags:
+- `--json` (`-j`) - Write the placeholder migration file in JSON format instead of YAML
+- `--yes` (`-y`) - Skip the confirmation prompt and proceed automatically
 
 ### How it works
 
@@ -58,4 +60,10 @@ pgroll baseline 01_initial_schema ./migrations
 
 ```
 pgroll baseline 01_initial_schema ./migrations --json
+```
+
+#### Create a baseline without confirmation prompt
+
+```
+pgroll baseline 01_initial_schema ./migrations --yes
 ```
