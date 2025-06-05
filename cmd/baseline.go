@@ -15,6 +15,7 @@ import (
 
 func baselineCmd() *cobra.Command {
 	var useJSON bool
+	var yes bool
 
 	baselineCmd := &cobra.Command{
 		Use:       "baseline <version> <target directory>",
@@ -39,11 +40,13 @@ func baselineCmd() *cobra.Command {
 				return err
 			}
 
-			// Prompt for confirmation
-			fmt.Println("Creating a baseline migration will restart the migration history.")
-			ok, _ := pterm.DefaultInteractiveConfirm.Show()
-			if !ok {
-				return nil
+			// Prompt for confirmation unless --yes flag is set
+			if !yes {
+				fmt.Println("Creating a baseline migration will restart the migration history.")
+				ok, _ := pterm.DefaultInteractiveConfirm.Show()
+				if !ok {
+					return nil
+				}
 			}
 
 			// Create a placeholder baseline migration
@@ -79,6 +82,7 @@ func baselineCmd() *cobra.Command {
 	}
 
 	baselineCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "output in JSON format instead of YAML")
+	baselineCmd.Flags().BoolVarP(&yes, "yes", "y", false, "skip confirmation prompt")
 
 	return baselineCmd
 }

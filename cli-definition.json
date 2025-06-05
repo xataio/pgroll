@@ -22,6 +22,12 @@
           "shorthand": "j",
           "description": "output in JSON format instead of YAML",
           "default": "false"
+        },
+        {
+          "name": "yes",
+          "shorthand": "y",
+          "description": "skip confirmation prompt",
+          "default": "false"
         }
       ],
       "subcommands": [],
