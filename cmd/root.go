@@ -101,6 +101,7 @@ func Prepare() *cobra.Command {
 	rootCmd.AddCommand(analyzeCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(updateCmd())
 	rootCmd.AddCommand(createCmd())
 	rootCmd.AddCommand(migrateCmd())
 	rootCmd.AddCommand(pullCmd())
