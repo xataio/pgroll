@@ -214,6 +214,19 @@ func (s *State) PreviousVersion(ctx context.Context, schema string, includeInfer
 	return parent, nil
 }
 
+// PreviousMigration returns the name of the previous migration
+func (s *State) PreviousMigration(ctx context.Context, schema string, includeInferred bool) (*string, error) {
+	var parent *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.previous_migration($1, $2)", pq.QuoteIdentifier(s.schema)),
+		schema, includeInferred).Scan(&parent)
+	if err != nil {
+		return nil, err
+	}
+
+	return parent, nil
+}
+
 // Status returns the current migration status of the specified schema
 func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
 	latestVersion, err := s.LatestVersion(ctx, schema)
