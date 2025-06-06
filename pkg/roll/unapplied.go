@@ -18,11 +18,6 @@ import (
 // If the local order of migrations does not match the order of migrations in
 // the schema history, an `ErrMismatchedMigration` error is returned.
 func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migrations.RawMigration, error) {
-	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
-	if err != nil {
-		return nil, fmt.Errorf("determining latest version: %w", err)
-	}
-
 	history, err := m.State().SchemaHistory(ctx, m.Schema())
 	if err != nil {
 		return nil, fmt.Errorf("reading schema history: %w", err)
@@ -84,9 +79,6 @@ func (m *Roll) UnappliedMigrations(ctx context.Context, dir fs.FS) ([]*migration
 		}
 
 		appliedCount++
-		if m.Name == *latestVersion {
-			break
-		}
 	}
 
 	// Return only the migrations that haven't been applied yet
