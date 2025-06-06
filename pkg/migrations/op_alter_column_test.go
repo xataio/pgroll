@@ -211,6 +211,13 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 					"id": "1",
 				})
 
+				// Updating name to default value should succeed
+				MustUpdate(t, db, schema, "02_alter_column", "events", map[string]string{
+					"name": "DEFAULT",
+				}, map[string]string{
+					"id": "1",
+				})
+
 				// Inserting a NULL explicitly into the new schema should fail
 				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
 					"id":   "100",
@@ -262,6 +269,13 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting with no `name` into the new schema should succeed
 				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id": "4",
+				})
+
+				// Updating name to default value should succeed
+				MustUpdate(t, db, schema, "02_alter_column", "events", map[string]string{
+					"name": "DEFAULT",
+				}, map[string]string{
 					"id": "4",
 				})
 
