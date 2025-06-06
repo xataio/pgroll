@@ -165,6 +165,58 @@ $$
 LANGUAGE SQL
 STABLE;
 
+-- Get the name of the previous migration, or NULL if there is none.
+-- This ignores previous versions for which no version schema exists, such as
+-- versions corresponding to inferred migrations.
+CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name, includeInferred boolean)
+    RETURNS text
+    AS $$
+    WITH RECURSIVE ancestors AS (
+        SELECT
+            name,
+            schema,
+            parent,
+            migration_type,
+            0 AS depth
+        FROM
+            placeholder.migrations
+        WHERE
+            name = placeholder.latest_migration (schemaname)
+            AND SCHEMA = schemaname
+        UNION ALL
+        SELECT
+            m.name,
+            m.schema,
+            m.parent,
+            m.migration_type,
+            a.depth + 1
+        FROM
+            placeholder.migrations m
+            JOIN ancestors a ON m.name = a.parent
+                AND m.schema = a.schema
+)
+        SELECT
+            a.name
+        FROM
+            ancestors a
+    WHERE
+        a.depth > 0
+        AND (includeInferred
+            OR (a.migration_type = 'pgroll'
+                AND EXISTS (
+                    SELECT
+                        s.schema_name
+                    FROM
+                        information_schema.schemata s
+                    WHERE
+                        s.schema_name = schemaname || '_' || a.name)))
+    ORDER BY
+        a.depth ASC
+    LIMIT 1;
+$$
+LANGUAGE SQL
+STABLE;
+
 -- Get the JSON representation of the current schema
 CREATE OR REPLACE FUNCTION placeholder.read_schema (schemaname text)
     RETURNS jsonb
