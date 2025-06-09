@@ -25,7 +25,7 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 	skipValidation := flags.SkipValidation()
 	verbose := flags.Verbose()
 
-	state, err := state.New(ctx, pgURL, stateSchema)
+	state, err := state.New(ctx, pgURL, stateSchema, state.WithPgrollVersion(Version))
 	if err != nil {
 		return nil, err
 	}
