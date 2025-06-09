@@ -43,6 +43,13 @@ ALTER TABLE placeholder.migrations
     ALTER COLUMN created_at SET DATA TYPE timestamptz USING created_at AT TIME ZONE 'UTC',
     ALTER COLUMN updated_at SET DATA TYPE timestamptz USING updated_at AT TIME ZONE 'UTC';
 
+-- Table to track pgroll binary version
+CREATE TABLE IF NOT EXISTS placeholder.pgroll_version (
+    version text NOT NULL,
+    initialized_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (version)
+);
+
 -- Helper functions
 -- Are we in the middle of a migration?
 CREATE OR REPLACE FUNCTION placeholder.is_active_migration_period (schemaname name)
