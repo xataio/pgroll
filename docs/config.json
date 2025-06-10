@@ -45,6 +45,11 @@
           "title": "Writing up and down migrations",
           "href": "/guides/updown",
           "file": "docs/guides/updown.mdx"
+        },
+        {
+          "title": "Update migration files",
+          "href": "/guides/update-migrations",
+          "file": "docs/guides/updatemigrations.mdx"
         }
       ]
     },
