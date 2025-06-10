@@ -351,9 +351,7 @@ func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB,
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
-		pq.QuoteIdentifier(tableName),
-		pq.QuoteIdentifier(columnName)))
+	err = NewSetNotNullAction(conn, tableName, columnName).Execute(ctx)
 	if err != nil {
 		return err
 	}
