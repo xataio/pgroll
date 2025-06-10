@@ -275,15 +275,15 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	// get the name of the previous version of the schema
-	previousVersion, err := m.state.PreviousVersion(ctx, m.schema, true)
+	previousMigration, err := m.state.PreviousMigration(ctx, m.schema, true)
 	if err != nil {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
 
 	// get the schema after the previous migration was applied
 	schema := schema.New()
-	if previousVersion != nil {
-		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousVersion)
+	if previousMigration != nil {
+		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousMigration)
 		if err != nil {
 			return fmt.Errorf("unable to read schema: %w", err)
 		}
