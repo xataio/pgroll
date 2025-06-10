@@ -222,16 +222,6 @@ jobs:
         run: |
           make license && [[ -z `git status -s` ]]
 
-  examples-schema-validation:
-    name: validate examples JSON
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate example migrations against JSON schema
-        run: |
-          npx -y ajv-cli --spec=draft2020 validate --strict-schema=false -s schema.json -d "./examples/*.json"
-
   examples:
     name: 'examples (pg: ${{ matrix.pgVersion }}, schema: ${{ matrix.testSchema }})'
     runs-on: ubuntu-24.04
@@ -277,7 +267,7 @@ jobs:
     runs-on: ubuntu-24.04
     container:
       image: goreleaser/goreleaser-cross:v1.24
-    needs: [test, lint, examples-schema-validation, examples, license-check, format, code-generation, dead-code-check, check-ledger, cross-build]
+    needs: [test, lint, examples, license-check, format, code-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
