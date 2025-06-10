@@ -55,14 +55,32 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	// the column as no DEFAULT or because the default value cannot be set using
 	// the fast path optimization), add a NOT NULL constraint to the column which
 	// will be validated on migration completion.
+	skipInherit := false
+	skipValidate := true
 	if !o.Column.IsNullable() && (o.Column.Default == nil || !fastPathDefault) {
-		if err := addNotNullConstraint(ctx, conn, table.Name, o.Column.Name, TemporaryName(o.Column.Name)); err != nil {
+		if err := NewCreateCheckConstraintAction(
+			conn,
+			table.Name,
+			NotNullConstraintName(o.Column.Name),
+			fmt.Sprintf("%s IS NOT NULL", o.Column.Name),
+			[]string{o.Column.Name},
+			skipInherit,
+			skipValidate,
+		).Execute(ctx); err != nil {
 			return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 		}
 	}
 
 	if o.Column.Check != nil {
-		if err := o.addCheckConstraint(ctx, table.Name, conn); err != nil {
+		if err := NewCreateCheckConstraintAction(
+			conn,
+			table.Name,
+			o.Column.Check.Name,
+			o.Column.Check.Constraint,
+			[]string{o.Column.Name},
+			skipInherit,
+			skipValidate,
+		).Execute(ctx); err != nil {
 			return nil, fmt.Errorf("failed to add check constraint: %w", err)
 		}
 	}
@@ -360,24 +378,6 @@ func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB,
 
 	err = NewDropConstraintAction(conn, tableName, NotNullConstraintName(columnName)).Execute(ctx)
 
-	return err
-}
-
-func addNotNullConstraint(ctx context.Context, conn db.DB, table, column, physicalColumn string) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s IS NOT NULL) NOT VALID",
-		pq.QuoteIdentifier(table),
-		pq.QuoteIdentifier(NotNullConstraintName(column)),
-		pq.QuoteIdentifier(physicalColumn),
-	))
-	return err
-}
-
-func (o *OpAddColumn) addCheckConstraint(ctx context.Context, tableName string, conn db.DB) error {
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s CHECK (%s) NOT VALID",
-		pq.QuoteIdentifier(tableName),
-		pq.QuoteIdentifier(o.Column.Check.Name),
-		rewriteCheckExpression(o.Column.Check.Constraint, o.Column.Name),
-	))
 	return err
 }
 
