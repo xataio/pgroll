@@ -1,0 +1,11 @@
+version_schema: with_version_schema
+operations:
+  - create_table:
+      name: products
+      columns:
+        - name: id
+          type: serial
+          pk: true
+        - name: name
+          type: varchar(255)
+          unique: true
