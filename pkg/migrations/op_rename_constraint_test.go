@@ -15,7 +15,8 @@ func TestRenameConstraint(t *testing.T) {
 	t.Parallel()
 
 	addTableMigration := migrations.Migration{
-		Name: "01_add_table",
+		Name:          "01_add_table",
+		VersionSchema: "add_table",
 		Operations: migrations.Operations{
 			&migrations.OpCreateTable{
 				Name: "users",
@@ -41,7 +42,8 @@ func TestRenameConstraint(t *testing.T) {
 		migrations: []migrations.Migration{
 			addTableMigration,
 			{
-				Name: "02_rename_constraint",
+				Name:          "02_rename_constraint",
+				VersionSchema: "rename_constraint",
 				Operations: migrations.Operations{
 					&migrations.OpRenameConstraint{
 						Table: "users",
@@ -59,7 +61,7 @@ func TestRenameConstraint(t *testing.T) {
 			CheckConstraintMustNotExist(t, db, schema, "users", "users_check_username_length")
 
 			// Inserting a row that violates the check constraint should fail.
-			MustNotInsert(t, db, schema, "02_rename_constraint", "users", map[string]string{
+			MustNotInsert(t, db, schema, "rename_constraint", "users", map[string]string{
 				"username": "a",
 			}, testutils.CheckViolationErrorCode)
 		},
@@ -75,7 +77,7 @@ func TestRenameConstraint(t *testing.T) {
 			CheckConstraintMustNotExist(t, db, schema, "users", "users_check")
 
 			// Inserting a row that violates the check constraint should fail.
-			MustNotInsert(t, db, schema, "02_rename_constraint", "users", map[string]string{
+			MustNotInsert(t, db, schema, "rename_constraint", "users", map[string]string{
 				"username": "a",
 			}, testutils.CheckViolationErrorCode)
 		},

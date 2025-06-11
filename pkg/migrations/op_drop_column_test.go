@@ -20,7 +20,8 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 			name: "drop column",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -45,7 +46,8 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_drop_column",
+					Name:          "02_drop_column",
+					VersionSchema: "drop_column",
 					Operations: migrations.Operations{
 						&migrations.OpDropColumn{
 							Table:  "users",
@@ -57,19 +59,19 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The deleted column is not present on the view in the new version schema.
-				versionSchema := roll.VersionedSchemaName(schema, "02_drop_column")
+				versionSchema := roll.VersionedSchemaName(schema, "drop_column")
 				ColumnMustNotExist(t, db, versionSchema, "users", "name")
 
 				// But the column is still present on the underlying table.
 				ColumnMustExist(t, db, schema, "users", "name")
 
 				// Inserting into the view in the new version schema should succeed.
-				MustInsert(t, db, schema, "02_drop_column", "users", map[string]string{
+				MustInsert(t, db, schema, "drop_column", "users", map[string]string{
 					"email": "foo@example.com",
 				})
 
 				// The "down" SQL has populated the removed column ("name")
-				results := MustSelect(t, db, schema, "01_add_table", "users")
+				results := MustSelect(t, db, schema, "add_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "FOO@EXAMPLE.COM", "email": "foo@example.com"},
 				}, results)
@@ -96,10 +98,10 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 				TriggerMustNotExist(t, db, schema, "users", triggerName)
 
 				// Inserting into the view in the new version schema should succeed.
-				MustInsert(t, db, schema, "02_drop_column", "users", map[string]string{
+				MustInsert(t, db, schema, "drop_column", "users", map[string]string{
 					"email": "bar@example.com",
 				})
-				results := MustSelect(t, db, schema, "02_drop_column", "users")
+				results := MustSelect(t, db, schema, "drop_column", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "email": "foo@example.com"},
 					{"id": 2, "email": "bar@example.com"},

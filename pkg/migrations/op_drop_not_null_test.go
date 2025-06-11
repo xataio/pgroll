@@ -21,7 +21,8 @@ func TestDropNotNull(t *testing.T) {
 			name: "remove not null with default up sql",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "reviews",
@@ -51,7 +52,8 @@ func TestDropNotNull(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_nullable",
+					Name:          "02_set_nullable",
+					VersionSchema: "set_nullable",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "reviews",
@@ -67,13 +69,13 @@ func TestDropNotNull(t *testing.T) {
 				ColumnMustExist(t, db, schema, "reviews", migrations.TemporaryName("review"))
 
 				// Inserting a NULL into the new `review` column should succeed
-				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "set_nullable", "reviews", map[string]string{
 					"username": "alice",
 					"product":  "apple",
 				})
 
 				// Inserting a non-NULL value into the new `review` column should succeed
-				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "set_nullable", "reviews", map[string]string{
 					"username": "bob",
 					"product":  "banana",
 					"review":   "brilliant",
@@ -81,20 +83,20 @@ func TestDropNotNull(t *testing.T) {
 
 				// The rows inserted into the new `review` column have been backfilled into the
 				// old `review` column.
-				rows := MustSelect(t, db, schema, "01_add_table", "reviews")
+				rows := MustSelect(t, db, schema, "add_table", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
 				}, rows)
 
 				// Inserting a NULL value into the old `review` column should fail
-				MustNotInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "add_table", "reviews", map[string]string{
 					"username": "carl",
 					"product":  "carrot",
 				}, testutils.NotNullViolationErrorCode)
 
 				// Inserting a non-NULL value into the old `review` column should succeed
-				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "add_table", "reviews", map[string]string{
 					"username": "dana",
 					"product":  "durian",
 					"review":   "delicious",
@@ -102,7 +104,7 @@ func TestDropNotNull(t *testing.T) {
 
 				// The non-NULL value inserted into the old `review` column has been copied
 				// unchanged into the new `review` column.
-				rows = MustSelect(t, db, schema, "02_set_nullable", "reviews")
+				rows = MustSelect(t, db, schema, "set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": nil},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},
@@ -118,13 +120,13 @@ func TestDropNotNull(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "reviews", "review")
 
 				// Writing a NULL review into the `review` column should succeed.
-				MustInsert(t, db, schema, "02_set_nullable", "reviews", map[string]string{
+				MustInsert(t, db, schema, "set_nullable", "reviews", map[string]string{
 					"username": "earl",
 					"product":  "eggplant",
 				})
 
 				// Selecting from the `reviews` view should succeed.
-				rows := MustSelect(t, db, schema, "02_set_nullable", "reviews")
+				rows := MustSelect(t, db, schema, "set_nullable", "reviews")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "username": "alice", "product": "apple", "review": "apple is good"},
 					{"id": 2, "username": "bob", "product": "banana", "review": "brilliant"},

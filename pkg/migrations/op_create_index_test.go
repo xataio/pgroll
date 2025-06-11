@@ -20,7 +20,8 @@ func TestCreateIndex(t *testing.T) {
 			name: "create index",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -40,7 +41,8 @@ func TestCreateIndex(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_create_index",
+					Name:          "02_create_index",
+					VersionSchema: "create_index",
 					Operations: migrations.Operations{
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",

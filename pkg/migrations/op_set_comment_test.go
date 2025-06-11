@@ -20,7 +20,8 @@ func TestSetComment(t *testing.T) {
 			name: "set column comment with default up and down SQL",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -40,7 +41,8 @@ func TestSetComment(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_comment",
+					Name:          "02_set_comment",
+					VersionSchema: "set_comment",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:   "users",
@@ -52,12 +54,12 @@ func TestSetComment(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema succeeds
-				MustInsert(t, db, schema, "02_set_comment", "users", map[string]string{
+				MustInsert(t, db, schema, "set_comment", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting a row into the old schema succeeds
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"name": "bob",
 				})
 
@@ -68,14 +70,14 @@ func TestSetComment(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "users", migrations.TemporaryName("name"), "name of the user")
 
 				// The old schema view has the expected rows
-				rows := MustSelect(t, db, schema, "01_add_table", "users")
+				rows := MustSelect(t, db, schema, "add_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "alice"},
 					{"id": 2, "name": "bob"},
 				}, rows)
 
 				// The new schema view has the expected rows
-				rows = MustSelect(t, db, schema, "02_set_comment", "users")
+				rows = MustSelect(t, db, schema, "set_comment", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "alice"},
 					{"id": 2, "name": "bob"},
@@ -90,7 +92,7 @@ func TestSetComment(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "users", "name", "name of the user")
 
 				// The new schema view has the expected rows
-				rows := MustSelect(t, db, schema, "02_set_comment", "users")
+				rows := MustSelect(t, db, schema, "set_comment", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "alice"},
 					{"id": 2, "name": "bob"},
