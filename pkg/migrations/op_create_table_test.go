@@ -22,7 +22,8 @@ func TestCreateTable(t *testing.T) {
 			name: "create table",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -44,15 +45,15 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The new view exists in the new version schema.
-				ViewMustExist(t, db, schema, "01_create_table", "users")
+				ViewMustExist(t, db, schema, "create_table", "users")
 
 				// Data can be inserted into the new view.
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+				MustInsert(t, db, schema, "create_table", "users", map[string]string{
 					"name": "Alice",
 				})
 
 				// Data can be retrieved from the new view.
-				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				rows := MustSelect(t, db, schema, "create_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
 				}, rows)
@@ -63,15 +64,15 @@ func TestCreateTable(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The view still exists
-				ViewMustExist(t, db, schema, "01_create_table", "users")
+				ViewMustExist(t, db, schema, "create_table", "users")
 
 				// Data can be inserted into the new view.
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+				MustInsert(t, db, schema, "create_table", "users", map[string]string{
 					"name": "Alice",
 				})
 
 				// Data can be retrieved from the new view.
-				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				rows := MustSelect(t, db, schema, "create_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
 				}, rows)

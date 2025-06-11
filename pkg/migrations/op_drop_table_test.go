@@ -18,7 +18,8 @@ func TestDropTable(t *testing.T) {
 			name: "drop table",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -38,7 +39,8 @@ func TestDropTable(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_drop_table",
+					Name:          "02_drop_table",
+					VersionSchema: "drop_table",
 					Operations: migrations.Operations{
 						&migrations.OpDropTable{
 							Name: "users",
@@ -48,7 +50,7 @@ func TestDropTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// The view for the deleted table does not exist in the new version schema.
-				ViewMustNotExist(t, db, schema, "02_drop_table", "users")
+				ViewMustNotExist(t, db, schema, "drop_table", "users")
 
 				// The underlying table has been soft-deleted (renamed).
 				TableMustExist(t, db, schema, migrations.DeletionName("users"))

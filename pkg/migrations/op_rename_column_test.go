@@ -19,7 +19,8 @@ func TestOpRenameColumn(t *testing.T) {
 			name: "rename column",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -39,7 +40,8 @@ func TestOpRenameColumn(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_rename_column",
+					Name:          "02_rename_column",
+					VersionSchema: "rename_column",
 					Operations: migrations.Operations{
 						&migrations.OpRenameColumn{
 							Table: "users",
@@ -54,17 +56,17 @@ func TestOpRenameColumn(t *testing.T) {
 				ColumnMustExist(t, db, schema, "users", "username")
 
 				// Insertions to the new column name in the new version schema should work.
-				MustInsert(t, db, schema, "02_rename_column", "users", map[string]string{
+				MustInsert(t, db, schema, "rename_column", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Insertions to the old column name in the old version schema should work.
-				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+				MustInsert(t, db, schema, "create_table", "users", map[string]string{
 					"username": "bob",
 				})
 
 				// Data can be read from the view in the new version schema.
-				rows := MustSelect(t, db, schema, "02_rename_column", "users")
+				rows := MustSelect(t, db, schema, "rename_column", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "alice"},
 					{"id": 2, "name": "bob"},
@@ -78,7 +80,7 @@ func TestOpRenameColumn(t *testing.T) {
 				ColumnMustExist(t, db, schema, "users", "name")
 
 				// Data can be read from the view in the new version schema.
-				rows := MustSelect(t, db, schema, "02_rename_column", "users")
+				rows := MustSelect(t, db, schema, "rename_column", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "alice"},
 					{"id": 2, "name": "bob"},

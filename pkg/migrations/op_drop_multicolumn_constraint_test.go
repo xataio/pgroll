@@ -19,7 +19,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 			name: "can drop a multi-column check constraint",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "products",
@@ -46,7 +47,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_create_check_constraint",
+					Name:          "02_create_check_constraint",
+					VersionSchema: "create_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpCreateConstraint{
 							Table:   "products",
@@ -66,7 +68,8 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "03_drop_check_constraint",
+					Name:          "03_drop_check_constraint",
+					VersionSchema: "drop_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpDropMultiColumnConstraint{
 							Table: "products",
@@ -85,7 +88,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into old schema that violates the check constraint fails.
-				MustNotInsert(t, db, schema, "02_create_check_constraint", "products", map[string]string{
+				MustNotInsert(t, db, schema, "create_check_constraint", "products", map[string]string{
 					"id":       "1",
 					"name":     "apple",
 					"price":    "0",
@@ -93,7 +96,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				}, testutils.CheckViolationErrorCode)
 
 				// Inserting a row into old schema that meets the check constraint succeeds.
-				MustInsert(t, db, schema, "02_create_check_constraint", "products", map[string]string{
+				MustInsert(t, db, schema, "create_check_constraint", "products", map[string]string{
 					"id":       "1",
 					"name":     "apple",
 					"price":    "1",
@@ -101,7 +104,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				})
 
 				// Inserting a row into the new schema that violates the check constraint succeeds.
-				MustInsert(t, db, schema, "03_drop_check_constraint", "products", map[string]string{
+				MustInsert(t, db, schema, "drop_check_constraint", "products", map[string]string{
 					"id":       "2",
 					"name":     "banana",
 					"price":    "0",
@@ -109,7 +112,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				})
 
 				// The `products` table in the new schema has the expected data.
-				rows := MustSelect(t, db, schema, "03_drop_check_constraint", "products")
+				rows := MustSelect(t, db, schema, "drop_check_constraint", "products")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "apple", "price": 1, "discount": 1},
 					{"id": 2, "name": "banana", "price": 0, "discount": 1},
@@ -117,7 +120,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 
 				// The `products` table in the old schema has the expected data.
 				// The row that violated the check constraint was migrated using the down SQL.
-				rows = MustSelect(t, db, schema, "02_create_check_constraint", "products")
+				rows = MustSelect(t, db, schema, "create_check_constraint", "products")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "apple", "price": 1, "discount": 1},
 					{"id": 2, "name": "banana", "price": 100, "discount": 1},
@@ -129,7 +132,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema that violates the check constraint succeeds.
-				MustInsert(t, db, schema, "03_drop_check_constraint", "products", map[string]string{
+				MustInsert(t, db, schema, "drop_check_constraint", "products", map[string]string{
 					"id":       "3",
 					"name":     "carrot",
 					"price":    "0",
@@ -137,7 +140,7 @@ func TestDropMultiColumnConstraint(t *testing.T) {
 				})
 
 				// The `products` table in the new schema has the expected data.
-				rows := MustSelect(t, db, schema, "03_drop_check_constraint", "products")
+				rows := MustSelect(t, db, schema, "drop_check_constraint", "products")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "apple", "price": 1, "discount": 1},
 					{"id": 2, "name": "banana", "price": 100, "discount": 1},

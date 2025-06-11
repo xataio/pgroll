@@ -17,7 +17,8 @@ func TestRawSQL(t *testing.T) {
 			name: "raw SQL",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpRawSQL{
 							Up: `
@@ -35,10 +36,10 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// table can be accessed after start
-				ViewMustExist(t, db, schema, "01_create_table", "test_table")
+				ViewMustExist(t, db, schema, "create_table", "test_table")
 
 				// inserts work
-				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
 			},
@@ -48,7 +49,7 @@ func TestRawSQL(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// inserts still work after complete
-				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
 			},

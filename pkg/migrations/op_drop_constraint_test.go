@@ -21,7 +21,8 @@ func TestDropConstraint(t *testing.T) {
 			name: "drop check constraint with default up sql",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "posts",
@@ -40,7 +41,8 @@ func TestDropConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_add_check_constraint",
+					Name:          "02_add_check_constraint",
+					VersionSchema: "add_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "posts",
@@ -55,7 +57,8 @@ func TestDropConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "03_drop_check_constraint",
+					Name:          "03_drop_check_constraint",
+					VersionSchema: "drop_check_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpDropConstraint{
 							Table: "posts",
@@ -70,35 +73,35 @@ func TestDropConstraint(t *testing.T) {
 				ColumnMustExist(t, db, schema, "posts", migrations.TemporaryName("title"))
 
 				// Inserting a row that meets the check constraint into the old view works.
-				MustInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "add_check_constraint", "posts", map[string]string{
 					"title": "post by alice",
 				})
 
 				// Inserting a row that does not meet the check constraint into the old view fails.
-				MustNotInsert(t, db, schema, "02_add_check_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "add_check_constraint", "posts", map[string]string{
 					"title": "b",
 				}, testutils.CheckViolationErrorCode)
 
 				// The inserted row has been backfilled into the new view.
-				rows := MustSelect(t, db, schema, "03_drop_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "drop_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 				}, rows)
 
 				// Inserting a row that meets the check constraint into the new view works.
-				MustInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "drop_check_constraint", "posts", map[string]string{
 					"title": "post by carl",
 				})
 
 				// Inserting a row that does not meet the check constraint into the new view also works.
-				MustInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "drop_check_constraint", "posts", map[string]string{
 					"title": "d",
 				})
 
 				// Both rows that were inserted into the new view have been backfilled
 				// into the old view. The short `title` value has been rewritten to meet the
 				// check constraint present on the old view.
-				rows = MustSelect(t, db, schema, "02_add_check_constraint", "posts")
+				rows = MustSelect(t, db, schema, "add_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 					{"id": 3, "title": "post by carl"},
@@ -111,12 +114,12 @@ func TestDropConstraint(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row that does not meet the check constraint into the new view works.
-				MustInsert(t, db, schema, "03_drop_check_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "drop_check_constraint", "posts", map[string]string{
 					"title": "e",
 				})
 
 				// The data in the new `posts` view is as expected.
-				rows := MustSelect(t, db, schema, "03_drop_check_constraint", "posts")
+				rows := MustSelect(t, db, schema, "drop_check_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice"},
 					{"id": 3, "title": "post by carl"},
