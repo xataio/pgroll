@@ -1162,6 +1162,10 @@
           "description": "Name of the migration",
           "type": "string"
         },
+        "version_schema": {
+          "description": "Name of the version schema to use for this migration",
+          "type": "string"
+        },
         "operations": {
           "$ref": "#/$defs/PgRollOperations"
         }
