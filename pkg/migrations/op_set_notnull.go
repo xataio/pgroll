@@ -34,7 +34,17 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	}
 
 	// Add an unchecked NOT NULL constraint to the new column.
-	if err := addNotNullConstraint(ctx, conn, table.Name, o.Column, column.Name); err != nil {
+	skipInherit := false
+	skipValidate := true // We will validate the constraint later in the Complete step.
+	if err := NewCreateCheckConstraintAction(
+		conn,
+		table.Name,
+		NotNullConstraintName(o.Column),
+		fmt.Sprintf("%s IS NOT NULL", o.Column),
+		[]string{o.Column},
+		skipInherit,
+		skipValidate,
+	).Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
