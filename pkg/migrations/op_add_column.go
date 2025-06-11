@@ -212,8 +212,7 @@ func (o *OpAddColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *sch
 		return err
 	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column.Name))))
+	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}

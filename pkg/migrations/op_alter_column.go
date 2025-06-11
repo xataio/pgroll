@@ -167,19 +167,12 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *s
 		return err
 	}
 
-	// Remove the up function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, o.Column)),
-	))
-	if err != nil {
-		return err
-	}
-
-	// Remove the down function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(o.Column))),
-	))
-	if err != nil {
+	// Remove the up and down functions and triggers
+	if err := NewDropFunctionAction(
+		conn,
+		TriggerFunctionName(o.Table, o.Column),
+		TriggerFunctionName(o.Table, TemporaryName(o.Column)),
+	).Execute(ctx); err != nil {
 		return err
 	}
 
