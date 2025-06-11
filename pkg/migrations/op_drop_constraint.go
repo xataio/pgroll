@@ -131,19 +131,12 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s
 		return err
 	}
 
-	// Remove the up function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, columnName)),
-	))
-	if err != nil {
-		return err
-	}
-
-	// Remove the down function and trigger
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("DROP FUNCTION IF EXISTS %s CASCADE",
-		pq.QuoteIdentifier(TriggerFunctionName(o.Table, TemporaryName(columnName))),
-	))
-	if err != nil {
+	// Remove the up and down functions and triggers
+	if err := NewDropFunctionAction(
+		conn,
+		TriggerFunctionName(o.Table, columnName),
+		TriggerFunctionName(o.Table, TemporaryName(columnName)),
+	).Execute(ctx); err != nil {
 		return err
 	}
 
