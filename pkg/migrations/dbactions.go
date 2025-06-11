@@ -556,3 +556,24 @@ func (a *dropConstraintAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.constraint)))
 	return err
 }
+
+type setNotNullAction struct {
+	conn   db.DB
+	table  string
+	column string
+}
+
+func NewSetNotNullAction(conn db.DB, table, column string) *setNotNullAction {
+	return &setNotNullAction{
+		conn:   conn,
+		table:  table,
+		column: column,
+	}
+}
+
+func (a *setNotNullAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.column)))
+	return err
+}
