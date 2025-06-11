@@ -17,71 +17,79 @@ import (
 // * Renames a duplicated column to its original name
 // * Renames any foreign keys on the duplicated column to their original name.
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
-func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table, column *schema.Column) error {
+type renameDuplicatedColumnAction struct {
+	conn  db.DB
+	table *schema.Table
+	from  string
+	to    string
+}
+
+func NewRenameDuplicatedColumnAction(conn db.DB, table *schema.Table, column string) *renameDuplicatedColumnAction {
+	return &renameDuplicatedColumnAction{
+		conn:  conn,
+		table: table,
+		from:  TemporaryName(column),
+		to:    column,
+	}
+}
+
+func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 	const (
-		cSetNotNullSQL             = `ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL`
-		cDropConstraintSQL         = `ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s`
 		cCreateUniqueConstraintSQL = `ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s`
 		cRenameIndexSQL            = `ALTER INDEX IF EXISTS %s RENAME TO %s`
 	)
 
-	err := NewRenameColumnAction(conn, table.Name, TemporaryName(column.Name), column.Name).Execute(ctx)
+	err := NewRenameColumnAction(a.conn, a.table.Name, a.from, a.to).Execute(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to rename duplicated column %q: %w", column.Name, err)
+		return fmt.Errorf("failed to rename duplicated column %q: %w", a.to, err)
 	}
 
 	// Rename any foreign keys on the duplicated column from their temporary name
 	// to their original name
-	for _, fk := range table.ForeignKeys {
+	for _, fk := range a.table.ForeignKeys {
 		if !IsDuplicatedName(fk.Name) {
 			continue
 		}
 
-		if slices.Contains(fk.Columns, TemporaryName(column.Name)) {
-			err = NewRenameConstraintAction(conn, table.Name, fk.Name, StripDuplicationPrefix(fk.Name)).Execute(ctx)
+		if slices.Contains(fk.Columns, a.from) {
+			err = NewRenameConstraintAction(a.conn, a.table.Name, fk.Name, StripDuplicationPrefix(fk.Name)).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to rename foreign key constraint %q: %w", fk.Name, err)
 			}
-			delete(table.ForeignKeys, fk.Name)
+			delete(a.table.ForeignKeys, fk.Name)
 		}
 	}
 
 	// Validate and rename any temporary `CHECK` constraints on the duplicated
 	// column.
-	for _, cc := range table.CheckConstraints {
+	for _, cc := range a.table.CheckConstraints {
 		if !IsDuplicatedName(cc.Name) {
 			continue
 		}
 
-		if slices.Contains(cc.Columns, TemporaryName(column.Name)) {
-			err := NewValidateConstraintAction(conn, table.Name, cc.Name).Execute(ctx)
+		if slices.Contains(cc.Columns, a.from) {
+			err := NewValidateConstraintAction(a.conn, a.table.Name, cc.Name).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to validate check constraint %q: %w", cc.Name, err)
 			}
 
-			err = NewRenameConstraintAction(conn, table.Name, cc.Name, StripDuplicationPrefix(cc.Name)).Execute(ctx)
+			err = NewRenameConstraintAction(a.conn, a.table.Name, cc.Name, StripDuplicationPrefix(cc.Name)).Execute(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to rename check constraint %q: %w", cc.Name, err)
 			}
-			delete(table.CheckConstraints, cc.Name)
+			delete(a.table.CheckConstraints, cc.Name)
 
 			// If the constraint is a `NOT NULL` constraint, convert the duplicated
 			// unchecked `NOT NULL` constraint into a `NOT NULL` attribute on the
 			// column.
 			if IsNotNullConstraintName(StripDuplicationPrefix(cc.Name)) {
 				// Apply `NOT NULL` attribute to the column. This uses the validated constraint
-				setNotNullSQL := fmt.Sprintf(cSetNotNullSQL,
-					pq.QuoteIdentifier(table.Name),
-					pq.QuoteIdentifier(column.Name),
-				)
-
-				_, err = conn.ExecContext(ctx, setNotNullSQL)
-				if err != nil {
+				if err := NewSetNotNullAction(a.conn, a.table.Name, a.to).Execute(ctx); err != nil {
 					return fmt.Errorf("failed to set column not null: %w", err)
 				}
 
 				// Drop the constraint
-				err = NewDropConstraintAction(conn, table.Name, NotNullConstraintName(column.Name)).Execute(ctx)
+				err = NewDropConstraintAction(a.conn, a.table.Name, NotNullConstraintName(a.to)).Execute(ctx)
 				if err != nil {
 					return fmt.Errorf("failed to drop not null constraint: %w", err)
 				}
@@ -91,8 +99,8 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 
 	// Rename any indexes on the duplicated column and use unique indexes to
 	// create `UNIQUE` constraints.
-	for _, idx := range table.Indexes {
-		if !IsDuplicatedName(idx.Name) || !slices.Contains(idx.Columns, TemporaryName(column.Name)) {
+	for _, idx := range a.table.Indexes {
+		if !IsDuplicatedName(idx.Name) || !slices.Contains(idx.Columns, a.from) {
 			continue
 		}
 
@@ -102,23 +110,23 @@ func RenameDuplicatedColumn(ctx context.Context, conn db.DB, table *schema.Table
 			pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 		)
 
-		_, err = conn.ExecContext(ctx, renameIndexSQL)
+		_, err = a.conn.ExecContext(ctx, renameIndexSQL)
 		if err != nil {
 			return fmt.Errorf("failed to rename index %q: %w", idx.Name, err)
 		}
 
 		// Index no longer exists, remove it from the table
-		delete(table.Indexes, idx.Name)
+		delete(a.table.Indexes, idx.Name)
 
-		if _, ok := table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
+		if _, ok := a.table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
 			createUniqueConstraintSQL := fmt.Sprintf(cCreateUniqueConstraintSQL,
-				pq.QuoteIdentifier(table.Name),
+				pq.QuoteIdentifier(a.table.Name),
 				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 			)
 
-			_, err = conn.ExecContext(ctx, createUniqueConstraintSQL)
+			_, err = a.conn.ExecContext(ctx, createUniqueConstraintSQL)
 			if err != nil {
 				return fmt.Errorf("failed to create unique constraint from index %q: %w", idx.Name, err)
 			}

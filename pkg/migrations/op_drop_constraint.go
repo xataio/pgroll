@@ -111,7 +111,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s
 	}
 
 	// Rename the new column to the old column name
-	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
+	if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
 		return err
 	}
 
