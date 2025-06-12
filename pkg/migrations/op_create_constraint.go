@@ -168,7 +168,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB,
 		if column == nil {
 			return ColumnDoesNotExistError{Table: o.Table, Name: col}
 		}
-		if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
+		if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
 			return err
 		}
 	}

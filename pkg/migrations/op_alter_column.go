@@ -134,7 +134,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *s
 	if column == nil {
 		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
-	if err := RenameDuplicatedColumn(ctx, conn, table, column); err != nil {
+	if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
 		return err
 	}
 
