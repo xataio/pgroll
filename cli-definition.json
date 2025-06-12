@@ -242,7 +242,7 @@
     },
     {
       "name": "update",
-      "short": "update outdated migrations in a directory",
+      "short": "Update outdated migrations in a directory",
       "use": "update <directory>",
       "example": "update ./migrations",
       "flags": [
@@ -250,12 +250,6 @@
           "name": "json",
           "shorthand": "j",
           "description": "Output migration file in JSON format instead of YAML",
-          "default": "false"
-        },
-        {
-          "name": "local",
-          "shorthand": "l",
-          "description": "Update all local migration files",
           "default": "false"
         }
       ],

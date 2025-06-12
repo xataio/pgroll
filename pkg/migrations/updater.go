@@ -12,10 +12,6 @@ type FileUpdater struct {
 	updaterFns map[string][]UpdaterFn
 }
 
-func (u *FileUpdater) RegisterFn(op string, fn UpdaterFn) {
-	u.updaterFns[op] = append(u.updaterFns[op], fn)
-}
-
 func NewFileUpdater(updaters map[string][]UpdaterFn) *FileUpdater {
 	return &FileUpdater{
 		updaterFns: updaters,
