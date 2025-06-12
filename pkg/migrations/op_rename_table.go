@@ -18,10 +18,10 @@ func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	return nil, s.RenameTable(o.From, o.To)
 }
 
-func (o *OpRenameTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return NewRenameTableAction(conn, o.From, o.To).Execute(ctx)
+	return []DBAction{NewRenameTableAction(conn, o.From, o.To)}, nil
 }
 
 func (o *OpRenameTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

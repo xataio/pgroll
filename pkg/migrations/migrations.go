@@ -25,7 +25,7 @@ type Operation interface {
 	// Complete will update the database schema to match the current version
 	// after calling Start.
 	// This method should be called once the previous version is no longer used.
-	Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error
+	Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error)
 
 	// Rollback will revert the changes made by Start. It is not possible to
 	// rollback a completed migration.

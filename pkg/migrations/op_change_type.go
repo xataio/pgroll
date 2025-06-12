@@ -31,10 +31,10 @@ func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpChangeType) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpChangeType) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpChangeType) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

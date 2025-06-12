@@ -79,11 +79,11 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	return nil, err
 }
 
-func (o *OpCreateIndex) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	// No-op
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpCreateIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

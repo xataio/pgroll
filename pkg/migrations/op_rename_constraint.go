@@ -19,11 +19,13 @@ func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 	return nil, nil
 }
 
-func (o *OpRenameConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	// rename the constraint in the underlying table
-	return NewRenameConstraintAction(conn, o.Table, o.From, o.To).Execute(ctx)
+	return []DBAction{
+		// rename the constraint in the underlying table
+		NewRenameConstraintAction(conn, o.Table, o.From, o.To),
+	}, nil
 }
 
 func (o *OpRenameConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

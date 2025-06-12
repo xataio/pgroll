@@ -37,16 +37,13 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, 
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpSetCheckConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetCheckConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	// Validate the check constraint
-	err := NewValidateConstraintAction(conn, o.Table, o.Check.Name).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return []DBAction{
+		// Validate the check constraint
+		NewValidateConstraintAction(conn, o.Table, o.Check.Name),
+	}, nil
 }
 
 func (o *OpSetCheckConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

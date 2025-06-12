@@ -97,42 +97,26 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	table := s.GetTable(o.Table)
 
+	dbActions := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		// Remove the up and down function and trigger
-		err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, columnName), backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		if err := NewAlterSequenceOwnerAction(conn, o.Table, columnName, TemporaryName(columnName)).Execute(ctx); err != nil {
-			return err
-		}
-
-		removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-		err = removeBackfillColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		removeOldColumn := NewDropColumnAction(conn, o.Table, columnName)
-		err = removeOldColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Rename the new column to the old column name
 		column := table.GetColumn(columnName)
-		if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
-			return err
-		}
+		dbActions = append(dbActions,
+			NewDropFunctionAction(conn,
+				backfill.TriggerFunctionName(o.Table, columnName),
+				backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))),
+			NewAlterSequenceOwnerAction(conn, o.Table, columnName, TemporaryName(columnName)),
+			NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
+			NewDropColumnAction(conn, o.Table, columnName),
+			NewRenameDuplicatedColumnAction(conn, table, column.Name),
+		)
 	}
 
-	return nil
+	return dbActions, nil
 }
 
 func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

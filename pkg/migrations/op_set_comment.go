@@ -32,10 +32,12 @@ func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	return backfill.NewTask(tbl), NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment).Execute(ctx)
 }
 
-func (o *OpSetComment) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetComment) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return NewCommentColumnAction(conn, o.Table, o.Column, o.Comment).Execute(ctx)
+	return []DBAction{
+		NewCommentColumnAction(conn, o.Table, o.Column, o.Comment),
+	}, nil
 }
 
 func (o *OpSetComment) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

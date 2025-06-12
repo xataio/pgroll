@@ -204,9 +204,15 @@ func (m *Roll) Complete(ctx context.Context) error {
 	// execute operations
 	refreshViews := false
 	for _, op := range migration.Operations {
-		err := op.Complete(ctx, m.logger, m.pgConn, currentSchema)
+		actions, err := op.Complete(m.logger, m.pgConn, currentSchema)
 		if err != nil {
-			return fmt.Errorf("unable to execute complete operation: %w", err)
+			return fmt.Errorf("unable to collect actions for complete operation: %w", err)
+		}
+
+		for _, action := range actions {
+			if err := action.Execute(ctx); err != nil {
+				return fmt.Errorf("unable to execute complete operation: %w", err)
+			}
 		}
 
 		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
