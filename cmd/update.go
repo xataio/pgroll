@@ -49,7 +49,7 @@ func updateCmd() *cobra.Command {
 			}
 
 			if len(migs) == 0 {
-				fmt.Println("database is up to date; no migrations to apply")
+				fmt.Println("nothing to do; all migration files are up to date")
 				return nil
 			}
 
