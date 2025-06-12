@@ -18,6 +18,34 @@ type DBAction interface {
 	Execute(context.Context) error
 }
 
+type addColumnAction struct {
+	conn   db.DB
+	table  string
+	column Column
+	withPK bool
+}
+
+func NewAddColumnAction(conn db.DB, table string, c Column, withPK bool) *addColumnAction {
+	return &addColumnAction{
+		conn:   conn,
+		table:  table,
+		column: c,
+	}
+}
+
+func (a *addColumnAction) Execute(ctx context.Context) error {
+	colSQL, err := ColumnSQLWriter{WithPK: a.withPK}.Write(a.column)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
+		pq.QuoteIdentifier(a.table),
+		colSQL,
+	))
+	return err
+}
+
 // dropColumnAction is a DBAction that drops one or more columns from a table.
 type dropColumnAction struct {
 	conn db.DB
