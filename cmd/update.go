@@ -20,7 +20,7 @@ func updateCmd() *cobra.Command {
 
 	updateCmd := &cobra.Command{
 		Use:       "update <directory>",
-		Short:     "update outdated migrations in a directory",
+		Short:     "Update outdated migrations in a directory",
 		Example:   "update ./migrations",
 		Args:      cobra.ExactArgs(1),
 		ValidArgs: []string{"directory"},
