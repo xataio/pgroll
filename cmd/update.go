@@ -53,7 +53,7 @@ func updateCmd() *cobra.Command {
 					continue
 				}
 
-				updater := migrations.NewFileUpdater()
+				updater := newFileUpdater()
 				updatedMigration, err := updater.Update(mig)
 				if err != nil {
 					return fmt.Errorf("failed to update migration file: %w", err)
@@ -80,4 +80,12 @@ func updateCmd() *cobra.Command {
 	updateCmd.Flags().BoolVarP(&useJSON, "json", "j", false, "Output migration file in JSON format instead of YAML")
 
 	return updateCmd
+}
+
+func newFileUpdater() *migrations.FileUpdater {
+	return migrations.NewFileUpdater(map[string][]migrations.UpdaterFn{
+		string(migrations.OpNameCreateIndex): {
+			migrations.UpdateCreateIndexColumnsList,
+		},
+	})
 }
