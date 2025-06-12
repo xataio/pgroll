@@ -191,11 +191,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 	// optimization, set it here.
 	column := s.GetTable(o.Table).GetColumn(TemporaryName(o.Column.Name))
 	if o.Column.HasDefault() && column.Default == nil {
-		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET DEFAULT %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Column.Name),
-			*o.Column.Default,
-		))
+		err := NewSetDefaultValueAction(conn, o.Table, o.Column.Name, *o.Column.Default).Execute(ctx)
 		if err != nil {
 			return err
 		}
