@@ -20,7 +20,7 @@ func NewFileUpdater() *FileUpdater {
 	updater := &FileUpdater{updaterFns: make(map[string][]updaterFn)}
 
 	// register updater functions
-	updater.registerFn("create_index", updateCreateIndexColumnsList)
+	updater.registerFn(string(OpNameCreateIndex), updateCreateIndexColumnsList)
 
 	return updater
 }
