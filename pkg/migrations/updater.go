@@ -4,25 +4,22 @@ package migrations
 
 import "encoding/json"
 
-type updaterFn func(operation map[string]any) (map[string]any, error)
+type UpdaterFn func(operation map[string]any) (map[string]any, error)
 
 // FileUpdater updates raw migration files if they contain any breaking
 // changes that have proper updater functions registered.
 type FileUpdater struct {
-	updaterFns map[string][]updaterFn
+	updaterFns map[string][]UpdaterFn
 }
 
-func (u *FileUpdater) registerFn(op string, fn updaterFn) {
+func (u *FileUpdater) RegisterFn(op string, fn UpdaterFn) {
 	u.updaterFns[op] = append(u.updaterFns[op], fn)
 }
 
-func NewFileUpdater() *FileUpdater {
-	updater := &FileUpdater{updaterFns: make(map[string][]updaterFn)}
-
-	// register updater functions
-	updater.registerFn(string(OpNameCreateIndex), updateCreateIndexColumnsList)
-
-	return updater
+func NewFileUpdater(updaters map[string][]UpdaterFn) *FileUpdater {
+	return &FileUpdater{
+		updaterFns: updaters,
+	}
 }
 
 func (u *FileUpdater) Update(rawMigration *RawMigration) (*Migration, error) {
@@ -57,7 +54,7 @@ func (u *FileUpdater) Update(rawMigration *RawMigration) (*Migration, error) {
 // columns: [name] -> columns: name: {}
 // breaking change was released in v0.10.0
 // PR: https://github.com/xataio/pgroll/pull/697
-func updateCreateIndexColumnsList(op map[string]any) (map[string]any, error) {
+func UpdateCreateIndexColumnsList(op map[string]any) (map[string]any, error) {
 	body, err := json.Marshal(op)
 	if err != nil {
 		return nil, err
