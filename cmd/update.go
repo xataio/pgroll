@@ -53,8 +53,7 @@ func updateCmd() *cobra.Command {
 					continue
 				}
 
-				updater := newFileUpdater()
-				updatedMigration, err := updater.Update(mig)
+				updatedMigration, err := newFileUpdater().Update(mig)
 				if err != nil {
 					return fmt.Errorf("failed to update migration file: %w", err)
 				}
