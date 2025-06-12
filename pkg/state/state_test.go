@@ -1353,6 +1353,85 @@ func TestReadSchema(t *testing.T) {
 	})
 }
 
+func TestPgrollSchemaVersionUpgrades(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	tests := []struct {
+		name                  string
+		initialSchemaVersion  string
+		pgrollVersion         string
+		expectedSchemaVersion string
+		expectedError         error
+	}{
+		{
+			name:                  "pgroll schema is older than the pgroll version - pgroll schema is updated",
+			initialSchemaVersion:  "0.13.0",
+			pgrollVersion:         "0.14.0",
+			expectedSchemaVersion: "0.14.0",
+		},
+		{
+			name:                 "pgroll schema is newer than the pgroll version - state initialization fails",
+			initialSchemaVersion: "0.15.0",
+			pgrollVersion:        "0.14.0",
+			expectedError:        state.ErrNewPgrollSchema,
+		},
+		{
+			name:                  "pgroll schema is the same as the pgroll version - pgroll schema is not updated",
+			initialSchemaVersion:  "0.13.0",
+			pgrollVersion:         "0.13.0",
+			expectedSchemaVersion: "0.13.0",
+		},
+		{
+			name:                  "development versions of pgroll never cause a pgroll schema update",
+			initialSchemaVersion:  "0.13.0",
+			pgrollVersion:         "development",
+			expectedSchemaVersion: "0.13.0",
+		},
+		{
+			name:                  "development versions of the pgroll schema are never upgraded",
+			initialSchemaVersion:  "development",
+			pgrollVersion:         "0.13.0",
+			expectedSchemaVersion: "development",
+		},
+		{
+			name:                  "invalid pgroll version - pgroll schema is not updated",
+			initialSchemaVersion:  "0.14.0",
+			pgrollVersion:         "banana",
+			expectedSchemaVersion: "0.14.0",
+		},
+		{
+			name:                  "invalid pgroll schema version - pgroll schema is not updated",
+			initialSchemaVersion:  "banana",
+			pgrollVersion:         "0.14.0",
+			expectedSchemaVersion: "banana",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testutils.WithStateAtVersionAndConnectionToContainer(t, tt.initialSchemaVersion, func(st *state.State, connStr string, _ *sql.DB) {
+				// Create a new state instance with the specified pgroll version. This
+				// will upgrade the pgroll schema if necessary.
+				s, err := state.New(ctx, connStr, "pgroll", state.WithPgrollVersion(tt.pgrollVersion))
+
+				if tt.expectedError != nil {
+					require.ErrorIs(t, err, tt.expectedError)
+				} else {
+					require.NoError(t, err)
+					// Get the version of the pgroll schema
+					schemaVersion, err := s.SchemaVersion(ctx)
+					require.NoError(t, err)
+
+					// Ensure the expected pgroll schema version
+					require.Equal(t, tt.expectedSchemaVersion, schemaVersion)
+				}
+			})
+		})
+	}
+}
+
 func clearOIDS(s *schema.Schema) {
 	for k := range s.Tables {
 		c := s.Tables[k]

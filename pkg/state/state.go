@@ -25,11 +25,12 @@ var sqlInit string
 const applicationName = "pgroll-state"
 
 type State struct {
-	pgConn *sql.DB
-	schema string
+	pgConn        *sql.DB
+	pgrollVersion string
+	schema        string
 }
 
-func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
+func New(ctx context.Context, pgURL, stateSchema string, opts ...StateOpt) (*State, error) {
 	dsn, err := pq.ParseURL(pgURL)
 	if err != nil {
 		dsn = pgURL
@@ -46,10 +47,38 @@ func New(ctx context.Context, pgURL, stateSchema string) (*State, error) {
 		return nil, err
 	}
 
-	return &State{
-		pgConn: conn,
-		schema: stateSchema,
-	}, nil
+	st := &State{
+		pgConn:        conn,
+		pgrollVersion: "development",
+		schema:        stateSchema,
+	}
+
+	// Apply options to the State instance
+	for _, opt := range opts {
+		opt(st)
+	}
+
+	// Check version compatibility between the pgroll version and the version of
+	// the pgroll state schema.
+	compat, err := st.VersionCompatibility(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// If the state schema is newer than the pgroll version, return an error
+	if compat == VersionCompatVersionSchemaNewer {
+		return nil, ErrNewPgrollSchema
+	}
+
+	// if the state schema is older than the pgroll version, re-initialize the
+	// state schema
+	if compat == VersionCompatVersionSchemaOlder {
+		if err := st.Init(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	return st, nil
 }
 
 // Init initializes the required pg_roll schema to store the state
@@ -76,6 +105,22 @@ func (s *State) Init(ctx context.Context) error {
 		return err
 	}
 
+	// Clear the pgroll_version table
+	_, err = tx.ExecContext(ctx, fmt.Sprintf("TRUNCATE TABLE %s.pgroll_version",
+		pq.QuoteIdentifier(s.schema)))
+	if err != nil {
+		return err
+	}
+
+	// Insert the version of `pgroll` that is being initialized into the
+	// pgroll_version table
+	_, err = tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO %s.pgroll_version (version) VALUES ($1)",
+		pq.QuoteIdentifier(s.schema)),
+		s.pgrollVersion)
+	if err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 
@@ -83,6 +128,7 @@ func (s *State) PgConn() *sql.DB {
 	return s.pgConn
 }
 
+// IsInitialized checks if the pgroll state schema is initialized.
 func (s *State) IsInitialized(ctx context.Context) (bool, error) {
 	var isInitialized bool
 	err := s.pgConn.QueryRowContext(ctx,

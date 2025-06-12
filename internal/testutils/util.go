@@ -131,6 +131,24 @@ func WithStateAndConnectionToContainer(t *testing.T, fn func(*state.State, *sql.
 	WithStateInSchemaAndConnectionToContainer(t, "pgroll", fn)
 }
 
+func WithStateAtVersionAndConnectionToContainer(t *testing.T, version string, fn func(*state.State, string, *sql.DB)) {
+	t.Helper()
+	ctx := context.Background()
+
+	db, connStr, _ := setupTestDatabase(t)
+
+	st, err := state.New(ctx, connStr, "pgroll", state.WithPgrollVersion(version))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := st.Init(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	fn(st, connStr, db)
+}
+
 func WithUninitializedState(t *testing.T, fn func(*state.State)) {
 	t.Helper()
 	ctx := context.Background()
