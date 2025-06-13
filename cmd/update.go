@@ -41,7 +41,7 @@ func updateCmd() *cobra.Command {
 
 			files, err := migrations.CollectFilesFromDir(os.DirFS(migrationsDir))
 			if err != nil {
-				return fmt.Errorf("failed to reading migration files from directory: %w", err)
+				return fmt.Errorf("failed to read migration files from directory: %w", err)
 			}
 
 			for _, f := range files {
