@@ -9,11 +9,11 @@ In this guide, we are going to learn how to update `pgroll` migration files in c
 `pgroll` hasn't reached v1 yet, so we are releasing breaking changes from time to time. Adopting these changes can be painful manually. We suggest you use the subcommand `update` to make sure all your local migrations are correct.
 </Warning>
 
-We provide two ways to update your migration files. One way is to update your local unapplied migrations when you are in the middle of a development and you happened to update pgroll. Other method is to pull migration files from a remote PostgreSQL database, and update all migrations in the folder.
+We provide two ways to update your migration files. One way is to update your local migrations when you are in the middle of a development and you happened to update pgroll. Other method is to pull migration files from a remote PostgreSQL database, and update all migrations in the folder.
 
-## Update unapplied migrations locally
+## Update your local migrations
 
-Let's say that you are working on your latest feature, already written your migration file. Then you update `pgroll` to leverage the latest features and improvements of the fresh release. But the release also contains breaking changes that impact your local, unapplied migrations. In this case you can run `update {migrations-folder}`, and `pgroll` will go through all of your local, unapplied migrations and rewrite the operations that are no longer considered correct.
+Let's say that you are working on your latest feature, already written your migration file. Then you update `pgroll` to leverage the latest features and improvements of the fresh release. But the release also contains breaking changes that impact your local migrations. In this case you can run `update {migrations-folder}`, and `pgroll` will go through all of your local migrations and rewrite the operations that are no longer considered correct.
 
 ```sh
 $ pgroll update {migrations-folder}
@@ -32,5 +32,5 @@ $ pgroll pull {migrations-folder}
 Then run `update` to update all files in the migrations folder:
 
 ```sh
-$ pgroll update --local {migrations-folder}
+$ pgroll update {migrations-folder}
 ```
