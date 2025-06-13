@@ -225,8 +225,7 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 }
 
 // LatestVersion returns the name of the latest version schema, or nil if there
-// is none. No active version occurs after initialization, but before the first
-// migration is started.
+// is none.
 func (s *State) LatestVersion(ctx context.Context, schema string) (*string, error) {
 	var version *string
 	err := s.pgConn.QueryRowContext(ctx,
@@ -239,11 +238,38 @@ func (s *State) LatestVersion(ctx context.Context, schema string) (*string, erro
 	return version, nil
 }
 
+// LatestMigration returns the name of the latest migration, or nil if there
+// is none.
+func (s *State) LatestMigration(ctx context.Context, schema string) (*string, error) {
+	var migration *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.latest_migration($1)", pq.QuoteIdentifier(s.schema)),
+		schema).Scan(&migration)
+	if err != nil {
+		return nil, err
+	}
+
+	return migration, nil
+}
+
 // PreviousVersion returns the name of the previous version schema
 func (s *State) PreviousVersion(ctx context.Context, schema string, includeInferred bool) (*string, error) {
 	var parent *string
 	err := s.pgConn.QueryRowContext(ctx,
 		fmt.Sprintf("SELECT %s.previous_version($1, $2)", pq.QuoteIdentifier(s.schema)),
+		schema, includeInferred).Scan(&parent)
+	if err != nil {
+		return nil, err
+	}
+
+	return parent, nil
+}
+
+// PreviousMigration returns the name of the previous migration
+func (s *State) PreviousMigration(ctx context.Context, schema string, includeInferred bool) (*string, error) {
+	var parent *string
+	err := s.pgConn.QueryRowContext(ctx,
+		fmt.Sprintf("SELECT %s.previous_migration($1, $2)", pq.QuoteIdentifier(s.schema)),
 		schema, includeInferred).Scan(&parent)
 	if err != nil {
 		return nil, err
@@ -295,7 +321,7 @@ func (s *State) Start(ctx context.Context, schemaname string, migration *migrati
 
 	// create a new migration object and return the previous known schema
 	// if there is no previous migration, read the schema from postgres
-	stmt := fmt.Sprintf(`INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_version($1), $3)`,
+	stmt := fmt.Sprintf(`INSERT INTO %[1]s.migrations (schema, name, parent, migration) VALUES ($1, $2, %[1]s.latest_migration($1), $3)`,
 		pq.QuoteIdentifier(s.schema))
 
 	_, err = s.pgConn.ExecContext(ctx, stmt, schemaname, migration.Name, rawMigration)
@@ -437,7 +463,7 @@ func (s *State) CreateBaseline(ctx context.Context, schemaName, baselineVersion 
 	stmt := fmt.Sprintf(`
 		INSERT INTO %[1]s.migrations 
 		(schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, TRUE,  %[1]s.latest_version($1), 'baseline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		VALUES ($1, $2, $3, $4, TRUE,  %[1]s.latest_migration($1), 'baseline', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
 		pq.QuoteIdentifier(s.schema))
 
 	_, err = s.pgConn.ExecContext(ctx, stmt, schemaName, baselineVersion, rawMigration, rawSchema)

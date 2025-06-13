@@ -155,6 +155,49 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			}
 		})
 	})
+
+	t.Run("when the previous version sets a non-default version schema name", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			migs := []migrations.Migration{
+				{
+					Name:          "01_create_table",
+					VersionSchema: "01_foo",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_another_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+			}
+
+			// Start and complete both migrations
+			for _, mig := range migs {
+				err := m.Start(ctx, &mig, backfill.NewConfig())
+				require.NoError(t, err)
+				err = m.Complete(ctx)
+				require.NoError(t, err)
+			}
+
+			// Ensure that the schema for the first migration has been dropped
+			require.False(t, schemaExists(t, db, roll.VersionedSchemaName("public", "01_foo")))
+		})
+	})
 }
 
 func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
@@ -215,23 +258,48 @@ func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
 func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
+	t.Run("when the migration does not set an explicit version schema name ", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+			version := "1_create_table"
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
-		if err := mig.Rollback(ctx); err != nil {
-			t.Fatalf("Failed to rollback migration: %v", err)
-		}
+			if err := mig.Start(ctx, &migrations.Migration{
+				Name:       version,
+				Operations: migrations.Operations{createTableOp("table1")},
+			}, backfill.NewConfig()); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
+			}
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to rollback migration: %v", err)
+			}
 
-		//
-		// Check that the schema has been dropped
-		//
-		if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
-			t.Errorf("Expected schema %q to not exist", version)
-		}
+			// Check that the schema has been dropped
+			if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
+				t.Errorf("Expected schema %q to not exist", version)
+			}
+		})
+	})
+
+	t.Run("when the migration does set an explicit version schema name ", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			if err := mig.Start(ctx, &migrations.Migration{
+				Name:          "1_create_table",
+				VersionSchema: "1_foo",
+				Operations:    migrations.Operations{createTableOp("table1")},
+			}, backfill.NewConfig()); err != nil {
+				t.Fatalf("Failed to start migration: %v", err)
+			}
+			if err := mig.Rollback(ctx); err != nil {
+				t.Fatalf("Failed to rollback migration: %v", err)
+			}
+
+			// Check that the schema has been dropped
+			if schemaExists(t, db, roll.VersionedSchemaName(cSchema, "1_foo")) {
+				t.Errorf("Expected schema %q to not exist", "1_foo")
+			}
+		})
 	})
 }
 
@@ -707,6 +775,43 @@ func TestRollSchemaMethodReturnsCorrectSchema(t *testing.T) {
 		testutils.WithMigratorInSchemaAndConnectionToContainer(t, "apples", func(mig *roll.Roll, _ *sql.DB) {
 			assert.Equal(t, "apples", mig.Schema())
 		})
+	})
+}
+
+func TestLatestVersionAndLatestMigrationMethodsRespectVersionSchemaAndName(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(r *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create a migration with an explicit version schema
+		mig := &migrations.Migration{
+			Name:          "01_create_table",
+			VersionSchema: "01_foo",
+			Operations:    migrations.Operations{createTableOp("table1")},
+		}
+
+		// Start and complete a migration
+		err := r.Start(ctx, mig, backfill.NewConfig())
+		require.NoError(t, err)
+		err = r.Complete(ctx)
+		require.NoError(t, err)
+
+		// Get the latest version
+		latestVersion, err := r.State().LatestVersion(ctx, "public")
+		require.NoError(t, err)
+
+		// Get the latest migration name
+		latestMigration, err := r.State().LatestMigration(ctx, "public")
+		require.NoError(t, err)
+
+		// Assert that the latest version is correct
+		require.NotNil(t, latestVersion)
+		require.Equal(t, "01_foo", *latestVersion)
+
+		// Assert that the latest migration name is correct
+		require.NotNil(t, latestMigration)
+		require.Equal(t, "01_create_table", *latestMigration)
 	})
 }
 

@@ -136,16 +136,15 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// create views for the new version
-	if err := m.ensureViews(ctx, newSchema, migration.Name); err != nil {
+	if err := m.ensureViews(ctx, newSchema, migration); err != nil {
 		return nil, err
 	}
 
 	return tablesToBackfill, nil
 }
 
-func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version string) error {
-	// create schema for the new version
-	versionSchema := VersionedSchemaName(m.schema, version)
+func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, mig *migrations.Migration) error {
+	versionSchema := VersionedSchemaName(m.schema, mig.VersionSchemaName())
 	_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", pq.QuoteIdentifier(versionSchema)))
 	if err != nil {
 		return err
@@ -156,13 +155,13 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, version s
 		if table.Deleted {
 			continue
 		}
-		err = m.ensureView(ctx, version, name, table)
+		err = m.ensureView(ctx, mig.VersionSchemaName(), name, table)
 		if err != nil {
 			return fmt.Errorf("unable to create view: %w", err)
 		}
 	}
 
-	m.logger.LogSchemaCreation(version, versionSchema)
+	m.logger.LogSchemaCreation(mig.VersionSchemaName(), versionSchema)
 
 	return nil
 }
@@ -237,7 +236,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 			return fmt.Errorf("unable to read schema: %w", err)
 		}
 
-		err = m.ensureViews(ctx, currentSchema, migration.Name)
+		err = m.ensureViews(ctx, currentSchema, migration)
 		if err != nil {
 			return err
 		}
@@ -266,7 +265,7 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	if !m.disableVersionSchemas {
 		// delete the schema and view for the new version
-		versionSchema := VersionedSchemaName(m.schema, migration.Name)
+		versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
 		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 		if err != nil {
 			return err
@@ -276,15 +275,15 @@ func (m *Roll) Rollback(ctx context.Context) error {
 	}
 
 	// get the name of the previous version of the schema
-	previousVersion, err := m.state.PreviousVersion(ctx, m.schema, true)
+	previousMigration, err := m.state.PreviousMigration(ctx, m.schema, true)
 	if err != nil {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
 
 	// get the schema after the previous migration was applied
 	schema := schema.New()
-	if previousVersion != nil {
-		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousVersion)
+	if previousMigration != nil {
+		schema, err = m.state.SchemaAfterMigration(ctx, m.schema, *previousMigration)
 		if err != nil {
 			return fmt.Errorf("unable to read schema: %w", err)
 		}

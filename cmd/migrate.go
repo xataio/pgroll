@@ -36,7 +36,7 @@ func migrateCmd() *cobra.Command {
 			}
 			defer m.Close()
 
-			latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
+			latestMigration, err := m.State().LatestMigration(ctx, m.Schema())
 			if err != nil {
 				return fmt.Errorf("unable to determine latest version: %w", err)
 			}
@@ -46,7 +46,7 @@ func migrateCmd() *cobra.Command {
 				return fmt.Errorf("unable to determine active migration period: %w", err)
 			}
 			if active {
-				fmt.Printf("migration %q is active\n", *latestVersion)
+				fmt.Printf("migration %q is active\n", *latestMigration)
 				return nil
 			}
 

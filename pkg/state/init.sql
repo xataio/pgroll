@@ -68,8 +68,34 @@ $$
 LANGUAGE SQL
 STABLE;
 
--- Get the latest version name (this is the one with child migrations)
+-- Get the latest version schema name
 CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
+    RETURNS text
+    SECURITY DEFINER
+    SET search_path = placeholder, pg_catalog, pg_temp
+    AS $$
+    SELECT
+        COALESCE(p.migration ->> 'version_schema', p.name)
+    FROM
+        placeholder.migrations p
+    WHERE
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                placeholder.migrations c
+            WHERE
+                SCHEMA = schemaname
+                AND c.parent = p.name)
+        AND SCHEMA = schemaname
+$$
+LANGUAGE SQL
+STABLE;
+
+-- Get the name of the latest version schema, or NULL if there is none.
+-- This will be the same as the version-schema name of the migration in most
+-- cases, unless the migration sets its `versionSchema` field.
+CREATE OR REPLACE FUNCTION placeholder.latest_migration (schemaname name)
     RETURNS text
     SECURITY DEFINER
     SET search_path = placeholder, pg_catalog, pg_temp
@@ -92,10 +118,64 @@ $$
 LANGUAGE SQL
 STABLE;
 
--- Get the name of the previous version of the schema, or NULL if there is none.
+-- Get the previous version schema name, or NULL if there is none.
 -- This ignores previous versions for which no version schema exists, such as
 -- versions corresponding to inferred migrations.
 CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includeInferred boolean)
+    RETURNS text
+    AS $$
+    WITH RECURSIVE ancestors AS (
+        SELECT
+            name,
+            migration ->> 'version_schema' AS versionSchema,
+            schema,
+            parent,
+            migration_type,
+            0 AS depth
+        FROM
+            placeholder.migrations
+        WHERE
+            name = placeholder.latest_migration (schemaname)
+            AND SCHEMA = schemaname
+        UNION ALL
+        SELECT
+            m.name,
+            m.migration ->> 'version_schema' AS versionSchema,
+            m.schema,
+            m.parent,
+            m.migration_type,
+            a.depth + 1
+        FROM
+            placeholder.migrations m
+            JOIN ancestors a ON m.name = a.parent
+                AND m.schema = a.schema
+)
+        SELECT
+            COALESCE(a.versionSchema, a.name)
+        FROM
+            ancestors a
+    WHERE
+        a.depth > 0
+        AND (includeInferred
+            OR (a.migration_type = 'pgroll'
+                AND EXISTS (
+                    SELECT
+                        s.schema_name
+                    FROM
+                        information_schema.schemata s
+                    WHERE
+                        s.schema_name = schemaname || '_' || COALESCE(a.versionSchema, a.name))))
+    ORDER BY
+        a.depth ASC
+    LIMIT 1;
+$$
+LANGUAGE SQL
+STABLE;
+
+-- Get the name of the previous migration, or NULL if there is none.
+-- This ignores previous versions for which no version schema exists, such as
+-- versions corresponding to inferred migrations.
+CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name, includeInferred boolean)
     RETURNS text
     AS $$
     WITH RECURSIVE ancestors AS (
@@ -108,7 +188,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
         FROM
             placeholder.migrations
         WHERE
-            name = placeholder.latest_version (schemaname)
+            name = placeholder.latest_migration (schemaname)
             AND SCHEMA = schemaname
         UNION ALL
         SELECT
@@ -399,7 +479,7 @@ BEGIN
                         pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
             placeholder.read_schema (schemaname),
             TRUE,
-            placeholder.latest_version (schemaname),
+            placeholder.latest_migration (schemaname),
             'inferred',
             statement_timestamp(),
             statement_timestamp());
