@@ -151,6 +151,30 @@ func (a *renameConstraintAction) Execute(ctx context.Context) error {
 	return err
 }
 
+type addConstraintUsingUniqueIndexAction struct {
+	conn       db.DB
+	table      string
+	constraint string
+	indexName  string
+}
+
+func NewAddConstraintUsingUniqueIndex(conn db.DB, table, constraint, indexName string) *addConstraintUsingUniqueIndexAction {
+	return &addConstraintUsingUniqueIndexAction{
+		conn:       conn,
+		table:      table,
+		constraint: constraint,
+		indexName:  indexName,
+	}
+}
+
+func (a *addConstraintUsingUniqueIndexAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.constraint),
+		pq.QuoteIdentifier(a.indexName)))
+	return err
+}
+
 // dropFunctionAction is a DBAction that drops a function and all of its dependencies (cascade).
 type dropFunctionAction struct {
 	conn      db.DB

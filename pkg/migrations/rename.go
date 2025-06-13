@@ -35,8 +35,7 @@ func NewRenameDuplicatedColumnAction(conn db.DB, table *schema.Table, column str
 
 func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 	const (
-		cCreateUniqueConstraintSQL = `ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s`
-		cRenameIndexSQL            = `ALTER INDEX IF EXISTS %s RENAME TO %s`
+		cRenameIndexSQL = `ALTER INDEX IF EXISTS %s RENAME TO %s`
 	)
 
 	err := NewRenameColumnAction(a.conn, a.table.Name, a.from, a.to).Execute(ctx)
@@ -120,14 +119,11 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 
 		if _, ok := a.table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
-			createUniqueConstraintSQL := fmt.Sprintf(cCreateUniqueConstraintSQL,
-				pq.QuoteIdentifier(a.table.Name),
-				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
-				pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
-			)
-
-			_, err = a.conn.ExecContext(ctx, createUniqueConstraintSQL)
-			if err != nil {
+			if err := NewAddConstraintUsingUniqueIndex(a.conn,
+				a.table.Name,
+				StripDuplicationPrefix(idx.Name),
+				StripDuplicationPrefix(idx.Name),
+			).Execute(ctx); err != nil {
 				return fmt.Errorf("failed to create unique constraint from index %q: %w", idx.Name, err)
 			}
 		}
