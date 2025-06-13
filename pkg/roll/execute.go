@@ -130,7 +130,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		}
 	}
 
-	if m.disableVersionSchemas || migration.ContainsRawSQLOperation() && m.noVersionSchemaForRawSQL {
+	if m.disableVersionSchemas {
 		// skip creating version schemas
 		return tablesToBackfill, nil
 	}
@@ -177,7 +177,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 	m.logger.LogMigrationComplete(migration)
 
 	// Drop the old schema
-	if !m.disableVersionSchemas && (!migration.ContainsRawSQLOperation() || !m.noVersionSchemaForRawSQL) {
+	if !m.disableVersionSchemas {
 		prevVersion, err := m.state.PreviousVersion(ctx, m.schema, false)
 		if err != nil {
 			return fmt.Errorf("unable to get name of previous version: %w", err)
@@ -223,9 +223,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 		}
 
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
-			if _, ok := op.(*migrations.OpRawSQL); !ok || !m.noVersionSchemaForRawSQL {
-				refreshViews = true
-			}
+			refreshViews = true
 		}
 	}
 

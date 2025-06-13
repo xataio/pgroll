@@ -12,9 +12,6 @@ type options struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
-	// disable creation of version schema for raw SQL migrations
-	noVersionSchemaForRawSQL bool
-
 	// additional entries to add to the search_path during migration execution
 	searchPath []string
 
@@ -63,13 +60,6 @@ func WithDisableViewsManagement() Option {
 	}
 }
 
-// WithNoVersionSchemaForRawSQL disables the creation of version schema for raw SQL migrations
-func WithNoVersionSchemaForRawSQL() Option {
-	return func(o *options) {
-		o.noVersionSchemaForRawSQL = true
-	}
-}
-
 // WithMigrationHooks sets the migration hooks for the Roll instance
 // Migration hooks are called at various points during the migration process
 // to allow for custom behavior to be injected
@@ -96,6 +86,7 @@ func WithSkipValidation(skip bool) Option {
 	}
 }
 
+// WithLogging enables verbose logging for the Roll instance
 func WithLogging(enabled bool) Option {
 	return func(o *options) {
 		if enabled {
