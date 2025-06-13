@@ -53,3 +53,4 @@
 53_add_column_with_volatile_default.yaml
 54_create_index_with_opclass.yaml
 55_add_primary_key_constraint_to_table.yaml
+56_with_version_schema.yaml
