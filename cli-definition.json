@@ -109,14 +109,14 @@
       "subcommands": [
         {
           "name": "migration",
-          "short": "Print the latest migration name (without schema prefix)",
+          "short": "Print the latest migration name",
           "use": "migration",
           "example": "latest migration --local ./migrations",
           "flags": [
             {
               "name": "local",
               "shorthand": "l",
-              "description": "retrieve the latest version from a local migration directory",
+              "description": "retrieve the latest migration from a local migration directory",
               "default": ""
             }
           ],
@@ -125,7 +125,7 @@
         },
         {
           "name": "schema",
-          "short": "Print the latest schema version (migration name prefixed with schema)",
+          "short": "Print the latest version schema name",
           "use": "schema",
           "example": "latest schema --local ./migrations",
           "flags": [

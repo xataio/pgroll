@@ -452,6 +452,23 @@ func exampleMigration(t *testing.T, name string) []byte {
 	return bytes
 }
 
+func exampleMigrationWithVersionSchema(t *testing.T, name, versionSchema string) []byte {
+	t.Helper()
+
+	mig := &migrations.Migration{
+		Name:          name,
+		VersionSchema: versionSchema,
+		Operations: migrations.Operations{
+			&migrations.OpRawSQL{Up: "SELECT 1"},
+		},
+	}
+
+	bytes, err := json.Marshal(mig)
+	require.NoError(t, err)
+
+	return bytes
+}
+
 // unDeserializableMigration creates a migration JSON that is valid but
 // contains an operation with invalid fields; this could happen if the
 // migration wasa created by an older version of `pgroll` before a breaking
