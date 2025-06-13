@@ -337,6 +337,8 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 		withOptions = "WITH (security_invoker = true)"
 	}
 
+	// We must set column default values for the views directly, as the
+	// values are not kept from the underlying tables.
 	var addDefaultsToView string
 	for column, defaultVal := range defaults {
 		addDefaultsToView += fmt.Sprintf("ALTER VIEW %s.%s ALTER %s SET DEFAULT %s; ",
