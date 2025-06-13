@@ -90,10 +90,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 	}
 
 	// Get index uniqueness
-	unique := false
-	if stmt.GetUnique() {
-		unique = true
-	}
+	unique := stmt.GetUnique()
 
 	// Deparse WHERE clause
 	var predicate string
