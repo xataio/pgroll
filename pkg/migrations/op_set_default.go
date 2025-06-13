@@ -34,8 +34,10 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	var err error
 	if o.Default == nil {
 		err = NewDropDefaultValueAction(conn, table.Name, column.Name).Execute(ctx)
+		column.Default = nil
 	} else {
 		err = NewSetDefaultValueAction(conn, table.Name, column.Name, *o.Default).Execute(ctx)
+		column.Default = o.Default
 	}
 	if err != nil {
 		return nil, err
