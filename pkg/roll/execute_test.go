@@ -880,6 +880,37 @@ func TestStartFailsWithExistingSchemaWithoutHistory(t *testing.T) {
 	})
 }
 
+func TestVersionSchemaCreationIsNotCapturedAsAnInferredMigration(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		// Apply a migration
+		err := m.Start(ctx, &migrations.Migration{
+			Name:       "01_create_table",
+			Operations: migrations.Operations{createTableOp("new_table")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = m.Complete(ctx)
+		require.NoError(t, err)
+
+		// Ensure that the version schema has been created
+		versionSchema := roll.VersionedSchemaName("public", "01_create_table")
+		require.True(t, schemaExists(t, db, versionSchema))
+
+		// Get the schema history **for the version schema**
+		hist, err := m.State().SchemaHistory(ctx, versionSchema)
+		require.NoError(t, err)
+
+		// Ensure that there are no inferred migrations recorded for the version
+		// schema; the DDL statements that `pgroll` executes to create the version
+		// schema and the views inside it should be ignored by the event trigger
+		// that captures inferred migrations.
+		require.Len(t, hist, 0)
+	})
+}
+
 func addColumnOp(tableName string) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: tableName,

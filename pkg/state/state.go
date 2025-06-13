@@ -47,6 +47,11 @@ func New(ctx context.Context, pgURL, stateSchema string, opts ...StateOpt) (*Sta
 		return nil, err
 	}
 
+	_, err = conn.ExecContext(ctx, "SET pgroll.internal TO 'TRUE'")
+	if err != nil {
+		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
+	}
+
 	st := &State{
 		pgConn:        conn,
 		pgrollVersion: "development",

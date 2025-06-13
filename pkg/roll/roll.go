@@ -105,6 +105,11 @@ func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql
 		return nil, err
 	}
 
+	_, err = conn.ExecContext(ctx, "SET pgroll.internal TO 'TRUE'")
+	if err != nil {
+		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
+	}
+
 	if options.lockTimeoutMs > 0 {
 		_, err = conn.ExecContext(ctx, fmt.Sprintf("SET lock_timeout to '%dms'", options.lockTimeoutMs))
 		if err != nil {
