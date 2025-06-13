@@ -86,6 +86,7 @@ func WithSkipValidation(skip bool) Option {
 	}
 }
 
+// WithLogging enables verbose logging for the Roll instance
 func WithLogging(enabled bool) Option {
 	return func(o *options) {
 		if enabled {
