@@ -673,3 +673,20 @@ func (a *dropDefaultAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.column)))
 	return err
 }
+
+type rawSQLAction struct {
+	conn db.DB
+	sql  string
+}
+
+func NewRawSQLAction(conn db.DB, sql string) *rawSQLAction {
+	return &rawSQLAction{
+		conn: conn,
+		sql:  sql,
+	}
+}
+
+func (a *rawSQLAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, a.sql)
+	return err
+}
