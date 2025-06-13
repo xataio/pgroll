@@ -345,18 +345,9 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	}
 
 	o.Column.Name = TemporaryName(o.Column.Name)
-	columnWriter := ColumnSQLWriter{WithPK: true}
-	colSQL, err := columnWriter.Write(o.Column)
-	if err != nil {
-		return err
-	}
 
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
-		pq.QuoteIdentifier(t.Name),
-		colSQL,
-	))
-
-	return err
+	withPK := true
+	return NewAddColumnAction(conn, t.Name, o.Column, withPK).Execute(ctx)
 }
 
 // upgradeNotNullConstraintToNotNullAttribute validates and upgrades a NOT NULL
@@ -391,56 +382,4 @@ func NotNullConstraintName(columnName string) string {
 // IsNotNullConstraintName returns true if the given name is a NOT NULL constraint name
 func IsNotNullConstraintName(name string) bool {
 	return strings.HasPrefix(name, "_pgroll_check_not_null_")
-}
-
-// ColumnSQLWriter writes a column to SQL
-// It can optionally include the primary key constraint
-// When creating a table, the primary key constraint is not added to the column definition
-type ColumnSQLWriter struct {
-	WithPK bool
-}
-
-func (w ColumnSQLWriter) Write(col Column) (string, error) {
-	sql := fmt.Sprintf("%s %s", pq.QuoteIdentifier(col.Name), col.Type)
-
-	if w.WithPK && col.IsPrimaryKey() {
-		sql += " PRIMARY KEY"
-	}
-
-	if col.IsUnique() {
-		sql += " UNIQUE"
-	}
-	if !col.IsNullable() {
-		sql += " NOT NULL"
-	}
-	if col.Default != nil {
-		sql += fmt.Sprintf(" DEFAULT %s", *col.Default)
-	}
-
-	if col.Generated != nil {
-		if col.Generated.Expression != "" {
-			sql += fmt.Sprintf(" GENERATED ALWAYS AS (%s) STORED", col.Generated.Expression)
-		} else if col.Generated.Identity != nil {
-			sql += fmt.Sprintf(" GENERATED %s AS IDENTITY", col.Generated.Identity.UserSpecifiedValues)
-			if col.Generated.Identity.SequenceOptions != "" {
-				sql += fmt.Sprintf(" (%s)", col.Generated.Identity.SequenceOptions)
-			}
-		}
-	}
-
-	if col.References != nil {
-		writer := &ConstraintSQLWriter{Name: col.References.Name}
-		sql += " " + writer.WriteForeignKey(
-			col.References.Table,
-			[]string{col.References.Column},
-			col.References.OnDelete,
-			col.References.OnUpdate,
-			nil,
-			col.References.MatchType)
-	}
-	if col.Check != nil {
-		writer := &ConstraintSQLWriter{Name: col.Check.Name}
-		sql += " " + writer.WriteCheck(col.Check.Constraint, col.Check.NoInherit)
-	}
-	return sql, nil
 }
