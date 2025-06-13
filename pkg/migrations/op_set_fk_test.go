@@ -20,7 +20,8 @@ func TestSetForeignKey(t *testing.T) {
 			name: "add foreign key constraint",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_tables",
+					Name:          "01_add_tables",
+					VersionSchema: "add_tables",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -58,7 +59,8 @@ func TestSetForeignKey(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_add_fk_constraint",
+					Name:          "02_add_fk_constraint",
+					VersionSchema: "add_fk_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "posts",
@@ -82,46 +84,46 @@ func TestSetForeignKey(t *testing.T) {
 				NotValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id")
 
 				// Inserting some data into the `users` table works.
-				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "add_fk_constraint", "users", map[string]string{
 					"name": "alice",
 				})
-				MustInsert(t, db, schema, "02_add_fk_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "add_fk_constraint", "users", map[string]string{
 					"name": "bob",
 				})
 
 				// Inserting data into the new `posts` view with a valid user reference works.
-				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "add_fk_constraint", "posts", map[string]string{
 					"title":   "post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting data into the new `posts` view with an invalid user reference fails.
-				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				}, testutils.FKViolationErrorCode)
 
 				// The post that was inserted successfully has been backfilled into the old view.
-				rows := MustSelect(t, db, schema, "01_add_tables", "posts")
+				rows := MustSelect(t, db, schema, "add_tables", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 				}, rows)
 
 				// Inserting data into the old `posts` view with a valid user reference works.
-				MustInsert(t, db, schema, "01_add_tables", "posts", map[string]string{
+				MustInsert(t, db, schema, "add_tables", "posts", map[string]string{
 					"title":   "post by bob",
 					"user_id": "2",
 				})
 
 				// Inserting data into the old `posts` view with an invalid user reference also works.
-				MustInsert(t, db, schema, "01_add_tables", "posts", map[string]string{
+				MustInsert(t, db, schema, "add_tables", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				})
 
 				// The post that was inserted successfully has been backfilled into the new view.
 				// The post by an unknown user has been backfilled with a NULL user_id.
-				rows = MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				rows = MustSelect(t, db, schema, "add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 					{"id": 3, "title": "post by bob", "user_id": 2},
@@ -140,19 +142,19 @@ func TestSetForeignKey(t *testing.T) {
 				ValidatedForeignKeyMustExist(t, db, schema, "posts", "fk_users_id")
 
 				// Inserting data into the new `posts` view with a valid user reference works.
-				MustInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustInsert(t, db, schema, "add_fk_constraint", "posts", map[string]string{
 					"title":   "another post by alice",
 					"user_id": "1",
 				})
 
 				// Inserting data into the new `posts` view with an invalid user reference fails.
-				MustNotInsert(t, db, schema, "02_add_fk_constraint", "posts", map[string]string{
+				MustNotInsert(t, db, schema, "add_fk_constraint", "posts", map[string]string{
 					"title":   "post by unknown user",
 					"user_id": "3",
 				}, testutils.FKViolationErrorCode)
 
 				// The data in the new `posts` view is as expected.
-				rows := MustSelect(t, db, schema, "02_add_fk_constraint", "posts")
+				rows := MustSelect(t, db, schema, "add_fk_constraint", "posts")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "title": "post by alice", "user_id": 1},
 					{"id": 3, "title": "post by bob", "user_id": 2},

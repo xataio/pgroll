@@ -21,7 +21,8 @@ func TestAddColumn(t *testing.T) {
 			name: "add column",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -41,7 +42,8 @@ func TestAddColumn(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_add_column",
+					Name:          "02_add_column",
+					VersionSchema: "add_column",
 					Operations: migrations.Operations{
 						&migrations.OpAddColumn{
 							Table: "users",
@@ -58,25 +60,25 @@ func TestAddColumn(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// old and new views of the table should exist
-				ViewMustExist(t, db, schema, "01_add_table", "users")
-				ViewMustExist(t, db, schema, "02_add_column", "users")
+				ViewMustExist(t, db, schema, "add_table", "users")
+				ViewMustExist(t, db, schema, "add_column", "users")
 
 				// inserting via both the old and the new views works
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"name": "Alice",
 				})
-				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+				MustInsert(t, db, schema, "add_column", "users", map[string]string{
 					"name": "Bob",
 					"age":  "21",
 				})
 
 				// selecting from both the old and the new views works
-				resOld := MustSelect(t, db, schema, "01_add_table", "users")
+				resOld := MustSelect(t, db, schema, "add_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
 					{"id": 2, "name": "Bob"},
 				}, resOld)
-				resNew := MustSelect(t, db, schema, "02_add_column", "users")
+				resNew := MustSelect(t, db, schema, "add_column", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice", "age": 0},
 					{"id": 2, "name": "Bob", "age": 21},
@@ -92,16 +94,16 @@ func TestAddColumn(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The new view still exists
-				ViewMustExist(t, db, schema, "02_add_column", "users")
+				ViewMustExist(t, db, schema, "add_column", "users")
 
 				// Inserting into the new view still works
-				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{
+				MustInsert(t, db, schema, "add_column", "users", map[string]string{
 					"name": "Carl",
 					"age":  "31",
 				})
 
 				// Selecting from the new view still works
-				res := MustSelect(t, db, schema, "02_add_column", "users")
+				res := MustSelect(t, db, schema, "add_column", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice", "age": 0},
 					{"id": 2, "name": "Bob", "age": 0},

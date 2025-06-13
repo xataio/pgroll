@@ -21,7 +21,8 @@ func TestRenameTable(t *testing.T) {
 			name: "rename table",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "test_table",
@@ -39,7 +40,8 @@ func TestRenameTable(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_rename_table",
+					Name:          "02_rename_table",
+					VersionSchema: "rename_table",
 					Operations: migrations.Operations{
 						&migrations.OpRenameTable{
 							From: "test_table",
@@ -50,20 +52,20 @@ func TestRenameTable(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// check that the table with the new name can be accessed
-				ViewMustExist(t, db, schema, "01_create_table", "test_table")
-				ViewMustExist(t, db, schema, "02_rename_table", "renamed_table")
+				ViewMustExist(t, db, schema, "create_table", "test_table")
+				ViewMustExist(t, db, schema, "rename_table", "renamed_table")
 
 				// inserts work
-				MustInsert(t, db, schema, "01_create_table", "test_table", map[string]string{
+				MustInsert(t, db, schema, "create_table", "test_table", map[string]string{
 					"name": "foo",
 				})
-				MustInsert(t, db, schema, "02_rename_table", "renamed_table", map[string]string{
+				MustInsert(t, db, schema, "rename_table", "renamed_table", map[string]string{
 					"name": "bar",
 				})
 
 				// selects work in both versions
-				resNew := MustSelect(t, db, schema, "01_create_table", "test_table")
-				resOld := MustSelect(t, db, schema, "02_rename_table", "renamed_table")
+				resNew := MustSelect(t, db, schema, "create_table", "test_table")
+				resOld := MustSelect(t, db, schema, "rename_table", "renamed_table")
 
 				assert.Equal(t, resOld, resNew)
 				assert.Equal(t, []map[string]any{
@@ -79,14 +81,14 @@ func TestRenameTable(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// the table still exists with the new name
-				ViewMustNotExist(t, db, schema, "02_rename_table", "testTable")
-				ViewMustExist(t, db, schema, "02_rename_table", "renamed_table")
+				ViewMustNotExist(t, db, schema, "rename_table", "testTable")
+				ViewMustExist(t, db, schema, "rename_table", "renamed_table")
 
 				// inserts & select work
-				MustInsert(t, db, schema, "02_rename_table", "renamed_table", map[string]string{
+				MustInsert(t, db, schema, "rename_table", "renamed_table", map[string]string{
 					"name": "baz",
 				})
-				res := MustSelect(t, db, schema, "02_rename_table", "renamed_table")
+				res := MustSelect(t, db, schema, "rename_table", "renamed_table")
 				assert.Equal(t, []map[string]any{
 					{
 						"id":   1,

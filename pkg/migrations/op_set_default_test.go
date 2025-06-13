@@ -20,7 +20,8 @@ func TestSetDefault(t *testing.T) {
 			name: "set column default with default up and down SQL",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -40,7 +41,8 @@ func TestSetDefault(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_default",
+					Name:          "02_set_default",
+					VersionSchema: "set_default",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:   "users",
@@ -52,12 +54,12 @@ func TestSetDefault(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema succeeds
-				MustInsert(t, db, schema, "02_set_default", "users", map[string]string{
+				MustInsert(t, db, schema, "set_default", "users", map[string]string{
 					"id": "1",
 				})
 
 				// Inserting a row into the old schema succeeds
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"id": "2",
 				})
 
@@ -66,7 +68,7 @@ func TestSetDefault(t *testing.T) {
 				//   a value into the new schema which has a default
 				// * The second is NULL because it was backfilled from the old schema
 				//   which does not have a default
-				rows := MustSelect(t, db, schema, "02_set_default", "users")
+				rows := MustSelect(t, db, schema, "set_default", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "unknown user"},
 					{"id": 2, "name": nil},
@@ -77,7 +79,7 @@ func TestSetDefault(t *testing.T) {
 				//   new schema which has a default
 				// * The second row is NULL because it was inserted without a value
 				//   into the old schema which does not have a default
-				rows = MustSelect(t, db, schema, "01_add_table", "users")
+				rows = MustSelect(t, db, schema, "add_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "unknown user"},
 					{"id": 2, "name": nil},
@@ -85,12 +87,12 @@ func TestSetDefault(t *testing.T) {
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the old schema succeeds
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"id": "3",
 				})
 
 				// The old schema has the expected rows
-				rows := MustSelect(t, db, schema, "01_add_table", "users")
+				rows := MustSelect(t, db, schema, "add_table", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "unknown user"},
 					{"id": 2, "name": nil},
@@ -99,7 +101,7 @@ func TestSetDefault(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a row into the new schema succeeds
-				MustInsert(t, db, schema, "02_set_default", "users", map[string]string{
+				MustInsert(t, db, schema, "set_default", "users", map[string]string{
 					"id": "4",
 				})
 
@@ -109,7 +111,7 @@ func TestSetDefault(t *testing.T) {
 				//   inserted without values into the new schema which has a default
 				// * The second and third are NULL because they were backfilled from
 				//   the old schema which does not have a default
-				rows := MustSelect(t, db, schema, "02_set_default", "users")
+				rows := MustSelect(t, db, schema, "set_default", "users")
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "unknown user"},
 					{"id": 2, "name": nil},

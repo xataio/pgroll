@@ -21,7 +21,8 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			name: "can alter a column: set not null, change type, change comment, and add check constraint",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_create_table",
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "events",
@@ -41,7 +42,8 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_alter_column",
+					Name:          "02_alter_column",
+					VersionSchema: "alter_column",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:    "events",
@@ -61,45 +63,45 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a NULL into the new column should fail
-				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
 					"id": "1",
 				}, testutils.CheckViolationErrorCode)
 
 				// Inserting a non-NULL value into the new column should succeed
-				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+				MustInsert(t, db, schema, "alter_column", "events", map[string]string{
 					"id":   "2",
 					"name": "apples",
 				})
 
 				// The value inserted into the new column has been backfilled into the
 				// old column.
-				rows := MustSelect(t, db, schema, "01_create_table", "events")
+				rows := MustSelect(t, db, schema, "create_table", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 				}, rows)
 
 				// Inserting a NULL value into the old column should succeed
-				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
 					"id": "3",
 				})
 
 				// The NULL value inserted into the old column has been written into
 				// the new column using the `up` SQL.
-				rows = MustSelect(t, db, schema, "02_alter_column", "events")
+				rows = MustSelect(t, db, schema, "alter_column", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 					{"id": 3, "name": "placeholder"},
 				}, rows)
 
 				// Inserting a non-NULL value into the old column should succeed
-				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
 					"id":   "4",
 					"name": "bananas",
 				})
 
 				// The non-NULL value inserted into the old column has been copied
 				// unchanged into the new column.
-				rows = MustSelect(t, db, schema, "02_alter_column", "events")
+				rows = MustSelect(t, db, schema, "alter_column", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 					{"id": 3, "name": "placeholder"},
@@ -108,21 +110,21 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 
 				// Inserting a row into the new column that violates the
 				// check constraint should fail
-				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
 					"id":   "5",
 					"name": "x",
 				}, testutils.CheckViolationErrorCode)
 
 				// Inserting a row into the old column that violates the
 				// check constraint should succeed.
-				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
 					"id":   "5",
 					"name": "x",
 				})
 
 				// The value that didn't meet the check constraint has been rewritten
 				// into the new column using the `up` SQL.
-				rows = MustSelect(t, db, schema, "02_alter_column", "events")
+				rows = MustSelect(t, db, schema, "alter_column", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 					{"id": 3, "name": "placeholder"},
@@ -142,13 +144,13 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting a NULL into the new column should fail
-				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
 					"id": "6",
 				}, testutils.NotNullViolationErrorCode)
 
 				// Inserting a row into the new column that violates the
 				// check constraint should fail
-				MustNotInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
 					"id":   "6",
 					"name": "x",
 				}, testutils.CheckViolationErrorCode)
@@ -160,7 +162,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				ColumnMustHaveComment(t, db, schema, "events", "name", "the name of the event")
 
 				// The table contains the expected rows
-				rows := MustSelect(t, db, schema, "02_alter_column", "events")
+				rows := MustSelect(t, db, schema, "alter_column", "events")
 				assert.Equal(t, []map[string]any{
 					{"id": 2, "name": "apples"},
 					{"id": 3, "name": "placeholder"},

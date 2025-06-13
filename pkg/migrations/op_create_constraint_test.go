@@ -21,7 +21,8 @@ func TestCreateConstraint(t *testing.T) {
 			name: "create unique constraint on single column",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -41,7 +42,8 @@ func TestCreateConstraint(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_create_constraint",
+					Name:          "02_create_constraint",
+					VersionSchema: "create_constraint",
 					Operations: migrations.Operations{
 						&migrations.OpCreateConstraint{
 							Name:    "unique_name",
@@ -63,18 +65,18 @@ func TestCreateConstraint(t *testing.T) {
 				IndexMustExist(t, db, schema, "users", "unique_name")
 
 				// Inserting values into the old schema that violate uniqueness should succeed.
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"name": "alice",
 				})
-				MustInsert(t, db, schema, "01_add_table", "users", map[string]string{
+				MustInsert(t, db, schema, "add_table", "users", map[string]string{
 					"name": "alice",
 				})
 
 				// Inserting values into the new schema that violate uniqueness should fail.
-				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "create_constraint", "users", map[string]string{
 					"name": "bob",
 				})
-				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+				MustNotInsert(t, db, schema, "create_constraint", "users", map[string]string{
 					"name": "bob",
 				}, testutils.UniqueViolationErrorCode)
 			},
@@ -90,10 +92,10 @@ func TestCreateConstraint(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "users", "name")
 
 				// Inserting values into the new schema that violate uniqueness should fail.
-				MustInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+				MustInsert(t, db, schema, "create_constraint", "users", map[string]string{
 					"name": "carol",
 				})
-				MustNotInsert(t, db, schema, "02_create_constraint", "users", map[string]string{
+				MustNotInsert(t, db, schema, "create_constraint", "users", map[string]string{
 					"name": "carol",
 				}, testutils.UniqueViolationErrorCode)
 			},

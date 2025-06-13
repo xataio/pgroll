@@ -20,7 +20,8 @@ func TestSetColumnUnique(t *testing.T) {
 			name: "set unique with default down sql",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "reviews",
@@ -50,7 +51,8 @@ func TestSetColumnUnique(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_set_unique",
+					Name:          "02_set_unique",
+					VersionSchema: "set_unique",
 					Operations: migrations.Operations{
 						&migrations.OpAlterColumn{
 							Table:  "reviews",
@@ -65,18 +67,18 @@ func TestSetColumnUnique(t *testing.T) {
 			},
 			afterStart: func(t *testing.T, db *sql.DB, schema string) {
 				// Inserting values into the old schema that violate uniqueness should succeed.
-				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "add_table", "reviews", map[string]string{
 					"username": "alice", "product": "apple", "review": "good",
 				})
-				MustInsert(t, db, schema, "01_add_table", "reviews", map[string]string{
+				MustInsert(t, db, schema, "add_table", "reviews", map[string]string{
 					"username": "bob", "product": "banana", "review": "good",
 				})
 
 				// Inserting values into the new schema that violate uniqueness should fail.
-				MustInsert(t, db, schema, "02_set_unique", "reviews", map[string]string{
+				MustInsert(t, db, schema, "set_unique", "reviews", map[string]string{
 					"username": "carl", "product": "carrot", "review": "bad",
 				})
-				MustNotInsert(t, db, schema, "02_set_unique", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "set_unique", "reviews", map[string]string{
 					"username": "dana", "product": "durian", "review": "bad",
 				}, testutils.UniqueViolationErrorCode)
 			},
@@ -89,10 +91,10 @@ func TestSetColumnUnique(t *testing.T) {
 				TableMustBeCleanedUp(t, db, schema, "reviews", "review")
 
 				// Inserting values into the new schema that violate uniqueness should fail.
-				MustInsert(t, db, schema, "02_set_unique", "reviews", map[string]string{
+				MustInsert(t, db, schema, "set_unique", "reviews", map[string]string{
 					"username": "earl", "product": "elderberry", "review": "ok",
 				})
-				MustNotInsert(t, db, schema, "02_set_unique", "reviews", map[string]string{
+				MustNotInsert(t, db, schema, "set_unique", "reviews", map[string]string{
 					"username": "flora", "product": "fig", "review": "ok",
 				}, testutils.UniqueViolationErrorCode)
 			},

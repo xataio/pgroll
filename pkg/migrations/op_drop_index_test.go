@@ -17,7 +17,8 @@ func TestDropIndex(t *testing.T) {
 			name: "drop index",
 			migrations: []migrations.Migration{
 				{
-					Name: "01_add_table",
+					Name:          "01_add_table",
+					VersionSchema: "add_table",
 					Operations: migrations.Operations{
 						&migrations.OpCreateTable{
 							Name: "users",
@@ -37,7 +38,8 @@ func TestDropIndex(t *testing.T) {
 					},
 				},
 				{
-					Name: "02_create_index",
+					Name:          "02_create_index",
+					VersionSchema: "create_index",
 					Operations: migrations.Operations{
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
@@ -47,7 +49,8 @@ func TestDropIndex(t *testing.T) {
 					},
 				},
 				{
-					Name: "03_drop_index",
+					Name:          "03_drop_index",
+					VersionSchema: "drop_index",
 					Operations: migrations.Operations{
 						&migrations.OpDropIndex{
 							Name: "idx_users_name",
