@@ -1,0 +1,20 @@
+---
+title: Update
+description: Update migration files that contain breaking changes
+---
+
+## Command
+
+```
+$ pgroll update {migrations-folder}
+```
+
+This command updates all outdated migration files in the selected migrations folder.
+
+The optional `--json` flag can be used to write migration files in JSON.
+
+### Example for updating migrations in the folder `migrations`
+
+```
+$ pgroll update migrations
+```

@@ -247,6 +247,24 @@
       "args": []
     },
     {
+      "name": "update",
+      "short": "Update outdated migrations in a directory",
+      "use": "update <directory>",
+      "example": "update ./migrations",
+      "flags": [
+        {
+          "name": "json",
+          "shorthand": "j",
+          "description": "Output migration file in JSON format instead of YAML",
+          "default": "false"
+        }
+      ],
+      "subcommands": [],
+      "args": [
+        "directory"
+      ]
+    },
+    {
       "name": "validate",
       "short": "Validate a migration file",
       "use": "validate <file>",
