@@ -1,22 +1,13 @@
-goVersion: &goVersion "1.24"
-
-run:
-  go: *goVersion
-  timeout: 5m
-
+version: "2"
 linters:
-  disable-all: true
-  # Enable specific linter
-  # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
+  default: none
   enable:
-    - errorlint
     - copyloopvar
+    - errorlint
     - forcetypeassert
     - goconst
     - gocritic
-    - gofumpt
     - gosec
-    - gosimple
     - govet
     - ineffassign
     - makezero
@@ -24,54 +15,60 @@ linters:
     - nakedret
     - nolintlint
     - prealloc
-    - prealloc
     - staticcheck
-    - stylecheck
     - unused
-
-linters-settings:
-  errorlint:
-    errorf: true
-
-  gomodguard:
-    blocked:
-      # List of blocked modules.
-      modules:
-        # Blocked module.
-        - github.com/pkg/errors:
-            # Recommended modules that should be used instead. (Optional)
-            recommendations:
-              - errors
-              - fmt
-            reason: "This package is deprecated, use `fmt.Errorf` with `%w` instead"
-
-  goconst:
-    ignore-tests: true
-    numbers: true
-
-  gocritic:
-    disabled-checks:
-      - exitAfterDefer
-      - ifElseChain
-      - commentFormatting
-
-  gofumpt:
-    module-path: "pgroll"
-    extra-rules: false
-
-  staticcheck:
-    checks: ["all"]
-
-  stylecheck:
-    checks: ["all", "-ST1000", "-ST1005"]
-
-  unused:
-    go: *goVersion
-
-  makezero:
-    always: false
-
-  gosec:
-    exclude-generated: true
-    severity: low
-    includes: []
+  settings:
+    errorlint:
+      errorf: true
+    goconst:
+      numbers: true
+    gocritic:
+      disabled-checks:
+        - exitAfterDefer
+        - ifElseChain
+        - commentFormatting
+    gomodguard:
+      blocked:
+        modules:
+          - github.com/pkg/errors:
+              recommendations:
+                - errors
+                - fmt
+              reason: This package is deprecated, use `fmt.Errorf` with `%w` instead
+    gosec:
+      severity: low
+    makezero:
+      always: false
+    staticcheck:
+      checks:
+        - all
+        - -ST1000
+        - -ST1005
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofumpt
+  settings:
+    gofumpt:
+      module-path: pgroll
+      extra-rules: false
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
