@@ -175,6 +175,28 @@ func (a *addConstraintUsingUniqueIndexAction) Execute(ctx context.Context) error
 	return err
 }
 
+type addPrimaryKeyAction struct {
+	conn      db.DB
+	table     string
+	indexName string
+}
+
+func NewAddPrimaryKeyAction(conn db.DB, table, indexName string) *addPrimaryKeyAction {
+	return &addPrimaryKeyAction{
+		conn:      conn,
+		table:     table,
+		indexName: indexName,
+	}
+}
+
+func (a *addPrimaryKeyAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.indexName),
+	))
+	return err
+}
+
 // dropFunctionAction is a DBAction that drops a function and all of its dependencies (cascade).
 type dropFunctionAction struct {
 	conn      db.DB

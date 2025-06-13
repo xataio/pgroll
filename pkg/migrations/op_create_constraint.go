@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lib/pq"
-
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -137,10 +135,7 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB,
 			return err
 		}
 	case OpCreateConstraintTypePrimaryKey:
-		_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
-			pq.QuoteIdentifier(o.Table),
-			pq.QuoteIdentifier(o.Name),
-		))
+		err := NewAddPrimaryKeyAction(conn, o.Table, o.Name).Execute(ctx)
 		if err != nil {
 			return err
 		}
