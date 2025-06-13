@@ -316,9 +316,13 @@ func (m *Roll) Rollback(ctx context.Context) error {
 // create view creates a view for the new version of the schema
 func (m *Roll) ensureView(ctx context.Context, version, name string, table *schema.Table) error {
 	columns := make([]string, 0, len(table.Columns))
+	defaults := make(map[string]string, len(table.Columns))
 	for k, v := range table.Columns {
 		if !v.Deleted {
 			columns = append(columns, fmt.Sprintf("%s AS %s", pq.QuoteIdentifier(v.Name), pq.QuoteIdentifier(k)))
+			if v.Default != nil {
+				defaults[k] = *v.Default
+			}
 		}
 	}
 
@@ -332,15 +336,26 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 		withOptions = "WITH (security_invoker = true)"
 	}
 
+	// We must set column default values for the views directly, as the
+	// values are not kept from the underlying tables.
+	var addDefaultsToView string
+	for column, defaultVal := range defaults {
+		addDefaultsToView += fmt.Sprintf("ALTER VIEW %s.%s ALTER %s SET DEFAULT %s; ",
+			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
+			pq.QuoteIdentifier(name),
+			pq.QuoteIdentifier(column),
+			defaultVal)
+	}
 	_, err := m.pgConn.ExecContext(ctx,
-		fmt.Sprintf("BEGIN; DROP VIEW IF EXISTS %s.%s; CREATE VIEW %s.%s %s AS SELECT %s FROM %s; COMMIT",
+		fmt.Sprintf("BEGIN; DROP VIEW IF EXISTS %s.%s; CREATE VIEW %s.%s %s AS SELECT %s FROM %s; %s COMMIT",
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
 			pq.QuoteIdentifier(VersionedSchemaName(m.schema, version)),
 			pq.QuoteIdentifier(name),
 			withOptions,
 			strings.Join(columns, ","),
-			pq.QuoteIdentifier(table.Name)))
+			pq.QuoteIdentifier(table.Name),
+			addDefaultsToView))
 	if err != nil {
 		return err
 	}
