@@ -123,13 +123,3 @@ func (m *Migration) UpdateVirtualSchema(ctx context.Context, s *schema.Schema) e
 	}
 	return nil
 }
-
-// ContainsRawSQLOperation returns true if the migration contains a raw SQL operation
-func (m *Migration) ContainsRawSQLOperation() bool {
-	for _, op := range m.Operations {
-		if _, ok := op.(*OpRawSQL); ok {
-			return true
-		}
-	}
-	return false
-}

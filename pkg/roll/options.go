@@ -12,9 +12,6 @@ type options struct {
 	// disable pgroll version schemas creation and deletion
 	disableVersionSchemas bool
 
-	// disable creation of version schema for raw SQL migrations
-	noVersionSchemaForRawSQL bool
-
 	// additional entries to add to the search_path during migration execution
 	searchPath []string
 
@@ -60,13 +57,6 @@ func WithRole(role string) Option {
 func WithDisableViewsManagement() Option {
 	return func(o *options) {
 		o.disableVersionSchemas = true
-	}
-}
-
-// WithNoVersionSchemaForRawSQL disables the creation of version schema for raw SQL migrations
-func WithNoVersionSchemaForRawSQL() Option {
-	return func(o *options) {
-		o.noVersionSchemaForRawSQL = true
 	}
 }
 

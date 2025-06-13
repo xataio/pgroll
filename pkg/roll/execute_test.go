@@ -200,61 +200,6 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 	})
 }
 
-func TestNoVersionSchemaForRawSQLMigrationsOptionIsRespected(t *testing.T) {
-	t.Parallel()
-
-	opts := []roll.Option{roll.WithNoVersionSchemaForRawSQL()}
-
-	testutils.WithMigratorAndStateAndConnectionToContainerWithOptions(t, opts, func(mig *roll.Roll, st *state.State, db *sql.DB) {
-		ctx := context.Background()
-
-		// Apply a create table migration
-		err := mig.Start(ctx, &migrations.Migration{Name: "01_create_table", Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig())
-		require.NoError(t, err)
-		err = mig.Complete(ctx)
-		require.NoError(t, err)
-
-		// Apply a raw SQL migration - no version schema should be created for this version
-		err = mig.Start(ctx, &migrations.Migration{
-			Name: "02_create_table",
-			Operations: migrations.Operations{&migrations.OpRawSQL{
-				Up: "CREATE TABLE table2(a int)",
-			}},
-		}, backfill.NewConfig())
-		require.NoError(t, err)
-		err = mig.Complete(ctx)
-		require.NoError(t, err)
-
-		// Start a third create table migration
-		err = mig.Start(ctx, &migrations.Migration{Name: "03_create_table", Operations: migrations.Operations{createTableOp("table3")}}, backfill.NewConfig())
-		require.NoError(t, err)
-
-		// The previous version is migration 01 if raw SQL migrations are ignored
-		prevVersion, err := st.PreviousVersion(ctx, "public", false)
-		require.NoError(t, err)
-		require.NotNil(t, prevVersion)
-		assert.Equal(t, "01_create_table", *prevVersion)
-
-		// The previous version is migration 02 (inferred) but there is no version schema
-		// for migration 02 due to the `WithNoVersionSchemaForRawSQL` option
-		prevVersion, err = st.PreviousVersion(ctx, "public", true)
-		require.NoError(t, err)
-		require.NotNil(t, prevVersion)
-		assert.Equal(t, "02_create_table", *prevVersion)
-		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, "02_create_table")))
-
-		// Complete the third migration
-		err = mig.Complete(ctx)
-		require.NoError(t, err)
-
-		// The latest version version is migration 03
-		latestVersion, err := st.LatestVersion(ctx, "public")
-		require.NoError(t, err)
-		require.NotNil(t, latestVersion)
-		assert.Equal(t, "03_create_table", *latestVersion)
-	})
-}
-
 func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
 	t.Parallel()
 
