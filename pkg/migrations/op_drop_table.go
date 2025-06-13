@@ -25,9 +25,7 @@ func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 
 	// Soft-delete the table in order that a create table operation in the same
 	// migration can create a table with the same name
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
-		table.Name,
-		DeletionName(table.Name)))
+	err := NewRenameTableAction(conn, table.Name, DeletionName(table.Name)).Execute(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to rename table %s: %w", o.Name, err)
 	}
@@ -54,9 +52,7 @@ func (o *OpDropTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *sch
 
 	// Rename the table back to its original name from its soft-deleted name
 	table := s.GetTable(o.Name)
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
-		DeletionName(table.Name),
-		table.Name))
+	err := NewRenameTableAction(conn, DeletionName(table.Name), table.Name).Execute(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to rename table %s: %w", o.Name, err)
 	}

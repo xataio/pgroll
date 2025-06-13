@@ -4,9 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -23,11 +20,7 @@ func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, latestS
 func (o *OpRenameTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
 	l.LogOperationComplete(o)
 
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
-		pq.QuoteIdentifier(o.From),
-		pq.QuoteIdentifier(o.To)))
-
-	return err
+	return NewRenameTableAction(conn, o.From, o.To).Execute(ctx)
 }
 
 func (o *OpRenameTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
