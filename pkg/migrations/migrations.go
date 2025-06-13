@@ -69,12 +69,12 @@ type (
 	Operations []Operation
 	Migration  struct {
 		Name          string     `json:"-"`
-		VersionSchema string     `json:"versionSchema,omitempty"`
+		VersionSchema string     `json:"version_schema,omitempty"`
 		Operations    Operations `json:"operations"`
 	}
 	RawMigration struct {
 		Name          string          `json:"-"`
-		VersionSchema string          `json:"versionSchema,omitempty"`
+		VersionSchema string          `json:"version_schema,omitempty"`
 		Operations    json.RawMessage `json:"operations"`
 	}
 )

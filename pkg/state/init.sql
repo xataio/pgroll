@@ -68,7 +68,7 @@ CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
     SET search_path = placeholder, pg_catalog, pg_temp
     AS $$
     SELECT
-        COALESCE(p.migration ->> 'versionSchema', p.name)
+        COALESCE(p.migration ->> 'version_schema', p.name)
     FROM
         placeholder.migrations p
     WHERE
@@ -120,7 +120,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
     WITH RECURSIVE ancestors AS (
         SELECT
             name,
-            migration ->> 'versionSchema' AS versionSchema,
+            migration ->> 'version_schema' AS versionSchema,
             schema,
             parent,
             migration_type,
@@ -133,7 +133,7 @@ CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includ
         UNION ALL
         SELECT
             m.name,
-            m.migration ->> 'versionSchema' AS versionSchema,
+            m.migration ->> 'version_schema' AS versionSchema,
             m.schema,
             m.parent,
             m.migration_type,
