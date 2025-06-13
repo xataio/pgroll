@@ -119,11 +119,12 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 
 		if _, ok := a.table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
-			if err := NewAddConstraintUsingUniqueIndex(a.conn,
+			err := NewAddConstraintUsingUniqueIndex(a.conn,
 				a.table.Name,
 				StripDuplicationPrefix(idx.Name),
 				StripDuplicationPrefix(idx.Name),
-			).Execute(ctx); err != nil {
+			).Execute(ctx)
+			if err != nil {
 				return fmt.Errorf("failed to create unique constraint from index %q: %w", idx.Name, err)
 			}
 		}

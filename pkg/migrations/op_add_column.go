@@ -175,7 +175,12 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 	}
 
 	if o.Column.Unique {
-		if err := NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Column.Name, UniqueIndexName(o.Column.Name)).Execute(ctx); err != nil {
+		err := NewAddConstraintUsingUniqueIndex(conn,
+			o.Table,
+			o.Column.Name,
+			UniqueIndexName(o.Column.Name),
+		).Execute(ctx)
+		if err != nil {
 			return err
 		}
 	}
