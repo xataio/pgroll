@@ -4,9 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -36,17 +33,10 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 
 	var err error
 	if o.Default == nil {
-		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT`,
-			pq.QuoteIdentifier(table.Name),
-			pq.QuoteIdentifier(column.Name)))
-
+		err = NewDropDefaultValueAction(conn, table.Name, column.Name).Execute(ctx)
 		column.Default = nil
 	} else {
-		_, err = conn.ExecContext(ctx, fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s`,
-			pq.QuoteIdentifier(table.Name),
-			pq.QuoteIdentifier(column.Name),
-			*o.Default))
-
+		err = NewSetDefaultValueAction(conn, table.Name, column.Name, *o.Default).Execute(ctx)
 		column.Default = o.Default
 	}
 	if err != nil {

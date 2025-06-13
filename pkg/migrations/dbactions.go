@@ -628,3 +628,48 @@ func (a *setNotNullAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.column)))
 	return err
 }
+
+type setDefaultAction struct {
+	conn         db.DB
+	table        string
+	column       string
+	defaultValue string
+}
+
+func NewSetDefaultValueAction(conn db.DB, table, column, defaultValue string) *setDefaultAction {
+	return &setDefaultAction{
+		conn:         conn,
+		table:        table,
+		column:       column,
+		defaultValue: defaultValue,
+	}
+}
+
+func (a *setDefaultAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET DEFAULT %s",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.column),
+		a.defaultValue))
+	return err
+}
+
+type dropDefaultAction struct {
+	conn   db.DB
+	table  string
+	column string
+}
+
+func NewDropDefaultValueAction(conn db.DB, table, column string) *dropDefaultAction {
+	return &dropDefaultAction{
+		conn:   conn,
+		table:  table,
+		column: column,
+	}
+}
+
+func (a *dropDefaultAction) Execute(ctx context.Context) error {
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s DROP DEFAULT",
+		pq.QuoteIdentifier(a.table),
+		pq.QuoteIdentifier(a.column)))
+	return err
+}
