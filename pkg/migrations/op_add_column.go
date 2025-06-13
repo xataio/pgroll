@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lib/pq"
-
 	"github.com/xataio/pgroll/internal/defaults"
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -177,11 +175,11 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 	}
 
 	if o.Column.Unique {
-		_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s_%s_key UNIQUE USING INDEX %s",
-			pq.QuoteIdentifier(o.Table),
+		err := NewAddConstraintUsingUniqueIndex(conn,
 			o.Table,
 			o.Column.Name,
-			UniqueIndexName(o.Column.Name)))
+			UniqueIndexName(o.Column.Name),
+		).Execute(ctx)
 		if err != nil {
 			return err
 		}

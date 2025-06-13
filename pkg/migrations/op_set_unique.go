@@ -4,9 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -41,15 +38,7 @@ func (o *OpSetUnique) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 	l.LogOperationComplete(o)
 
 	// Create a unique constraint using the unique index
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(o.Name)))
-	if err != nil {
-		return err
-	}
-
-	return err
+	return NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Name, o.Name).Execute(ctx)
 }
 
 func (o *OpSetUnique) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
