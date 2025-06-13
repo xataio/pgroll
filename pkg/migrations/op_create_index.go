@@ -89,10 +89,7 @@ func (o *OpCreateIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *s
 	l.LogOperationRollback(o)
 
 	// drop the index concurrently
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
-		pq.QuoteIdentifier(o.Name)))
-
-	return err
+	return NewDropIndexAction(conn, o.Name).Execute(ctx)
 }
 
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
