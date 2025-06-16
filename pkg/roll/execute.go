@@ -85,14 +85,11 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		defer m.migrationHooks.AfterStartDDL(m)
 	}
 
-	// Get the name of the latest version schema
-	// This is created after ops have started but ops need to know what it will
-	// be called in order to set up any up/down triggers
-	latestVersion, err := m.state.LatestVersion(ctx, m.schema)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get name of latest version: %w", err)
-	}
-	latestSchema := VersionedSchemaName(m.schema, *latestVersion)
+	// Construct the full name of the version schema that will be created by this
+	// migration. The version schema is created after operations have completed
+	// but ops need to know the name in advance in order to construct backfill
+	// triggers.
+	versionSchemaName := VersionedSchemaName(m.schema, migration.VersionSchemaName())
 
 	// Reread the latest schema as validation may have updated the schema object
 	// in memory.
@@ -104,7 +101,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	var tablesToBackfill []*schema.Table
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.logger, m.pgConn, latestSchema, newSchema)
+		table, err := op.Start(ctx, m.logger, m.pgConn, versionSchemaName, newSchema)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 			if errRollback != nil {
