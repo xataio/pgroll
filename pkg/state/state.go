@@ -328,27 +328,6 @@ func (s *State) Start(ctx context.Context, schemaname string, migration *migrati
 	return err
 }
 
-func (s *State) LastSchema(ctx context.Context, schemaname string) (*schema.Schema, error) {
-	stmt := fmt.Sprintf(`SELECT COALESCE(
-		(SELECT resulting_schema FROM %[1]s.migrations WHERE schema=$1 AND name=%[1]s.latest_version($1)),
-		%[1]s.read_schema($1))`,
-		pq.QuoteIdentifier(s.schema))
-
-	var rawSchema string
-	err := s.pgConn.QueryRowContext(ctx, stmt, schemaname).Scan(&rawSchema)
-	if err != nil {
-		return nil, err
-	}
-
-	var unmarshalledSchema schema.Schema
-	err = json.Unmarshal([]byte(rawSchema), &unmarshalledSchema)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal schema: %w", err)
-	}
-
-	return &unmarshalledSchema, nil
-}
-
 // Complete marks a migration as completed
 func (s *State) Complete(ctx context.Context, schema, name string) error {
 	res, err := s.pgConn.ExecContext(ctx, fmt.Sprintf("UPDATE %[1]s.migrations SET done=$1, resulting_schema=(SELECT %[1]s.read_schema($2)) WHERE schema=$2 AND name=$3 AND done=$4", pq.QuoteIdentifier(s.schema)), true, schema, name, false)

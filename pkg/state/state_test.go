@@ -38,7 +38,7 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 		}
 
 		// check that we can retrieve the already existing table
-		currentSchema, err := state.LastSchema(ctx, "public")
+		currentSchema, err := state.ReadSchema(ctx, "public")
 		assert.NoError(t, err)
 
 		assert.Equal(t, 1, len(currentSchema.Tables))
