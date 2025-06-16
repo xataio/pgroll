@@ -508,6 +508,190 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 	})
 }
 
+func TestAlterColumnMultipleTimes(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "can alter a column: set not null, change type, change comment, and add check constraint",
+			migrations: []migrations.Migration{
+				{
+					Name:          "01_create_table",
+					VersionSchema: "create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "events",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name:          "02_alter_column_with_not_null",
+					VersionSchema: "alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:    "events",
+							Column:   "name",
+							Up:       "SELECT CASE WHEN name IS NULL THEN 'placeholder' ELSE name END",
+							Down:     "name",
+							Nullable: ptr(false),
+						},
+					},
+				},
+				{
+					Name:          "03_alter_column_with_check",
+					VersionSchema: "alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "events",
+							Column: "name",
+							Up:     "SELECT CASE WHEN LENGTH(name) <= 3 THEN 'placeholder' ELSE name END",
+							Down:   "name",
+							Check: &migrations.CheckConstraint{
+								Name:       "name_length",
+								Constraint: "length(name) > 3",
+							},
+						},
+					},
+				},
+				{
+					Name:          "04_alter_column_comment",
+					VersionSchema: "alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:   "events",
+							Column:  "name",
+							Up:      "name",
+							Down:    "name",
+							Comment: nullable.NewNullableWithValue("the name of the event"),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a NULL into the new column should fail
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
+					"id": "1",
+				}, testutils.CheckViolationErrorCode)
+
+				// Inserting a non-NULL value into the new column should succeed
+				MustInsert(t, db, schema, "alter_column", "events", map[string]string{
+					"id":   "2",
+					"name": "apples",
+				})
+
+				// The value inserted into the new column has been backfilled into the
+				// old column.
+				rows := MustSelect(t, db, schema, "create_table", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "apples"},
+				}, rows)
+
+				// Inserting a NULL value into the old column should succeed
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
+					"id": "3",
+				})
+
+				// The NULL value inserted into the old column has been written into
+				// the new column using the `up` SQL.
+				rows = MustSelect(t, db, schema, "alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+				}, rows)
+
+				// Inserting a non-NULL value into the old column should succeed
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
+					"id":   "4",
+					"name": "bananas",
+				})
+
+				// The non-NULL value inserted into the old column has been copied
+				// unchanged into the new column.
+				rows = MustSelect(t, db, schema, "alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
+				}, rows)
+
+				// Inserting a row into the new column that violates the
+				// check constraint should fail
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
+					"id":   "5",
+					"name": "x",
+				}, testutils.CheckViolationErrorCode)
+
+				// Inserting a row into the old column that violates the
+				// check constraint should succeed.
+				MustInsert(t, db, schema, "create_table", "events", map[string]string{
+					"id":   "5",
+					"name": "x",
+				})
+
+				// The value that didn't meet the check constraint has been rewritten
+				// into the new column using the `up` SQL.
+				rows = MustSelect(t, db, schema, "alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
+					{"id": 5, "name": "placeholder"},
+				}, rows)
+
+				// The type of the new column in the underlying table should be `text`
+				ColumnMustHaveType(t, db, schema, "events", migrations.TemporaryName("name"), "text")
+
+				// The new column should have the new comment.
+				ColumnMustHaveComment(t, db, schema, "events", migrations.TemporaryName("name"), "the name of the event")
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The new (temporary) column should not exist on the underlying table.
+				ColumnMustNotExist(t, db, schema, "events", migrations.TemporaryName("name"))
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a NULL into the new column should fail
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
+					"id": "6",
+				}, testutils.NotNullViolationErrorCode)
+
+				// Inserting a row into the new column that violates the
+				// check constraint should fail
+				MustNotInsert(t, db, schema, "alter_column", "events", map[string]string{
+					"id":   "6",
+					"name": "x",
+				}, testutils.CheckViolationErrorCode)
+
+				// The type of the new column in the underlying table should be `text`
+				ColumnMustHaveType(t, db, schema, "events", "name", "text")
+
+				// The new column should have the new comment.
+				ColumnMustHaveComment(t, db, schema, "events", "name", "the name of the event")
+
+				// The table contains the expected rows
+				rows := MustSelect(t, db, schema, "alter_column", "events")
+				assert.Equal(t, []map[string]any{
+					{"id": 2, "name": "apples"},
+					{"id": 3, "name": "placeholder"},
+					{"id": 4, "name": "bananas"},
+					{"id": 5, "name": "placeholder"},
+				}, rows)
+			},
+		},
+	})
+}
+
 func TestAlterColumnValidation(t *testing.T) {
 	t.Parallel()
 
