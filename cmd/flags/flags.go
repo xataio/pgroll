@@ -29,3 +29,7 @@ func Role() string {
 }
 
 func Verbose() bool { return viper.GetBool("VERBOSE") }
+
+func UseVersionSchema() bool {
+	return viper.GetBool("USE_VERSION_SCHEMA")
+}
