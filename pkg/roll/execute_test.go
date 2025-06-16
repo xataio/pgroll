@@ -47,40 +47,42 @@ func TestSchemaIsCreatedAfterMigrationStart(t *testing.T) {
 	})
 }
 
-func TestDisabledSchemaManagement(t *testing.T) {
+func TestWithUseVersionSchemaOption(t *testing.T) {
 	t.Parallel()
 
-	testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", []roll.Option{roll.WithDisableViewsManagement()}, func(mig *roll.Roll, db *sql.DB) {
-		ctx := context.Background()
-		version := "1_create_table"
+	opts := []roll.Option{roll.WithVersionSchema(false)}
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
-			t.Fatalf("Failed to start migration: %v", err)
-		}
+	t.Run("can start, rollback and complete a migration without using version schema", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", opts, func(mig *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+			version := "1_create_table"
 
-		//
-		// Check that the schema doesn't get created
-		//
-		if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
-			t.Errorf("Expected schema %q to not exist", version)
-		}
+			m := &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}
 
-		if err := mig.Rollback(ctx); err != nil {
-			t.Fatalf("Failed to rollback migration: %v", err)
-		}
+			// Start the migration
+			err := mig.Start(ctx, m, backfill.NewConfig())
+			require.NoError(t, err)
 
-		if err := mig.Start(ctx, &migrations.Migration{Name: version, Operations: migrations.Operations{createTableOp("table1")}}, backfill.NewConfig()); err != nil {
-			t.Fatalf("Failed to start migration again: %v", err)
-		}
+			// Check that the version schema doesn't get created
+			exists := schemaExists(t, db, roll.VersionedSchemaName(cSchema, version))
+			require.False(t, exists)
 
-		// complete the migration, check that the schema still doesn't exist
-		if err := mig.Complete(ctx); err != nil {
-			t.Fatalf("Failed to complete migration: %v", err)
-		}
+			// Rollback the migration
+			err = mig.Rollback(ctx)
+			require.NoError(t, err)
 
-		if schemaExists(t, db, roll.VersionedSchemaName(cSchema, version)) {
-			t.Errorf("Expected schema %q to not exist", version)
-		}
+			// Restart the migration
+			err = mig.Start(ctx, m, backfill.NewConfig())
+			require.NoError(t, err)
+
+			// complete the migration
+			err = mig.Complete(ctx)
+			require.NoError(t, err)
+
+			// Check that no version schema exists for the migration
+			exists = schemaExists(t, db, roll.VersionedSchemaName(cSchema, version))
+			require.False(t, exists)
+		})
 	})
 }
 

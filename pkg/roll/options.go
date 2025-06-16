@@ -52,11 +52,11 @@ func WithRole(role string) Option {
 	}
 }
 
-// WithDisableViewsManagement disables pgroll version schemas management
-// when passed, pgroll will not create or drop version schemas
-func WithDisableViewsManagement() Option {
+// WithVersionSchema enables or disables the creation of version schema for
+// migrations.
+func WithVersionSchema(enabled bool) Option {
 	return func(o *options) {
-		o.disableVersionSchemas = true
+		o.disableVersionSchemas = !enabled
 	}
 }
 
