@@ -68,31 +68,7 @@ $$
 LANGUAGE SQL
 STABLE;
 
--- Get the latest version schema name
-CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
-    RETURNS text
-    SECURITY DEFINER
-    SET search_path = placeholder, pg_catalog, pg_temp
-    AS $$
-    SELECT
-        COALESCE(p.migration ->> 'version_schema', p.name)
-    FROM
-        placeholder.migrations p
-    WHERE
-        NOT EXISTS (
-            SELECT
-                1
-            FROM
-                placeholder.migrations c
-            WHERE
-                SCHEMA = schemaname
-                AND c.parent = p.name)
-        AND SCHEMA = schemaname
-$$
-LANGUAGE SQL
-STABLE;
-
--- Get the name of the latest version schema, or NULL if there is none.
+-- Get the name of the latest migration, or NULL if there is none.
 -- This will be the same as the version-schema name of the migration in most
 -- cases, unless the migration sets its `versionSchema` field.
 CREATE OR REPLACE FUNCTION placeholder.latest_migration (schemaname name)
@@ -114,60 +90,6 @@ CREATE OR REPLACE FUNCTION placeholder.latest_migration (schemaname name)
                 SCHEMA = schemaname
                 AND c.parent = p.name)
         AND SCHEMA = schemaname
-$$
-LANGUAGE SQL
-STABLE;
-
--- Get the previous version schema name, or NULL if there is none.
--- This ignores previous versions for which no version schema exists, such as
--- versions corresponding to inferred migrations.
-CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name, includeInferred boolean)
-    RETURNS text
-    AS $$
-    WITH RECURSIVE ancestors AS (
-        SELECT
-            name,
-            migration ->> 'version_schema' AS versionSchema,
-            schema,
-            parent,
-            migration_type,
-            0 AS depth
-        FROM
-            placeholder.migrations
-        WHERE
-            name = placeholder.latest_migration (schemaname)
-            AND SCHEMA = schemaname
-        UNION ALL
-        SELECT
-            m.name,
-            m.migration ->> 'version_schema' AS versionSchema,
-            m.schema,
-            m.parent,
-            m.migration_type,
-            a.depth + 1
-        FROM
-            placeholder.migrations m
-            JOIN ancestors a ON m.name = a.parent
-                AND m.schema = a.schema
-)
-        SELECT
-            COALESCE(a.versionSchema, a.name)
-        FROM
-            ancestors a
-    WHERE
-        a.depth > 0
-        AND (includeInferred
-            OR (a.migration_type = 'pgroll'
-                AND EXISTS (
-                    SELECT
-                        s.schema_name
-                    FROM
-                        information_schema.schemata s
-                    WHERE
-                        s.schema_name = schemaname || '_' || COALESCE(a.versionSchema, a.name))))
-    ORDER BY
-        a.depth ASC
-    LIMIT 1;
 $$
 LANGUAGE SQL
 STABLE;
@@ -209,6 +131,80 @@ CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name)
     ORDER BY
         a.depth ASC
     LIMIT 1;
+$$
+LANGUAGE SQL
+STABLE;
+
+-- find_version_schema finds a recent version schema for a given schema name.
+-- How recent is determined by the minDepth parameter: for a minDepth of 0, it
+-- returns the latest version schema, for a minDepth of 1, it returns the
+-- previous version schema, and so on.
+-- Only version schemas that exist in the database are considered; migrations
+-- without version schema (such as inferred migrations) are ignored.
+CREATE OR REPLACE FUNCTION find_version_schema (p_schema_name name, p_depth integer DEFAULT 0)
+    RETURNS text
+    AS $$
+    WITH RECURSIVE ancestors AS (
+        SELECT
+            name,
+            COALESCE(migration ->> 'version_schema', name) AS version_schema,
+            schema,
+            parent,
+            0 AS depth
+        FROM
+            placeholder.migrations
+        WHERE
+            name = placeholder.latest_migration (p_schema_name)
+            AND SCHEMA = p_schema_name
+        UNION ALL
+        SELECT
+            m.name,
+            COALESCE(m.migration ->> 'version_schema', m.name) AS version_schema,
+            m.schema,
+            m.parent,
+            a.depth + 1
+        FROM
+            placeholder.migrations m
+            JOIN ancestors a ON m.name = a.parent
+                AND m.schema = a.schema
+)
+        SELECT
+            a.version_schema
+        FROM
+            ancestors a
+    WHERE
+        EXISTS (
+            SELECT
+                1
+            FROM
+                information_schema.schemata s
+            WHERE
+                s.schema_name = p_schema_name || '_' || a.version_schema)
+    ORDER BY
+        a.depth ASC OFFSET p_depth
+    LIMIT 1;
+$$
+LANGUAGE SQL
+STABLE;
+
+-- previous_version returns the name of the previous version schema for a given
+-- schema name or NULL if there is no previous version schema.
+CREATE OR REPLACE FUNCTION previous_version (schemaname name)
+    RETURNS text
+    AS $$
+    SELECT
+        placeholder.find_version_schema (schemaname, 1);
+$$
+LANGUAGE SQL
+STABLE;
+
+-- latest_version returns the name of the latest version schema for a given
+-- schema name or NULL if there are no version schema.
+CREATE OR REPLACE FUNCTION latest_version (schemaname name)
+    RETURNS text
+    AS $$
+    SELECT
+        placeholder.find_version_schema (schemaname, 0);
 $$
 LANGUAGE SQL
 STABLE;
