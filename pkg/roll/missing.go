@@ -14,17 +14,6 @@ import (
 // the target database but are missing from the local migrations directory
 // `dir`.
 func (m *Roll) MissingMigrations(ctx context.Context, dir fs.FS) ([]*migrations.RawMigration, error) {
-	// Determine the latest version of the database
-	latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
-	if err != nil {
-		return nil, fmt.Errorf("determining latest version: %w", err)
-	}
-
-	// If no migrations are applied, return a nil slice
-	if latestVersion == nil {
-		return nil, nil
-	}
-
 	// Collect all migration files from the directory
 	files, err := migrations.CollectFilesFromDir(dir)
 	if err != nil {
