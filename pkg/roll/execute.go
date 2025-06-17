@@ -269,8 +269,8 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		m.logger.LogSchemaDeletion(migration.Name, versionSchema)
 	}
 
-	// get the name of the previous version of the schema
-	previousMigration, err := m.state.PreviousMigration(ctx, m.schema, true)
+	// get the name of the previous migration
+	previousMigration, err := m.state.PreviousMigration(ctx, m.schema)
 	if err != nil {
 		return fmt.Errorf("unable to get name of previous version: %w", err)
 	}
