@@ -175,7 +175,7 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// Drop the old schema
 	if !m.disableVersionSchemas {
-		prevVersion, err := m.state.PreviousVersion(ctx, m.schema, false)
+		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
 		if err != nil {
 			return fmt.Errorf("unable to get name of previous version: %w", err)
 		}
