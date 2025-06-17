@@ -173,9 +173,7 @@ LANGUAGE SQL
 STABLE;
 
 -- Get the name of the previous migration, or NULL if there is none.
--- This ignores previous versions for which no version schema exists, such as
--- versions corresponding to inferred migrations.
-CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name, includeInferred boolean)
+CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name)
     RETURNS text
     AS $$
     WITH RECURSIVE ancestors AS (
@@ -208,15 +206,6 @@ CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name, incl
             ancestors a
     WHERE
         a.depth > 0
-        AND (includeInferred
-            OR (a.migration_type = 'pgroll'
-                AND EXISTS (
-                    SELECT
-                        s.schema_name
-                    FROM
-                        information_schema.schemata s
-                    WHERE
-                        s.schema_name = schemaname || '_' || a.name)))
     ORDER BY
         a.depth ASC
     LIMIT 1;
