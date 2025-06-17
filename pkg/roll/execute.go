@@ -19,7 +19,7 @@ func (m *Roll) Validate(ctx context.Context, migration *migrations.Migration) er
 	if m.skipValidation {
 		return nil
 	}
-	lastSchema, err := m.state.LastSchema(ctx, m.schema)
+	lastSchema, err := m.state.ReadSchema(ctx, m.schema)
 	if err != nil {
 		return err
 	}
