@@ -72,7 +72,37 @@ func TestLatestVersionRemote(t *testing.T) {
 			latestVersion, err := m.LatestVersionRemote(ctx)
 			require.NoError(t, err)
 
-			// Assert latest migration name
+			// Assert latest migration version schema name
+			assert.Equal(t, "01_foo", latestVersion)
+		})
+	})
+
+	t.Run("inferred migrations without a version schema are ignored", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			// Start and complete a migration
+			err := m.Start(ctx, &migrations.Migration{
+				Name:          "01_first_migration",
+				VersionSchema: "01_foo",
+				Operations: migrations.Operations{
+					&migrations.OpRawSQL{Up: "SELECT 1"},
+				},
+			}, backfill.NewConfig())
+			require.NoError(t, err)
+			err = m.Complete(ctx)
+			require.NoError(t, err)
+
+			// Run some DDL to generate an inferred migration
+			_, err = db.ExecContext(ctx, "CREATE TABLE apples(id int)")
+			require.NoError(t, err)
+
+			// Get the latest version in the target schema
+			latestVersion, err := m.LatestVersionRemote(ctx)
+			require.NoError(t, err)
+
+			// Assert latest migration version schema name; the inferred migration
+			// name is ignored
 			assert.Equal(t, "01_foo", latestVersion)
 		})
 	})
