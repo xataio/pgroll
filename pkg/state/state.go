@@ -266,11 +266,11 @@ func (s *State) PreviousVersion(ctx context.Context, schema string, includeInfer
 }
 
 // PreviousMigration returns the name of the previous migration
-func (s *State) PreviousMigration(ctx context.Context, schema string, includeInferred bool) (*string, error) {
+func (s *State) PreviousMigration(ctx context.Context, schema string) (*string, error) {
 	var parent *string
 	err := s.pgConn.QueryRowContext(ctx,
-		fmt.Sprintf("SELECT %s.previous_migration($1, $2)", pq.QuoteIdentifier(s.schema)),
-		schema, includeInferred).Scan(&parent)
+		fmt.Sprintf("SELECT %s.previous_migration($1)", pq.QuoteIdentifier(s.schema)),
+		schema).Scan(&parent)
 	if err != nil {
 		return nil, err
 	}
