@@ -107,15 +107,40 @@ func TestLatestVersionRemote(t *testing.T) {
 		})
 	})
 
+	t.Run("returns an error if migrations have been applied but none have a version schema", func(t *testing.T) {
+		opts := []roll.Option{roll.WithVersionSchema(false)}
+
+		testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", opts, func(m *roll.Roll, _ *sql.DB) {
+			ctx := context.Background()
+
+			// Start and complete a migration
+			err := m.Start(ctx, &migrations.Migration{
+				Name: "01_first_migration",
+				Operations: migrations.Operations{
+					&migrations.OpRawSQL{Up: "SELECT 1"},
+				},
+			}, backfill.NewConfig())
+			require.NoError(t, err)
+			err = m.Complete(ctx)
+			require.NoError(t, err)
+
+			// Get the latest migration in the target schema
+			_, err = m.LatestVersionRemote(ctx)
+
+			// Assert expected error
+			assert.ErrorIs(t, err, roll.ErrNoVersionSchema)
+		})
+	})
+
 	t.Run("returns an error if no migrations have been applied", func(t *testing.T) {
 		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, _ *sql.DB) {
 			ctx := context.Background()
 
-			// Get the latest migration in the directory
+			// Get the latest migration in the target schema
 			_, err := m.LatestVersionRemote(ctx)
 
 			// Assert expected error
-			assert.ErrorIs(t, err, roll.ErrNoMigrationApplied)
+			assert.ErrorIs(t, err, roll.ErrNoVersionSchema)
 		})
 	})
 }
