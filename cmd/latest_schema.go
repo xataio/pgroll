@@ -25,7 +25,7 @@ func latestSchemaCmd() *cobra.Command {
 
 			latestVersion, err := latestVersion(ctx, migrationsDir)
 			if err != nil {
-				return fmt.Errorf("failed to get latest migration from database: %w", err)
+				return fmt.Errorf("failed to get latest version: %w", err)
 			}
 
 			fmt.Println(latestVersion)

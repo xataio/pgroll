@@ -84,6 +84,20 @@ func TestWithUseVersionSchemaOption(t *testing.T) {
 			require.False(t, exists)
 		})
 	})
+
+	t.Run("roll instance reports that it does not use version schema", func(t *testing.T) {
+		testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", opts, func(mig *roll.Roll, db *sql.DB) {
+			// The roll instance correctly reports tht it does not use version schema
+			require.False(t, mig.UseVersionSchema())
+		})
+	})
+
+	t.Run("roll instance reports that it does use version schema", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+			// The roll instance correctly reports that it uses version schema
+			require.True(t, mig.UseVersionSchema())
+		})
+	})
 }
 
 func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {

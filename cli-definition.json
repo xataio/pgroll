@@ -303,6 +303,11 @@
       "default": "public"
     },
     {
+      "name": "use-version-schema",
+      "description": "Create version schemas for each migration",
+      "default": "true"
+    },
+    {
       "name": "verbose",
       "description": "Enable verbose logging",
       "default": "false"
