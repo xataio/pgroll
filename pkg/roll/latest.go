@@ -13,6 +13,7 @@ import (
 var (
 	ErrNoMigrationFiles   = fmt.Errorf("no migration files found")
 	ErrNoMigrationApplied = fmt.Errorf("no migrations applied")
+	ErrNoVersionSchema    = fmt.Errorf("no version schemas found")
 )
 
 // LatestVersionLocal returns the version schema name of the last migration in
@@ -46,7 +47,7 @@ func (m *Roll) LatestVersionRemote(ctx context.Context) (string, error) {
 	}
 
 	if latestVersion == nil {
-		return "", ErrNoMigrationApplied
+		return "", ErrNoVersionSchema
 	}
 
 	return *latestVersion, nil
