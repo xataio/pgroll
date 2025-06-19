@@ -364,7 +364,6 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 func (m *Roll) performBackfills(ctx context.Context, jobs []*backfill.Job, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
 
-	fmt.Println("START BACKFILL")
 	for _, job := range jobs {
 		bf.SetupTriggers(job.Triggers)
 	}
@@ -372,7 +371,6 @@ func (m *Roll) performBackfills(ctx context.Context, jobs []*backfill.Job, cfg *
 
 	for _, job := range jobs {
 		m.logger.LogBackfillStart(job.Table.Name)
-		fmt.Println("trigger count", len(job.Triggers))
 
 		if err := bf.Start(ctx, job.Table); err != nil {
 			errRollback := m.Rollback(ctx)
@@ -384,7 +382,6 @@ func (m *Roll) performBackfills(ctx context.Context, jobs []*backfill.Job, cfg *
 
 		m.logger.LogBackfillComplete(job.Table.Name)
 	}
-	fmt.Println("STOP BACKFILL")
 
 	return nil
 }
