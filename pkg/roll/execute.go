@@ -127,14 +127,11 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		}
 	}
 
-	if m.disableVersionSchemas {
-		// skip creating version schemas
-		return tablesToBackfill, nil
-	}
-
 	// create views for the new version
-	if err := m.ensureViews(ctx, newSchema, migration); err != nil {
-		return nil, err
+	if !m.disableVersionSchemas {
+		if err := m.ensureViews(ctx, newSchema, migration); err != nil {
+			return nil, err
+		}
 	}
 
 	return tablesToBackfill, nil
