@@ -47,18 +47,18 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 		return err
 	}
 
-	backfillJobs, err := m.StartDDLOperations(ctx, migration)
+	backfillTask, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
 		return err
 	}
 
 	// perform backfills for the tables that require it
-	return m.performBackfills(ctx, backfillJobs, cfg)
+	return m.performBackfills(ctx, backfillTask, cfg)
 }
 
 // StartDDLOperations performs the DDL operations for the migration. This does
 // not include running backfills for any modified tables.
-func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) ([]*backfill.Job, error) {
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) (*backfill.Task, error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -102,7 +102,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// execute operations
-	var jobs []*backfill.Job
+	var task *backfill.Task
 	for _, op := range migration.Operations {
 		fmt.Printf("Executing operation %T for migration %q\n", op, migration.Name)
 		job, err := op.Start(ctx, m.logger, m.pgConn, latestSchema, newSchema)
@@ -127,13 +127,13 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 			}
 		}
 		if job != nil {
-			jobs = append(jobs, job)
+			task.AddJob(job)
 		}
 	}
 
 	if m.disableVersionSchemas {
 		// skip creating version schemas
-		return jobs, nil
+		return task, nil
 	}
 
 	// create views for the new version
@@ -141,7 +141,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		return nil, err
 	}
 
-	return jobs, nil
+	return task, nil
 }
 
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, mig *migrations.Migration) error {
@@ -361,26 +361,23 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 	return nil
 }
 
-func (m *Roll) performBackfills(ctx context.Context, jobs []*backfill.Job, cfg *backfill.Config) error {
+func (m *Roll) performBackfills(ctx context.Context, task *backfill.Task, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
 
-	for _, job := range jobs {
-		bf.SetupTriggers(job.Triggers)
-	}
-	bf.LoadTriggers(ctx)
+	bf.LoadTriggers(ctx, task)
 
-	for _, job := range jobs {
-		m.logger.LogBackfillStart(job.Table.Name)
+	for _, table := range task.Tables {
+		m.logger.LogBackfillStart(table.Name)
 
-		if err := bf.Start(ctx, job.Table); err != nil {
+		if err := bf.Start(ctx, table); err != nil {
 			errRollback := m.Rollback(ctx)
 
 			return errors.Join(
-				fmt.Errorf("unable to backfill table %q: %w", job.Table.Name, err),
+				fmt.Errorf("unable to backfill table %q: %w", table.Name, err),
 				errRollback)
 		}
 
-		m.logger.LogBackfillComplete(job.Table.Name)
+		m.logger.LogBackfillComplete(table.Name)
 	}
 
 	return nil
