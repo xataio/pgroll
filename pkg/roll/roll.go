@@ -152,11 +152,6 @@ func (m *Roll) UseVersionSchema() bool {
 	return !m.disableVersionSchemas
 }
 
-// Status returns the current migration status
-func (m *Roll) Status(ctx context.Context, schema string) (*state.Status, error) {
-	return m.state.Status(ctx, schema)
-}
-
 func (m *Roll) Close() error {
 	err := m.state.Close()
 	if err != nil {
