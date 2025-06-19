@@ -293,7 +293,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 			// ensure that there is no active migration
 			status, err := mig.Status(ctx, "public")
 			assert.NoError(t, err)
-			assert.Equal(t, state.NoneMigrationStatus, status.Status)
+			assert.Equal(t, roll.NoneMigrationStatus, status.Status)
 		})
 	})
 
@@ -338,7 +338,7 @@ func TestRollbackOnMigrationStartFailure(t *testing.T) {
 			status, err := mig.Status(ctx, "public")
 			assert.NoError(t, err)
 			assert.Equal(t, "01_create_table", status.Version)
-			assert.Equal(t, state.CompleteMigrationStatus, status.Status)
+			assert.Equal(t, roll.CompleteMigrationStatus, status.Status)
 		})
 	})
 }
@@ -542,10 +542,10 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Ensure that the status shows "No migrations"
-		assert.Equal(t, &state.Status{
+		assert.Equal(t, &roll.Status{
 			Schema:  "public",
 			Version: "",
-			Status:  state.NoneMigrationStatus,
+			Status:  roll.NoneMigrationStatus,
 		}, status)
 
 		// Start a migration
@@ -560,10 +560,10 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Ensure that the status shows "In progress"
-		assert.Equal(t, &state.Status{
+		assert.Equal(t, &roll.Status{
 			Schema:  "public",
 			Version: "01_create_table",
-			Status:  state.InProgressMigrationStatus,
+			Status:  roll.InProgressMigrationStatus,
 		}, status)
 
 		// Rollback the migration
@@ -575,10 +575,10 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Ensure that the status shows "No migrations"
-		assert.Equal(t, &state.Status{
+		assert.Equal(t, &roll.Status{
 			Schema:  "public",
 			Version: "",
-			Status:  state.NoneMigrationStatus,
+			Status:  roll.NoneMigrationStatus,
 		}, status)
 
 		// Start and complete a migration
@@ -595,10 +595,10 @@ func TestStatusMethodReturnsCorrectStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Ensure that the status shows "Complete"
-		assert.Equal(t, &state.Status{
+		assert.Equal(t, &roll.Status{
 			Schema:  "public",
 			Version: "01_create_table",
-			Status:  state.CompleteMigrationStatus,
+			Status:  roll.CompleteMigrationStatus,
 		}, status)
 	})
 }
