@@ -103,9 +103,9 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	var tableToBackfill *schema.Table
 	if o.Up != "" {
 		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, o.Column.Name),
-				Direction:      TriggerDirectionUp,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, o.Column.Name),
+				Direction:      backfill.TriggerDirectionUp,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
@@ -149,7 +149,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -224,7 +224,7 @@ func (o *OpAddColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *sch
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}

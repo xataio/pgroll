@@ -38,9 +38,9 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	err := NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, column.Name),
-			Direction:      TriggerDirectionUp,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, column.Name),
+			Direction:      backfill.TriggerDirectionUp,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
@@ -62,9 +62,9 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
 	err = NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, TemporaryName(column.Name)),
-			Direction:      TriggerDirectionDown,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, TemporaryName(column.Name)),
+			Direction:      backfill.TriggerDirectionDown,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
@@ -87,7 +87,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Remove the up and down function and trigger
-	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, column.Name), TriggerFunctionName(o.Table, TemporaryName(column.Name))).Execute(ctx)
+	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, column.Name), backfill.TriggerFunctionName(o.Table, TemporaryName(column.Name))).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -134,8 +134,8 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s
 	// Remove the up and down functions and triggers
 	if err := NewDropFunctionAction(
 		conn,
-		TriggerFunctionName(o.Table, columnName),
-		TriggerFunctionName(o.Table, TemporaryName(columnName)),
+		backfill.TriggerFunctionName(o.Table, columnName),
+		backfill.TriggerFunctionName(o.Table, TemporaryName(columnName)),
 	).Execute(ctx); err != nil {
 		return err
 	}

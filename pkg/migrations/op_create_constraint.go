@@ -45,9 +45,9 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
 		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, colName),
-				Direction:      TriggerDirectionUp,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, colName),
+				Direction:      backfill.TriggerDirectionUp,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
@@ -71,9 +71,9 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 
 		downSQL := o.Down[colName]
 		err = NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, TemporaryName(colName)),
-				Direction:      TriggerDirectionDown,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, TemporaryName(colName)),
+				Direction:      backfill.TriggerDirectionDown,
 				Columns:        table.Columns,
 				LatestSchema:   latestSchema,
 				SchemaName:     s.Name,
@@ -205,8 +205,8 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB,
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
 	dropFuncs := make([]string, 0, len(o.Columns)*2)
 	for _, column := range o.Columns {
-		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, column))
-		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, TemporaryName(column)))
+		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, column))
+		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, TemporaryName(column)))
 	}
 	return NewDropFunctionAction(conn, dropFuncs...).Execute(ctx)
 }

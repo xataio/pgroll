@@ -40,9 +40,9 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	err := NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, o.Column),
-			Direction:      TriggerDirectionUp,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, o.Column),
+			Direction:      backfill.TriggerDirectionUp,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
@@ -66,9 +66,9 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 
 	// Add a trigger to copy values from the new column to the old.
 	err = NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, TemporaryName(o.Column)),
-			Direction:      TriggerDirectionDown,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, TemporaryName(o.Column)),
+			Direction:      backfill.TriggerDirectionDown,
 			Columns:        table.Columns,
 			LatestSchema:   latestSchema,
 			SchemaName:     s.Name,
@@ -114,7 +114,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *s
 	}
 
 	// Remove the up and down function and trigger
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column), TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column), backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -170,8 +170,8 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *s
 	// Remove the up and down functions and triggers
 	if err := NewDropFunctionAction(
 		conn,
-		TriggerFunctionName(o.Table, o.Column),
-		TriggerFunctionName(o.Table, TemporaryName(o.Column)),
+		backfill.TriggerFunctionName(o.Table, o.Column),
+		backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
 	).Execute(ctx); err != nil {
 		return err
 	}
