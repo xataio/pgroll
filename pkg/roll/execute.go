@@ -47,18 +47,18 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 		return err
 	}
 
-	tablesToBackfill, err := m.StartDDLOperations(ctx, migration)
+	job, err := m.StartDDLOperations(ctx, migration)
 	if err != nil {
 		return err
 	}
 
 	// perform backfills for the tables that require it
-	return m.performBackfills(ctx, tablesToBackfill, cfg)
+	return m.performBackfills(ctx, job, cfg)
 }
 
 // StartDDLOperations performs the DDL operations for the migration. This does
 // not include running backfills for any modified tables.
-func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) ([]*schema.Table, error) {
+func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) (*backfill.Job, error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
@@ -99,9 +99,9 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// execute operations
-	var tablesToBackfill []*schema.Table
+	job := &backfill.Job{}
 	for _, op := range migration.Operations {
-		table, err := op.Start(ctx, m.logger, m.pgConn, versionSchemaName, newSchema)
+		task, err := op.Start(ctx, m.logger, m.pgConn, versionSchemaName, newSchema)
 		if err != nil {
 			errRollback := m.Rollback(ctx)
 			if errRollback != nil {
@@ -122,8 +122,8 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 				}
 			}
 		}
-		if table != nil {
-			tablesToBackfill = append(tablesToBackfill, table)
+		if task != nil {
+			job.AddTask(task)
 		}
 	}
 
@@ -134,7 +134,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		}
 	}
 
-	return tablesToBackfill, nil
+	return job, nil
 }
 
 func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, mig *migrations.Migration) error {
@@ -350,10 +350,12 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 	return nil
 }
 
-func (m *Roll) performBackfills(ctx context.Context, tables []*schema.Table, cfg *backfill.Config) error {
+func (m *Roll) performBackfills(ctx context.Context, job *backfill.Job, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
 
-	for _, table := range tables {
+	bf.LoadTriggers(ctx, job)
+
+	for _, table := range job.Tables {
 		m.logger.LogBackfillStart(table.Name)
 
 		if err := bf.Start(ctx, table); err != nil {

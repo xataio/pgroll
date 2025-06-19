@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -21,7 +22,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -48,7 +49,9 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
-	return table, nil
+	return &backfill.Task{
+		Table: table,
+	}, nil
 }
 
 func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

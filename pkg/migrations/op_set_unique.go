@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -19,7 +20,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -31,7 +32,9 @@ func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
+	return &backfill.Task{
+		Table: table,
+	}, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

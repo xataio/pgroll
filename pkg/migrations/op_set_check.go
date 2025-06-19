@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -20,7 +21,7 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -33,7 +34,9 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, 
 		return nil, fmt.Errorf("failed to add check constraint: %w", err)
 	}
 
-	return table, nil
+	return &backfill.Task{
+		Table: table,
+	}, nil
 }
 
 func (o *OpSetCheckConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
