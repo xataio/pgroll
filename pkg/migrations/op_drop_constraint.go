@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -37,21 +37,19 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, column.Name),
-			Direction:      TriggerDirectionUp,
+	var triggers []backfill.TriggerConfig
+	triggers = append(triggers,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, column.Name),
+			Direction:      backfill.TriggerDirectionUp,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(column.Name),
-			SQL:            o.upSQL(column.Name),
+			SQL:            []string{o.upSQL(column.Name)},
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
-	}
+	)
 
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
@@ -61,22 +59,22 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	err = NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, TemporaryName(column.Name)),
-			Direction:      TriggerDirectionDown,
+	triggers = append(triggers,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, TemporaryName(column.Name)),
+			Direction:      backfill.TriggerDirectionDown,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: column.Name,
-			SQL:            o.Down,
+			SQL:            []string{o.Down},
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
-	}
-	return table, nil
+	)
+	return &backfill.Job{
+		Table:    table,
+		Triggers: triggers,
+	}, nil
 }
 
 func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -87,7 +85,7 @@ func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
 	// Remove the up and down function and trigger
-	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, column.Name), TriggerFunctionName(o.Table, TemporaryName(column.Name))).Execute(ctx)
+	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, column.Name), backfill.TriggerFunctionName(o.Table, TemporaryName(column.Name))).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -134,8 +132,8 @@ func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s
 	// Remove the up and down functions and triggers
 	if err := NewDropFunctionAction(
 		conn,
-		TriggerFunctionName(o.Table, columnName),
-		TriggerFunctionName(o.Table, TemporaryName(columnName)),
+		backfill.TriggerFunctionName(o.Table, columnName),
+		backfill.TriggerFunctionName(o.Table, TemporaryName(columnName)),
 	).Execute(ctx); err != nil {
 		return err
 	}

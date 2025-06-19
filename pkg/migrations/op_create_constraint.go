@@ -16,7 +16,7 @@ var (
 	_ Createable = (*OpCreateConstraint)(nil)
 )
 
-func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -41,24 +41,21 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
 
-	// Setup triggers
+	var triggers []backfill.TriggerConfig
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, colName),
-				Direction:      TriggerDirectionUp,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, colName),
+				Direction:      backfill.TriggerDirectionUp,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
 				TableName:      table.Name,
 				PhysicalColumn: TemporaryName(colName),
-				SQL:            upSQL,
+				SQL:            []string{upSQL},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create up trigger: %w", err)
-		}
+		)
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
@@ -70,33 +67,34 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 		})
 
 		downSQL := o.Down[colName]
-		err = NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, TemporaryName(colName)),
-				Direction:      TriggerDirectionDown,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, TemporaryName(colName)),
+				Direction:      backfill.TriggerDirectionDown,
 				Columns:        table.Columns,
 				LatestSchema:   latestSchema,
 				SchemaName:     s.Name,
 				TableName:      table.Name,
 				PhysicalColumn: oldPhysicalColumn,
-				SQL:            downSQL,
+				SQL:            []string{downSQL},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create down trigger: %w", err)
-		}
+		)
 	}
 
+	job := &backfill.Job{
+		Table:    table,
+		Triggers: triggers,
+	}
 	switch o.Type {
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:
-		return table, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...).Execute(ctx)
+		return job, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...).Execute(ctx)
 	case OpCreateConstraintTypeCheck:
-		return table, NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true).Execute(ctx)
+		return job, NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true).Execute(ctx)
 	case OpCreateConstraintTypeForeignKey:
-		return table, NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true).Execute(ctx)
+		return job, NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true).Execute(ctx)
 	}
 
-	return table, nil
+	return job, nil
 }
 
 func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -205,8 +203,8 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB,
 func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
 	dropFuncs := make([]string, 0, len(o.Columns)*2)
 	for _, column := range o.Columns {
-		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, column))
-		dropFuncs = append(dropFuncs, TriggerFunctionName(o.Table, TemporaryName(column)))
+		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, column))
+		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, TemporaryName(column)))
 	}
 	return NewDropFunctionAction(conn, dropFuncs...).Execute(ctx)
 }

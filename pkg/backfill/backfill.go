@@ -20,8 +20,14 @@ import (
 const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 
 type Backfill struct {
-	conn db.DB
+	conn     db.DB
+	triggers *triggerCreator
 	*Config
+}
+
+type Job struct {
+	Table    *schema.Table
+	Triggers []TriggerConfig
 }
 
 type CallbackFn func(done int64, total int64)
@@ -32,9 +38,30 @@ func New(conn db.DB, c *Config) *Backfill {
 	b := &Backfill{
 		conn:   conn,
 		Config: c,
+		triggers: &triggerCreator{
+			triggers: make(map[string]TriggerConfig),
+		},
 	}
 
 	return b
+}
+
+func (bf *Backfill) SetupTriggers(triggers []TriggerConfig) {
+	// Add the triggers to the creator
+	for _, t := range triggers {
+		bf.triggers.addTrigger(t)
+	}
+}
+
+func (bf *Backfill) LoadTriggers(ctx context.Context) error {
+	// Create the triggers in the database
+	for _, t := range bf.triggers.triggers {
+		action := &createTriggerAction{conn: bf.conn, cfg: t}
+		if err := action.Execute(ctx); err != nil {
+			return fmt.Errorf("creating trigger %q: %w", t.Name, err)
+		}
+	}
+	return nil
 }
 
 // Start updates all rows in the given table, in batches, using the

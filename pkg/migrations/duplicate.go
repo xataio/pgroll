@@ -19,11 +19,13 @@ import (
 type Duplicator struct {
 	stmtBuilder       *duplicatorStmtBuilder
 	conn              db.DB
+	tableName         string
 	columns           map[string]*columnToDuplicate
 	withoutConstraint []string
 }
 
 type columnToDuplicate struct {
+	exists         bool // exists indicates if the column exists in the table
 	column         *schema.Column
 	asName         string
 	withoutNotNull bool
@@ -51,14 +53,43 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 			withType: column.Type,
 		}
 	}
+
+	for name := range cols {
+		exists, err := checkColumnExists(context.Background(), conn, table.Name, name)
+		if err != nil {
+			continue
+		}
+		cols[name].exists = exists
+	}
+
 	return &Duplicator{
 		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
 		conn:              conn,
+		tableName:         table.Name,
 		columns:           cols,
 		withoutConstraint: make([]string, 0),
 	}
+}
+
+func checkColumnExists(ctx context.Context, conn db.DB, tableName, columnName string) (bool, error) {
+	rows, err := conn.QueryContext(ctx,
+		"SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = $1 AND column_name = $2)",
+		tableName,
+		columnName,
+	)
+	if err != nil || rows == nil {
+		return false, err
+	}
+
+	var exists bool
+	if err := db.ScanFirstValue(rows, &exists); err != nil {
+		return false, err
+	}
+	rows.Close()
+
+	return exists, nil
 }
 
 // WithType sets the type of the new column.
@@ -82,6 +113,8 @@ func (d *Duplicator) WithoutNotNull(columnName string) *Duplicator {
 // WithName sets the name of the new column.
 func (d *Duplicator) WithName(columnName, asName string) *Duplicator {
 	d.columns[columnName].asName = asName
+	exists, _ := checkColumnExists(context.Background(), d.conn, d.tableName, asName)
+	d.columns[columnName].exists = exists
 	return d
 }
 
@@ -93,11 +126,13 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		colNames = append(colNames, name)
 
 		// Duplicate the column with the new type
-		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType); sql != "" {
+		if sql := d.stmtBuilder.duplicateColumn(c.column, c.exists, c.asName, c.withoutNotNull, c.withType); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
+				fmt.Println("Error duplicating column SQL with type:", sql)
 				return err
 			}
+			d.columns[name].exists = true // Mark the column as existing after duplication
 		}
 
 		// Duplicate the column's default value
@@ -105,6 +140,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 			_, err := d.conn.ExecContext(ctx, sql)
 			err = errorIgnoringErrorCode(err, dataTypeMismatchErrorCode)
 			if err != nil {
+				fmt.Println("Error duplicating default SQL:", sql)
 				return err
 			}
 		}
@@ -113,6 +149,7 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 		if sql := d.stmtBuilder.duplicateComment(c.column, c.asName); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
+				fmt.Println("Error duplicating comment SQL:", sql)
 				return err
 			}
 		}
@@ -166,6 +203,9 @@ func (d *Duplicator) Duplicate(ctx context.Context) error {
 func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.CheckConstraints))
 	for _, cc := range d.table.CheckConstraints {
+		if IsDuplicatedName(cc.Name) {
+			continue // Skip already duplicated constraints
+		}
 		if slices.Contains(withoutConstraint, cc.Name) {
 			continue
 		}
@@ -177,6 +217,24 @@ func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []st
 		}
 	}
 	return stmts
+}
+
+func checkConstraintExists(ctx context.Context, conn db.DB, constraintName string) (bool, error) {
+	rows, err := conn.QueryContext(ctx,
+		"SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = $1)",
+		constraintName,
+	)
+	if err != nil || rows == nil {
+		return false, err
+	}
+
+	var exists bool
+	if err := db.ScanFirstValue(rows, &exists); err != nil {
+		return false, err
+	}
+	rows.Close()
+
+	return exists, nil
 }
 
 func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint []string, colNames ...string) []string {
@@ -275,28 +333,47 @@ func (d *duplicatorStmtBuilder) allConstraintColumns(constraintColumns []string,
 
 func (d *duplicatorStmtBuilder) duplicateColumn(
 	column *schema.Column,
+	exists bool,
 	asName string,
 	withoutNotNull bool,
 	withType string,
 ) string {
 	const (
-		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
-		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
+		cAlterTableSQL          = `ALTER TABLE %s ADD COLUMN %s %s`
+		cAddCheckConstraintSQL  = `ADD CONSTRAINT %s %s NOT VALID`
+		cAlterTableConstrantSQL = `ALTER TABLE %s `
 	)
 
 	// Generate SQL to duplicate the column's name and type
-	sql := fmt.Sprintf(cAlterTableSQL,
-		pq.QuoteIdentifier(d.table.Name),
-		pq.QuoteIdentifier(asName),
-		withType)
+	var sql string
+	if !exists {
+		sql = fmt.Sprintf(cAlterTableSQL,
+			pq.QuoteIdentifier(d.table.Name),
+			pq.QuoteIdentifier(asName),
+			withType)
+	} else {
+		sql = fmt.Sprintf(cAlterTableConstrantSQL,
+			pq.QuoteIdentifier(d.table.Name),
+		)
+	}
 
 	// Generate SQL to add an unchecked NOT NULL constraint if the original column
 	// is NOT NULL. The constraint will be validated on migration completion.
 	if !column.Nullable && !withoutNotNull {
-		sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
+		if !exists {
+			sql += ", "
+		}
+		if _, ok := d.table.CheckConstraints[DuplicationName(NotNullConstraintName(column.Name))]; ok {
+			return "" // Skip if the constraint already exists
+		}
+		sql += fmt.Sprintf(cAddCheckConstraintSQL,
 			pq.QuoteIdentifier(DuplicationName(NotNullConstraintName(column.Name))),
 			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(asName)),
 		)
+		d.table.CheckConstraints[DuplicationName(NotNullConstraintName(column.Name))] = &schema.CheckConstraint{
+			Name:    DuplicationName(NotNullConstraintName(column.Name)),
+			Columns: []string{asName},
+		}
 	}
 
 	return sql

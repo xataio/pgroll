@@ -18,7 +18,7 @@ var (
 	_ Createable = (*OpAlterColumn)(nil)
 )
 
-func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -32,28 +32,36 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	ops := o.subOperations()
 
 	// Duplicate the column on the underlying table.
+	fmt.Println("Duplicating column:", o.Column, "to temporary name:", TemporaryName(o.Column))
+	temporaryName := TemporaryName(o.Column)
+	if IsTemporaryName(o.Column) {
+		temporaryName = o.Column
+	}
 	d := duplicatorForOperations(ops, conn, table, column).
-		WithName(column.Name, TemporaryName(o.Column))
+		WithName(column.Name, temporaryName)
 	if err := d.Duplicate(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
+	var triggers []backfill.TriggerConfig
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, o.Column),
-			Direction:      TriggerDirectionUp,
+	triggers = append(triggers,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, o.Column),
+			Direction:      backfill.TriggerDirectionUp,
 			Columns:        table.Columns,
 			SchemaName:     s.Name,
 			LatestSchema:   latestSchema,
 			TableName:      table.Name,
-			PhysicalColumn: TemporaryName(o.Column),
+			PhysicalColumn: temporaryName,
 			SQL:            o.upSQLForOperations(ops),
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
-	}
+	)
+
+	fmt.Println("--------")
+	fmt.Println(o.upSQLForOperations(ops))
+	fmt.Println(o.downSQLForOperations(ops))
+	fmt.Println("--------")
 
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
@@ -65,10 +73,10 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	})
 
 	// Add a trigger to copy values from the new column to the old.
-	err = NewCreateTriggerAction(conn,
-		triggerConfig{
-			Name:           TriggerName(o.Table, TemporaryName(o.Column)),
-			Direction:      TriggerDirectionDown,
+	triggers = append(triggers,
+		backfill.TriggerConfig{
+			Name:           backfill.TriggerName(o.Table, TemporaryName(o.Column)),
+			Direction:      backfill.TriggerDirectionDown,
 			Columns:        table.Columns,
 			LatestSchema:   latestSchema,
 			SchemaName:     s.Name,
@@ -76,10 +84,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 			PhysicalColumn: oldPhysicalColumn,
 			SQL:            o.downSQLForOperations(ops),
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
-	}
+	)
 
 	// perform any operation specific start steps
 	for _, op := range ops {
@@ -88,7 +93,10 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		}
 	}
 
-	return table, nil
+	return &backfill.Job{
+		Table:    table,
+		Triggers: triggers,
+	}, nil
 }
 
 func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -98,6 +106,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *s
 
 	// Perform any operation specific completion steps
 	for _, op := range ops {
+		fmt.Println(op)
 		if err := op.Complete(ctx, l, conn, s); err != nil {
 			return err
 		}
@@ -114,7 +123,7 @@ func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *s
 	}
 
 	// Remove the up and down function and trigger
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column), TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column), backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -170,8 +179,8 @@ func (o *OpAlterColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *s
 	// Remove the up and down functions and triggers
 	if err := NewDropFunctionAction(
 		conn,
-		TriggerFunctionName(o.Table, o.Column),
-		TriggerFunctionName(o.Table, TemporaryName(o.Column)),
+		backfill.TriggerFunctionName(o.Table, o.Column),
+		backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
 	).Execute(ctx); err != nil {
 		return err
 	}
@@ -312,34 +321,36 @@ func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, c
 
 // downSQLForOperations returns the `down` SQL for the given operations, applying
 // an appropriate default if no `down` SQL is provided.
-func (o *OpAlterColumn) downSQLForOperations(ops []Operation) string {
+func (o *OpAlterColumn) downSQLForOperations(ops []Operation) []string {
 	if o.Down != "" {
-		return o.Down
+		return []string{o.Down}
 	}
 
+	sqls := make([]string, 0)
 	for _, op := range ops {
 		switch (op).(type) {
 		case *OpSetUnique, *OpSetNotNull, *OpSetDefault, *OpSetComment:
-			return pq.QuoteIdentifier(o.Column)
+			sqls = append(sqls, pq.QuoteIdentifier(o.Column))
 		}
 	}
 
-	return ""
+	return sqls
 }
 
 // upSQLForOperations returns the `up` SQL for the given operations, applying
 // an appropriate default if no `up` SQL is provided.
-func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
+func (o *OpAlterColumn) upSQLForOperations(ops []Operation) []string {
 	if o.Up != "" {
-		return o.Up
+		return []string{o.Up}
 	}
 
+	sqls := make([]string, 0)
 	for _, op := range ops {
 		switch (op).(type) {
 		case *OpDropNotNull, *OpSetDefault, *OpSetComment:
-			return pq.QuoteIdentifier(o.Column)
+			sqls = append(sqls, pq.QuoteIdentifier(o.Column))
 		}
 	}
 
-	return ""
+	return sqls
 }

@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -14,7 +15,7 @@ var (
 	_ Createable = (*OpDropIndex)(nil)
 )
 
-func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	// no-op

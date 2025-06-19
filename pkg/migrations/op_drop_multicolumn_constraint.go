@@ -19,7 +19,7 @@ var (
 	_ Createable = (*OpDropMultiColumnConstraint)(nil)
 )
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -48,24 +48,22 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
+	var triggers []backfill.TriggerConfig
 	// Create triggers for each column covered by the constraint to be dropped
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
 		// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, columnName),
-				Direction:      TriggerDirectionUp,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, columnName),
+				Direction:      backfill.TriggerDirectionUp,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
 				TableName:      table.Name,
 				PhysicalColumn: TemporaryName(columnName),
-				SQL:            o.upSQL(columnName),
+				SQL:            []string{o.upSQL(columnName)},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create up trigger: %w", err)
-		}
+		)
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
@@ -77,24 +75,24 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		})
 
 		// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-		err = NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, TemporaryName(columnName)),
-				Direction:      TriggerDirectionDown,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, TemporaryName(columnName)),
+				Direction:      backfill.TriggerDirectionDown,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
 				TableName:      table.Name,
 				PhysicalColumn: oldPhysicalColumn,
-				SQL:            o.Down[columnName],
+				SQL:            []string{o.Down[columnName]},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create down trigger: %w", err)
-		}
+		)
 	}
 
-	return table, nil
+	return &backfill.Job{
+		Table:    table,
+		Triggers: triggers,
+	}, nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -102,32 +100,21 @@ func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, l Logger, co
 
 	table := s.GetTable(o.Table)
 
+	dbActions := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		// Remove the up and down function and trigger
-		err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName), TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		if err := NewAlterSequenceOwnerAction(conn, o.Table, columnName, TemporaryName(columnName)).Execute(ctx); err != nil {
-			return err
-		}
-
-		removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-		err = removeBackfillColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		removeOldColumn := NewDropColumnAction(conn, o.Table, columnName)
-		err = removeOldColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Rename the new column to the old column name
 		column := table.GetColumn(columnName)
-		if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
+		dbActions = append(dbActions,
+			NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, columnName), backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))),
+			NewAlterSequenceOwnerAction(conn, o.Table, columnName, TemporaryName(columnName)),
+			NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
+			NewDropColumnAction(conn, o.Table, columnName),
+			NewRenameDuplicatedColumnAction(conn, table, column.Name),
+		)
+	}
+
+	for _, action := range dbActions {
+		err := action.Execute(ctx)
+		if err != nil {
 			return err
 		}
 	}
@@ -148,7 +135,7 @@ func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, l Logger, co
 		}
 
 		// Remove the up and down function and trigger
-		err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, columnName), TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
+		err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, columnName), backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
 		if err != nil {
 			return err
 		}

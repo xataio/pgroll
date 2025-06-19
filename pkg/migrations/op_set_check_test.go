@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -128,14 +129,14 @@ func TestSetCheckConstraint(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", "title"))
+				FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName("posts", "title"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("posts", migrations.TemporaryName("title")))
+				FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName("posts", migrations.TemporaryName("title")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", "title"))
+				TriggerMustNotExist(t, db, schema, "posts", backfill.TriggerName("posts", "title"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "posts", migrations.TriggerName("posts", migrations.TemporaryName("title")))
+				TriggerMustNotExist(t, db, schema, "posts", backfill.TriggerName("posts", migrations.TemporaryName("title")))
 			},
 		},
 		{

@@ -19,7 +19,7 @@ var (
 	_ Createable = (*OpAddColumn)(nil)
 )
 
-func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -101,22 +101,20 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	}
 
 	var tableToBackfill *schema.Table
+	var triggers []backfill.TriggerConfig
 	if o.Up != "" {
-		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, o.Column.Name),
-				Direction:      TriggerDirectionUp,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, o.Column.Name),
+				Direction:      backfill.TriggerDirectionUp,
 				Columns:        table.Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
 				TableName:      table.Name,
 				PhysicalColumn: TemporaryName(o.Column.Name),
-				SQL:            o.Up,
+				SQL:            []string{o.Up},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create trigger: %w", err)
-		}
+		)
 		tableToBackfill = table
 	}
 
@@ -124,7 +122,10 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return tableToBackfill, nil
+	return &backfill.Job{
+		Table:    tableToBackfill,
+		Triggers: triggers,
+	}, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {
@@ -149,7 +150,7 @@ func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sch
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -224,7 +225,7 @@ func (o *OpAddColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *sch
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
 	if err != nil {
 		return err
 	}

@@ -65,6 +65,10 @@ func TemporaryName(name string) string {
 	return temporaryPrefix + name
 }
 
+func IsTemporaryName(name string) bool {
+	return strings.HasPrefix(name, temporaryPrefix)
+}
+
 // DeletionName returns the deleted name for a given name.
 func DeletionName(name string) string {
 	return deletedPrefix + name

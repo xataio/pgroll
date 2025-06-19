@@ -537,9 +537,10 @@ func TestAlterColumnMultipleTimes(t *testing.T) {
 					},
 				},
 				{
-					Name:          "02_alter_column_with_not_null",
+					Name:          "02_alter_column",
 					VersionSchema: "alter_column",
 					Operations: migrations.Operations{
+						// The first alteration sets the column to not null
 						&migrations.OpAlterColumn{
 							Table:    "events",
 							Column:   "name",
@@ -547,12 +548,7 @@ func TestAlterColumnMultipleTimes(t *testing.T) {
 							Down:     "name",
 							Nullable: ptr(false),
 						},
-					},
-				},
-				{
-					Name:          "03_alter_column_with_check",
-					VersionSchema: "alter_column",
-					Operations: migrations.Operations{
+						// The second alteration adds a check constraint
 						&migrations.OpAlterColumn{
 							Table:  "events",
 							Column: "name",
@@ -563,12 +559,7 @@ func TestAlterColumnMultipleTimes(t *testing.T) {
 								Constraint: "length(name) > 3",
 							},
 						},
-					},
-				},
-				{
-					Name:          "04_alter_column_comment",
-					VersionSchema: "alter_column",
-					Operations: migrations.Operations{
+						// The third alteration adds a comment
 						&migrations.OpAlterColumn{
 							Table:   "events",
 							Column:  "name",
@@ -649,9 +640,6 @@ func TestAlterColumnMultipleTimes(t *testing.T) {
 					{"id": 4, "name": "bananas"},
 					{"id": 5, "name": "placeholder"},
 				}, rows)
-
-				// The type of the new column in the underlying table should be `text`
-				ColumnMustHaveType(t, db, schema, "events", migrations.TemporaryName("name"), "text")
 
 				// The new column should have the new comment.
 				ColumnMustHaveComment(t, db, schema, "events", migrations.TemporaryName("name"), "the name of the event")

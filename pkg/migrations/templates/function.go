@@ -20,8 +20,10 @@ const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
         FROM current_setting('search_path');
 
       IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} {{ .LatestSchema | ql }} THEN
-        NEW.{{ .PhysicalColumn | qi  }} = {{ .SQL }};
         NEW.{{ .NeedsBackfillColumn | qi }} = false;
+      {{- $physicalName := .PhysicalColumn | qi }}
+      {{ range $idx, $s := .SQL }}  NEW.{{ $physicalName }} = {{ $s }};
+      {{ end -}}
       END IF;
 
       RETURN NEW;

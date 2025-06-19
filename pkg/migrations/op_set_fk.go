@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -20,7 +21,7 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -60,7 +61,9 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, lates
 		return nil, fmt.Errorf("failed to add foreign key constraint: %w", err)
 	}
 
-	return table, nil
+	return &backfill.Job{
+		Table: table,
+	}, nil
 }
 
 func (o *OpSetForeignKey) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

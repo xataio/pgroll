@@ -15,25 +15,23 @@ var (
 	_ Createable = (*OpDropColumn)(nil)
 )
 
-func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Job, error) {
 	l.LogOperationStart(o)
 
+	var triggers []backfill.TriggerConfig
 	if o.Down != "" {
-		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, o.Column),
-				Direction:      TriggerDirectionDown,
+		triggers = append(triggers,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, o.Column),
+				Direction:      backfill.TriggerDirectionDown,
 				Columns:        s.GetTable(o.Table).Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
 				TableName:      s.GetTable(o.Table).Name,
 				PhysicalColumn: o.Column,
-				SQL:            o.Down,
+				SQL:            []string{o.Down},
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, err
-		}
+		)
 	}
 
 	table := s.GetTable(o.Table)
@@ -46,7 +44,9 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	}
 
 	s.GetTable(o.Table).RemoveColumn(o.Column)
-	return nil, nil
+	return &backfill.Job{
+		Triggers: triggers,
+	}, nil
 }
 
 func (o *OpDropColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -58,7 +58,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sc
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (o *OpDropColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *sc
 
 	table := s.GetTable(o.Table)
 
-	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
+	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ type renameDuplicatedColumnAction struct {
 }
 
 func NewRenameDuplicatedColumnAction(conn db.DB, table *schema.Table, column string) *renameDuplicatedColumnAction {
+	fmt.Println("Creating rename duplicated column action for", column)
 	return &renameDuplicatedColumnAction{
 		conn:  conn,
 		table: table,
@@ -65,6 +66,7 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 		if !IsDuplicatedName(cc.Name) {
 			continue
 		}
+		fmt.Println("ii")
 
 		if slices.Contains(cc.Columns, a.from) {
 			err := NewValidateConstraintAction(a.conn, a.table.Name, cc.Name).Execute(ctx)

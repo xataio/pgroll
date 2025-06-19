@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xataio/pgroll/internal/testutils"
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -78,11 +79,11 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 				// The trigger function has been dropped.
-				triggerFnName := migrations.TriggerFunctionName("users", "name")
+				triggerFnName := backfill.TriggerFunctionName("users", "name")
 				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
-				triggerName := migrations.TriggerName("users", "name")
+				triggerName := backfill.TriggerName("users", "name")
 				TriggerMustNotExist(t, db, schema, "users", triggerName)
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
@@ -90,11 +91,11 @@ func TestDropColumnWithDownSQL(t *testing.T) {
 				ColumnMustNotExist(t, db, schema, "users", "name")
 
 				// The trigger function has been dropped.
-				triggerFnName := migrations.TriggerFunctionName("users", "name")
+				triggerFnName := backfill.TriggerFunctionName("users", "name")
 				FunctionMustNotExist(t, db, schema, triggerFnName)
 
 				// The trigger has been dropped.
-				triggerName := migrations.TriggerName("users", "name")
+				triggerName := backfill.TriggerName("users", "name")
 				TriggerMustNotExist(t, db, schema, "users", triggerName)
 
 				// Inserting into the view in the new version schema should succeed.
