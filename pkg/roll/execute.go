@@ -170,18 +170,16 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	m.logger.LogMigrationComplete(migration)
 
-	// Drop the old schema
-	if !m.disableVersionSchemas {
-		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
+	// Drop the old version schema if there is one
+	prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
+	if err != nil {
+		return fmt.Errorf("unable to get name of previous version: %w", err)
+	}
+	if prevVersion != nil {
+		versionSchema := VersionedSchemaName(m.schema, *prevVersion)
+		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 		if err != nil {
-			return fmt.Errorf("unable to get name of previous version: %w", err)
-		}
-		if prevVersion != nil {
-			versionSchema := VersionedSchemaName(m.schema, *prevVersion)
-			_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
-			if err != nil {
-				return fmt.Errorf("unable to drop previous version: %w", err)
-			}
+			return fmt.Errorf("unable to drop previous version: %w", err)
 		}
 	}
 
