@@ -253,16 +253,14 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	m.logger.LogMigrationRollback(migration)
 
-	if !m.disableVersionSchemas {
-		// delete the schema and view for the new version
-		versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
-		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
-		if err != nil {
-			return err
-		}
-
-		m.logger.LogSchemaDeletion(migration.Name, versionSchema)
+	// delete the schema and views for the new version
+	versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+	if err != nil {
+		return err
 	}
+
+	m.logger.LogSchemaDeletion(migration.Name, versionSchema)
 
 	// get the name of the previous migration
 	previousMigration, err := m.state.PreviousMigration(ctx, m.schema)
