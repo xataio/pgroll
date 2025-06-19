@@ -127,14 +127,11 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		}
 	}
 
-	if m.disableVersionSchemas {
-		// skip creating version schemas
-		return tablesToBackfill, nil
-	}
-
 	// create views for the new version
-	if err := m.ensureViews(ctx, newSchema, migration); err != nil {
-		return nil, err
+	if !m.disableVersionSchemas {
+		if err := m.ensureViews(ctx, newSchema, migration); err != nil {
+			return nil, err
+		}
 	}
 
 	return tablesToBackfill, nil
@@ -173,18 +170,16 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	m.logger.LogMigrationComplete(migration)
 
-	// Drop the old schema
-	if !m.disableVersionSchemas {
-		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
+	// Drop the old version schema if there is one
+	prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
+	if err != nil {
+		return fmt.Errorf("unable to get name of previous version: %w", err)
+	}
+	if prevVersion != nil {
+		versionSchema := VersionedSchemaName(m.schema, *prevVersion)
+		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
 		if err != nil {
-			return fmt.Errorf("unable to get name of previous version: %w", err)
-		}
-		if prevVersion != nil {
-			versionSchema := VersionedSchemaName(m.schema, *prevVersion)
-			_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
-			if err != nil {
-				return fmt.Errorf("unable to drop previous version: %w", err)
-			}
+			return fmt.Errorf("unable to drop previous version: %w", err)
 		}
 	}
 
@@ -258,16 +253,14 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	m.logger.LogMigrationRollback(migration)
 
-	if !m.disableVersionSchemas {
-		// delete the schema and view for the new version
-		versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
-		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
-		if err != nil {
-			return err
-		}
-
-		m.logger.LogSchemaDeletion(migration.Name, versionSchema)
+	// delete the schema and views for the new version
+	versionSchema := VersionedSchemaName(m.schema, migration.VersionSchemaName())
+	_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+	if err != nil {
+		return err
 	}
+
+	m.logger.LogSchemaDeletion(migration.Name, versionSchema)
 
 	// get the name of the previous migration
 	previousMigration, err := m.state.PreviousMigration(ctx, m.schema)
