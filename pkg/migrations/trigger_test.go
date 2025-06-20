@@ -13,14 +13,14 @@ import (
 func TestBuildFunction(t *testing.T) {
 	testCases := []struct {
 		name     string
-		config   triggerConfig
+		config   backfill.TriggerConfig
 		expected string
 	}{
 		{
 			name: "simple up trigger",
-			config: triggerConfig{
+			config: backfill.TriggerConfig{
 				Name:      "triggerName",
-				Direction: TriggerDirectionUp,
+				Direction: backfill.TriggerDirectionUp,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -61,9 +61,9 @@ func TestBuildFunction(t *testing.T) {
 		},
 		{
 			name: "simple down trigger",
-			config: triggerConfig{
+			config: backfill.TriggerConfig{
 				Name:      "triggerName",
-				Direction: TriggerDirectionDown,
+				Direction: backfill.TriggerDirectionDown,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -104,9 +104,9 @@ func TestBuildFunction(t *testing.T) {
 		},
 		{
 			name: "down trigger with aliased column",
-			config: triggerConfig{
+			config: backfill.TriggerConfig{
 				Name:      "triggerName",
-				Direction: TriggerDirectionDown,
+				Direction: backfill.TriggerDirectionDown,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -163,12 +163,12 @@ func TestBuildFunction(t *testing.T) {
 func TestBuildTrigger(t *testing.T) {
 	testCases := []struct {
 		name     string
-		config   triggerConfig
+		config   backfill.TriggerConfig
 		expected string
 	}{
 		{
 			name: "trigger",
-			config: triggerConfig{
+			config: backfill.TriggerConfig{
 				Name:      "triggerName",
 				TableName: "reviews",
 			},

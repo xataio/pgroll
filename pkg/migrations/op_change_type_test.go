@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
 	"github.com/xataio/pgroll/pkg/roll"
 )
@@ -131,14 +132,14 @@ func TestChangeColumnType(t *testing.T) {
 				}, rows)
 
 				// The up function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", "rating"))
+				FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName("reviews", "rating"))
 				// The down function no longer exists.
-				FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
+				FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName("reviews", migrations.TemporaryName("rating")))
 
 				// The up trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", "rating"))
+				TriggerMustNotExist(t, db, schema, "reviews", backfill.TriggerName("reviews", "rating"))
 				// The down trigger no longer exists.
-				TriggerMustNotExist(t, db, schema, "reviews", migrations.TriggerName("reviews", migrations.TemporaryName("rating")))
+				TriggerMustNotExist(t, db, schema, "reviews", backfill.TriggerName("reviews", migrations.TemporaryName("rating")))
 			},
 		},
 		{

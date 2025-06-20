@@ -14,34 +14,14 @@ import (
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/migrations/templates"
-	"github.com/xataio/pgroll/pkg/schema"
 )
-
-type TriggerDirection string
-
-const (
-	TriggerDirectionUp   TriggerDirection = "up"
-	TriggerDirectionDown TriggerDirection = "down"
-)
-
-type triggerConfig struct {
-	Name                string
-	Direction           TriggerDirection
-	Columns             map[string]*schema.Column
-	SchemaName          string
-	TableName           string
-	PhysicalColumn      string
-	LatestSchema        string
-	SQL                 string
-	NeedsBackfillColumn string
-}
 
 type createTriggerAction struct {
 	conn db.DB
-	cfg  triggerConfig
+	cfg  backfill.TriggerConfig
 }
 
-func NewCreateTriggerAction(conn db.DB, cfg triggerConfig) DBAction {
+func NewCreateTriggerAction(conn db.DB, cfg backfill.TriggerConfig) DBAction {
 	return &createTriggerAction{
 		conn: conn,
 		cfg:  cfg,
@@ -85,26 +65,15 @@ func (a *createTriggerAction) Execute(ctx context.Context) error {
 	})
 }
 
-func buildFunction(cfg triggerConfig) (string, error) {
+func buildFunction(cfg backfill.TriggerConfig) (string, error) {
 	return executeTemplate("function", templates.Function, cfg)
 }
 
-func buildTrigger(cfg triggerConfig) (string, error) {
+func buildTrigger(cfg backfill.TriggerConfig) (string, error) {
 	return executeTemplate("trigger", templates.Trigger, cfg)
 }
 
-// TriggerFunctionName returns the name of the trigger function
-// for a given table and column.
-func TriggerFunctionName(tableName, columnName string) string {
-	return "_pgroll_trigger_" + tableName + "_" + columnName
-}
-
-// TriggerName returns the name of the trigger for a given table and column.
-func TriggerName(tableName, columnName string) string {
-	return TriggerFunctionName(tableName, columnName)
-}
-
-func executeTemplate(name, content string, cfg triggerConfig) (string, error) {
+func executeTemplate(name, content string, cfg backfill.TriggerConfig) (string, error) {
 	tmpl := template.Must(template.
 		New(name).
 		Funcs(template.FuncMap{

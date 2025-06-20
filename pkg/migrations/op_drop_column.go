@@ -20,9 +20,9 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 
 	if o.Down != "" {
 		err := NewCreateTriggerAction(conn,
-			triggerConfig{
-				Name:           TriggerName(o.Table, o.Column),
-				Direction:      TriggerDirectionDown,
+			backfill.TriggerConfig{
+				Name:           backfill.TriggerName(o.Table, o.Column),
+				Direction:      backfill.TriggerDirectionDown,
 				Columns:        s.GetTable(o.Table).Columns,
 				SchemaName:     s.Name,
 				LatestSchema:   latestSchema,
@@ -58,7 +58,7 @@ func (o *OpDropColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *sc
 		return err
 	}
 
-	err = NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
+	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (o *OpDropColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *sc
 
 	table := s.GetTable(o.Table)
 
-	err := NewDropFunctionAction(conn, TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
+	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
 	if err != nil {
 		return err
 	}

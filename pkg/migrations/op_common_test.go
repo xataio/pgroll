@@ -981,14 +981,14 @@ func TableMustBeCleanedUp(t *testing.T, db *sql.DB, schema, table string, column
 		ColumnMustNotExist(t, db, schema, table, backfill.CNeedsBackfillColumn)
 
 		// The up function for the column no longer exists.
-		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, column))
+		FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName(table, column))
 		// The down function for the column no longer exists.
-		FunctionMustNotExist(t, db, schema, migrations.TriggerFunctionName(table, migrations.TemporaryName(column)))
+		FunctionMustNotExist(t, db, schema, backfill.TriggerFunctionName(table, migrations.TemporaryName(column)))
 
 		// The up trigger for the column no longer exists.
-		TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, column))
+		TriggerMustNotExist(t, db, schema, table, backfill.TriggerName(table, column))
 		// The down trigger for the column no longer exists.
-		TriggerMustNotExist(t, db, schema, table, migrations.TriggerName(table, migrations.TemporaryName(column)))
+		TriggerMustNotExist(t, db, schema, table, backfill.TriggerName(table, migrations.TemporaryName(column)))
 	}
 }
 
