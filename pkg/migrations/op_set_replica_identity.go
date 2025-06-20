@@ -10,13 +10,14 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type

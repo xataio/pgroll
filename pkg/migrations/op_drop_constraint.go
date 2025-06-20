@@ -15,7 +15,7 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -76,7 +76,9 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}
-	return table, nil
+	return &backfill.Task{
+		Table: table,
+	}, nil
 }
 
 func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

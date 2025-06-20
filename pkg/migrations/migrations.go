@@ -9,6 +9,7 @@ import (
 
 	_ "github.com/lib/pq"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -19,7 +20,7 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error)
+	Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.

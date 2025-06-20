@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -14,7 +15,7 @@ var (
 	_ Createable = (*OpRawSQL)(nil)
 )
 
-func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	if o.OnComplete {

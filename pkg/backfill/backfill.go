@@ -19,12 +19,29 @@ import (
 // by pgroll to mark rows that must be backfilled
 const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 
+// Task represents a backfill task for a specific table from an operation.
+type Task struct {
+	Table    *schema.Table
+	Triggers []TriggerConfig
+}
+
+// Job is a collection of all tables that need to be backfilled and their associated triggers.
+type Job struct {
+	Tables   []*schema.Table
+	triggers []TriggerConfig
+}
+
 type Backfill struct {
 	conn db.DB
 	*Config
 }
 
 type CallbackFn func(done int64, total int64)
+
+func (j *Job) AddTask(t *Task) {
+	j.Tables = append(j.Tables, t.Table)
+	j.triggers = append(j.triggers, t.Triggers...)
+}
 
 // New creates a new backfill operation with the given options. The backfill is
 // not started until `Start` is invoked.
@@ -35,6 +52,12 @@ func New(conn db.DB, c *Config) *Backfill {
 	}
 
 	return b
+}
+
+// LoadTriggers loads the triggers for the tables before starting the backfill.
+func (bf *Backfill) LoadTriggers(ctx context.Context, j *Job) error {
+	// Not yet implemented, triggers are loaded during the Start method.
+	return nil
 }
 
 // Start updates all rows in the given table, in batches, using the
