@@ -58,10 +58,13 @@ func NewJob(schemaName, latestSchema string) *Job {
 	}
 }
 
+<<<<<<< HEAD
 func (t *Task) AddTriggers(other *Task) {
 	t.triggers = append(t.triggers, other.triggers...)
 }
 
+=======
+>>>>>>> 204e7f6b (Add trigger configuration to `backfill.Task` && consolidate triggers per)
 func (j *Job) AddTask(t *Task) {
 	if t.table != nil {
 		j.Tables = append(j.Tables, t.table)
@@ -69,6 +72,7 @@ func (j *Job) AddTask(t *Task) {
 
 	for _, trigger := range t.triggers {
 		if tg, exists := j.triggers[trigger.Name]; exists {
+<<<<<<< HEAD
 			// If the trigger already exists, append the SQL to the existing trigger config
 			// The rewriting is necessary to ensure that the expression uses the NEW prefix with the physical column name
 			// For example, if the user sets the following expression in their second operation:
@@ -80,6 +84,11 @@ func (j *Job) AddTask(t *Task) {
 		} else {
 			// If the trigger does not exist, create a new trigger config
 			// No need to rewrite the SQL here, as it is the first time we are adding it.
+=======
+			tg.SQL = append(tg.SQL, rewriteTriggerSQL(trigger.SQL, findColumnName(tg.Columns, tg.PhysicalColumn), tg.PhysicalColumn))
+			j.triggers[trigger.Name] = tg
+		} else {
+>>>>>>> 204e7f6b (Add trigger configuration to `backfill.Task` && consolidate triggers per)
 			j.triggers[trigger.Name] = triggerConfig{
 				Name:                trigger.Name,
 				Direction:           trigger.Direction,
@@ -95,17 +104,23 @@ func (j *Job) AddTask(t *Task) {
 	}
 }
 
+<<<<<<< HEAD
 // rewriteTriggerSQL rewrites the SQL migrations expression provided by the user
 // in the up or down attribute of the operations config.
 // The column name are turned from user defined names the physical column name with NEW prefix.
 // This is only needed, If there is already an backfilling step in the trigger SQL.
+=======
+>>>>>>> 204e7f6b (Add trigger configuration to `backfill.Task` && consolidate triggers per)
 func rewriteTriggerSQL(sql string, from, to string) string {
 	return strings.ReplaceAll(sql, from, fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(to)))
 }
 
+<<<<<<< HEAD
 // findColumnName returns the original, user defined column name from the map of columns
 // for the provided physical column name.
 // __pgroll_new_name -> name
+=======
+>>>>>>> 204e7f6b (Add trigger configuration to `backfill.Task` && consolidate triggers per)
 func findColumnName(columns map[string]*schema.Column, columnName string) string {
 	for name, col := range columns {
 		if col.Name == columnName {
