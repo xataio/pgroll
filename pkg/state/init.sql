@@ -193,14 +193,14 @@ BEGIN
     SELECT
         json_build_object('name', schemaname, 'tables', (
                 SELECT
-                    COALESCE(json_object_agg(t.relname, jsonb_strip_nulls(jsonb_build_object('name', t.relname, 'oid', t.oid, 'comment', descr.description, 'columns', (
-                                    SELECT
-                                        json_object_agg(name, c)
-                                FROM (
-                                    SELECT
-                                        attr.attname AS name, pg_get_expr(def.adbin, def.adrelid) AS default, NOT (attr.attnotnull
-                                        OR tp.typtype = 'd'
-                                        AND tp.typnotnull) AS nullable, CASE WHEN 'character varying'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
+                    COALESCE(json_object_agg(t.relname, jsonb_strip_nulls (jsonb_build_object('name', t.relname, 'oid', t.oid, 'comment', descr.description, 'columns', (
+                                        SELECT
+                                            json_object_agg(name, c)
+                                    FROM (
+                                        SELECT
+                                            attr.attname AS name, pg_get_expr(def.adbin, def.adrelid) AS default, NOT (attr.attnotnull
+                                            OR tp.typtype = 'd'
+                                            AND tp.typnotnull) AS nullable, CASE WHEN 'character varying'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
                                         REPLACE(format_type(attr.atttypid, attr.atttypmod), 'character varying', 'varchar')
                                     WHEN 'timestamp with time zone'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
                                         REPLACE(format_type(attr.atttypid, attr.atttypmod), 'timestamp with time zone', 'timestamptz')
@@ -347,13 +347,13 @@ BEGIN
                                             INNER JOIN pg_attribute ref_attr ON ref_attr.attrelid = fk_info.confrelid
                                                 AND ref_attr.attnum = ANY (fk_info.confkey) -- join the columns of the referenced table
                                         GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confmatchtype, fk_info.confdeltype, fk_info.confupdtype, fk_info.relname) AS fk_details)))), '{}'::json)
-                        FROM pg_class AS t
-                        INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
-                        LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
-                            AND descr.objsubid = 0
-                        WHERE
-                            ns.nspname = schemaname
-                            AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
+                    FROM pg_class AS t
+                    INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
+                    LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
+                        AND descr.objsubid = 0
+                    WHERE
+                        ns.nspname = schemaname
+                        AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
 )) INTO tables;
     RETURN tables;
 END;
