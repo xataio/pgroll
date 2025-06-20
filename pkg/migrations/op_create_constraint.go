@@ -41,24 +41,27 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
 
+	// Copy the columns from table columns, so we can use it later
+	// in the down trigger with the physical name
+	upColumns := make(map[string]*schema.Column)
+	for name, col := range table.Columns {
+		upColumns[name] = col
+	}
+
 	// Setup triggers
+	triggers := make([]backfill.OperationTrigger, 0)
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		err := NewCreateTriggerAction(conn,
-			backfill.TriggerConfig{
+		triggers = append(triggers,
+			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, colName),
 				Direction:      backfill.TriggerDirectionUp,
-				Columns:        table.Columns,
-				SchemaName:     s.Name,
-				LatestSchema:   latestSchema,
+				Columns:        upColumns,
 				TableName:      table.Name,
 				PhysicalColumn: TemporaryName(colName),
 				SQL:            upSQL,
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create up trigger: %w", err)
-		}
+		)
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
@@ -70,24 +73,19 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 		})
 
 		downSQL := o.Down[colName]
-		err = NewCreateTriggerAction(conn,
-			backfill.TriggerConfig{
+		triggers = append(triggers,
+			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, TemporaryName(colName)),
 				Direction:      backfill.TriggerDirectionDown,
 				Columns:        table.Columns,
-				LatestSchema:   latestSchema,
-				SchemaName:     s.Name,
 				TableName:      table.Name,
 				PhysicalColumn: oldPhysicalColumn,
 				SQL:            downSQL,
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create down trigger: %w", err)
-		}
+		)
 	}
 
-	task := backfill.NewTask(table)
+	task := backfill.NewTask(table, triggers...)
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:

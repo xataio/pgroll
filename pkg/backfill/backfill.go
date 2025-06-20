@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -22,13 +23,16 @@ const CNeedsBackfillColumn = "_pgroll_needs_backfill"
 // Task represents a backfill task for a specific table from an operation.
 type Task struct {
 	table    *schema.Table
-	triggers []TriggerConfig
+	triggers []OperationTrigger
 }
 
 // Job is a collection of all tables that need to be backfilled and their associated triggers.
 type Job struct {
-	Tables   []*schema.Table
-	triggers []TriggerConfig
+	schemaName   string
+	latestSchema string
+	triggers     map[string]triggerConfig
+
+	Tables []*schema.Table
 }
 
 type Backfill struct {
@@ -38,16 +42,62 @@ type Backfill struct {
 
 type CallbackFn func(done int64, total int64)
 
-func NewTask(table *schema.Table, triggers ...TriggerConfig) *Task {
+func NewTask(table *schema.Table, triggers ...OperationTrigger) *Task {
 	return &Task{
 		table:    table,
 		triggers: triggers,
 	}
 }
 
+func NewJob(schemaName, latestSchema string) *Job {
+	return &Job{
+		schemaName:   schemaName,
+		latestSchema: latestSchema,
+		triggers:     make(map[string]triggerConfig, 0),
+		Tables:       make([]*schema.Table, 0),
+	}
+}
+
+func (t *Task) AddTriggers(other *Task) {
+	t.triggers = append(t.triggers, other.triggers...)
+}
+
 func (j *Job) AddTask(t *Task) {
-	j.Tables = append(j.Tables, t.table)
-	j.triggers = append(j.triggers, t.triggers...)
+	if t.table != nil {
+		j.Tables = append(j.Tables, t.table)
+	}
+
+	for _, trigger := range t.triggers {
+		if tg, exists := j.triggers[trigger.Name]; exists {
+			tg.SQL = append(tg.SQL, rewriteTriggerSQL(trigger.SQL, findColumnName(tg.Columns, tg.PhysicalColumn), tg.PhysicalColumn))
+			j.triggers[trigger.Name] = tg
+		} else {
+			j.triggers[trigger.Name] = triggerConfig{
+				Name:                trigger.Name,
+				Direction:           trigger.Direction,
+				Columns:             trigger.Columns,
+				SchemaName:          j.schemaName,
+				TableName:           trigger.TableName,
+				PhysicalColumn:      trigger.PhysicalColumn,
+				LatestSchema:        j.latestSchema,
+				SQL:                 []string{trigger.SQL},
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+			}
+		}
+	}
+}
+
+func rewriteTriggerSQL(sql string, from, to string) string {
+	return strings.ReplaceAll(sql, from, fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(to)))
+}
+
+func findColumnName(columns map[string]*schema.Column, columnName string) string {
+	for name, col := range columns {
+		if col.Name == columnName {
+			return name
+		}
+	}
+	return columnName
 }
 
 // New creates a new backfill operation with the given options. The backfill is
@@ -63,7 +113,15 @@ func New(conn db.DB, c *Config) *Backfill {
 
 // CreateTriggers creates the triggers for the tables before starting the backfill.
 func (bf *Backfill) CreateTriggers(ctx context.Context, j *Job) error {
-	// Not yet implemented, triggers are loaded during the Start method.
+	for _, trigger := range j.triggers {
+		a := &createTriggerAction{
+			conn: bf.conn,
+			cfg:  trigger,
+		}
+		if err := a.execute(ctx); err != nil {
+			return fmt.Errorf("creating trigger %q: %w", trigger.Name, err)
+		}
+	}
 	return nil
 }
 
