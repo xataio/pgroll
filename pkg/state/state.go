@@ -224,37 +224,6 @@ func (s *State) GetActiveMigration(ctx context.Context, schema string) (*migrati
 	return &migration, nil
 }
 
-// Status returns the current migration status of the specified schema
-func (s *State) Status(ctx context.Context, schema string) (*Status, error) {
-	latestVersion, err := s.LatestVersion(ctx, schema)
-	if err != nil {
-		return nil, err
-	}
-	if latestVersion == nil {
-		latestVersion = new(string)
-	}
-
-	isActive, err := s.IsActiveMigrationPeriod(ctx, schema)
-	if err != nil {
-		return nil, err
-	}
-
-	var status MigrationStatus
-	if *latestVersion == "" {
-		status = NoneMigrationStatus
-	} else if isActive {
-		status = InProgressMigrationStatus
-	} else {
-		status = CompleteMigrationStatus
-	}
-
-	return &Status{
-		Schema:  schema,
-		Version: *latestVersion,
-		Status:  status,
-	}, nil
-}
-
 // Start creates a new migration, storing its name and raw content
 // this will effectively activate a new migration period, so `IsActiveMigrationPeriod` will return true
 // until the migration is completed
