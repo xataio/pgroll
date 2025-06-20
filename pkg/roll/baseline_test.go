@@ -47,12 +47,6 @@ func TestBaseline(t *testing.T) {
 								PostgresType: "base",
 							},
 						},
-						PrimaryKey:         []string{},
-						Indexes:            map[string]*schema.Index{},
-						ForeignKeys:        map[string]*schema.ForeignKey{},
-						CheckConstraints:   map[string]*schema.CheckConstraint{},
-						UniqueConstraints:  map[string]*schema.UniqueConstraint{},
-						ExcludeConstraints: map[string]*schema.ExcludeConstraint{},
 					},
 				},
 			}

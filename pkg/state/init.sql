@@ -193,14 +193,14 @@ BEGIN
     SELECT
         json_build_object('name', schemaname, 'tables', (
                 SELECT
-                    COALESCE(json_object_agg(t.relname, jsonb_build_object('name', t.relname, 'oid', t.oid, 'comment', descr.description, 'columns', (
-                                    SELECT
-                                        COALESCE(json_object_agg(name, c), '{}'::json)
-                                FROM (
-                                    SELECT
-                                        attr.attname AS name, pg_get_expr(def.adbin, def.adrelid) AS default, NOT (attr.attnotnull
-                                        OR tp.typtype = 'd'
-                                        AND tp.typnotnull) AS nullable, CASE WHEN 'character varying'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
+                    COALESCE(json_object_agg(t.relname, jsonb_strip_nulls (jsonb_build_object('name', t.relname, 'oid', t.oid, 'comment', descr.description, 'columns', (
+                                        SELECT
+                                            json_object_agg(name, c)
+                                    FROM (
+                                        SELECT
+                                            attr.attname AS name, pg_get_expr(def.adbin, def.adrelid) AS default, NOT (attr.attnotnull
+                                            OR tp.typtype = 'd'
+                                            AND tp.typnotnull) AS nullable, CASE WHEN 'character varying'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
                                         REPLACE(format_type(attr.atttypid, attr.atttypmod), 'character varying', 'varchar')
                                     WHEN 'timestamp with time zone'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
                                         REPLACE(format_type(attr.atttypid, attr.atttypmod), 'timestamp with time zone', 'timestamptz')
@@ -252,7 +252,7 @@ BEGIN
                                 AND NOT attr.attisdropped
                                 AND attr.attrelid = t.oid ORDER BY attr.attnum) c), 'primaryKey', (
                             SELECT
-                                COALESCE(json_agg(pg_attribute.attname), '[]'::json) AS primary_key_columns
+                                json_agg(pg_attribute.attname) AS primary_key_columns
                             FROM pg_index, pg_attribute
                             WHERE
                                 indrelid = t.oid
@@ -261,7 +261,7 @@ BEGIN
                                 AND pg_attribute.attnum = ANY (pg_index.indkey)
                                 AND indisprimary), 'indexes', (
                                 SELECT
-                                    COALESCE(json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition)), '{}'::json)
+                                    json_object_agg(ix_details.name, json_build_object('name', ix_details.name, 'unique', ix_details.indisunique, 'exclusion', ix_details.indisexclusion, 'columns', ix_details.columns, 'predicate', ix_details.predicate, 'method', ix_details.method, 'definition', ix_details.definition))
                             FROM (
                                 SELECT
                                     replace(reverse(split_part(reverse(pi.indexrelid::regclass::text), '.', 1)), '"', '') AS name, pi.indisunique, pi.indisexclusion, array_agg(a.attname) AS columns, pg_get_expr(pi.indpred, t.oid) AS predicate, am.amname AS method, pg_get_indexdef(pi.indexrelid) AS definition
@@ -273,7 +273,7 @@ BEGIN
                                 WHERE
                                     indrelid = t.oid::regclass GROUP BY pi.indexrelid, pi.indisunique, pi.indpred, am.amname) AS ix_details), 'checkConstraints', (
                         SELECT
-                            COALESCE(json_object_agg(cc_details.conname, json_build_object('name', cc_details.conname, 'columns', cc_details.columns, 'definition', cc_details.definition, 'noInherit', cc_details.connoinherit)), '{}'::json)
+                            json_object_agg(cc_details.conname, json_build_object('name', cc_details.conname, 'columns', cc_details.columns, 'definition', cc_details.definition, 'noInherit', cc_details.connoinherit))
                         FROM (
                             SELECT
                                 cc_constraint.conname, array_agg(cc_attr.attname ORDER BY cc_constraint.conkey::int[]) AS columns, pg_get_constraintdef(cc_constraint.oid) AS definition, cc_constraint.connoinherit FROM pg_constraint AS cc_constraint
@@ -283,7 +283,7 @@ BEGIN
                                 cc_constraint.conrelid = t.oid
                                 AND cc_constraint.contype = 'c' GROUP BY cc_constraint.oid, cc_constraint.conname) AS cc_details), 'uniqueConstraints', (
                             SELECT
-                                COALESCE(json_object_agg(uc_details.conname, json_build_object('name', uc_details.conname, 'columns', uc_details.columns)), '{}'::json)
+                                json_object_agg(uc_details.conname, json_build_object('name', uc_details.conname, 'columns', uc_details.columns))
                             FROM (
                                 SELECT
                                     uc_constraint.conname, array_agg(uc_attr.attname ORDER BY uc_constraint.conkey::int[]) AS columns, pg_get_constraintdef(uc_constraint.oid) AS definition FROM pg_constraint AS uc_constraint
@@ -293,7 +293,7 @@ BEGIN
                                     uc_constraint.conrelid = t.oid
                                     AND uc_constraint.contype = 'u' GROUP BY uc_constraint.oid, uc_constraint.conname) AS uc_details), 'excludeConstraints', (
                                 SELECT
-                                    COALESCE(json_object_agg(xc_details.conname, json_build_object('name', xc_details.conname, 'columns', xc_details.columns, 'definition', xc_details.definition, 'predicate', xc_details.predicate, 'method', xc_details.method)), '{}'::json)
+                                    json_object_agg(xc_details.conname, json_build_object('name', xc_details.conname, 'columns', xc_details.columns, 'definition', xc_details.definition, 'predicate', xc_details.predicate, 'method', xc_details.method))
                                 FROM (
                                     SELECT
                                         xc_constraint.conname, array_agg(xc_attr.attname ORDER BY xc_constraint.conkey::int[]) AS columns, pg_get_expr(pi.indpred, t.oid) AS predicate, am.amname AS method, pg_get_constraintdef(xc_constraint.oid) AS definition FROM pg_constraint AS xc_constraint
@@ -306,7 +306,7 @@ BEGIN
                                         xc_constraint.conrelid = t.oid
                                         AND xc_constraint.contype = 'x' GROUP BY xc_constraint.oid, xc_constraint.conname, pi.indpred, pi.indexrelid, am.amname) AS xc_details), 'foreignKeys', (
                                     SELECT
-                                        COALESCE(json_object_agg(fk_details.conname, json_build_object('name', fk_details.conname, 'columns', fk_details.columns, 'referencedTable', fk_details.referencedTable, 'referencedColumns', fk_details.referencedColumns, 'matchType', fk_details.matchType, 'onDelete', fk_details.onDelete, 'onUpdate', fk_details.onUpdate)), '{}'::json)
+                                        json_object_agg(fk_details.conname, json_build_object('name', fk_details.conname, 'columns', fk_details.columns, 'referencedTable', fk_details.referencedTable, 'referencedColumns', fk_details.referencedColumns, 'matchType', fk_details.matchType, 'onDelete', fk_details.onDelete, 'onUpdate', fk_details.onUpdate))
                                     FROM (
                                         SELECT
                                             fk_info.conname AS conname, fk_info.columns AS columns, fk_info.relname AS referencedTable, array_agg(ref_attr.attname ORDER BY ref_attr.attname) AS referencedColumns, CASE WHEN fk_info.confmatchtype = 'f' THEN
@@ -346,14 +346,14 @@ BEGIN
                                                 AND fk_constraint.contype = 'f' GROUP BY fk_constraint.conrelid, fk_constraint.conname, fk_constraint.confrelid, fk_cl.relname, fk_constraint.confkey, fk_constraint.confmatchtype, fk_constraint.confdeltype, fk_constraint.confupdtype) AS fk_info
                                             INNER JOIN pg_attribute ref_attr ON ref_attr.attrelid = fk_info.confrelid
                                                 AND ref_attr.attnum = ANY (fk_info.confkey) -- join the columns of the referenced table
-                                        GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confmatchtype, fk_info.confdeltype, fk_info.confupdtype, fk_info.relname) AS fk_details))), '{}'::json)
-                        FROM pg_class AS t
-                        INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
-                        LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
-                            AND descr.objsubid = 0
-                        WHERE
-                            ns.nspname = schemaname
-                            AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
+                                        GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confmatchtype, fk_info.confdeltype, fk_info.confupdtype, fk_info.relname) AS fk_details)))), '{}'::json)
+                    FROM pg_class AS t
+                    INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
+                    LEFT JOIN pg_description AS descr ON t.oid = descr.objoid
+                        AND descr.objsubid = 0
+                    WHERE
+                        ns.nspname = schemaname
+                        AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
 )) INTO tables;
     RETURN tables;
 END;
