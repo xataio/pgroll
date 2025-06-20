@@ -1377,6 +1377,84 @@ func TestPgrollSchemaVersionUpgrades(t *testing.T) {
 	}
 }
 
+func TestSchemaAfterMigration(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns error for non-existent migration", func(t *testing.T) {
+		testutils.WithStateAndConnectionToContainer(t, func(st *state.State, db *sql.DB) {
+			ctx := context.Background()
+
+			_, err := st.SchemaAfterMigration(ctx, "public", "non_existent_migration")
+
+			require.ErrorIs(t, err, sql.ErrNoRows)
+		})
+	})
+
+	t.Run("returns the schemas after the two most recent migrations", func(t *testing.T) {
+		testutils.WithStateAndConnectionToContainer(t, func(st *state.State, db *sql.DB) {
+			ctx := context.Background()
+
+			// Run some SQL to generate a first migration
+			_, err := db.ExecContext(ctx, "CREATE TABLE items (id int NOT NULL)")
+			require.NoError(t, err)
+
+			// Run some more SQL to generate a second migration
+			_, err = db.ExecContext(ctx, "ALTER TABLE items ADD COLUMN name text NOT NULL")
+			require.NoError(t, err)
+
+			// Get the schema history
+			hist, err := st.SchemaHistory(ctx, "public")
+			require.NoError(t, err)
+
+			// Assert that the schema history has the expected length
+			require.Len(t, hist, 2)
+
+			// Get the schema after the first migration
+			sc, err := st.SchemaAfterMigration(ctx, "public", hist[0].Migration.Name)
+			require.NoError(t, err)
+
+			// Assert the schema after the first migration
+			expectedTable := &schema.Table{
+				Name: "items",
+				Columns: map[string]*schema.Column{
+					"id": {
+						Name:         "id",
+						Type:         "integer",
+						PostgresType: "base",
+					},
+				},
+			}
+			clearOIDS(sc)
+			require.Len(t, sc.Tables, 1)
+			require.Equal(t, expectedTable, sc.Tables["items"])
+
+			// Get the schema after the second migration
+			sc, err = st.SchemaAfterMigration(ctx, "public", hist[1].Migration.Name)
+			require.NoError(t, err)
+
+			// Assert the schema after the second migration
+			expectedTable = &schema.Table{
+				Name: "items",
+				Columns: map[string]*schema.Column{
+					"id": {
+						Name:         "id",
+						Type:         "integer",
+						PostgresType: "base",
+					},
+					"name": {
+						Name:         "name",
+						Type:         "text",
+						PostgresType: "base",
+					},
+				},
+			}
+			clearOIDS(sc)
+			require.Len(t, sc.Tables, 1)
+			require.Equal(t, expectedTable, sc.Tables["items"])
+		})
+	})
+}
+
 func clearOIDS(s *schema.Schema) {
 	for k := range s.Tables {
 		c := s.Tables[k]
