@@ -98,42 +98,15 @@ STABLE;
 CREATE OR REPLACE FUNCTION placeholder.previous_migration (schemaname name)
     RETURNS text
     AS $$
-    WITH RECURSIVE ancestors AS (
-        SELECT
-            name,
-            schema,
-            parent,
-            migration_type,
-            0 AS depth
-        FROM
-            placeholder.migrations
-        WHERE
-            name = placeholder.latest_migration (schemaname)
-            AND SCHEMA = schemaname
-        UNION ALL
-        SELECT
-            m.name,
-            m.schema,
-            m.parent,
-            m.migration_type,
-            a.depth + 1
-        FROM
-            placeholder.migrations m
-            JOIN ancestors a ON m.name = a.parent
-                AND m.schema = a.schema
-)
-        SELECT
-            a.name
-        FROM
-            ancestors a
+    SELECT
+        parent
+    FROM
+        placeholder.migrations
     WHERE
-        a.depth > 0
-    ORDER BY
-        a.depth ASC
-    LIMIT 1;
+        SCHEMA = schemaname
+        AND name = placeholder.latest_migration (schemaname);
 $$
-LANGUAGE SQL
-STABLE;
+LANGUAGE SQL;
 
 -- find_version_schema finds a recent version schema for a given schema name.
 -- How recent is determined by the minDepth parameter: for a minDepth of 0, it
