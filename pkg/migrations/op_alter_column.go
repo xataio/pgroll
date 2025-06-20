@@ -38,22 +38,25 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
+	// Copy the columns from table columns, so we can use it later
+	// in the down trigger with the physical name
+	upColumns := make(map[string]*schema.Column)
+	for name, col := range table.Columns {
+		upColumns[name] = col
+	}
+
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := NewCreateTriggerAction(conn,
-		backfill.TriggerConfig{
+	triggers := make([]backfill.OperationTrigger, 0)
+	triggers = append(triggers,
+		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, o.Column),
 			Direction:      backfill.TriggerDirectionUp,
-			Columns:        table.Columns,
-			SchemaName:     s.Name,
-			LatestSchema:   latestSchema,
 			TableName:      table.Name,
+			Columns:        upColumns,
 			PhysicalColumn: TemporaryName(o.Column),
 			SQL:            o.upSQLForOperations(ops),
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
-	}
+	)
 
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
@@ -65,21 +68,16 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	})
 
 	// Add a trigger to copy values from the new column to the old.
-	err = NewCreateTriggerAction(conn,
-		backfill.TriggerConfig{
+	triggers = append(triggers,
+		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, TemporaryName(o.Column)),
 			Direction:      backfill.TriggerDirectionDown,
-			Columns:        table.Columns,
-			LatestSchema:   latestSchema,
-			SchemaName:     s.Name,
 			TableName:      table.Name,
+			Columns:        table.Columns,
 			PhysicalColumn: oldPhysicalColumn,
 			SQL:            o.downSQLForOperations(ops),
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
-	}
+	)
 
 	// perform any operation specific start steps
 	for _, op := range ops {
@@ -88,7 +86,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		}
 	}
 
-	return backfill.NewTask(table), nil
+	return backfill.NewTask(table, triggers...), nil
 }
 
 func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
