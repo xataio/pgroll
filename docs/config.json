@@ -108,6 +108,11 @@
               "title": "Latest Migration",
               "href": "/cli/latest-migration",
               "file": "docs/cli/latest-migration.mdx"
+            },
+            {
+              "title": "Latest URL",
+              "href": "/cli/latest-url",
+              "file": "docs/cli/latest-url.mdx"
             }
           ]
         },

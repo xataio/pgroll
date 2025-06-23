@@ -1,13 +1,14 @@
 ---
 title: Latest
-description: Prints the latest schema version, or migration name in either the target database or a local directory of migration files.
+description: Prints information about the latest migration in either the target database or a local directory of migration files.
 ---
 
 ## Command
 
-The `pgroll latest` command has two subcommands:
+The `pgroll latest` command has three subcommands:
 
 - [`pgroll latest schema`](./latest-schema) - prints the latest version schema name
-- [`pgroll latest migration`](./latest-migration) - prints the latest migration name  
+- [`pgroll latest migration`](./latest-migration) - prints the latest migration name
+- [`pgroll latest url`](./latest-url) - prints a database connection URL for the latest schema version
 
 All subcommands support the `--local` flag to retrieve information from a local directory of migration files instead of the target database.
