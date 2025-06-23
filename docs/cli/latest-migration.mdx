@@ -1,0 +1,50 @@
+---
+title: Latest Migration
+description: Prints the latest migration name in either the target database or a local directory of migration files.
+---
+
+## Command
+
+The `pgroll latest migration` command prints the latest migration name.
+
+## Usage
+
+```
+pgroll latest migration [flags]
+```
+
+## Flags
+
+- `--local, -l` - retrieve the latest migration from a local migration directory
+
+## Examples
+
+### Database
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) have been applied to the `public` schema in the target database, running:
+
+```
+$ pgroll latest migration
+```
+
+will print the latest migration name in the target database:
+
+```
+55_add_primary_key_constraint_to_table
+```
+
+### Local
+
+Assuming that the [example migrations](https://github.com/xataio/pgroll/tree/main/examples) are on disk in a directory called `examples`, running:
+
+```
+$ pgroll latest migration --local examples/
+```
+
+will print the latest migration name in the directory:
+
+```
+55_add_primary_key_constraint_to_table
+```
+
+The exact outputs will vary as the `examples/` directory is updated.
