@@ -353,7 +353,7 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 func (m *Roll) performBackfills(ctx context.Context, job *backfill.Job, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
 
-	bf.LoadTriggers(ctx, job)
+	bf.CreateTriggers(ctx, job)
 
 	for _, table := range job.Tables {
 		m.logger.LogBackfillStart(table.Name)

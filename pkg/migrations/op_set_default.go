@@ -44,9 +44,7 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 		return nil, err
 	}
 
-	return &backfill.Task{
-		Table: table,
-	}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpSetDefault) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

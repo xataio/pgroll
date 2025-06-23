@@ -28,9 +28,7 @@ func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return &backfill.Task{
-		Table: table,
-	}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpDropNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

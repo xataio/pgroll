@@ -29,7 +29,7 @@ func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return &backfill.Task{Table: tbl}, NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment).Execute(ctx)
+	return backfill.NewTask(tbl), NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment).Execute(ctx)
 }
 
 func (o *OpSetComment) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

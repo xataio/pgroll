@@ -49,9 +49,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
 	}
 
-	return &backfill.Task{
-		Table: table,
-	}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

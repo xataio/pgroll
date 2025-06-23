@@ -88,9 +88,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		}
 	}
 
-	return &backfill.Task{
-		Table: table,
-	}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

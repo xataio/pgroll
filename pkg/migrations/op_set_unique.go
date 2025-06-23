@@ -32,9 +32,7 @@ func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	return &backfill.Task{
-		Table: table,
-	}, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
+	return backfill.NewTask(table), NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
 func (o *OpSetUnique) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

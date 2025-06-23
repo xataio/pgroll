@@ -87,9 +87,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 		}
 	}
 
-	task := &backfill.Task{
-		Table: table,
-	}
+	task := backfill.NewTask(table)
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:

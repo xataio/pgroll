@@ -76,9 +76,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	if err != nil {
 		return nil, fmt.Errorf("failed to create down trigger: %w", err)
 	}
-	return &backfill.Task{
-		Table: table,
-	}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

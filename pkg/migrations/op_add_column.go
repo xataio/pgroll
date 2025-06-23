@@ -117,9 +117,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 		if err != nil {
 			return nil, fmt.Errorf("failed to create trigger: %w", err)
 		}
-		task = &backfill.Task{
-			Table: table,
-		}
+		task = backfill.NewTask(table)
 	}
 
 	tmpColumn := toSchemaColumn(o.Column)

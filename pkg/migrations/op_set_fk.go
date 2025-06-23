@@ -61,7 +61,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, lates
 		return nil, fmt.Errorf("failed to add foreign key constraint: %w", err)
 	}
 
-	return &backfill.Task{Table: table}, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpSetForeignKey) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
