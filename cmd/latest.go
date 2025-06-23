@@ -15,6 +15,7 @@ func latestCmd() *cobra.Command {
 
 	latestCmd.AddCommand(latestSchemaCmd())
 	latestCmd.AddCommand(latestMigrationCmd())
+	latestCmd.AddCommand(latestURLCmd())
 
 	return latestCmd
 }
