@@ -40,10 +40,10 @@ func (o *OpSetComment) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAct
 	}, nil
 }
 
-func (o *OpSetComment) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetComment) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpSetComment) Validate(ctx context.Context, s *schema.Schema) error {

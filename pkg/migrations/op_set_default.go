@@ -53,10 +53,10 @@ func (o *OpSetDefault) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAct
 	return []DBAction{}, nil
 }
 
-func (o *OpSetDefault) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetDefault) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpSetDefault) Validate(ctx context.Context, s *schema.Schema) error {

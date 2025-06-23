@@ -37,10 +37,10 @@ func (o *OpChangeType) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAct
 	return []DBAction{}, nil
 }
 
-func (o *OpChangeType) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpChangeType) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {

@@ -128,43 +128,39 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	}...), nil
 }
 
-func (o *OpAlterColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpAlterColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	// Perform any operation specific rollback steps
+	dbActions := make([]DBAction, 0)
 	ops := o.subOperations()
 	for _, ops := range ops {
-		if err := ops.Rollback(ctx, l, conn, nil); err != nil {
-			return err
+		actions, err := ops.Rollback(l, conn, nil)
+		if err != nil {
+			return []DBAction{}, err
 		}
+		dbActions = append(dbActions, actions...)
 	}
 
-	rollbackAddColumn := NewDropColumnAction(conn, table.Name, column.Name)
-	err := rollbackAddColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
+	dbActions = append(dbActions,
+		NewDropColumnAction(conn, table.Name, column.Name),
+		NewDropFunctionAction(conn,
+			backfill.TriggerFunctionName(o.Table, o.Column),
+			backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
+		),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	)
 
-	// Remove the up and down functions and triggers
-	if err := NewDropFunctionAction(
-		conn,
-		backfill.TriggerFunctionName(o.Table, o.Column),
-		backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
-	).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	return removeBackfillColumn.Execute(ctx)
+	return dbActions, nil
 }
 
 func (o *OpAlterColumn) Validate(ctx context.Context, s *schema.Schema) error {

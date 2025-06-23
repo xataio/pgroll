@@ -170,28 +170,19 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	return dbActions, nil
 }
 
-func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
 	}
 
-	removeDuplicatedColumns := NewDropColumnAction(conn, table.Name, temporaryNames(o.Columns)...)
-	err := removeDuplicatedColumns.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := o.removeTriggers(conn).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-
-	return err
+	return []DBAction{
+		NewDropColumnAction(conn, table.Name, temporaryNames(o.Columns)...),
+		o.removeTriggers(conn),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpCreateConstraint) removeTriggers(conn db.DB) DBAction {

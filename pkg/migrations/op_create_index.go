@@ -86,11 +86,11 @@ func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	return []DBAction{}, nil
 }
 
-func (o *OpCreateIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateIndex) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// drop the index concurrently
-	return NewDropIndexAction(conn, o.Name).Execute(ctx)
+	return []DBAction{NewDropIndexAction(conn, o.Name)}, nil
 }
 
 func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {

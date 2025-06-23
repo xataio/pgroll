@@ -36,9 +36,9 @@ func (o *OpDropNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	return []DBAction{}, nil
 }
 
-func (o *OpDropNotNull) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropNotNull) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpDropNotNull) Validate(ctx context.Context, s *schema.Schema) error {

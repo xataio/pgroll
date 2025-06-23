@@ -290,9 +290,14 @@ func (m *Roll) Rollback(ctx context.Context) error {
 
 	// roll back operations in reverse order
 	for i := len(migration.Operations) - 1; i >= 0; i-- {
-		err := migration.Operations[i].Rollback(ctx, m.logger, m.pgConn, schema)
+		actions, err := migration.Operations[i].Rollback(m.logger, m.pgConn, schema)
 		if err != nil {
-			return fmt.Errorf("unable to execute rollback operation: %w", err)
+			return fmt.Errorf("unable to collect actions for rollback operation: %w", err)
+		}
+		for _, a := range actions {
+			if err := a.Execute(ctx); err != nil {
+				return fmt.Errorf("unable to execute rollback operation: %w", err)
+			}
 		}
 	}
 

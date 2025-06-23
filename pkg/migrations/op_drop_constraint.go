@@ -97,32 +97,20 @@ func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]D
 	}, nil
 }
 
-func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
 	columnName := table.GetConstraintColumns(o.Name)[0]
 
-	removeNewColumn := NewDropColumnAction(conn, o.Table, TemporaryName(columnName))
-	err := removeNewColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Remove the up and down functions and triggers
-	if err := NewDropFunctionAction(
-		conn,
-		backfill.TriggerFunctionName(o.Table, columnName),
-		backfill.TriggerFunctionName(o.Table, TemporaryName(columnName)),
-	).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-
-	return err
+	return []DBAction{
+		NewDropColumnAction(conn, o.Table, TemporaryName(columnName)),
+		NewDropFunctionAction(conn,
+			backfill.TriggerFunctionName(o.Table, columnName),
+			backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpDropConstraint) Validate(ctx context.Context, s *schema.Schema) error {

@@ -24,11 +24,11 @@ func (o *OpRenameTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	return []DBAction{NewRenameTableAction(conn, o.From, o.To)}, nil
 }
 
-func (o *OpRenameTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameTable) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	s.RenameTable(o.To, o.From)
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {
