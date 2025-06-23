@@ -130,5 +130,16 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 		}
 	}
 
+	if slices.Contains(a.table.PrimaryKey, a.to) {
+		err := NewAddPrimaryKeyAction(a.conn, a.table.Name, primaryKeyName(a.table.Name)).Execute(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to re-add primary key constraint: %w", err)
+		}
+	}
+
 	return nil
+}
+
+func primaryKeyName(tableName string) string {
+	return fmt.Sprintf("%s_pkey", tableName)
 }
