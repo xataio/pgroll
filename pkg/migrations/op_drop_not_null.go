@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -19,7 +20,7 @@ type OpDropNotNull struct {
 
 var _ Operation = (*OpDropNotNull)(nil)
 
-func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -27,7 +28,7 @@ func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return table, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpDropNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

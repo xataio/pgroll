@@ -19,7 +19,7 @@ var (
 	_ Createable = (*OpAddColumn)(nil)
 )
 
-func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -100,7 +100,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 		}
 	}
 
-	var tableToBackfill *schema.Table
+	var task *backfill.Task
 	if o.Up != "" {
 		err := NewCreateTriggerAction(conn,
 			backfill.TriggerConfig{
@@ -117,14 +117,14 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 		if err != nil {
 			return nil, fmt.Errorf("failed to create trigger: %w", err)
 		}
-		tableToBackfill = table
+		task = backfill.NewTask(table)
 	}
 
 	tmpColumn := toSchemaColumn(o.Column)
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return tableToBackfill, nil
+	return task, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {

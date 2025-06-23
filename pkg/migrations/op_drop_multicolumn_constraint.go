@@ -19,7 +19,7 @@ var (
 	_ Createable = (*OpDropMultiColumnConstraint)(nil)
 )
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*schema.Table, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -94,7 +94,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		}
 	}
 
-	return table, nil
+	return backfill.NewTask(table), nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
