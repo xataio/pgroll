@@ -30,11 +30,11 @@ func (o *OpDropIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 	}, nil
 }
 
-func (o *OpDropIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropIndex) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// no-op
-	return nil
+	return nil, nil
 }
 
 func (o *OpDropIndex) Validate(ctx context.Context, s *schema.Schema) error {

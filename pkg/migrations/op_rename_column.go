@@ -41,14 +41,14 @@ func (o *OpRenameColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBA
 	}, nil
 }
 
-func (o *OpRenameColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// Rename the column back to the original name in the in-memory schema.
 	table := s.GetTable(o.Table)
 	table.RenameColumn(o.To, o.From)
 
-	return nil
+	return nil, nil
 }
 
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {

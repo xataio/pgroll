@@ -34,13 +34,13 @@ func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 func (o *OpChangeType) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
-func (o *OpChangeType) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpChangeType) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return nil
+	return nil, nil
 }
 
 func (o *OpChangeType) Validate(ctx context.Context, s *schema.Schema) error {

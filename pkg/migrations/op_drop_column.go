@@ -59,27 +59,19 @@ func (o *OpDropColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAct
 	}, nil
 }
 
-func (o *OpDropColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
-
-	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
 
 	// Mark the column as no longer deleted so thats it's visible to preceding
 	// rollback operations in the same migration
 	s.GetTable(o.Table).UnRemoveColumn(o.Column)
 
-	return nil
+	return []DBAction{
+		NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpDropColumn) Validate(ctx context.Context, s *schema.Schema) error {

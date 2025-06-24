@@ -113,7 +113,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := uniqueOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeCheck:
@@ -125,7 +125,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := checkOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeForeignKey:
@@ -137,7 +137,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := fkOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypePrimaryKey:
@@ -153,12 +153,12 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	// rename new columns to old name
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	for _, col := range o.Columns {
 		column := table.GetColumn(col)
 		if column == nil {
-			return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: col}
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: col}
 		}
 		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, column.Name))
 	}
@@ -170,28 +170,19 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	return dbActions, nil
 }
 
-func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	removeDuplicatedColumns := NewDropColumnAction(conn, table.Name, temporaryNames(o.Columns)...)
-	err := removeDuplicatedColumns.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := o.removeTriggers(conn).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-
-	return err
+	return []DBAction{
+		NewDropColumnAction(conn, table.Name, temporaryNames(o.Columns)...),
+		o.removeTriggers(conn),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpCreateConstraint) removeTriggers(conn db.DB) DBAction {

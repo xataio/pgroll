@@ -29,20 +29,20 @@ func (o *OpRawSQL) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction,
 	l.LogOperationComplete(o)
 
 	if !o.OnComplete {
-		return []DBAction{}, nil
+		return nil, nil
 	}
 
 	return []DBAction{NewRawSQLAction(conn, o.Up)}, nil
 }
 
-func (o *OpRawSQL) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRawSQL) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	if o.Down == "" {
-		return nil
+		return nil, nil
 	}
 
-	return NewRawSQLAction(conn, o.Down).Execute(ctx)
+	return []DBAction{NewRawSQLAction(conn, o.Down)}, nil
 }
 
 func (o *OpRawSQL) Validate(ctx context.Context, s *schema.Schema) error {

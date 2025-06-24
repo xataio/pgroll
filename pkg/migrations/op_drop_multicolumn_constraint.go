@@ -119,32 +119,23 @@ func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.S
 	return dbActions, nil
 }
 
-func (o *OpDropMultiColumnConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropMultiColumnConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
 
+	dbAction := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		removeNewColumn := NewDropColumnAction(conn, table.Name, TemporaryName(columnName))
-		err := removeNewColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Remove the up and down function and trigger
-		err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, columnName), backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))).Execute(ctx)
-		if err != nil {
-			return err
-		}
-
-		removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-		err = removeBackfillColumn.Execute(ctx)
-		if err != nil {
-			return err
-		}
+		dbAction = append(dbAction,
+			NewDropColumnAction(conn, table.Name, TemporaryName(columnName)),
+			NewDropFunctionAction(conn,
+				backfill.TriggerFunctionName(o.Table, columnName),
+				backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))),
+			NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+		)
 	}
 
-	return nil
+	return dbAction, nil
 }
 
 func (o *OpDropMultiColumnConstraint) Validate(ctx context.Context, s *schema.Schema) error {
