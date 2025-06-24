@@ -18,7 +18,7 @@ var (
 	_ Createable = (*OpAlterColumn)(nil)
 )
 
-func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -81,7 +81,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	task := backfill.NewTask(table, triggers...)
 	// perform any operation specific start steps
 	for _, op := range ops {
-		bf, err := op.Start(ctx, l, conn, latestSchema, s)
+		bf, err := op.Start(ctx, l, conn, s)
 		if err != nil {
 			return nil, err
 		}
