@@ -370,7 +370,7 @@ DECLARE
     migration_id text;
 BEGIN
     -- Ignore schema changes made by pgroll
-    IF (pg_catalog.current_setting('pgroll.internal', TRUE) = 'TRUE') THEN
+    IF (pg_catalog.current_setting('pgroll.no_inferred_migrations', TRUE) = 'TRUE') THEN
         RETURN;
     END IF;
     IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN

@@ -101,9 +101,9 @@ func setupConn(ctx context.Context, pgURL, schema string, options options) (*sql
 		return nil, err
 	}
 
-	_, err = conn.ExecContext(ctx, "SET pgroll.internal TO 'TRUE'")
+	_, err = conn.ExecContext(ctx, "SET pgroll.no_inferred_migrations TO 'TRUE'")
 	if err != nil {
-		return nil, fmt.Errorf("unable to set pgroll.internal to true: %w", err)
+		return nil, fmt.Errorf("unable to set pgroll.no_inferred_migrations to true: %w", err)
 	}
 
 	if options.lockTimeoutMs > 0 {
