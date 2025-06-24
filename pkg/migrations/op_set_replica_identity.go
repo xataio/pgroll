@@ -17,7 +17,7 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type

@@ -20,7 +20,7 @@ type OpChangeType struct {
 
 var _ Operation = (*OpChangeType)(nil)
 
-func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
