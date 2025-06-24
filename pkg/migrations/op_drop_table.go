@@ -35,13 +35,13 @@ func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	return nil, nil
 }
 
-func (o *OpDropTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	deletionName := DeletionName(o.Name)
-
-	// Perform the actual deletion of the soft-deleted table
-	return NewDropTableAction(conn, deletionName).Execute(ctx)
+	return []DBAction{
+		// Perform the actual deletion of the soft-deleted table
+		NewDropTableAction(conn, DeletionName(o.Name)),
+	}, nil
 }
 
 func (o *OpDropTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

@@ -101,19 +101,21 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 	return task, nil
 }
 
-func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	dbActions := make([]DBAction, 0)
 	switch o.Type {
 	case OpCreateConstraintTypeUnique:
 		uniqueOp := &OpSetUnique{
 			Table: o.Table,
 			Name:  o.Name,
 		}
-		err := uniqueOp.Complete(ctx, l, conn, s)
+		actions, err := uniqueOp.Complete(l, conn, s)
 		if err != nil {
-			return err
+			return []DBAction{}, err
 		}
+		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeCheck:
 		checkOp := &OpSetCheckConstraint{
 			Table: o.Table,
@@ -121,10 +123,11 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB,
 				Name: o.Name,
 			},
 		}
-		err := checkOp.Complete(ctx, l, conn, s)
+		actions, err := checkOp.Complete(l, conn, s)
 		if err != nil {
-			return err
+			return []DBAction{}, err
 		}
+		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeForeignKey:
 		fkOp := &OpSetForeignKey{
 			Table: o.Table,
@@ -132,52 +135,39 @@ func (o *OpCreateConstraint) Complete(ctx context.Context, l Logger, conn db.DB,
 				Name: o.Name,
 			},
 		}
-		err := fkOp.Complete(ctx, l, conn, s)
+		actions, err := fkOp.Complete(l, conn, s)
 		if err != nil {
-			return err
+			return []DBAction{}, err
 		}
+		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypePrimaryKey:
-		err := NewAddPrimaryKeyAction(conn, o.Table, o.Name).Execute(ctx)
-		if err != nil {
-			return err
-		}
+		dbActions = append(dbActions, NewAddPrimaryKeyAction(conn, o.Table, o.Name))
 	}
 
 	for _, col := range o.Columns {
-		if err := NewAlterSequenceOwnerAction(conn, o.Table, col, TemporaryName(col)).Execute(ctx); err != nil {
-			return err
-		}
+		dbActions = append(dbActions, NewAlterSequenceOwnerAction(conn, o.Table, col, TemporaryName(col)))
 	}
 
-	removeOldColumns := NewDropColumnAction(conn, o.Table, o.Columns...)
-	err := removeOldColumns.Execute(ctx)
-	if err != nil {
-		return err
-	}
+	dbActions = append(dbActions, NewDropColumnAction(conn, o.Table, o.Columns...))
 
 	// rename new columns to old name
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
 	}
 	for _, col := range o.Columns {
 		column := table.GetColumn(col)
 		if column == nil {
-			return ColumnDoesNotExistError{Table: o.Table, Name: col}
+			return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: col}
 		}
-		if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
-			return err
-		}
+		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, column.Name))
 	}
+	dbActions = append(dbActions,
+		o.removeTriggers(conn),
+		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
+	)
 
-	if err := o.removeTriggers(ctx, conn); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-
-	return err
+	return dbActions, nil
 }
 
 func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -194,7 +184,7 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB,
 		return err
 	}
 
-	if err := o.removeTriggers(ctx, conn); err != nil {
+	if err := o.removeTriggers(conn).Execute(ctx); err != nil {
 		return err
 	}
 
@@ -204,13 +194,13 @@ func (o *OpCreateConstraint) Rollback(ctx context.Context, l Logger, conn db.DB,
 	return err
 }
 
-func (o *OpCreateConstraint) removeTriggers(ctx context.Context, conn db.DB) error {
+func (o *OpCreateConstraint) removeTriggers(conn db.DB) DBAction {
 	dropFuncs := make([]string, 0, len(o.Columns)*2)
 	for _, column := range o.Columns {
 		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, column))
 		dropFuncs = append(dropFuncs, backfill.TriggerFunctionName(o.Table, TemporaryName(column)))
 	}
-	return NewDropFunctionAction(conn, dropFuncs...).Execute(ctx)
+	return NewDropFunctionAction(conn, dropFuncs...)
 }
 
 func (o *OpCreateConstraint) Validate(ctx context.Context, s *schema.Schema) error {

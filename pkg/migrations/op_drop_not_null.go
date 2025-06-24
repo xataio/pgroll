@@ -31,9 +31,9 @@ func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpDropNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpDropNotNull) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

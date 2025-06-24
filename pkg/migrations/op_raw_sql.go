@@ -25,14 +25,14 @@ func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema
 	return nil, NewRawSQLAction(conn, o.Up).Execute(ctx)
 }
 
-func (o *OpRawSQL) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRawSQL) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	if !o.OnComplete {
-		return nil
+		return []DBAction{}, nil
 	}
 
-	return NewRawSQLAction(conn, o.Up).Execute(ctx)
+	return []DBAction{NewRawSQLAction(conn, o.Up)}, nil
 }
 
 func (o *OpRawSQL) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

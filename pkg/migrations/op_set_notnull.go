@@ -6,8 +6,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lib/pq"
-
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
@@ -52,33 +50,20 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpSetNotNull) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	// Validate the NOT NULL constraint on the old column.
-	// The constraint must be valid because:
-	// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
-	// * New NULL values written to the old column during the migration period were also rewritten using `up` SQL.
-	err := NewValidateConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Use the validated constraint to add `NOT NULL` to the new column
-	_, err = conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
-		pq.QuoteIdentifier(o.Table),
-		pq.QuoteIdentifier(TemporaryName(o.Column))))
-	if err != nil {
-		return err
-	}
-
-	// Drop the NOT NULL constraint
-	err = NewDropConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return []DBAction{
+		// Validate the NOT NULL constraint on the old column.
+		// The constraint must be valid because:
+		// * Existing NULL values in the old column were rewritten using the `up` SQL during backfill.
+		// * New NULL values written to the old column during the migration period were also rewritten using `up` SQL.
+		NewValidateConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)),
+		// Use the validated constraint to add `NOT NULL` to the new column
+		NewSetNotNullAction(conn, o.Table, TemporaryName(o.Column)),
+		// Drop the NOT NULL constraint
+		NewDropConstraintAction(conn, o.Table, NotNullConstraintName(o.Column)),
+	}, nil
 }
 
 func (o *OpSetNotNull) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

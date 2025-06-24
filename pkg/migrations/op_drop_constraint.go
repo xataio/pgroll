@@ -79,43 +79,22 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpDropConstraint) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	// We have already validated that there is single column related to this constraint.
 	table := s.GetTable(o.Table)
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 
-	// Remove the up and down function and trigger
-	err := NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, column.Name), backfill.TriggerFunctionName(o.Table, TemporaryName(column.Name))).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := NewAlterSequenceOwnerAction(conn, o.Table, column.Name, TemporaryName(column.Name)).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeOldColumn := NewDropColumnAction(conn,
-		o.Table,
-		column.Name)
-	err = removeOldColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Rename the new column to the old column name
-	if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
-		return err
-	}
-
-	return err
+	return []DBAction{
+		NewDropFunctionAction(conn,
+			backfill.TriggerFunctionName(o.Table, column.Name),
+			backfill.TriggerFunctionName(o.Table, TemporaryName(column.Name))),
+		NewAlterSequenceOwnerAction(conn, o.Table, column.Name, TemporaryName(column.Name)),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+		NewDropColumnAction(conn, o.Table, column.Name),
+		NewRenameDuplicatedColumnAction(conn, table, column.Name),
+	}, nil
 }
 
 func (o *OpDropConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

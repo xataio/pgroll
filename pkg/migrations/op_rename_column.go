@@ -33,9 +33,12 @@ func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, latest
 	return nil, nil
 }
 
-func (o *OpRenameColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
-	return NewRenameColumnAction(conn, o.Table, o.From, o.To).Execute(ctx)
+
+	return []DBAction{
+		NewRenameColumnAction(conn, o.Table, o.From, o.To),
+	}, nil
 }
 
 func (o *OpRenameColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

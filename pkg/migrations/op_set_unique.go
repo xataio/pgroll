@@ -35,11 +35,11 @@ func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	return backfill.NewTask(table), NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name).Execute(ctx)
 }
 
-func (o *OpSetUnique) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetUnique) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	// Create a unique constraint using the unique index
-	return NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Name, o.Name).Execute(ctx)
+	return []DBAction{NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Name, o.Name)}, nil
 }
 
 func (o *OpSetUnique) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

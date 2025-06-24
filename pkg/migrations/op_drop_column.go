@@ -49,27 +49,14 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	return nil, nil
 }
 
-func (o *OpDropColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	removeColumn := NewDropColumnAction(conn, o.Table, o.Column)
-	err := removeColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return []DBAction{
+		NewDropColumnAction(conn, o.Table, o.Column),
+		NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column)),
+		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpDropColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

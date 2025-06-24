@@ -61,11 +61,11 @@ func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	return nil, nil
 }
 
-func (o *OpCreateTable) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	// No-op
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpCreateTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

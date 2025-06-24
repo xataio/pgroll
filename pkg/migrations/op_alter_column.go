@@ -91,54 +91,41 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpAlterColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	ops := o.subOperations()
 
+	dbActions := []DBAction{}
 	// Perform any operation specific completion steps
 	for _, op := range ops {
-		if err := op.Complete(ctx, l, conn, s); err != nil {
-			return err
+		actions, err := op.Complete(l, conn, s)
+		if err != nil {
+			return []DBAction{}, err
 		}
-	}
-
-	if err := NewAlterSequenceOwnerAction(conn, o.Table, o.Column, TemporaryName(o.Column)).Execute(ctx); err != nil {
-		return err
-	}
-
-	removeOldColumn := NewDropColumnAction(conn, o.Table, o.Column)
-	err := removeOldColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Remove the up and down function and trigger
-	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column), backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column))).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-	if err != nil {
-		return err
+		dbActions = append(dbActions, actions...)
 	}
 
 	// Rename the new column to the old column name
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
-	}
-	if err := NewRenameDuplicatedColumnAction(conn, table, column.Name).Execute(ctx); err != nil {
-		return err
+		return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	return nil
+	return append(dbActions, []DBAction{
+		NewAlterSequenceOwnerAction(conn, o.Table, o.Column, TemporaryName(o.Column)),
+		NewDropColumnAction(conn, o.Table, o.Column),
+		NewDropFunctionAction(conn,
+			backfill.TriggerFunctionName(o.Table, o.Column),
+			backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
+		),
+		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
+		NewRenameDuplicatedColumnAction(conn, table, column.Name),
+	}...), nil
 }
 
 func (o *OpAlterColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

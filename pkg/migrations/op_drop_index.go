@@ -22,10 +22,12 @@ func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, latestSch
 	return nil, nil
 }
 
-func (o *OpDropIndex) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return NewDropIndexAction(conn, o.Name).Execute(ctx)
+	return []DBAction{
+		NewDropIndexAction(conn, o.Name),
+	}, nil
 }
 
 func (o *OpDropIndex) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

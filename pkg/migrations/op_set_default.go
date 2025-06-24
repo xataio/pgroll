@@ -47,10 +47,10 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpSetDefault) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetDefault) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpSetDefault) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

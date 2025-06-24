@@ -141,69 +141,43 @@ func toSchemaColumn(c Column) *schema.Column {
 	return tmpColumn
 }
 
-func (o *OpAddColumn) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	err := NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-	if err != nil {
-		return err
+	dbActions := []DBAction{
+		NewRenameColumnAction(conn, o.Table, TemporaryName(o.Column.Name), o.Column.Name),
+		NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)),
+		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
 	}
 
 	if !o.Column.IsNullable() && o.Column.Default == nil {
-		err = upgradeNotNullConstraintToNotNullAttribute(ctx, conn, o.Table, o.Column.Name)
-		if err != nil {
-			return err
-		}
+		dbActions = append(dbActions, upgradeNotNullConstraintToNotNullAttribute(conn, o.Table, o.Column.Name)...)
 	}
 
 	if o.Column.Check != nil {
-		err = NewValidateConstraintAction(conn, o.Table, o.Column.Check.Name).Execute(ctx)
-		if err != nil {
-			return err
-		}
+		dbActions = append(dbActions, NewValidateConstraintAction(conn, o.Table, o.Column.Check.Name))
 	}
 
 	if o.Column.Unique {
-		err := NewAddConstraintUsingUniqueIndex(conn,
+		dbActions = append(dbActions, NewAddConstraintUsingUniqueIndex(conn,
 			o.Table,
 			o.Column.Name,
-			UniqueIndexName(o.Column.Name),
-		).Execute(ctx)
-		if err != nil {
-			return err
-		}
+			UniqueIndexName(o.Column.Name)))
 	}
 
 	// If the column has a DEFAULT that could not be set using the fast-path
 	// optimization, set it here.
 	column := s.GetTable(o.Table).GetColumn(TemporaryName(o.Column.Name))
 	if o.Column.HasDefault() && column.Default == nil {
-		err := NewSetDefaultValueAction(conn, o.Table, o.Column.Name, *o.Column.Default).Execute(ctx)
-		if err != nil {
-			return err
-		}
+		dbActions = append(dbActions, NewSetDefaultValueAction(conn, o.Table, o.Column.Name, *o.Column.Default))
 
 		// Validate the `NOT NULL` constraint on the column if necessary
 		if !o.Column.IsNullable() {
-			err = upgradeNotNullConstraintToNotNullAttribute(ctx, conn, o.Table, o.Column.Name)
-			if err != nil {
-				return err
-			}
+			dbActions = append(dbActions, upgradeNotNullConstraintToNotNullAttribute(conn, o.Table, o.Column.Name)...)
 		}
 	}
 
-	return nil
+	return dbActions, nil
 }
 
 func (o *OpAddColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
@@ -347,20 +321,12 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 // upgradeNotNullConstraintToNotNullAttribute validates and upgrades a NOT NULL
 // constraint to a NOT NULL column attribute. The constraint is removed after
 // the column attribute is added.
-func upgradeNotNullConstraintToNotNullAttribute(ctx context.Context, conn db.DB, tableName, columnName string) error {
-	err := NewValidateConstraintAction(conn, tableName, NotNullConstraintName(columnName)).Execute(ctx)
-	if err != nil {
-		return err
+func upgradeNotNullConstraintToNotNullAttribute(conn db.DB, tableName, columnName string) []DBAction {
+	return []DBAction{
+		NewValidateConstraintAction(conn, tableName, NotNullConstraintName(columnName)),
+		NewSetNotNullAction(conn, tableName, columnName),
+		NewDropConstraintAction(conn, tableName, NotNullConstraintName(columnName)),
 	}
-
-	err = NewSetNotNullAction(conn, tableName, columnName).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = NewDropConstraintAction(conn, tableName, NotNullConstraintName(columnName)).Execute(ctx)
-
-	return err
 }
 
 // UniqueIndexName returns the name of the unique index for the given column

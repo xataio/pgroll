@@ -64,16 +64,13 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, lates
 	return backfill.NewTask(table), nil
 }
 
-func (o *OpSetForeignKey) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetForeignKey) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	// Validate the foreign key constraint
-	err := NewValidateConstraintAction(conn, o.Table, o.References.Name).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return []DBAction{
+		// Validate the foreign key constraint
+		NewValidateConstraintAction(conn, o.Table, o.References.Name),
+	}, nil
 }
 
 func (o *OpSetForeignKey) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {

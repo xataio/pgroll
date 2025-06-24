@@ -33,11 +33,11 @@ func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, 
 	return nil, err
 }
 
-func (o *OpSetReplicaIdentity) Complete(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetReplicaIdentity) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
 	// No-op
-	return nil
+	return []DBAction{}, nil
 }
 
 func (o *OpSetReplicaIdentity) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
