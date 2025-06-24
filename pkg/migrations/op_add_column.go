@@ -185,11 +185,11 @@ func (o *OpAddColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column.Name)
 	if column == nil {
-		return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: o.Column.Name}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column.Name}
 	}
 
 	return []DBAction{

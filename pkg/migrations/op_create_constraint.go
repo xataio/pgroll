@@ -113,7 +113,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := uniqueOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeCheck:
@@ -125,7 +125,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := checkOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypeForeignKey:
@@ -137,7 +137,7 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		actions, err := fkOp.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	case OpCreateConstraintTypePrimaryKey:
@@ -153,12 +153,12 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	// rename new columns to old name
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	for _, col := range o.Columns {
 		column := table.GetColumn(col)
 		if column == nil {
-			return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: col}
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: col}
 		}
 		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, column.Name))
 	}
@@ -175,7 +175,7 @@ func (o *OpCreateConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	return []DBAction{

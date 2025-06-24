@@ -34,7 +34,7 @@ func (o *OpDropIndex) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 	l.LogOperationRollback(o)
 
 	// no-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpDropIndex) Validate(ctx context.Context, s *schema.Schema) error {

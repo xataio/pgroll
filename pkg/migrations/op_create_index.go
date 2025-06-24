@@ -83,7 +83,7 @@ func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	l.LogOperationComplete(o)
 
 	// No-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpCreateIndex) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

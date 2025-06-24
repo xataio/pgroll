@@ -48,7 +48,7 @@ func (o *OpRenameColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBA
 	table := s.GetTable(o.Table)
 	table.RenameColumn(o.To, o.From)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpRenameColumn) Validate(ctx context.Context, s *schema.Schema) error {

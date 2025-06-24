@@ -49,7 +49,7 @@ func (o *OpSetCheckConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) 
 func (o *OpSetCheckConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetCheckConstraint) Validate(ctx context.Context, s *schema.Schema) error {

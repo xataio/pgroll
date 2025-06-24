@@ -76,7 +76,7 @@ func (o *OpSetForeignKey) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DB
 func (o *OpSetForeignKey) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetForeignKey) Validate(ctx context.Context, s *schema.Schema) error {

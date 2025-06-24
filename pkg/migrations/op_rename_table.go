@@ -28,7 +28,7 @@ func (o *OpRenameTable) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	l.LogOperationRollback(o)
 
 	s.RenameTable(o.To, o.From)
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpRenameTable) Validate(ctx context.Context, s *schema.Schema) error {

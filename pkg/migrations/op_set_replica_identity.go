@@ -37,14 +37,14 @@ func (o *OpSetReplicaIdentity) Complete(l Logger, conn db.DB, s *schema.Schema) 
 	l.LogOperationComplete(o)
 
 	// No-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetReplicaIdentity) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// No-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetReplicaIdentity) Validate(ctx context.Context, s *schema.Schema) error {

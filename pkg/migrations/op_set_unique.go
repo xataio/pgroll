@@ -45,7 +45,7 @@ func (o *OpSetUnique) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 func (o *OpSetUnique) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {

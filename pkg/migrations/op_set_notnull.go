@@ -69,7 +69,7 @@ func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAct
 func (o *OpSetNotNull) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetNotNull) Validate(ctx context.Context, s *schema.Schema) error {

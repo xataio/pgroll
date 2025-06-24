@@ -32,7 +32,7 @@ func (o *OpRenameConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([
 	l.LogOperationRollback(o)
 
 	// no-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) error {

@@ -50,13 +50,13 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 func (o *OpSetDefault) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetDefault) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpSetDefault) Validate(ctx context.Context, s *schema.Schema) error {

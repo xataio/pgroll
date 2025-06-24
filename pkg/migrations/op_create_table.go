@@ -65,7 +65,7 @@ func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	l.LogOperationComplete(o)
 
 	// No-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
 func (o *OpCreateTable) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

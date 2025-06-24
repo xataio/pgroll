@@ -96,12 +96,12 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 
 	ops := o.subOperations()
 
-	dbActions := []DBAction{}
+	dbActions := make([]DBAction, 0)
 	// Perform any operation specific completion steps
 	for _, op := range ops {
 		actions, err := op.Complete(l, conn, s)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	}
@@ -109,11 +109,11 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	// Rename the new column to the old column name
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	return append(dbActions, []DBAction{
@@ -133,11 +133,11 @@ func (o *OpAlterColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return []DBAction{}, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return []DBAction{}, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	// Perform any operation specific rollback steps
@@ -146,7 +146,7 @@ func (o *OpAlterColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	for _, ops := range ops {
 		actions, err := ops.Rollback(l, conn, nil)
 		if err != nil {
-			return []DBAction{}, err
+			return nil, err
 		}
 		dbActions = append(dbActions, actions...)
 	}
