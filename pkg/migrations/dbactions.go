@@ -941,3 +941,83 @@ func (a *setReplicaIdentityAction) Execute(ctx context.Context) error {
 		identitySQL))
 	return err
 }
+
+type alterReferencesAction struct {
+	conn   db.DB
+	id     string
+	table  string
+	column string
+}
+
+func NewAlterReferencesAction(conn db.DB, table, column string) *alterReferencesAction {
+	return &alterReferencesAction{
+		conn:   conn,
+		id:     fmt.Sprintf("alter_references_%s_%s", table, column),
+		table:  table,
+		column: column,
+	}
+}
+
+func (a *alterReferencesAction) ID() string {
+	return a.id
+}
+
+func (a *alterReferencesAction) Execute(ctx context.Context) error {
+	definitions, err := a.constraintDefinitions(ctx)
+	if err != nil {
+		return err
+	}
+	for _, def := range definitions {
+		// Drop the existing constraint
+		_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT %s",
+			pq.QuoteIdentifier(def.table),
+			pq.QuoteIdentifier(def.name),
+		))
+		if err != nil {
+			return fmt.Errorf("dropping constraint %s on %s: %w", def.name, def.table, err)
+		}
+
+		// Recreate the constraint with the table and new column
+		newDef := strings.ReplaceAll(def.def, a.column, pq.QuoteIdentifier(TemporaryName(a.column)))
+		newDef = strings.ReplaceAll(newDef, a.table, pq.QuoteIdentifier(a.table))
+		_, err = a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s %s",
+			pq.QuoteIdentifier(def.table),
+			pq.QuoteIdentifier(def.name),
+			newDef,
+		))
+		if err != nil {
+			return fmt.Errorf("altering references for %s.%s: %w", a.table, a.column, err)
+		}
+	}
+	return nil
+}
+
+type constraintDefinition struct {
+	name  string
+	table string
+	def   string
+}
+
+func (a *alterReferencesAction) constraintDefinitions(ctx context.Context) ([]constraintDefinition, error) {
+	rows, err := a.conn.QueryContext(ctx, fmt.Sprintf(`
+SELECT conname, r.conrelid::regclass, pg_catalog.pg_get_constraintdef(r.oid, true) as condef
+FROM pg_catalog.pg_constraint r
+WHERE confrelid = %s::regclass AND r.contype = 'f'`,
+		pq.QuoteIdentifier(a.table),
+	))
+	// No FK constraint for table
+	if err != nil {
+		return nil, nil
+	}
+	defer rows.Close()
+
+	defs := make([]constraintDefinition, 0)
+	for rows.Next() {
+		var def constraintDefinition
+		if err := rows.Scan(&def.name, &def.table, &def.def); err != nil {
+			return nil, fmt.Errorf("scanning referencing constraints for %s.%s: %w", a.table, a.column, err)
+		}
+		defs = append(defs, def)
+	}
+	return defs, rows.Err()
+}

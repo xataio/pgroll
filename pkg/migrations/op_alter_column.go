@@ -127,6 +127,7 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	// Rename the new column to the old column name
 	return append(dbActions, []DBAction{
 		NewAlterSequenceOwnerAction(conn, table.Name, column.Name, TemporaryName(column.Name)),
+		NewAlterReferencesAction(conn, table.Name, o.Column),
 		NewDropColumnAction(conn, table.Name, o.Column),
 		NewDropFunctionAction(conn,
 			backfill.TriggerFunctionName(o.Table, o.Column),
