@@ -30,7 +30,6 @@ type TestCase struct {
 	wantStartErr      error
 	wantRollbackErr   error
 	wantCompleteErr   error
-	beforeStart       func(t *testing.T, ctx context.Context, db *sql.DB, schema string)
 	afterStart        func(t *testing.T, db *sql.DB, schema string)
 	afterComplete     func(t *testing.T, db *sql.DB, schema string)
 	afterRollback     func(t *testing.T, db *sql.DB, schema string)
@@ -53,10 +52,6 @@ func ExecuteTests(t *testing.T, tests TestCases, opts ...roll.Option) {
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, testSchema, opts, func(mig *roll.Roll, db *sql.DB) {
 				ctx := context.Background()
-				if tt.beforeStart != nil {
-					tt.beforeStart(t, ctx, db, testSchema)
-				}
-
 				config := backfill.NewConfig()
 
 				// run all migrations except the last one

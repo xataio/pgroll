@@ -118,6 +118,7 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 
 	return append(dbActions, []DBAction{
 		NewAlterSequenceOwnerAction(conn, o.Table, o.Column, TemporaryName(o.Column)),
+		NewAlterReferencesAction(conn, o.Table, o.Column),
 		NewDropColumnAction(conn, o.Table, o.Column),
 		NewDropFunctionAction(conn,
 			backfill.TriggerFunctionName(o.Table, o.Column),
