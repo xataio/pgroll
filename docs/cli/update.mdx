@@ -13,7 +13,9 @@ This command updates all outdated migration files in the selected migrations fol
 
 The optional `--json` flag can be used to write migration files in JSON.
 
-Consult the [guide](guides/updatemigrations) for more details about updating your migrations files.
+<Warning>
+`pgroll` hasn't reached v1 yet, so we are releasing breaking changes from time to time. Adopting these changes can be painful manually. We suggest you use the subcommand `update` to make sure all your local migrations are correct.
+</Warning>
 
 ### Example for updating migrations in the folder `migrations`
 
