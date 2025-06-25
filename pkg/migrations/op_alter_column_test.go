@@ -508,6 +508,175 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 	})
 }
 
+func TestAlterPrimaryKeyColumns(t *testing.T) {
+	t.Parallel()
+
+	ExecuteTests(t, TestCases{
+		{
+			name: "alter a single primary key column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "people",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "people",
+							Column: "id",
+							Type:   ptr("bigint"),
+							Up:     "CAST(id AS bigint)",
+							Down:   "SELECT CASE WHEN id < 2147483647 THEN CAST(id AS int) ELSE 0 END",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id")
+
+				bigint := "31474836471" // A value larger than int can hold
+				integer := "100"
+
+				// Inserting a row with integer id into the old schema should succeed
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id":   integer,
+					"name": "alice",
+				})
+				// Inserting a row with integer bigint id into the old schema should fail
+				MustNotInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id":   bigint,
+					"name": "alice",
+				}, testutils.NumericValueOutOfRangeErrorCode)
+
+				// Inserting a row with bigint id into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id":   bigint,
+					"name": "alice",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id")
+
+				// Inserting a row with integer bigint into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id":   "31474836472",
+					"name": "bob",
+				})
+			},
+		},
+		{
+			name: "alter a composite primary key: one column changes type, the other is unchanged",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "people",
+							Columns: []migrations.Column{
+								{
+									Name: "id1",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name: "id2",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "people",
+							Column: "id1",
+							Type:   ptr("bigint"),
+							Up:     "CAST(id1 AS bigint)",
+							Down:   "SELECT CASE WHEN id1 < 2147483647 THEN CAST(id1 AS int) ELSE 0 END",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id1")
+				ColumnMustBePK(t, db, schema, "people", "id2")
+
+				bigint := "31474836471" // A value larger than int can hold
+				integer := "100"
+
+				// Inserting a row with integer id into the old schema should succeed
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id1":  integer,
+					"id2":  integer,
+					"name": "alice",
+				})
+				// Inserting a row with integer bigint id into the old schema should fail
+				MustNotInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id1":  bigint,
+					"id2":  integer,
+					"name": "alice",
+				}, testutils.NumericValueOutOfRangeErrorCode)
+
+				// Inserting a row with bigint id into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id1":  bigint,
+					"id2":  integer,
+					"name": "alice",
+				})
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id1")
+				ColumnMustBePK(t, db, schema, "people", "id2")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ColumnMustBePK(t, db, schema, "people", "id1")
+				ColumnMustBePK(t, db, schema, "people", "id2")
+
+				// Inserting a row with integer bigint into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id1":  "31474836472",
+					"id2":  "72",
+					"name": "bob",
+				})
+			},
+		},
+	})
+}
+
 func TestAlterColumnValidation(t *testing.T) {
 	t.Parallel()
 
