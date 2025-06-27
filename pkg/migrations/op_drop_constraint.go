@@ -36,22 +36,25 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
+	// Copy the columns from table columns, so we can use it later
+	// in the down trigger with the physical name
+	upColumns := make(map[string]*schema.Column)
+	for name, col := range table.Columns {
+		upColumns[name] = col
+	}
+
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	err := NewCreateTriggerAction(conn,
-		backfill.TriggerConfig{
+	triggers := make([]backfill.OperationTrigger, 0)
+	triggers = append(triggers,
+		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, column.Name),
 			Direction:      backfill.TriggerDirectionUp,
-			Columns:        table.Columns,
-			SchemaName:     s.Name,
-			LatestSchema:   latestSchema,
+			Columns:        upColumns,
 			TableName:      o.Table,
 			PhysicalColumn: TemporaryName(column.Name),
 			SQL:            o.upSQL(column.Name),
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create up trigger: %w", err)
-	}
+	)
 
 	// Add the new column to the internal schema representation. This is done
 	// here, before creation of the down trigger, so that the trigger can declare
@@ -61,22 +64,17 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	err = NewCreateTriggerAction(conn,
-		backfill.TriggerConfig{
+	triggers = append(triggers,
+		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, TemporaryName(column.Name)),
 			Direction:      backfill.TriggerDirectionDown,
 			Columns:        table.Columns,
-			SchemaName:     s.Name,
-			LatestSchema:   latestSchema,
 			TableName:      o.Table,
 			PhysicalColumn: column.Name,
 			SQL:            o.Down,
 		},
-	).Execute(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create down trigger: %w", err)
-	}
-	return backfill.NewTask(table), nil
+	)
+	return backfill.NewTask(table, triggers...), nil
 }
 
 func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
