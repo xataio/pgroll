@@ -5,7 +5,6 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/lib/pq"
 
@@ -27,55 +26,23 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, latestS
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	// create index concurrently
-	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
-	if o.Unique {
-		stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
-	}
-	stmt := fmt.Sprintf(stmtFmt,
-		pq.QuoteIdentifier(o.Name),
-		pq.QuoteIdentifier(table.Name))
-
-	if o.Method != "" {
-		stmt += fmt.Sprintf(" USING %s", string(o.Method))
+	cols := make(map[string]IndexField, len(o.Columns))
+	for name, settings := range map[string]IndexField(o.Columns) {
+		physicalName := table.PhysicalColumnNamesFor(name)
+		cols[physicalName[0]] = settings
 	}
 
-	colSQLs := make([]string, 0, len(o.Columns))
-	for columnName, settings := range map[string]IndexField(o.Columns) {
-		physicalName := table.PhysicalColumnNamesFor(columnName)
-		colSQL := pq.QuoteIdentifier(physicalName[0])
-		// deparse collations
-		if settings.Collate != "" {
-			colSQL += " COLLATE " + settings.Collate
-		}
-		// deparse operator classes and their parameters
-		if settings.Opclass != nil {
-			colSQL += " " + settings.Opclass.Name
-			if len(settings.Opclass.Params) > 0 {
-				colSQL += " " + strings.Join(settings.Opclass.Params, ", ")
-			}
-		}
-		// deparse sort order of the index column
-		if settings.Sort != "" {
-			colSQL += " " + string(settings.Sort)
-		}
-		// deparse nulls order of the index column
-		if settings.Nulls != nil {
-			colSQL += " " + string(*settings.Nulls)
-		}
-		colSQLs = append(colSQLs, colSQL)
-	}
-	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
+	err := NewCreateIndexConcurrentlyAction(
+		conn,
+		table.Name,
+		o.Name,
+		string(o.Method),
+		o.Unique,
+		cols,
+		o.StorageParameters,
+		o.Predicate,
+	).Execute(ctx)
 
-	if o.StorageParameters != "" {
-		stmt += fmt.Sprintf(" WITH (%s)", o.StorageParameters)
-	}
-
-	if o.Predicate != "" {
-		stmt += fmt.Sprintf(" WHERE %s", o.Predicate)
-	}
-
-	_, err := conn.ExecContext(ctx, stmt)
 	return nil, err
 }
 
