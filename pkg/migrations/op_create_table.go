@@ -18,47 +18,39 @@ var (
 	_ Createable = (*OpCreateTable)(nil)
 )
 
-func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
+		return nil, nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
 	constraintsSQL, err := constraintsToSQL(o.Constraints)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
+		return nil, nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
 
-	err = NewCreateTableAction(conn, o.Name, columnsSQL, constraintsSQL).Execute(ctx)
-	if err != nil {
-		return nil, err
-	}
+	dbActions := make([]DBAction, 0)
+	dbActions = append(dbActions, NewCreateTableAction(conn, o.Name, columnsSQL, constraintsSQL))
 
 	// Add comments to any columns that have them
 	for _, col := range o.Columns {
 		if col.Comment != nil {
-			err := NewCommentColumnAction(conn, o.Name, col.Name, col.Comment).Execute(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to add comment to column: %w", err)
-			}
+			dbActions = append(dbActions, NewCommentColumnAction(conn, o.Name, col.Name, col.Comment))
 		}
 	}
 
 	// Add comment to the table itself
 	if o.Comment != nil {
-		err := NewCommentTableAction(conn, o.Name, o.Comment).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add comment to table: %w", err)
-		}
+		dbActions = append(dbActions, NewCommentTableAction(conn, o.Name, o.Comment))
 	}
 
 	// Update the in-memory schema representation with the new table
 	o.updateSchema(s)
 
-	return nil, nil
+	return dbActions, nil, nil
 }
 
 func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

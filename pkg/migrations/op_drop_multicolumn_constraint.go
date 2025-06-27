@@ -4,7 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/lib/pq"
@@ -19,12 +18,12 @@ var (
 	_ Createable = (*OpDropMultiColumnConstraint)(nil)
 )
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// Get all columns covered by the constraint to be dropped
@@ -33,20 +32,19 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 	for i, c := range constraintColumns {
 		columns[i] = table.GetColumn(c)
 		if columns[i] == nil {
-			return nil, ColumnDoesNotExistError{Table: o.Table, Name: c}
+			return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: c}
 		}
 	}
 
 	// Duplicate each of the columns covered by the constraint to be dropped.
 	// Each column is duplicated assuming its final name after the migration is
 	// completed.
+
 	d := NewColumnDuplicator(conn, table, columns...).WithoutConstraint(o.Name)
 	for _, colName := range constraintColumns {
 		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
 	}
-	if err := d.Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to duplicate column: %w", err)
-	}
+	dbActions := []DBAction{d}
 
 	// Create triggers for each column covered by the constraint to be dropped
 	triggers := make([]backfill.OperationTrigger, 0)
@@ -91,7 +89,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		)
 	}
 
-	return backfill.NewTask(table, triggers...), nil
+	return dbActions, backfill.NewTask(table, triggers...), nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -4,7 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -16,19 +15,19 @@ var (
 	_ Createable = (*OpCreateConstraint)(nil)
 )
 
-func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	columns := make([]*schema.Column, len(o.Columns))
 	for i, colName := range o.Columns {
 		columns[i] = table.GetColumn(colName)
 		if columns[i] == nil {
-			return nil, ColumnDoesNotExistError{Table: o.Table, Name: colName}
+			return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: colName}
 		}
 	}
 
@@ -37,9 +36,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 	for _, colName := range o.Columns {
 		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
 	}
-	if err := d.Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
-	}
+	dbActions := []DBAction{d}
 
 	// Copy the columns from table columns, so we can use it later
 	// in the down trigger with the physical name
@@ -89,14 +86,25 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:
-		return task, NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...).Execute(ctx)
+		dbActions = append(dbActions,
+			NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...),
+		)
+		return dbActions, task, nil
+
 	case OpCreateConstraintTypeCheck:
-		return task, NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true).Execute(ctx)
+		dbActions = append(dbActions,
+			NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true),
+		)
+		return dbActions, task, nil
+
 	case OpCreateConstraintTypeForeignKey:
-		return task, NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true).Execute(ctx)
+		dbActions = append(dbActions,
+			NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true),
+		)
+		return dbActions, task, nil
 	}
 
-	return task, nil
+	return dbActions, task, nil
 }
 
 func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

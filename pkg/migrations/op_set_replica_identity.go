@@ -14,10 +14,10 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
-	return nil, NewSetReplicaIdentityAction(conn, o.Table, o.Identity.Type, o.Identity.Index).Execute(ctx)
+	return []DBAction{NewSetReplicaIdentityAction(conn, o.Table, o.Identity.Type, o.Identity.Index)}, nil, nil
 }
 
 func (o *OpSetReplicaIdentity) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

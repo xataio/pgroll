@@ -4,7 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -21,47 +20,47 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 	referencedTable := s.GetTable(o.References.Table)
 	if referencedTable == nil {
-		return nil, TableDoesNotExistError{Name: o.References.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.References.Table}
 	}
 
 	referencedColumn := referencedTable.GetColumn(o.References.Column)
 	if referencedColumn == nil {
-		return nil, ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
+		return nil, nil, ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
 	}
 
-	// Create a NOT VALID foreign key constraint on the new column.
-	if err := NewCreateFKConstraintAction(conn,
-		table.Name,
-		o.References.Name,
-		[]string{column.Name},
-		&TableForeignKeyReference{
-			Table:     referencedTable.Name,
-			Columns:   []string{referencedColumn.Name},
-			MatchType: o.References.MatchType,
-			OnDelete:  o.References.OnDelete,
-			OnUpdate:  o.References.OnUpdate,
-		},
-		o.References.InitiallyDeferred,
-		o.References.Deferrable,
-		true,
-	).Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to add foreign key constraint: %w", err)
+	dbActions := []DBAction{
+		// Create a NOT VALID foreign key constraint on the new column.
+		NewCreateFKConstraintAction(conn,
+			table.Name,
+			o.References.Name,
+			[]string{column.Name},
+			&TableForeignKeyReference{
+				Table:     referencedTable.Name,
+				Columns:   []string{referencedColumn.Name},
+				MatchType: o.References.MatchType,
+				OnDelete:  o.References.OnDelete,
+				OnUpdate:  o.References.OnUpdate,
+			},
+			o.References.InitiallyDeferred,
+			o.References.Deferrable,
+			true,
+		),
 	}
 
-	return backfill.NewTask(table), nil
+	return dbActions, backfill.NewTask(table), nil
 }
 
 func (o *OpSetForeignKey) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

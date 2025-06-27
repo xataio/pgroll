@@ -20,31 +20,28 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
-	var err error
+	dbActions := make([]DBAction, 0)
 	if o.Default == nil {
-		err = NewDropDefaultValueAction(conn, table.Name, column.Name).Execute(ctx)
+		dbActions = append(dbActions, NewDropDefaultValueAction(conn, table.Name, column.Name))
 		column.Default = nil
 	} else {
-		err = NewSetDefaultValueAction(conn, table.Name, column.Name, *o.Default).Execute(ctx)
+		dbActions = append(dbActions, NewSetDefaultValueAction(conn, table.Name, column.Name, *o.Default))
 		column.Default = o.Default
 	}
-	if err != nil {
-		return nil, err
-	}
 
-	return backfill.NewTask(table), nil
+	return dbActions, backfill.NewTask(table), nil
 }
 
 func (o *OpSetDefault) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

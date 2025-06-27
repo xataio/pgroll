@@ -15,11 +15,11 @@ var (
 	_ Createable = (*OpDropIndex)(nil)
 )
 
-func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// no-op
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (o *OpDropIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

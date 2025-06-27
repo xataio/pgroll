@@ -4,7 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/lib/pq"
 
@@ -15,25 +14,24 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// By this point Validate() should have run which ensures the constraint exists and that we only have
 	// one column associated with it.
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 	if column == nil {
-		return nil, ColumnDoesNotExistError{Table: o.Table, Name: table.GetConstraintColumns(o.Name)[0]}
+		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: table.GetConstraintColumns(o.Name)[0]}
 	}
 
 	// Create a copy of the column on the underlying table.
-	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
-	if err := d.Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to duplicate column: %w", err)
+	dbActions := []DBAction{
+		NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name),
 	}
 
 	// Copy the columns from table columns, so we can use it later
@@ -74,7 +72,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 			SQL:            o.Down,
 		},
 	)
-	return backfill.NewTask(table, triggers...), nil
+	return dbActions, backfill.NewTask(table, triggers...), nil
 }
 
 func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

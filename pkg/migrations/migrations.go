@@ -16,11 +16,11 @@ import (
 
 // Operation is an operation that can be applied to a schema
 type Operation interface {
-	// Start will apply the required changes to enable supporting the new schema
+	// Start will return the list of required changes to enable supporting the new schema
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error)
+	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
@@ -118,7 +118,7 @@ func (m *Migration) UpdateVirtualSchema(ctx context.Context, s *schema.Schema) e
 	// Run `Start` on each operation using the fake DB. Updates will be made to
 	// the in-memory schema `s` without touching the physical database.
 	for _, op := range m.Operations {
-		if _, err := op.Start(ctx, NewNoopLogger(), db, s); err != nil {
+		if _, _, err := op.Start(ctx, NewNoopLogger(), db, s); err != nil {
 			return err
 		}
 	}
