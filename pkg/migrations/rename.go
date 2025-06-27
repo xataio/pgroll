@@ -33,6 +33,10 @@ func NewRenameDuplicatedColumnAction(conn db.DB, table *schema.Table, column str
 	}
 }
 
+func (a *renameDuplicatedColumnAction) ID() string {
+	return fmt.Sprintf("rename_duplicated_%s", a.to)
+}
+
 func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 	const (
 		cRenameIndexSQL = `ALTER INDEX IF EXISTS %s RENAME TO %s`
