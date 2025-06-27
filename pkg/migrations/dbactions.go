@@ -8,13 +8,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
+
 	"github.com/xataio/pgroll/pkg/db"
 )
 
 // DBAction is an interface for common database actions
 // pgroll runs during migrations.
 type DBAction interface {
+	ID() string
 	Execute(context.Context) error
 }
 
@@ -31,6 +34,10 @@ func NewAddColumnAction(conn db.DB, table string, c Column, withPK bool) *addCol
 		table:  table,
 		column: c,
 	}
+}
+
+func (a *addColumnAction) ID() string {
+	return fmt.Sprintf("add_column_%s_%s", a.table, a.column.Name)
 }
 
 func (a *addColumnAction) Execute(ctx context.Context) error {
@@ -60,6 +67,10 @@ func NewDropColumnAction(conn db.DB, table string, columns ...string) *dropColum
 		table:   table,
 		columns: columns,
 	}
+}
+
+func (a *dropColumnAction) ID() string {
+	return fmt.Sprintf("drop_column_%s_%s", a.table, strings.Join(a.columns, "_"))
 }
 
 func (a *dropColumnAction) Execute(ctx context.Context) error {
@@ -93,6 +104,10 @@ func NewRenameTableAction(conn db.DB, from, to string) *renameTableAction {
 	}
 }
 
+func (a *renameTableAction) ID() string {
+	return fmt.Sprintf("rename_table_%s_to_%s", a.from, a.to)
+}
+
 func (a *renameTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
 		pq.QuoteIdentifier(a.from),
@@ -116,6 +131,10 @@ func NewRenameColumnAction(conn db.DB, table, from, to string) *renameColumnActi
 		from:  from,
 		to:    to,
 	}
+}
+
+func (a *renameColumnAction) ID() string {
+	return fmt.Sprintf("rename_column_%s_%s_to_%s", a.table, a.from, a.to)
 }
 
 func (a *renameColumnAction) Execute(ctx context.Context) error {
@@ -143,6 +162,10 @@ func NewRenameConstraintAction(conn db.DB, table, from, to string) *renameConstr
 	}
 }
 
+func (a *renameConstraintAction) ID() string {
+	return fmt.Sprintf("rename_constraint_%s_%s_to_%s", a.table, a.from, a.to)
+}
+
 func (a *renameConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
 		pq.QuoteIdentifier(a.table),
@@ -167,6 +190,10 @@ func NewAddConstraintUsingUniqueIndex(conn db.DB, table, constraint, indexName s
 	}
 }
 
+func (a *addConstraintUsingUniqueIndexAction) ID() string {
+	return fmt.Sprintf("add_constraint_using_unique_index_%s_%s", a.table, a.constraint)
+}
+
 func (a *addConstraintUsingUniqueIndexAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
 		pq.QuoteIdentifier(a.table),
@@ -189,6 +216,10 @@ func NewAddPrimaryKeyAction(conn db.DB, table, indexName string) *addPrimaryKeyA
 	}
 }
 
+func (a *addPrimaryKeyAction) ID() string {
+	return fmt.Sprintf("add_pk_%s_%s", a.table, a.indexName)
+}
+
 func (a *addPrimaryKeyAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
 		pq.QuoteIdentifier(a.table),
@@ -208,6 +239,10 @@ func NewDropFunctionAction(conn db.DB, functions ...string) *dropFunctionAction 
 		conn:      conn,
 		functions: functions,
 	}
+}
+
+func (a *dropFunctionAction) ID() string {
+	return fmt.Sprintf("drop_function_%s", strings.Join(a.functions, "_"))
 }
 
 func (a *dropFunctionAction) Execute(ctx context.Context) error {
@@ -311,6 +346,10 @@ func NewCommentColumnAction(conn db.DB, table, column string, comment *string) *
 	}
 }
 
+func (a *commentColumnAction) ID() string {
+	return fmt.Sprintf("comment_column_%s_%s", a.table, a.column)
+}
+
 func (a *commentColumnAction) Execute(ctx context.Context) error {
 	commentSQL := fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s",
 		pq.QuoteIdentifier(a.table),
@@ -334,6 +373,10 @@ func NewCommentTableAction(conn db.DB, table string, comment *string) *commentTa
 		table:   table,
 		comment: comment,
 	}
+}
+
+func (a *commentTableAction) ID() string {
+	return fmt.Sprintf("comment_table_%s", a.table)
 }
 
 func (a *commentTableAction) Execute(ctx context.Context) error {
@@ -368,6 +411,10 @@ func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName, t
 		tableName:   tableName,
 		columnNames: columnNames,
 	}
+}
+
+func (a *createUniqueIndexConcurrentlyAction) ID() string {
+	return fmt.Sprintf("create_unique_index_concurrently_%s_%s", a.indexName, a.tableName)
 }
 
 func (a *createUniqueIndexConcurrentlyAction) Execute(ctx context.Context) error {
@@ -498,6 +545,10 @@ func NewCreateTableAction(conn db.DB, table, columns, constraints string) *creat
 	}
 }
 
+func (a *createTableAction) ID() string {
+	return fmt.Sprintf("create_table_%s", a.table)
+}
+
 func (a *createTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
 		pq.QuoteIdentifier(a.table),
@@ -519,6 +570,10 @@ func NewDropIndexAction(conn db.DB, name string) *dropIndexAction {
 	}
 }
 
+func (a *dropIndexAction) ID() string {
+	return fmt.Sprintf("drop_index_%s", a.name)
+}
+
 func (a *dropIndexAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
 		pq.QuoteIdentifier(a.name)))
@@ -536,6 +591,10 @@ func NewDropTableAction(conn db.DB, table string) *DropTableAction {
 		conn:  conn,
 		table: table,
 	}
+}
+
+func (a *DropTableAction) ID() string {
+	return fmt.Sprintf("drop_table_%s", a.table)
 }
 
 func (a *DropTableAction) Execute(ctx context.Context) error {
@@ -557,6 +616,10 @@ func NewValidateConstraintAction(conn db.DB, table, constraint string) *validate
 		table:      table,
 		constraint: constraint,
 	}
+}
+
+func (a *validateConstraintAction) ID() string {
+	return fmt.Sprintf("validate_constraint_%s_%s", a.table, a.constraint)
 }
 
 func (a *validateConstraintAction) Execute(ctx context.Context) error {
@@ -587,6 +650,10 @@ func NewCreateCheckConstraintAction(conn db.DB, table, constraint, check string,
 		noInherit:      noInherit,
 		skipValidation: skipValidation,
 	}
+}
+
+func (a *CreateCheckConstraintAction) ID() string {
+	return fmt.Sprintf("create_check_constraint_%s_%s", a.table, a.constraint)
 }
 
 func (a *CreateCheckConstraintAction) Execute(ctx context.Context) error {
@@ -638,6 +705,10 @@ func NewCreateFKConstraintAction(conn db.DB, table, constraint string, columns [
 	}
 }
 
+func (a *createFKConstraintAction) ID() string {
+	return fmt.Sprintf("create_fk_constraint_%s_%s", a.table, a.constraint)
+}
+
 func (a *createFKConstraintAction) Execute(ctx context.Context) error {
 	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(a.table))
 	writer := &ConstraintSQLWriter{
@@ -673,6 +744,10 @@ func NewAlterSequenceOwnerAction(conn db.DB, table, from, to string) *alterSeque
 		from:  from,
 		to:    to,
 	}
+}
+
+func (a *alterSequenceOwnerAction) ID() string {
+	return fmt.Sprintf("alter_sequence_owner_%s_%s_to_%s", a.table, a.from, a.to)
 }
 
 func (a *alterSequenceOwnerAction) Execute(ctx context.Context) error {
@@ -721,6 +796,10 @@ func NewDropConstraintAction(conn db.DB, table, constraint string) *dropConstrai
 	}
 }
 
+func (a *dropConstraintAction) ID() string {
+	return fmt.Sprintf("drop_constraint_%s_%s", a.table, a.constraint)
+}
+
 func (a *dropConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
 		pq.QuoteIdentifier(a.table),
@@ -740,6 +819,10 @@ func NewSetNotNullAction(conn db.DB, table, column string) *setNotNullAction {
 		table:  table,
 		column: column,
 	}
+}
+
+func (a *setNotNullAction) ID() string {
+	return fmt.Sprintf("set_not_null_%s_%s", a.table, a.column)
 }
 
 func (a *setNotNullAction) Execute(ctx context.Context) error {
@@ -765,6 +848,10 @@ func NewSetDefaultValueAction(conn db.DB, table, column, defaultValue string) *s
 	}
 }
 
+func (a *setDefaultAction) ID() string {
+	return fmt.Sprintf("set_default_%s_%s", a.table, a.column)
+}
+
 func (a *setDefaultAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET DEFAULT %s",
 		pq.QuoteIdentifier(a.table),
@@ -787,6 +874,10 @@ func NewDropDefaultValueAction(conn db.DB, table, column string) *dropDefaultAct
 	}
 }
 
+func (a *dropDefaultAction) ID() string {
+	return fmt.Sprintf("drop_default_%s_%s", a.table, a.column)
+}
+
 func (a *dropDefaultAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s DROP DEFAULT",
 		pq.QuoteIdentifier(a.table),
@@ -797,13 +888,19 @@ func (a *dropDefaultAction) Execute(ctx context.Context) error {
 type rawSQLAction struct {
 	conn db.DB
 	sql  string
+	id   string
 }
 
 func NewRawSQLAction(conn db.DB, sql string) *rawSQLAction {
 	return &rawSQLAction{
 		conn: conn,
 		sql:  sql,
+		id:   fmt.Sprintf("raw_sql_%s", uuid.NewString()),
 	}
+}
+
+func (a *rawSQLAction) ID() string {
+	return a.id
 }
 
 func (a *rawSQLAction) Execute(ctx context.Context) error {

@@ -218,10 +218,9 @@ func (m *Roll) Complete(ctx context.Context) error {
 			return fmt.Errorf("unable to collect actions for complete operation: %w", err)
 		}
 
-		for _, action := range actions {
-			if err := action.Execute(ctx); err != nil {
-				return fmt.Errorf("unable to execute complete operation: %w", err)
-			}
+		coordinator := migrations.NewCoordinator(actions)
+		if err := coordinator.Execute(ctx); err != nil {
+			return fmt.Errorf("unable to execute complete operation: %w", err)
 		}
 
 		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
