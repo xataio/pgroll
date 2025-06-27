@@ -32,7 +32,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, late
 
 	// Create a copy of the column on the underlying table.
 	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
-	if err := d.Duplicate(ctx); err != nil {
+	if err := d.Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
