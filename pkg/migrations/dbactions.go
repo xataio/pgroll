@@ -220,6 +220,80 @@ func (a *dropFunctionAction) Execute(ctx context.Context) error {
 	return err
 }
 
+type createIndexConcurrentlyAction struct {
+	conn              db.DB
+	table             string
+	name              string
+	method            string
+	unique            bool
+	columns           map[string]IndexField
+	storageParameters string
+	predicate         string
+}
+
+func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns map[string]IndexField, storageParameters, predicate string) *createIndexConcurrentlyAction {
+	return &createIndexConcurrentlyAction{
+		conn:              conn,
+		table:             table,
+		name:              name,
+		method:            method,
+		unique:            unique,
+		columns:           columns,
+		storageParameters: storageParameters,
+		predicate:         predicate,
+	}
+}
+
+func (a *createIndexConcurrentlyAction) Execute(ctx context.Context) error {
+	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
+	if a.unique {
+		stmtFmt = "CREATE UNIQUE INDEX CONCURRENTLY %s ON %s"
+	}
+	stmt := fmt.Sprintf(stmtFmt,
+		pq.QuoteIdentifier(a.name),
+		pq.QuoteIdentifier(a.table))
+
+	if a.method != "" {
+		stmt += fmt.Sprintf(" USING %s", a.method)
+	}
+
+	colSQLs := make([]string, 0, len(a.columns))
+	for columnName, settings := range a.columns {
+		colSQL := pq.QuoteIdentifier(columnName)
+		// deparse collations
+		if settings.Collate != "" {
+			colSQL += " COLLATE " + settings.Collate
+		}
+		// deparse operator classes and their parameters
+		if settings.Opclass != nil {
+			colSQL += " " + settings.Opclass.Name
+			if len(settings.Opclass.Params) > 0 {
+				colSQL += " " + strings.Join(settings.Opclass.Params, ", ")
+			}
+		}
+		// deparse sort order of the index column
+		if settings.Sort != "" {
+			colSQL += " " + string(settings.Sort)
+		}
+		// deparse nulls order of the index column
+		if settings.Nulls != nil {
+			colSQL += " " + string(*settings.Nulls)
+		}
+		colSQLs = append(colSQLs, colSQL)
+	}
+	stmt += fmt.Sprintf(" (%s)", strings.Join(colSQLs, ", "))
+
+	if a.storageParameters != "" {
+		stmt += fmt.Sprintf(" WITH (%s)", a.storageParameters)
+	}
+
+	if a.predicate != "" {
+		stmt += fmt.Sprintf(" WHERE %s", a.predicate)
+	}
+	_, err := a.conn.ExecContext(ctx, stmt)
+	return err
+}
+
 // commentColumnAction is a DBAction that adds a comment to a column in a table.
 type commentColumnAction struct {
 	conn    db.DB
