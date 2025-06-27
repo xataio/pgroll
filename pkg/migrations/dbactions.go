@@ -736,3 +736,33 @@ func (a *rawSQLAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, a.sql)
 	return err
 }
+
+type setReplicaIdentityAction struct {
+	conn     db.DB
+	table    string
+	identity string
+	index    string
+}
+
+func NewSetReplicaIdentityAction(conn db.DB, table string, identityType, index string) *setReplicaIdentityAction {
+	return &setReplicaIdentityAction{
+		conn:     conn,
+		table:    table,
+		identity: strings.ToUpper(identityType),
+		index:    index,
+	}
+}
+
+func (a *setReplicaIdentityAction) Execute(ctx context.Context) error {
+	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type
+	identitySQL := a.identity
+	if identitySQL == "INDEX" {
+		identitySQL = fmt.Sprintf("USING INDEX %s", pq.QuoteIdentifier(a.index))
+	}
+
+	// set the replica identity on the underlying table
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY %s",
+		pq.QuoteIdentifier(a.table),
+		identitySQL))
+	return err
+}

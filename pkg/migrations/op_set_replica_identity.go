@@ -4,11 +4,8 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
-
-	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -20,17 +17,7 @@ var _ Operation = (*OpSetReplicaIdentity)(nil)
 func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
-	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type
-	identitySQL := strings.ToUpper(o.Identity.Type)
-	if identitySQL == "INDEX" {
-		identitySQL = fmt.Sprintf("USING INDEX %s", pq.QuoteIdentifier(o.Identity.Index))
-	}
-
-	// set the replica identity on the underlying table
-	_, err := conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s REPLICA IDENTITY %s",
-		pq.QuoteIdentifier(o.Table),
-		identitySQL))
-	return nil, err
+	return nil, NewSetReplicaIdentityAction(conn, o.Table, o.Identity.Type, o.Identity.Index).Execute(ctx)
 }
 
 func (o *OpSetReplicaIdentity) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
