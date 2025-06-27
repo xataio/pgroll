@@ -68,7 +68,7 @@ func TestCoordinator(t *testing.T) {
 		"create table multiple time with different statement with the same name": {
 			actions: []DBAction{
 				NewCreateTableAction(nil, "test_table", "", ""),
-				NewCreateTableAction(nil, "test_table", "id INT", ""),
+				NewCreateTableAction(nil, "test_table", "CREATE TABLE test_table (id INT)", ""),
 				NewCommentTableAction(nil, "test_table", ptr("This is a test table")),
 				NewCommentColumnAction(nil, "test_table", "id", ptr("This is a test column")),
 			},
@@ -153,11 +153,11 @@ func TestCoordinator(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			coordinator := NewCoordinator(tc.actions)
-			if len(coordinator.orderedActions) != len(tc.expectedOrder) {
-				t.Fatalf("expected order length %d, got %d", len(tc.expectedOrder), len(coordinator.orderedActions))
+			if len(coordinator.order) != len(tc.expectedOrder) {
+				t.Fatalf("expected order length %d, got %d", len(tc.expectedOrder), len(coordinator.order))
 			}
 
-			require.Equal(t, tc.expectedOrder, coordinator.orderedActions, "order of actions does not match expected")
+			require.Equal(t, tc.expectedOrder, coordinator.order, "order of actions does not match expected")
 		})
 	}
 }
