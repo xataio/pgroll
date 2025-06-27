@@ -21,7 +21,7 @@ type OpSetComment struct {
 
 var _ Operation = (*OpSetComment)(nil)
 
-func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	tbl := s.GetTable(o.Table)

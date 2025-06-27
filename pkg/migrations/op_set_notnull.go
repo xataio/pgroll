@@ -20,7 +20,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)

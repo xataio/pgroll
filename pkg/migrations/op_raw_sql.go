@@ -15,7 +15,7 @@ var (
 	_ Createable = (*OpRawSQL)(nil)
 )
 
-func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	if o.OnComplete {

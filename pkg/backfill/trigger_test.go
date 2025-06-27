@@ -1,26 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
-package migrations
+package backfill
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 func TestBuildFunction(t *testing.T) {
 	testCases := []struct {
 		name     string
-		config   backfill.TriggerConfig
+		config   triggerConfig
 		expected string
 	}{
 		{
 			name: "simple up trigger",
-			config: backfill.TriggerConfig{
+			config: triggerConfig{
 				Name:      "triggerName",
-				Direction: backfill.TriggerDirectionUp,
+				Direction: TriggerDirectionUp,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -31,8 +30,8 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "_pgroll_new_review",
-				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
-				SQL:                 "product || 'is good'",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 []string{"product || 'is good'"},
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -60,10 +59,57 @@ func TestBuildFunction(t *testing.T) {
 `,
 		},
 		{
-			name: "simple down trigger",
-			config: backfill.TriggerConfig{
+			name: "multiple up trigger",
+			config: triggerConfig{
 				Name:      "triggerName",
-				Direction: backfill.TriggerDirectionDown,
+				Direction: TriggerDirectionUp,
+				Columns: map[string]*schema.Column{
+					"id":       {Name: "id", Type: "int"},
+					"username": {Name: "username", Type: "text"},
+					"product":  {Name: "product", Type: "text"},
+					"review":   {Name: "review", Type: "text"},
+				},
+				SchemaName:          "public",
+				LatestSchema:        "public_01_migration_name",
+				TableName:           "reviews",
+				PhysicalColumn:      "_pgroll_new_review",
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL: []string{
+					"product || 'is good'",
+					"CASE WHEN NEW.\"_pgroll_new_review\" = 'bad' THEN 'bad review' ELSE 'good review' END",
+				},
+			},
+			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
+    RETURNS TRIGGER
+    LANGUAGE PLPGSQL
+    AS $$
+    DECLARE
+      "id" "public"."reviews"."id"%TYPE := NEW."id";
+      "product" "public"."reviews"."product"%TYPE := NEW."product";
+      "review" "public"."reviews"."review"%TYPE := NEW."review";
+      "username" "public"."reviews"."username"%TYPE := NEW."username";
+      latest_schema text;
+      search_path text;
+    BEGIN
+      SELECT current_setting
+        INTO search_path
+        FROM current_setting('search_path');
+
+      IF search_path != 'public_01_migration_name' THEN
+        NEW."_pgroll_new_review" = product || 'is good';
+        NEW."_pgroll_new_review" = CASE WHEN NEW."_pgroll_new_review" = 'bad' THEN 'bad review' ELSE 'good review' END;
+        NEW."_pgroll_needs_backfill" = false;
+      END IF;
+
+      RETURN NEW;
+    END; $$
+`,
+		},
+		{
+			name: "simple down trigger",
+			config: triggerConfig{
+				Name:      "triggerName",
+				Direction: TriggerDirectionDown,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -74,8 +120,8 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "review",
-				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
-				SQL:                 `NEW."_pgroll_new_review"`,
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 []string{`NEW."_pgroll_new_review"`},
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -104,9 +150,9 @@ func TestBuildFunction(t *testing.T) {
 		},
 		{
 			name: "down trigger with aliased column",
-			config: backfill.TriggerConfig{
+			config: triggerConfig{
 				Name:      "triggerName",
-				Direction: backfill.TriggerDirectionDown,
+				Direction: TriggerDirectionDown,
 				Columns: map[string]*schema.Column{
 					"id":       {Name: "id", Type: "int"},
 					"username": {Name: "username", Type: "text"},
@@ -118,8 +164,8 @@ func TestBuildFunction(t *testing.T) {
 				LatestSchema:        "public_01_migration_name",
 				TableName:           "reviews",
 				PhysicalColumn:      "rating",
-				NeedsBackfillColumn: backfill.CNeedsBackfillColumn,
-				SQL:                 `CAST(rating as text)`,
+				NeedsBackfillColumn: CNeedsBackfillColumn,
+				SQL:                 []string{`CAST(rating as text)`},
 			},
 			expected: `CREATE OR REPLACE FUNCTION "triggerName"()
     RETURNS TRIGGER
@@ -163,12 +209,12 @@ func TestBuildFunction(t *testing.T) {
 func TestBuildTrigger(t *testing.T) {
 	testCases := []struct {
 		name     string
-		config   backfill.TriggerConfig
+		config   triggerConfig
 		expected string
 	}{
 		{
 			name: "trigger",
-			config: backfill.TriggerConfig{
+			config: triggerConfig{
 				Name:      "triggerName",
 				TableName: "reviews",
 			},
