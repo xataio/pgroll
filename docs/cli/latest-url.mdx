@@ -1,0 +1,65 @@
+---
+title: Latest URL
+description: Prints a database connection URL for the latest schema version in either the target database or a local directory of migration files.
+---
+
+## Command
+
+The `pgroll latest url` command prints a database connection URL for the latest schema version. Use this to construct connection strings for applications that need to connect to the latest version of the database schema.
+
+## Usage
+
+```
+pgroll latest url [connection-string] [flags]
+```
+
+## Arguments
+
+- `connection-string` - Optional database connection string. If not provided, uses the connection string from the global `--postgres-url` flag or `PGROLL_PG_URL` environment variable.
+
+## Flags
+
+- `--local, -l` - retrieve the latest schema version from a local migration directory rather than the target database.
+
+## Examples
+
+### Use the global pgroll connection string as the base
+
+With no arguments, the command uses the global `--postgres-url` flag (or the `PGROLL_PG_URL` environment variable) as the connection string on which to set the `search_path`.
+
+```
+$ export PGROLL_PG_URL=postgresql://user:pass@example.com:5432/mydb
+$ pgroll latest url
+```
+
+Output:
+```
+postgresql://user:pass@example.com:5432/mydb?options=-c%20search_path%3Dpublic_00n_some_migration
+```
+
+### Use an arbitrary connection string as the base
+
+With an argument, the command uses the provided connection string as the base and sets its `search_path` to the latest schema version found on the target database (set by the `--postgres-url` flag or `PGROLL_PG_URL` environment variable).
+
+```
+$ export PGROLL_PG_URL=postgresql://user:pass@example.com:5432/mydb
+$ pgroll latest url postgresql://someotheruser:someotherpass@example.com:5432/mydb
+```
+
+Output:
+```
+postgresql://someotheruser:someotherpass@example.com:5432/mydb?options=-c%20search_path%3Dpublic_00n_some_migration
+```
+
+### Take the latest schema version from a local migrations directory
+
+By setting the `--local` flag, the command retrieves the latest schema version from a local migrations directory instead of the target database.
+
+```
+$ pgroll latest url --local migrations/ postgresql://me:pass@example.com:5432/mydb
+```
+
+Output:
+```
+postgresql://me:pass@example.com:5432/mydb?options=-c%20search_path%3Dpublic_with_version_schema
+```

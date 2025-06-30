@@ -97,7 +97,24 @@
         {
           "title": "Latest",
           "href": "/cli/latest",
-          "file": "docs/cli/latest.mdx"
+          "file": "docs/cli/latest.mdx",
+          "items": [
+            {
+              "title": "Latest Schema",
+              "href": "/cli/latest-schema",
+              "file": "docs/cli/latest-schema.mdx"
+            },
+            {
+              "title": "Latest Migration",
+              "href": "/cli/latest-migration",
+              "file": "docs/cli/latest-migration.mdx"
+            },
+            {
+              "title": "Latest URL",
+              "href": "/cli/latest-url",
+              "file": "docs/cli/latest-url.mdx"
+            }
+          ]
         },
         {
           "title": "Pull",
