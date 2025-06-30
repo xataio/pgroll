@@ -180,33 +180,23 @@ func (o *OpAddColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 	return dbActions, nil
 }
 
-func (o *OpAddColumn) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpAddColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column.Name)
 	if column == nil {
-		return ColumnDoesNotExistError{Table: o.Table, Name: o.Column.Name}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column.Name}
 	}
 
-	rollbackAddColumn := NewDropColumnAction(conn, table.Name, column.Name)
-	err := rollbackAddColumn.Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)).Execute(ctx)
-	if err != nil {
-		return err
-	}
-
-	removeBackfillColumn := NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn)
-	err = removeBackfillColumn.Execute(ctx)
-
-	return err
+	return []DBAction{
+		NewDropColumnAction(conn, table.Name, column.Name),
+		NewDropFunctionAction(conn, backfill.TriggerFunctionName(o.Table, o.Column.Name)),
+		NewDropColumnAction(conn, table.Name, backfill.CNeedsBackfillColumn),
+	}, nil
 }
 
 func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {

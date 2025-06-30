@@ -65,13 +65,13 @@ func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	l.LogOperationComplete(o)
 
 	// No-op
-	return []DBAction{}, nil
+	return nil, nil
 }
 
-func (o *OpCreateTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpCreateTable) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return NewDropTableAction(conn, o.Name).Execute(ctx)
+	return []DBAction{NewDropTableAction(conn, o.Name)}, nil
 }
 
 func (o *OpCreateTable) Validate(ctx context.Context, s *schema.Schema) error {

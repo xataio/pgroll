@@ -44,7 +44,7 @@ func (o *OpDropTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 	}, nil
 }
 
-func (o *OpDropTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpDropTable) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// Mark the table as no longer deleted so that it is visible to preceding
@@ -53,11 +53,10 @@ func (o *OpDropTable) Rollback(ctx context.Context, l Logger, conn db.DB, s *sch
 
 	// Rename the table back to its original name from its soft-deleted name
 	table := s.GetTable(o.Name)
-	err := NewRenameTableAction(conn, DeletionName(table.Name), table.Name).Execute(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to rename table %s: %w", o.Name, err)
-	}
-	return nil
+
+	return []DBAction{
+		NewRenameTableAction(conn, DeletionName(table.Name), table.Name),
+	}, nil
 }
 
 func (o *OpDropTable) Validate(ctx context.Context, s *schema.Schema) error {

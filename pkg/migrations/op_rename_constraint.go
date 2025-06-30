@@ -28,11 +28,11 @@ func (o *OpRenameConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	}, nil
 }
 
-func (o *OpRenameConstraint) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpRenameConstraint) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
 	// no-op
-	return nil
+	return nil, nil
 }
 
 func (o *OpRenameConstraint) Validate(ctx context.Context, s *schema.Schema) error {

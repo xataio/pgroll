@@ -42,10 +42,10 @@ func (o *OpSetUnique) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBActi
 	return []DBAction{NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Name, o.Name)}, nil
 }
 
-func (o *OpSetUnique) Rollback(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) error {
+func (o *OpSetUnique) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationRollback(o)
 
-	return nil
+	return nil, nil
 }
 
 func (o *OpSetUnique) Validate(ctx context.Context, s *schema.Schema) error {
