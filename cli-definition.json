@@ -138,6 +138,24 @@
           ],
           "subcommands": [],
           "args": []
+        },
+        {
+          "name": "url",
+          "short": "Print a database connection URL for the latest schema version",
+          "use": "url",
+          "example": "pgroll latest url <connection-string> --local ./migrations",
+          "flags": [
+            {
+              "name": "local",
+              "shorthand": "l",
+              "description": "retrieve the latest schema version from a local migration directory",
+              "default": ""
+            }
+          ],
+          "subcommands": [],
+          "args": [
+            "connection-string"
+          ]
         }
       ],
       "args": []
