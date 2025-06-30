@@ -1,6 +1,6 @@
 ---
 title: Update
-description: Update migration files that contain breaking changes
+description: Update migration files to the latest file format
 ---
 
 ## Command
@@ -9,11 +9,17 @@ description: Update migration files that contain breaking changes
 $ pgroll update {migrations-folder}
 ```
 
-This command updates all outdated migration files in the selected migrations folder.
+The `pgroll update` command updates migration files to the latest file format; use it when a new version of `pgroll` contains breaking changes to the migration file JSON/YAML schema.
 
-The optional `--json` flag can be used to write migration files in JSON.
+The optional `--json` flag can be used to write migration files in JSON format instead of YAML.
 
-### Example for updating migrations in the folder `migrations`
+<Warning>
+`pgroll` hasn't reached v1 yet, so we are releasing breaking changes from time to time. Adopting these changes can be painful manually. We suggest you use `pgroll update` to make sure all your local migrations are correct.
+</Warning>
+
+### Example for updating migrations in the `migrations` folder
+
+Update all migrations in the `migrations/` folder:
 
 ```
 $ pgroll update migrations
