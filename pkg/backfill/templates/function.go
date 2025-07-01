@@ -22,7 +22,7 @@ const Function = `CREATE OR REPLACE FUNCTION {{ .Name | qi }}()
       IF search_path {{- if eq .Direction "up" }} != {{- else }} = {{- end }} {{ .LatestSchema | ql }} THEN
       {{- $physicalColumn := .PhysicalColumn | qi  }}{{ range $s := .SQL }}
         NEW.{{ $physicalColumn  }} = {{ $s }};
-	  {{- end }}
+      {{- end }}
         NEW.{{ .NeedsBackfillColumn | qi }} = false;
       END IF;
 

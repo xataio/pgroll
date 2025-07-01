@@ -69,9 +69,17 @@ func (j *Job) AddTask(t *Task) {
 
 	for _, trigger := range t.triggers {
 		if tg, exists := j.triggers[trigger.Name]; exists {
+			// If the trigger already exists, append the SQL to the existing trigger config
+			// The rewriting is necessary to ensure that the expression uses the NEW prefix with the physical column name
+			// For example, if the user sets the following expression in their second operation:
+			// CASE WHEN "review" = 'bad' THEN 'bad review' ELSE 'good review' END, it must be rewritten to:
+			// CASE WHEN NEW."_pgroll_new_review" = 'bad' THEN 'bad review' ELSE 'good review' END.
+			// Otherwise, the trigger will not work correctly because it will reference the old column name.
 			tg.SQL = append(tg.SQL, rewriteTriggerSQL(trigger.SQL, findColumnName(tg.Columns, tg.PhysicalColumn), tg.PhysicalColumn))
 			j.triggers[trigger.Name] = tg
 		} else {
+			// If the trigger does not exist, create a new trigger config
+			// No need to rewrite the SQL here, as it is the first time we are adding it.
 			j.triggers[trigger.Name] = triggerConfig{
 				Name:                trigger.Name,
 				Direction:           trigger.Direction,
@@ -87,10 +95,17 @@ func (j *Job) AddTask(t *Task) {
 	}
 }
 
+// rewriteTriggerSQL rewrites the SQL migrations expression provided by the user
+// in the up or down attribute of the operations config.
+// The column name are turned from user defined names the physical column name with NEW prefix.
+// This is only needed, If there is already an backfilling step in the trigger SQL.
 func rewriteTriggerSQL(sql string, from, to string) string {
 	return strings.ReplaceAll(sql, from, fmt.Sprintf("NEW.%s", pq.QuoteIdentifier(to)))
 }
 
+// findColumnName returns the original, user defined column name from the map of columns
+// for the provided physical column name.
+// __pgroll_new_name -> name
 func findColumnName(columns map[string]*schema.Column, columnName string) string {
 	for name, col := range columns {
 		if col.Name == columnName {
