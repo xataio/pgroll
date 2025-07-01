@@ -16,7 +16,7 @@ var (
 	_ Createable = (*OpDropTable)(nil)
 )
 
-func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Name)

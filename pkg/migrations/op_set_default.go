@@ -20,7 +20,7 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)

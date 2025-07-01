@@ -15,7 +15,7 @@ var (
 	_ Createable = (*OpDropColumn)(nil)
 )
 
-func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	var task *backfill.Task

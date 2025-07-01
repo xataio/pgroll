@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	return nil, NewSetReplicaIdentityAction(conn, o.Table, o.Identity.Type, o.Identity.Index).Execute(ctx)

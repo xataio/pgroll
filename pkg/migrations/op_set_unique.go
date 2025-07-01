@@ -20,7 +20,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
