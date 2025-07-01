@@ -19,6 +19,7 @@ import (
 // * Validates and renames any temporary `CHECK` constraints on the duplicated column.
 type renameDuplicatedColumnAction struct {
 	conn  db.DB
+	id    string
 	table *schema.Table
 	from  string
 	to    string
@@ -27,15 +28,14 @@ type renameDuplicatedColumnAction struct {
 func NewRenameDuplicatedColumnAction(conn db.DB, table *schema.Table, column string) *renameDuplicatedColumnAction {
 	return &renameDuplicatedColumnAction{
 		conn:  conn,
+		id:    fmt.Sprintf("rename_duplicated_%s_%s", table.Name, column),
 		table: table,
 		from:  TemporaryName(column),
 		to:    column,
 	}
 }
 
-func (a *renameDuplicatedColumnAction) ID() string {
-	return fmt.Sprintf("rename_duplicated_%s", a.to)
-}
+func (a *renameDuplicatedColumnAction) ID() string { return a.id }
 
 func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 	const (

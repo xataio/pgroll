@@ -23,6 +23,7 @@ type DBAction interface {
 
 type addColumnAction struct {
 	conn   db.DB
+	id     string
 	table  string
 	column Column
 	withPK bool
@@ -31,14 +32,13 @@ type addColumnAction struct {
 func NewAddColumnAction(conn db.DB, table string, c Column, withPK bool) *addColumnAction {
 	return &addColumnAction{
 		conn:   conn,
+		id:     fmt.Sprintf("add_column_%s_%s", table, c.Name),
 		table:  table,
 		column: c,
 	}
 }
 
-func (a *addColumnAction) ID() string {
-	return fmt.Sprintf("add_column_%s_%s", a.table, a.column.Name)
-}
+func (a *addColumnAction) ID() string { return a.id }
 
 func (a *addColumnAction) Execute(ctx context.Context) error {
 	colSQL, err := ColumnSQLWriter{WithPK: a.withPK}.Write(a.column)
@@ -55,8 +55,8 @@ func (a *addColumnAction) Execute(ctx context.Context) error {
 
 // dropColumnAction is a DBAction that drops one or more columns from a table.
 type dropColumnAction struct {
-	conn db.DB
-
+	conn    db.DB
+	id      string
 	table   string
 	columns []string
 }
@@ -64,14 +64,13 @@ type dropColumnAction struct {
 func NewDropColumnAction(conn db.DB, table string, columns ...string) *dropColumnAction {
 	return &dropColumnAction{
 		conn:    conn,
+		id:      fmt.Sprintf("drop_column_%s_%s", table, strings.Join(columns, "_")),
 		table:   table,
 		columns: columns,
 	}
 }
 
-func (a *dropColumnAction) ID() string {
-	return fmt.Sprintf("drop_column_%s_%s", a.table, strings.Join(a.columns, "_"))
-}
+func (a *dropColumnAction) ID() string { return a.id }
 
 func (a *dropColumnAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s %s",
@@ -91,7 +90,7 @@ func (a *dropColumnAction) dropMultipleColumns() string {
 // renameTableAction is a DBAction that renames a table.
 type renameTableAction struct {
 	conn db.DB
-
+	id   string
 	from string
 	to   string
 }
@@ -99,14 +98,13 @@ type renameTableAction struct {
 func NewRenameTableAction(conn db.DB, from, to string) *renameTableAction {
 	return &renameTableAction{
 		conn: conn,
+		id:   fmt.Sprintf("rename_table_%s_to_%s", from, to),
 		from: from,
 		to:   to,
 	}
 }
 
-func (a *renameTableAction) ID() string {
-	return fmt.Sprintf("rename_table_%s_to_%s", a.from, a.to)
-}
+func (a *renameTableAction) ID() string { return a.id }
 
 func (a *renameTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME TO %s",
@@ -117,8 +115,8 @@ func (a *renameTableAction) Execute(ctx context.Context) error {
 
 // renameColumnAction is a DBAction that renames a column in a table.
 type renameColumnAction struct {
-	conn db.DB
-
+	conn  db.DB
+	id    string
 	table string
 	from  string
 	to    string
@@ -127,15 +125,14 @@ type renameColumnAction struct {
 func NewRenameColumnAction(conn db.DB, table, from, to string) *renameColumnAction {
 	return &renameColumnAction{
 		conn:  conn,
+		id:    fmt.Sprintf("rename_column_%s_%s_to_%s", table, from, to),
 		table: table,
 		from:  from,
 		to:    to,
 	}
 }
 
-func (a *renameColumnAction) ID() string {
-	return fmt.Sprintf("rename_column_%s_%s_to_%s", a.table, a.from, a.to)
-}
+func (a *renameColumnAction) ID() string { return a.id }
 
 func (a *renameColumnAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME COLUMN %s TO %s",
@@ -148,6 +145,7 @@ func (a *renameColumnAction) Execute(ctx context.Context) error {
 // renameConstraintAction is a DBAction that renames a constraint in a table.
 type renameConstraintAction struct {
 	conn  db.DB
+	id    string
 	table string
 	from  string
 	to    string
@@ -156,15 +154,14 @@ type renameConstraintAction struct {
 func NewRenameConstraintAction(conn db.DB, table, from, to string) *renameConstraintAction {
 	return &renameConstraintAction{
 		conn:  conn,
+		id:    fmt.Sprintf("rename_constraint_%s_%s_to_%s", table, from, to),
 		table: table,
 		from:  from,
 		to:    to,
 	}
 }
 
-func (a *renameConstraintAction) ID() string {
-	return fmt.Sprintf("rename_constraint_%s_%s_to_%s", a.table, a.from, a.to)
-}
+func (a *renameConstraintAction) ID() string { return a.id }
 
 func (a *renameConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s RENAME CONSTRAINT %s TO %s",
@@ -176,6 +173,7 @@ func (a *renameConstraintAction) Execute(ctx context.Context) error {
 
 type addConstraintUsingUniqueIndexAction struct {
 	conn       db.DB
+	id         string
 	table      string
 	constraint string
 	indexName  string
@@ -184,15 +182,14 @@ type addConstraintUsingUniqueIndexAction struct {
 func NewAddConstraintUsingUniqueIndex(conn db.DB, table, constraint, indexName string) *addConstraintUsingUniqueIndexAction {
 	return &addConstraintUsingUniqueIndexAction{
 		conn:       conn,
+		id:         fmt.Sprintf("add_constraint_using_unique_index_%s_%s", table, constraint),
 		table:      table,
 		constraint: constraint,
 		indexName:  indexName,
 	}
 }
 
-func (a *addConstraintUsingUniqueIndexAction) ID() string {
-	return fmt.Sprintf("add_constraint_using_unique_index_%s_%s", a.table, a.constraint)
-}
+func (a *addConstraintUsingUniqueIndexAction) ID() string { return a.id }
 
 func (a *addConstraintUsingUniqueIndexAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ADD CONSTRAINT %s UNIQUE USING INDEX %s",
@@ -204,6 +201,7 @@ func (a *addConstraintUsingUniqueIndexAction) Execute(ctx context.Context) error
 
 type addPrimaryKeyAction struct {
 	conn      db.DB
+	id        string
 	table     string
 	indexName string
 }
@@ -211,14 +209,13 @@ type addPrimaryKeyAction struct {
 func NewAddPrimaryKeyAction(conn db.DB, table, indexName string) *addPrimaryKeyAction {
 	return &addPrimaryKeyAction{
 		conn:      conn,
+		id:        fmt.Sprintf("add_pk_%s_%s", table, indexName),
 		table:     table,
 		indexName: indexName,
 	}
 }
 
-func (a *addPrimaryKeyAction) ID() string {
-	return fmt.Sprintf("add_pk_%s_%s", a.table, a.indexName)
-}
+func (a *addPrimaryKeyAction) ID() string { return a.id }
 
 func (a *addPrimaryKeyAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
@@ -231,19 +228,19 @@ func (a *addPrimaryKeyAction) Execute(ctx context.Context) error {
 // dropFunctionAction is a DBAction that drops a function and all of its dependencies (cascade).
 type dropFunctionAction struct {
 	conn      db.DB
+	id        string
 	functions []string
 }
 
 func NewDropFunctionAction(conn db.DB, functions ...string) *dropFunctionAction {
 	return &dropFunctionAction{
 		conn:      conn,
+		id:        fmt.Sprintf("drop_function_%s", strings.Join(functions, "_")),
 		functions: functions,
 	}
 }
 
-func (a *dropFunctionAction) ID() string {
-	return fmt.Sprintf("drop_function_%s", strings.Join(a.functions, "_"))
-}
+func (a *dropFunctionAction) ID() string { return a.id }
 
 func (a *dropFunctionAction) Execute(ctx context.Context) error {
 	functions := make([]string, len(a.functions))
@@ -257,6 +254,7 @@ func (a *dropFunctionAction) Execute(ctx context.Context) error {
 
 type createIndexConcurrentlyAction struct {
 	conn              db.DB
+	id                string
 	table             string
 	name              string
 	method            string
@@ -269,6 +267,7 @@ type createIndexConcurrentlyAction struct {
 func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns map[string]IndexField, storageParameters, predicate string) *createIndexConcurrentlyAction {
 	return &createIndexConcurrentlyAction{
 		conn:              conn,
+		id:                fmt.Sprintf("create_index_concurrently_%s_%s", table, name),
 		table:             table,
 		name:              name,
 		method:            method,
@@ -278,6 +277,8 @@ func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, un
 		predicate:         predicate,
 	}
 }
+
+func (a *createIndexConcurrentlyAction) ID() string { return a.id }
 
 func (a *createIndexConcurrentlyAction) Execute(ctx context.Context) error {
 	stmtFmt := "CREATE INDEX CONCURRENTLY %s ON %s"
@@ -332,6 +333,7 @@ func (a *createIndexConcurrentlyAction) Execute(ctx context.Context) error {
 // commentColumnAction is a DBAction that adds a comment to a column in a table.
 type commentColumnAction struct {
 	conn    db.DB
+	id      string
 	table   string
 	column  string
 	comment *string
@@ -340,15 +342,14 @@ type commentColumnAction struct {
 func NewCommentColumnAction(conn db.DB, table, column string, comment *string) *commentColumnAction {
 	return &commentColumnAction{
 		conn:    conn,
+		id:      fmt.Sprintf("comment_column_%s_%s", table, column),
 		table:   table,
 		column:  column,
 		comment: comment,
 	}
 }
 
-func (a *commentColumnAction) ID() string {
-	return fmt.Sprintf("comment_column_%s_%s", a.table, a.column)
-}
+func (a *commentColumnAction) ID() string { return a.id }
 
 func (a *commentColumnAction) Execute(ctx context.Context) error {
 	commentSQL := fmt.Sprintf("COMMENT ON COLUMN %s.%s IS %s",
@@ -363,6 +364,7 @@ func (a *commentColumnAction) Execute(ctx context.Context) error {
 // commentTableAction is a DBAction that adds a comment to a table.
 type commentTableAction struct {
 	conn    db.DB
+	id      string
 	table   string
 	comment *string
 }
@@ -370,14 +372,13 @@ type commentTableAction struct {
 func NewCommentTableAction(conn db.DB, table string, comment *string) *commentTableAction {
 	return &commentTableAction{
 		conn:    conn,
+		id:      fmt.Sprintf("comment_table_%s", table),
 		table:   table,
 		comment: comment,
 	}
 }
 
-func (a *commentTableAction) ID() string {
-	return fmt.Sprintf("comment_table_%s", a.table)
-}
+func (a *commentTableAction) ID() string { return a.id }
 
 func (a *commentTableAction) Execute(ctx context.Context) error {
 	commentSQL := fmt.Sprintf("COMMENT ON TABLE %s IS %s",
@@ -397,6 +398,7 @@ func commentToSQL(comment *string) string {
 
 type createUniqueIndexConcurrentlyAction struct {
 	conn        db.DB
+	id          string
 	schemaName  string
 	indexName   string
 	tableName   string
@@ -406,6 +408,7 @@ type createUniqueIndexConcurrentlyAction struct {
 func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName, tableName string, columnNames ...string) *createUniqueIndexConcurrentlyAction {
 	return &createUniqueIndexConcurrentlyAction{
 		conn:        conn,
+		id:          fmt.Sprintf("create_unique_index_concurrently_%s_%s", indexName, tableName),
 		schemaName:  schemaName,
 		indexName:   indexName,
 		tableName:   tableName,
@@ -413,9 +416,7 @@ func NewCreateUniqueIndexConcurrentlyAction(conn db.DB, schemaName, indexName, t
 	}
 }
 
-func (a *createUniqueIndexConcurrentlyAction) ID() string {
-	return fmt.Sprintf("create_unique_index_concurrently_%s_%s", a.indexName, a.tableName)
-}
+func (a *createUniqueIndexConcurrentlyAction) ID() string { return a.id }
 
 func (a *createUniqueIndexConcurrentlyAction) Execute(ctx context.Context) error {
 	quotedQualifiedIndexName := pq.QuoteIdentifier(a.indexName)
@@ -531,6 +532,7 @@ func (a *createUniqueIndexConcurrentlyAction) isIndexValid(ctx context.Context, 
 // createTableAction is a DBAction that creates a table.
 type createTableAction struct {
 	conn        db.DB
+	id          string
 	table       string
 	columns     string
 	constraints string
@@ -539,15 +541,14 @@ type createTableAction struct {
 func NewCreateTableAction(conn db.DB, table, columns, constraints string) *createTableAction {
 	return &createTableAction{
 		conn:        conn,
+		id:          fmt.Sprintf("create_table_%s", table),
 		table:       table,
 		columns:     columns,
 		constraints: constraints,
 	}
 }
 
-func (a *createTableAction) ID() string {
-	return fmt.Sprintf("create_table_%s", a.table)
-}
+func (a *createTableAction) ID() string { return a.id }
 
 func (a *createTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("CREATE TABLE %s (%s %s)",
@@ -560,19 +561,19 @@ func (a *createTableAction) Execute(ctx context.Context) error {
 // dropIndexAction is a DBAction that drops an index.
 type dropIndexAction struct {
 	conn db.DB
+	id   string
 	name string
 }
 
 func NewDropIndexAction(conn db.DB, name string) *dropIndexAction {
 	return &dropIndexAction{
 		conn: conn,
+		id:   fmt.Sprintf("drop_index_%s", name),
 		name: name,
 	}
 }
 
-func (a *dropIndexAction) ID() string {
-	return fmt.Sprintf("drop_index_%s", a.name)
-}
+func (a *dropIndexAction) ID() string { return a.id }
 
 func (a *dropIndexAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP INDEX CONCURRENTLY IF EXISTS %s",
@@ -583,19 +584,19 @@ func (a *dropIndexAction) Execute(ctx context.Context) error {
 // DropTableAction is a DBAction that drops a table.
 type DropTableAction struct {
 	conn  db.DB
+	id    string
 	table string
 }
 
 func NewDropTableAction(conn db.DB, table string) *DropTableAction {
 	return &DropTableAction{
 		conn:  conn,
+		id:    fmt.Sprintf("drop_table_%s", table),
 		table: table,
 	}
 }
 
-func (a *DropTableAction) ID() string {
-	return fmt.Sprintf("drop_table_%s", a.table)
-}
+func (a *DropTableAction) ID() string { return a.id }
 
 func (a *DropTableAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s",
@@ -606,6 +607,7 @@ func (a *DropTableAction) Execute(ctx context.Context) error {
 // validateConstraintAction is a DBAction that validates a constraint in a table.
 type validateConstraintAction struct {
 	conn       db.DB
+	id         string
 	table      string
 	constraint string
 }
@@ -613,14 +615,13 @@ type validateConstraintAction struct {
 func NewValidateConstraintAction(conn db.DB, table, constraint string) *validateConstraintAction {
 	return &validateConstraintAction{
 		conn:       conn,
+		id:         fmt.Sprintf("validate_constraint_%s_%s", table, constraint),
 		table:      table,
 		constraint: constraint,
 	}
 }
 
-func (a *validateConstraintAction) ID() string {
-	return fmt.Sprintf("validate_constraint_%s_%s", a.table, a.constraint)
-}
+func (a *validateConstraintAction) ID() string { return a.id }
 
 func (a *validateConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s VALIDATE CONSTRAINT %s",
@@ -632,6 +633,7 @@ func (a *validateConstraintAction) Execute(ctx context.Context) error {
 // CreateCheckConstraintAction creates a check constraint on a table.
 type CreateCheckConstraintAction struct {
 	conn           db.DB
+	id             string
 	table          string
 	columns        []string
 	constraint     string
@@ -643,6 +645,7 @@ type CreateCheckConstraintAction struct {
 func NewCreateCheckConstraintAction(conn db.DB, table, constraint, check string, columns []string, noInherit, skipValidation bool) *CreateCheckConstraintAction {
 	return &CreateCheckConstraintAction{
 		conn:           conn,
+		id:             fmt.Sprintf("create_check_constraint_%s_%s", table, constraint),
 		table:          table,
 		columns:        columns,
 		check:          check,
@@ -652,9 +655,7 @@ func NewCreateCheckConstraintAction(conn db.DB, table, constraint, check string,
 	}
 }
 
-func (a *CreateCheckConstraintAction) ID() string {
-	return fmt.Sprintf("create_check_constraint_%s_%s", a.table, a.constraint)
-}
+func (a *CreateCheckConstraintAction) ID() string { return a.id }
 
 func (a *CreateCheckConstraintAction) Execute(ctx context.Context) error {
 	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(a.table))
@@ -683,6 +684,7 @@ func rewriteCheckExpression(check string, columns ...string) string {
 // createFKConstraintAction is a DBAction that creates a new foreign key constraint
 type createFKConstraintAction struct {
 	conn              db.DB
+	id                string
 	table             string
 	constraint        string
 	columns           []string
@@ -695,6 +697,7 @@ type createFKConstraintAction struct {
 func NewCreateFKConstraintAction(conn db.DB, table, constraint string, columns []string, reference *TableForeignKeyReference, initiallyDeferred, deferrable, skipValidation bool) *createFKConstraintAction {
 	return &createFKConstraintAction{
 		conn:              conn,
+		id:                fmt.Sprintf("create_fk_constraint_%s_%s", table, constraint),
 		table:             table,
 		constraint:        constraint,
 		columns:           columns,
@@ -705,9 +708,7 @@ func NewCreateFKConstraintAction(conn db.DB, table, constraint string, columns [
 	}
 }
 
-func (a *createFKConstraintAction) ID() string {
-	return fmt.Sprintf("create_fk_constraint_%s_%s", a.table, a.constraint)
-}
+func (a *createFKConstraintAction) ID() string { return a.id }
 
 func (a *createFKConstraintAction) Execute(ctx context.Context) error {
 	sql := fmt.Sprintf("ALTER TABLE %s ADD ", pq.QuoteIdentifier(a.table))
@@ -732,6 +733,7 @@ func (a *createFKConstraintAction) Execute(ctx context.Context) error {
 
 type alterSequenceOwnerAction struct {
 	conn  db.DB
+	id    string
 	table string
 	from  string
 	to    string
@@ -740,15 +742,14 @@ type alterSequenceOwnerAction struct {
 func NewAlterSequenceOwnerAction(conn db.DB, table, from, to string) *alterSequenceOwnerAction {
 	return &alterSequenceOwnerAction{
 		conn:  conn,
+		id:    fmt.Sprintf("alter_sequence_owner_%s_%s_to_%s", table, from, to),
 		table: table,
 		from:  from,
 		to:    to,
 	}
 }
 
-func (a *alterSequenceOwnerAction) ID() string {
-	return fmt.Sprintf("alter_sequence_owner_%s_%s_to_%s", a.table, a.from, a.to)
-}
+func (a *alterSequenceOwnerAction) ID() string { return a.id }
 
 func (a *alterSequenceOwnerAction) Execute(ctx context.Context) error {
 	sequence := getSequenceNameForColumn(ctx, a.conn, a.table, a.from)
@@ -784,6 +785,7 @@ func getSequenceNameForColumn(ctx context.Context, conn db.DB, tableName, column
 
 type dropConstraintAction struct {
 	conn       db.DB
+	id         string
 	table      string
 	constraint string
 }
@@ -791,14 +793,13 @@ type dropConstraintAction struct {
 func NewDropConstraintAction(conn db.DB, table, constraint string) *dropConstraintAction {
 	return &dropConstraintAction{
 		conn:       conn,
+		id:         fmt.Sprintf("drop_constraint_%s_%s", table, constraint),
 		table:      table,
 		constraint: constraint,
 	}
 }
 
-func (a *dropConstraintAction) ID() string {
-	return fmt.Sprintf("drop_constraint_%s_%s", a.table, a.constraint)
-}
+func (a *dropConstraintAction) ID() string { return a.id }
 
 func (a *dropConstraintAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s DROP CONSTRAINT IF EXISTS %s",
@@ -809,6 +810,7 @@ func (a *dropConstraintAction) Execute(ctx context.Context) error {
 
 type setNotNullAction struct {
 	conn   db.DB
+	id     string
 	table  string
 	column string
 }
@@ -816,14 +818,13 @@ type setNotNullAction struct {
 func NewSetNotNullAction(conn db.DB, table, column string) *setNotNullAction {
 	return &setNotNullAction{
 		conn:   conn,
+		id:     fmt.Sprintf("set_not_null_%s_%s", table, column),
 		table:  table,
 		column: column,
 	}
 }
 
-func (a *setNotNullAction) ID() string {
-	return fmt.Sprintf("set_not_null_%s_%s", a.table, a.column)
-}
+func (a *setNotNullAction) ID() string { return a.id }
 
 func (a *setNotNullAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET NOT NULL",
@@ -834,6 +835,7 @@ func (a *setNotNullAction) Execute(ctx context.Context) error {
 
 type setDefaultAction struct {
 	conn         db.DB
+	id           string
 	table        string
 	column       string
 	defaultValue string
@@ -842,15 +844,14 @@ type setDefaultAction struct {
 func NewSetDefaultValueAction(conn db.DB, table, column, defaultValue string) *setDefaultAction {
 	return &setDefaultAction{
 		conn:         conn,
+		id:           fmt.Sprintf("set_default_%s_%s", table, column),
 		table:        table,
 		column:       column,
 		defaultValue: defaultValue,
 	}
 }
 
-func (a *setDefaultAction) ID() string {
-	return fmt.Sprintf("set_default_%s_%s", a.table, a.column)
-}
+func (a *setDefaultAction) ID() string { return a.id }
 
 func (a *setDefaultAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s SET DEFAULT %s",
@@ -862,6 +863,7 @@ func (a *setDefaultAction) Execute(ctx context.Context) error {
 
 type dropDefaultAction struct {
 	conn   db.DB
+	id     string
 	table  string
 	column string
 }
@@ -869,14 +871,13 @@ type dropDefaultAction struct {
 func NewDropDefaultValueAction(conn db.DB, table, column string) *dropDefaultAction {
 	return &dropDefaultAction{
 		conn:   conn,
+		id:     fmt.Sprintf("drop_default_%s_%s", table, column),
 		table:  table,
 		column: column,
 	}
 }
 
-func (a *dropDefaultAction) ID() string {
-	return fmt.Sprintf("drop_default_%s_%s", a.table, a.column)
-}
+func (a *dropDefaultAction) ID() string { return a.id }
 
 func (a *dropDefaultAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE IF EXISTS %s ALTER COLUMN %s DROP DEFAULT",
@@ -887,21 +888,19 @@ func (a *dropDefaultAction) Execute(ctx context.Context) error {
 
 type rawSQLAction struct {
 	conn db.DB
-	sql  string
 	id   string
+	sql  string
 }
 
 func NewRawSQLAction(conn db.DB, sql string) *rawSQLAction {
 	return &rawSQLAction{
 		conn: conn,
-		sql:  sql,
 		id:   fmt.Sprintf("raw_sql_%s", uuid.NewString()),
+		sql:  sql,
 	}
 }
 
-func (a *rawSQLAction) ID() string {
-	return a.id
-}
+func (a *rawSQLAction) ID() string { return a.id }
 
 func (a *rawSQLAction) Execute(ctx context.Context) error {
 	_, err := a.conn.ExecContext(ctx, a.sql)
@@ -910,19 +909,24 @@ func (a *rawSQLAction) Execute(ctx context.Context) error {
 
 type setReplicaIdentityAction struct {
 	conn     db.DB
+	id       string
 	table    string
 	identity string
 	index    string
 }
 
 func NewSetReplicaIdentityAction(conn db.DB, table string, identityType, index string) *setReplicaIdentityAction {
+	identity := strings.ToUpper(identityType)
 	return &setReplicaIdentityAction{
 		conn:     conn,
+		id:       fmt.Sprintf("set_replica_%s_%s", identity, index),
 		table:    table,
-		identity: strings.ToUpper(identityType),
+		identity: identity,
 		index:    index,
 	}
 }
+
+func (a *setReplicaIdentityAction) ID() string { return a.id }
 
 func (a *setReplicaIdentityAction) Execute(ctx context.Context) error {
 	// build the correct form of the `SET REPLICA IDENTITY` statement based on the`identity type

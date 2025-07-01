@@ -17,6 +17,7 @@ import (
 // duplicator duplicates a column in a table, including all constraints and
 // comments.
 type duplicator struct {
+	id                string
 	stmtBuilder       *duplicatorStmtBuilder
 	conn              db.DB
 	columns           map[string]*columnToDuplicate
@@ -44,6 +45,7 @@ const (
 // NewColumnDuplicator creates a new Duplicator for a column.
 func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Column) *duplicator {
 	cols := make(map[string]*columnToDuplicate, len(columns))
+	columsID := make([]string, 0, len(columns))
 	for _, column := range columns {
 		cols[column.Name] = &columnToDuplicate{
 			column:   column,
@@ -52,6 +54,7 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 		}
 	}
 	return &duplicator{
+		id: fmt.Sprintf("duplicate_%s_%s", table.Name, strings.Join(columsID, "_")),
 		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
@@ -60,6 +63,8 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 		withoutConstraint: make([]string, 0),
 	}
 }
+
+func (d *duplicator) ID() string { return d.id }
 
 // WithType sets the type of the new column.
 func (d *duplicator) WithType(columnName, t string) *duplicator {
