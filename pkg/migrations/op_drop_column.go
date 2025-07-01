@@ -18,22 +18,18 @@ var (
 func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSchema string, s *schema.Schema) (*backfill.Task, error) {
 	l.LogOperationStart(o)
 
+	var task *backfill.Task
 	if o.Down != "" {
-		err := NewCreateTriggerAction(conn,
-			backfill.TriggerConfig{
+		task = backfill.NewTask(nil,
+			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, o.Column),
 				Direction:      backfill.TriggerDirectionDown,
 				Columns:        s.GetTable(o.Table).Columns,
-				SchemaName:     s.Name,
-				LatestSchema:   latestSchema,
 				TableName:      s.GetTable(o.Table).Name,
 				PhysicalColumn: o.Column,
 				SQL:            o.Down,
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, err
-		}
+		)
 	}
 
 	table := s.GetTable(o.Table)
@@ -46,7 +42,8 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, latestSc
 	}
 
 	s.GetTable(o.Table).RemoveColumn(o.Column)
-	return nil, nil
+
+	return task, nil
 }
 
 func (o *OpDropColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

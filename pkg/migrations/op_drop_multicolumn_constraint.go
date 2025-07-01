@@ -49,23 +49,25 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 	}
 
 	// Create triggers for each column covered by the constraint to be dropped
+	triggers := make([]backfill.OperationTrigger, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
+		// Copy the columns from table columns, so we can use it later
+		// in the down trigger with the physical name
+		upColumns := make(map[string]*schema.Column)
+		for name, col := range table.Columns {
+			upColumns[name] = col
+		}
 		// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-		err := NewCreateTriggerAction(conn,
-			backfill.TriggerConfig{
+		triggers = append(triggers,
+			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, columnName),
 				Direction:      backfill.TriggerDirectionUp,
-				Columns:        table.Columns,
-				SchemaName:     s.Name,
-				LatestSchema:   latestSchema,
+				Columns:        upColumns,
 				TableName:      table.Name,
 				PhysicalColumn: TemporaryName(columnName),
 				SQL:            o.upSQL(columnName),
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create up trigger: %w", err)
-		}
+		)
 
 		// Add the new column to the internal schema representation. This is done
 		// here, before creation of the down trigger, so that the trigger can declare
@@ -77,24 +79,19 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		})
 
 		// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-		err = NewCreateTriggerAction(conn,
-			backfill.TriggerConfig{
+		triggers = append(triggers,
+			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, TemporaryName(columnName)),
 				Direction:      backfill.TriggerDirectionDown,
 				Columns:        table.Columns,
-				SchemaName:     s.Name,
-				LatestSchema:   latestSchema,
 				TableName:      table.Name,
 				PhysicalColumn: oldPhysicalColumn,
 				SQL:            o.Down[columnName],
 			},
-		).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create down trigger: %w", err)
-		}
+		)
 	}
 
-	return backfill.NewTask(table), nil
+	return backfill.NewTask(table, triggers...), nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

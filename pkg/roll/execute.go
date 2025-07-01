@@ -99,7 +99,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	}
 
 	// execute operations
-	job := &backfill.Job{}
+	job := backfill.NewJob(m.schema, versionSchemaName)
 	for _, op := range migration.Operations {
 		task, err := op.Start(ctx, m.logger, m.pgConn, versionSchemaName, newSchema)
 		if err != nil {
