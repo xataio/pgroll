@@ -14,9 +14,9 @@ import (
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
-// Duplicator duplicates a column in a table, including all constraints and
+// duplicator duplicates a column in a table, including all constraints and
 // comments.
-type Duplicator struct {
+type duplicator struct {
 	stmtBuilder       *duplicatorStmtBuilder
 	conn              db.DB
 	columns           map[string]*columnToDuplicate
@@ -42,7 +42,7 @@ const (
 )
 
 // NewColumnDuplicator creates a new Duplicator for a column.
-func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Column) *Duplicator {
+func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Column) *duplicator {
 	cols := make(map[string]*columnToDuplicate, len(columns))
 	for _, column := range columns {
 		cols[column.Name] = &columnToDuplicate{
@@ -51,7 +51,7 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 			withType: column.Type,
 		}
 	}
-	return &Duplicator{
+	return &duplicator{
 		stmtBuilder: &duplicatorStmtBuilder{
 			table: table,
 		},
@@ -62,32 +62,32 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 }
 
 // WithType sets the type of the new column.
-func (d *Duplicator) WithType(columnName, t string) *Duplicator {
+func (d *duplicator) WithType(columnName, t string) *duplicator {
 	d.columns[columnName].withType = t
 	return d
 }
 
 // WithoutConstraint excludes a constraint from being duplicated.
-func (d *Duplicator) WithoutConstraint(c string) *Duplicator {
+func (d *duplicator) WithoutConstraint(c string) *duplicator {
 	d.withoutConstraint = append(d.withoutConstraint, c)
 	return d
 }
 
 // WithoutNotNull excludes the NOT NULL constraint from being duplicated.
-func (d *Duplicator) WithoutNotNull(columnName string) *Duplicator {
+func (d *duplicator) WithoutNotNull(columnName string) *duplicator {
 	d.columns[columnName].withoutNotNull = true
 	return d
 }
 
 // WithName sets the name of the new column.
-func (d *Duplicator) WithName(columnName, asName string) *Duplicator {
+func (d *duplicator) WithName(columnName, asName string) *duplicator {
 	d.columns[columnName].asName = asName
 	return d
 }
 
 // Duplicate duplicates a column in the table, including all constraints and
 // comments.
-func (d *Duplicator) Duplicate(ctx context.Context) error {
+func (d *duplicator) Execute(ctx context.Context) error {
 	colNames := make([]string, 0, len(d.columns))
 	for name, c := range d.columns {
 		colNames = append(colNames, name)

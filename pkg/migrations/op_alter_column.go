@@ -34,7 +34,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, latestS
 	// Duplicate the column on the underlying table.
 	d := duplicatorForOperations(ops, conn, table, column).
 		WithName(column.Name, TemporaryName(o.Column))
-	if err := d.Duplicate(ctx); err != nil {
+	if err := d.Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
@@ -279,7 +279,7 @@ func (o *OpAlterColumn) subOperations() []Operation {
 }
 
 // duplicatorForOperations returns a Duplicator for the given operations
-func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, column *schema.Column) *Duplicator {
+func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, column *schema.Column) *duplicator {
 	d := NewColumnDuplicator(conn, table, column)
 
 	for _, op := range ops {

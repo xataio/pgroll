@@ -37,7 +37,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, la
 	for _, colName := range o.Columns {
 		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
 	}
-	if err := d.Duplicate(ctx); err != nil {
+	if err := d.Execute(ctx); err != nil {
 		return nil, fmt.Errorf("failed to duplicate columns for new constraint: %w", err)
 	}
 
