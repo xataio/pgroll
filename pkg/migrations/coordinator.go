@@ -33,7 +33,7 @@ func NewCoordinator(actions []DBAction) *Coordinator {
 	}
 }
 
-// Execute runs all actions in the order they were added to the coordinator.
+// Execute runs all actions in the orderedActions they were added to the coordinator.
 func (c *Coordinator) Execute(ctx context.Context) error {
 	for _, id := range c.orderedActions {
 		action, exists := c.actions[id]

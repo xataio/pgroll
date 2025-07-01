@@ -68,7 +68,7 @@ func TestCoordinator(t *testing.T) {
 		"create table multiple time with different statement with the same name": {
 			actions: []DBAction{
 				NewCreateTableAction(nil, "test_table", "", ""),
-				NewCreateTableAction(nil, "test_table", "CREATE TABLE test_table (id INT)", ""),
+				NewCreateTableAction(nil, "test_table", "id INT", ""),
 				NewCommentTableAction(nil, "test_table", ptr("This is a test table")),
 				NewCommentColumnAction(nil, "test_table", "id", ptr("This is a test column")),
 			},
@@ -81,6 +81,54 @@ func TestCoordinator(t *testing.T) {
 				NewDropDefaultValueAction(nil, "test_table", "column1"),
 			},
 			expectedOrder: []string{"create_table_test_table", "add_column_test_table1_column1", "drop_default_test_table_column1"},
+		},
+		"alter column multiple times rollback phase": {
+			actions: []DBAction{
+				NewDropColumnAction(nil, "t1", "column1"),
+				NewDropFunctionAction(nil,
+					backfill.TriggerFunctionName("t1", "column1"),
+					backfill.TriggerFunctionName("t1", "__pgroll_new_column1"),
+				),
+				NewDropColumnAction(nil, "t1", backfill.CNeedsBackfillColumn),
+				NewDropColumnAction(nil, "t1", "column1"),
+				NewDropFunctionAction(nil,
+					backfill.TriggerFunctionName("t1", "column1"),
+					backfill.TriggerFunctionName("t1", "__pgroll_new_column1"),
+				),
+				NewDropColumnAction(nil, "t1", backfill.CNeedsBackfillColumn),
+			},
+			expectedOrder: []string{
+				"drop_column_t1_column1",
+				"drop_function__pgroll_trigger_t1_column1__pgroll_trigger_t1___pgroll_new_column1",
+				"drop_column_t1_" + backfill.CNeedsBackfillColumn,
+			},
+		},
+		"alter column multiple times complete phase": {
+			actions: []DBAction{
+				NewAlterSequenceOwnerAction(nil, "t1", "column1", TemporaryName("column1")),
+				NewDropColumnAction(nil, "t1", "column1"),
+				NewDropFunctionAction(nil,
+					backfill.TriggerFunctionName("t1", "column1"),
+					backfill.TriggerFunctionName("t1", TemporaryName("column1")),
+				),
+				NewDropColumnAction(nil, "t1", backfill.CNeedsBackfillColumn),
+				NewRenameDuplicatedColumnAction(nil, &schema.Table{Name: "t1"}, "column1"),
+				NewAlterSequenceOwnerAction(nil, "t1", "column1", TemporaryName("column1")),
+				NewDropColumnAction(nil, "t1", "column1"),
+				NewDropFunctionAction(nil,
+					backfill.TriggerFunctionName("t1", "column1"),
+					backfill.TriggerFunctionName("t1", TemporaryName("column1")),
+				),
+				NewDropColumnAction(nil, "t1", backfill.CNeedsBackfillColumn),
+				NewRenameDuplicatedColumnAction(nil, &schema.Table{Name: "t1"}, "column1"),
+			},
+			expectedOrder: []string{
+				"alter_sequence_owner_t1_column1_to__pgroll_new_column1",
+				"drop_column_t1_column1",
+				"drop_function__pgroll_trigger_t1_column1__pgroll_trigger_t1__pgroll_new_column1",
+				"drop_column_t1_" + backfill.CNeedsBackfillColumn,
+				"rename_duplicated_t1_column1",
+			},
 		},
 		"alter column multiple times rollback phase": {
 			actions: []DBAction{
@@ -153,11 +201,11 @@ func TestCoordinator(t *testing.T) {
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
 			coordinator := NewCoordinator(tc.actions)
-			if len(coordinator.order) != len(tc.expectedOrder) {
-				t.Fatalf("expected order length %d, got %d", len(tc.expectedOrder), len(coordinator.order))
+			if len(coordinator.orderedActions) != len(tc.expectedOrder) {
+				t.Fatalf("expected order length %d, got %d", len(tc.expectedOrder), len(coordinator.orderedActions))
 			}
 
-			require.Equal(t, tc.expectedOrder, coordinator.order, "order of actions does not match expected")
+			require.Equal(t, tc.expectedOrder, coordinator.orderedActions, "order of actions does not match expected")
 		})
 	}
 }

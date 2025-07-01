@@ -890,7 +890,6 @@ type rawSQLAction struct {
 	conn db.DB
 	id   string
 	sql  string
-	id   string
 }
 
 func NewRawSQLAction(conn db.DB, sql string) *rawSQLAction {
@@ -898,7 +897,6 @@ func NewRawSQLAction(conn db.DB, sql string) *rawSQLAction {
 		conn: conn,
 		id:   fmt.Sprintf("raw_sql_%s", uuid.NewString()),
 		sql:  sql,
-		id:   fmt.Sprintf("raw_sql_%s", uuid.NewString()),
 	}
 }
 
