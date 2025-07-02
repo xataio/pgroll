@@ -15,14 +15,14 @@ var (
 	_ Createable = (*OpRawSQL)(nil)
 )
 
-func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	if o.OnComplete {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	return nil, NewRawSQLAction(conn, o.Up).Execute(ctx)
+	return []DBAction{NewRawSQLAction(conn, o.Up)}, nil, nil
 }
 
 func (o *OpRawSQL) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

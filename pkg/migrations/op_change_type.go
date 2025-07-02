@@ -20,15 +20,15 @@ type OpChangeType struct {
 
 var _ Operation = (*OpChangeType)(nil)
 
-func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpChangeType) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return backfill.NewTask(table), nil
+	return nil, backfill.NewTask(table), nil
 }
 
 func (o *OpChangeType) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

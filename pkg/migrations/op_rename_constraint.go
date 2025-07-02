@@ -12,11 +12,11 @@ import (
 
 var _ Operation = (*OpRenameConstraint)(nil)
 
-func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// no-op
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (o *OpRenameConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

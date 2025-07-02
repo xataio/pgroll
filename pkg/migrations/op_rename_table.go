@@ -12,10 +12,10 @@ import (
 
 var _ Operation = (*OpRenameTable)(nil)
 
-func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
-	return nil, s.RenameTable(o.From, o.To)
+	return nil, nil, s.RenameTable(o.From, o.To)
 }
 
 func (o *OpRenameTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

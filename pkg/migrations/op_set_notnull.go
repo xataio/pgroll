@@ -20,34 +20,34 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	// Add an unchecked NOT NULL constraint to the new column.
 	skipInherit := false
 	skipValidate := true // We will validate the constraint later in the Complete step.
-	if err := NewCreateCheckConstraintAction(
-		conn,
-		table.Name,
-		NotNullConstraintName(o.Column),
-		fmt.Sprintf("%s IS NOT NULL", o.Column),
-		[]string{o.Column},
-		skipInherit,
-		skipValidate,
-	).Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to add not null constraint: %w", err)
+	dbActions := []DBAction{
+		NewCreateCheckConstraintAction(
+			conn,
+			table.Name,
+			NotNullConstraintName(o.Column),
+			fmt.Sprintf("%s IS NOT NULL", o.Column),
+			[]string{o.Column},
+			skipInherit,
+			skipValidate,
+		),
 	}
 
-	return backfill.NewTask(table), nil
+	return dbActions, backfill.NewTask(table), nil
 }
 
 func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

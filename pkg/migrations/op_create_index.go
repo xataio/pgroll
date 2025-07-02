@@ -18,12 +18,12 @@ var (
 	_ Createable = (*OpCreateIndex)(nil)
 )
 
-func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	cols := make(map[string]IndexField, len(o.Columns))
@@ -32,18 +32,20 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 		cols[physicalName[0]] = settings
 	}
 
-	err := NewCreateIndexConcurrentlyAction(
-		conn,
-		table.Name,
-		o.Name,
-		string(o.Method),
-		o.Unique,
-		cols,
-		o.StorageParameters,
-		o.Predicate,
-	).Execute(ctx)
+	dbActions := []DBAction{
+		NewCreateIndexConcurrentlyAction(
+			conn,
+			table.Name,
+			o.Name,
+			string(o.Method),
+			o.Unique,
+			cols,
+			o.StorageParameters,
+			o.Predicate,
+		),
+	}
 
-	return nil, err
+	return dbActions, nil, nil
 }
 
 func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

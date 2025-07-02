@@ -12,17 +12,17 @@ import (
 
 var _ Operation = (*OpRenameColumn)(nil)
 
-func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	// Rename the table in the in-memory schema.
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.From)
 	if column == nil {
-		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.From}
+		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.From}
 	}
 	table.RenameColumn(o.From, o.To)
 
@@ -30,7 +30,7 @@ func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sch
 	// renamed column.
 	table.RenameConstraintColumns(o.From, o.To)
 
-	return nil, nil
+	return nil, nil, nil
 }
 
 func (o *OpRenameColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

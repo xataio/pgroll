@@ -19,12 +19,12 @@ var (
 	_ Createable = (*OpAddColumn)(nil)
 )
 
-func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// If the column has a DEFAULT, check if it can be added using the fast path
@@ -33,20 +33,19 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	if o.Column.HasDefault() {
 		v, err := defaults.UsesFastPath(ctx, conn, table.Name, o.Column.Type, *o.Column.Default)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check for fast path default optimization: %w", err)
+			return nil, nil, fmt.Errorf("failed to check for fast path default optimization: %w", err)
 		}
 		fastPathDefault = v
 	}
 
-	if err := addColumn(ctx, conn, *o, table, fastPathDefault); err != nil {
-		return nil, fmt.Errorf("failed to start add column operation: %w", err)
+	action, err := addColumn(conn, *o, table, fastPathDefault)
+	if err != nil {
+		return nil, nil, err
 	}
+	dbActions := []DBAction{action}
 
 	if o.Column.Comment != nil {
-		err := NewCommentColumnAction(conn, table.Name, TemporaryName(o.Column.Name), o.Column.Comment).Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add comment to column: %w", err)
-		}
+		dbActions = append(dbActions, NewCommentColumnAction(conn, table.Name, TemporaryName(o.Column.Name), o.Column.Comment))
 	}
 
 	// If the column is `NOT NULL` and there is no default value (either because
@@ -56,39 +55,40 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	skipInherit := false
 	skipValidate := true
 	if !o.Column.IsNullable() && (o.Column.Default == nil || !fastPathDefault) {
-		if err := NewCreateCheckConstraintAction(
-			conn,
-			table.Name,
-			NotNullConstraintName(o.Column.Name),
-			fmt.Sprintf("%s IS NOT NULL", o.Column.Name),
-			[]string{o.Column.Name},
-			skipInherit,
-			skipValidate,
-		).Execute(ctx); err != nil {
-			return nil, fmt.Errorf("failed to add not null constraint: %w", err)
-		}
+		dbActions = append(dbActions,
+			NewCreateCheckConstraintAction(
+				conn,
+				table.Name,
+				NotNullConstraintName(o.Column.Name),
+				fmt.Sprintf("%s IS NOT NULL", o.Column.Name),
+				[]string{o.Column.Name},
+				skipInherit,
+				skipValidate,
+			))
 	}
 
 	if o.Column.Check != nil {
-		if err := NewCreateCheckConstraintAction(
-			conn,
-			table.Name,
-			o.Column.Check.Name,
-			o.Column.Check.Constraint,
-			[]string{o.Column.Name},
-			skipInherit,
-			skipValidate,
-		).Execute(ctx); err != nil {
-			return nil, fmt.Errorf("failed to add check constraint: %w", err)
-		}
+		dbActions = append(dbActions,
+			NewCreateCheckConstraintAction(
+				conn,
+				table.Name,
+				o.Column.Check.Name,
+				o.Column.Check.Constraint,
+				[]string{o.Column.Name},
+				skipInherit,
+				skipValidate,
+			))
 	}
 
 	if o.Column.Unique {
-		createIndex := NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, UniqueIndexName(o.Column.Name), table.Name, TemporaryName(o.Column.Name))
-		err := createIndex.Execute(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add unique index: %w", err)
-		}
+		dbActions = append(dbActions,
+			NewCreateUniqueIndexConcurrentlyAction(
+				conn,
+				s.Name,
+				UniqueIndexName(o.Column.Name),
+				table.Name,
+				TemporaryName(o.Column.Name),
+			))
 	}
 
 	// If the column has a DEFAULT that cannot be set using the fast path
@@ -96,7 +96,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	// value for the column.
 	if o.Column.HasDefault() && !fastPathDefault {
 		if o.Up != *o.Column.Default {
-			return nil, UpSQLMustBeColumnDefaultError{Column: o.Column.Name}
+			return nil, nil, UpSQLMustBeColumnDefaultError{Column: o.Column.Name}
 		}
 	}
 
@@ -118,7 +118,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return task, nil
+	return dbActions, task, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {
@@ -253,7 +253,7 @@ func (o *OpAddColumn) Validate(ctx context.Context, s *schema.Schema) error {
 	return nil
 }
 
-func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, fastPathDefault bool) error {
+func addColumn(conn db.DB, o OpAddColumn, t *schema.Table, fastPathDefault bool) (DBAction, error) {
 	// don't add non-nullable columns with no default directly
 	// they are handled by:
 	// - adding the column as nullable
@@ -266,7 +266,7 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	}
 
 	if o.Column.Generated != nil {
-		return fmt.Errorf("adding generated columns to existing tables is not supported")
+		return nil, fmt.Errorf("adding generated columns to existing tables is not supported")
 	}
 
 	// Don't add a column with a CHECK constraint directly.
@@ -299,7 +299,7 @@ func addColumn(ctx context.Context, conn db.DB, o OpAddColumn, t *schema.Table, 
 	o.Column.Name = TemporaryName(o.Column.Name)
 
 	withPK := true
-	return NewAddColumnAction(conn, t.Name, o.Column, withPK).Execute(ctx)
+	return NewAddColumnAction(conn, t.Name, o.Column, withPK), nil
 }
 
 // upgradeNotNullConstraintToNotNullAttribute validates and upgrades a NOT NULL

@@ -4,7 +4,6 @@ package migrations
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -21,20 +20,28 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*backfill.Task, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, TableDoesNotExistError{Name: o.Table}
+		return nil, nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// Add the check constraint to the new column as NOT VALID.
-	if err := NewCreateCheckConstraintAction(conn, table.Name, o.Check.Name, o.Check.Constraint, []string{o.Column}, o.Check.NoInherit, true).Execute(ctx); err != nil {
-		return nil, fmt.Errorf("failed to add check constraint: %w", err)
+	skipValidate := true // We will validate the constraint later in the Complete step.
+	dbActions := []DBAction{
+		NewCreateCheckConstraintAction(
+			conn,
+			table.Name,
+			o.Check.Name,
+			o.Check.Constraint,
+			[]string{o.Column},
+			o.Check.NoInherit,
+			skipValidate),
 	}
 
-	return backfill.NewTask(table), nil
+	return dbActions, backfill.NewTask(table), nil
 }
 
 func (o *OpSetCheckConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -101,15 +101,20 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	job := backfill.NewJob(m.schema, versionSchemaName)
 	for _, op := range migration.Operations {
-		task, err := op.Start(ctx, m.logger, m.pgConn, newSchema)
+		actions, backfillTask, err := op.Start(ctx, m.logger, m.pgConn, newSchema)
 		if err != nil {
-			errRollback := m.Rollback(ctx)
-			if errRollback != nil {
-				return nil, errors.Join(
-					fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
-					fmt.Errorf("unable to roll back failed operation: %w", errRollback))
+			return nil, fmt.Errorf("unable to collect actions for start %q migration: %w", migration.Name, err)
+		}
+		for _, action := range actions {
+			if err := action.Execute(ctx); err != nil {
+				errRollback := m.Rollback(ctx)
+				if errRollback != nil {
+					return nil, errors.Join(
+						fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
+						fmt.Errorf("unable to roll back failed operation: %w", errRollback))
+				}
+				return nil, fmt.Errorf("failed to start %q migration, changes rolled back: %w", migration.Name, err)
 			}
-			return nil, fmt.Errorf("failed to start %q migration, changes rolled back: %w", migration.Name, err)
 		}
 		// refresh schema when the op is isolated and requires a refresh (for example raw sql)
 		// we don't want to refresh the schema if the operation is not isolated as it would
@@ -122,8 +127,8 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 				}
 			}
 		}
-		if task != nil {
-			job.AddTask(task)
+		if backfillTask != nil {
+			job.AddTask(backfillTask)
 		}
 	}
 
