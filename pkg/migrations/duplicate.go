@@ -52,6 +52,7 @@ func NewColumnDuplicator(conn db.DB, table *schema.Table, columns ...*schema.Col
 			asName:   TemporaryName(column.Name),
 			withType: column.Type,
 		}
+		columsID = append(columsID, column.Name)
 	}
 	return &duplicator{
 		id: fmt.Sprintf("duplicate_%s_%s", table.Name, strings.Join(columsID, "_")),
