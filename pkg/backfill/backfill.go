@@ -75,7 +75,9 @@ func (j *Job) AddTask(t *Task) {
 			// CASE WHEN "review" = 'bad' THEN 'bad review' ELSE 'good review' END, it must be rewritten to:
 			// CASE WHEN NEW."_pgroll_new_review" = 'bad' THEN 'bad review' ELSE 'good review' END.
 			// Otherwise, the trigger will not work correctly because it will reference the old column name.
-			tg.SQL = append(tg.SQL, rewriteTriggerSQL(trigger.SQL, findColumnName(tg.Columns, tg.PhysicalColumn), tg.PhysicalColumn))
+			tg.SQL = append(tg.SQL,
+				rewriteTriggerSQL(trigger.SQL, findColumnName(trigger.Columns, trigger.PhysicalColumn), trigger.PhysicalColumn),
+			)
 			j.triggers[trigger.Name] = tg
 		} else {
 			// If the trigger does not exist, create a new trigger config
