@@ -14,19 +14,19 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// By this point Validate() should have run which ensures the constraint exists and that we only have
 	// one column associated with it.
 	column := table.GetColumn(table.GetConstraintColumns(o.Name)[0])
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: table.GetConstraintColumns(o.Name)[0]}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: table.GetConstraintColumns(o.Name)[0]}
 	}
 
 	// Create a copy of the column on the underlying table.
@@ -72,7 +72,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 			SQL:            o.Down,
 		},
 	)
-	return dbActions, backfill.NewTask(table, triggers...), nil
+	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
 }
 
 func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

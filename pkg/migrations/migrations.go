@@ -20,7 +20,7 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error)
+	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
@@ -78,6 +78,11 @@ type (
 		VersionSchema string          `json:"version_schema,omitempty"`
 		Operations    json.RawMessage `json:"operations"`
 	}
+
+	StartOperation struct {
+		Actions      []DBAction
+		BackfillTask *backfill.Task
+	}
 )
 
 // VersionSchemaName returns the version schema name for the migration.
@@ -118,7 +123,7 @@ func (m *Migration) UpdateVirtualSchema(ctx context.Context, s *schema.Schema) e
 	// Run `Start` on each operation using the fake DB. Updates will be made to
 	// the in-memory schema `s` without touching the physical database.
 	for _, op := range m.Operations {
-		if _, _, err := op.Start(ctx, NewNoopLogger(), db, s); err != nil {
+		if _, err := op.Start(ctx, NewNoopLogger(), db, s); err != nil {
 			return err
 		}
 	}

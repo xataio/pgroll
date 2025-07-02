@@ -15,7 +15,7 @@ var (
 	_ Createable = (*OpDropColumn)(nil)
 )
 
-func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	var task *backfill.Task
@@ -34,16 +34,16 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	s.GetTable(o.Table).RemoveColumn(o.Column)
 
-	return nil, task, nil
+	return &StartOperation{BackfillTask: task}, nil
 }
 
 func (o *OpDropColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

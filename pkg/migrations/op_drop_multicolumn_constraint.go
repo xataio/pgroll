@@ -18,12 +18,12 @@ var (
 	_ Createable = (*OpDropMultiColumnConstraint)(nil)
 )
 
-func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// Get all columns covered by the constraint to be dropped
@@ -32,7 +32,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 	for i, c := range constraintColumns {
 		columns[i] = table.GetColumn(c)
 		if columns[i] == nil {
-			return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: c}
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: c}
 		}
 	}
 
@@ -89,7 +89,7 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		)
 	}
 
-	return dbActions, backfill.NewTask(table, triggers...), nil
+	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

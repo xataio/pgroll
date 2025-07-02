@@ -5,24 +5,23 @@ package migrations
 import (
 	"context"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
 
 var _ Operation = (*OpRenameColumn)(nil)
 
-func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	// Rename the table in the in-memory schema.
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.From)
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.From}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.From}
 	}
 	table.RenameColumn(o.From, o.To)
 
@@ -30,7 +29,7 @@ func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sch
 	// renamed column.
 	table.RenameConstraintColumns(o.From, o.To)
 
-	return nil, nil, nil
+	return nil, nil
 }
 
 func (o *OpRenameColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

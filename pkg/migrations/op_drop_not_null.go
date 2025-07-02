@@ -20,15 +20,15 @@ type OpDropNotNull struct {
 
 var _ Operation = (*OpDropNotNull)(nil)
 
-func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpDropNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return nil, backfill.NewTask(table), nil
+	return &StartOperation{BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpDropNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

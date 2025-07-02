@@ -15,19 +15,19 @@ var (
 	_ Createable = (*OpCreateConstraint)(nil)
 )
 
-func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	columns := make([]*schema.Column, len(o.Columns))
 	for i, colName := range o.Columns {
 		columns[i] = table.GetColumn(colName)
 		if columns[i] == nil {
-			return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: colName}
+			return nil, ColumnDoesNotExistError{Table: o.Table, Name: colName}
 		}
 	}
 
@@ -89,22 +89,22 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 		dbActions = append(dbActions,
 			NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...),
 		)
-		return dbActions, task, nil
+		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeCheck:
 		dbActions = append(dbActions,
 			NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true),
 		)
-		return dbActions, task, nil
+		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeForeignKey:
 		dbActions = append(dbActions,
 			NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true),
 		)
-		return dbActions, task, nil
+		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
 	}
 
-	return dbActions, task, nil
+	return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
 }
 
 func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

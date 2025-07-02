@@ -21,15 +21,19 @@ type OpSetComment struct {
 
 var _ Operation = (*OpSetComment)(nil)
 
-func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpSetComment) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
 	l.LogOperationStart(o)
 
 	tbl := s.GetTable(o.Table)
 	if tbl == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	return []DBAction{NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment)}, backfill.NewTask(tbl), nil
+	dbActions := []DBAction{
+		NewCommentColumnAction(conn, o.Table, TemporaryName(o.Column), o.Comment),
+	}
+
+	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(tbl)}, nil
 }
 
 func (o *OpSetComment) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
