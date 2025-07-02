@@ -101,7 +101,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 	// execute operations
 	job := backfill.NewJob(m.schema, versionSchemaName)
 	for _, op := range migration.Operations {
-		actions, task, err := op.Start(ctx, m.logger, m.pgConn, newSchema)
+		actions, backfillTask, err := op.Start(ctx, m.logger, m.pgConn, newSchema)
 		if err != nil {
 			return nil, fmt.Errorf("unable to collect actions for start %q migration: %w", migration.Name, err)
 		}
@@ -127,8 +127,8 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 				}
 			}
 		}
-		if task != nil {
-			job.AddTask(task)
+		if backfillTask != nil {
+			job.AddTask(backfillTask)
 		}
 	}
 
