@@ -63,8 +63,13 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	// a variable for the new column. Save the old column name for use as the
 	// physical column name. in the down trigger first.
 	oldPhysicalColumn := column.Name
+	columnType := column.Type
+	if o.Type != nil {
+		columnType = *o.Type
+	}
 	table.AddColumn(o.Column, &schema.Column{
 		Name: TemporaryName(o.Column),
+		Type: columnType,
 	})
 
 	// Add a trigger to copy values from the new column to the old.
