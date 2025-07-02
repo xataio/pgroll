@@ -80,7 +80,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	)
 	task := backfill.NewTask(table, triggers...)
 
-	dbActions := make([]DBAction, 0)
+	var dbActions []DBAction
 	// perform any operation specific start steps
 	for _, op := range ops {
 		actions, bf, err := op.Start(ctx, l, conn, s)
