@@ -11,7 +11,7 @@ import (
 
 var _ Operation = (*OpRenameConstraint)(nil)
 
-func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpRenameConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	// no-op

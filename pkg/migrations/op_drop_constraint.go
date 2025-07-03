@@ -14,7 +14,7 @@ import (
 
 var _ Operation = (*OpDropConstraint)(nil)
 
-func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -72,7 +72,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 			SQL:            o.Down,
 		},
 	)
-	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
 }
 
 func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

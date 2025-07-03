@@ -20,7 +20,7 @@ type Operation interface {
 	// version in the database (through a view)
 	// update the given views to expose the new schema version
 	// Returns the table that requires backfilling, if any.
-	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error)
+	Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error)
 
 	// Complete will update the database schema to match the current version
 	// after calling Start.
@@ -79,7 +79,7 @@ type (
 		Operations    json.RawMessage `json:"operations"`
 	}
 
-	StartOperation struct {
+	StartResult struct {
 		Actions      []DBAction
 		BackfillTask *backfill.Task
 	}

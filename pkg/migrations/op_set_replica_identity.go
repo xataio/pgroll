@@ -13,13 +13,13 @@ import (
 
 var _ Operation = (*OpSetReplicaIdentity)(nil)
 
-func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpSetReplicaIdentity) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	dbActions := []DBAction{
 		NewSetReplicaIdentityAction(conn, o.Table, o.Identity.Type, o.Identity.Index),
 	}
-	return &StartOperation{Actions: dbActions}, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpSetReplicaIdentity) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

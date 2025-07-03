@@ -17,7 +17,7 @@ var (
 	_ Createable = (*OpCreateTable)(nil)
 )
 
-func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	// Generate SQL for the columns in the table
@@ -49,7 +49,7 @@ func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	// Update the in-memory schema representation with the new table
 	o.updateSchema(s)
 
-	return &StartOperation{Actions: dbActions}, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

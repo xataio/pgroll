@@ -14,7 +14,7 @@ var (
 	_ Createable = (*OpRawSQL)(nil)
 )
 
-func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	if o.OnComplete {
@@ -24,7 +24,7 @@ func (o *OpRawSQL) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Sc
 	dbActions := []DBAction{
 		NewRawSQLAction(conn, o.Up),
 	}
-	return &StartOperation{Actions: dbActions}, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpRawSQL) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

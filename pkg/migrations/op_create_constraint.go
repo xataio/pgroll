@@ -15,7 +15,7 @@ var (
 	_ Createable = (*OpCreateConstraint)(nil)
 )
 
-func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -89,22 +89,22 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 		dbActions = append(dbActions,
 			NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...),
 		)
-		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeCheck:
 		dbActions = append(dbActions,
 			NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true),
 		)
-		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeForeignKey:
 		dbActions = append(dbActions,
 			NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true),
 		)
-		return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 	}
 
-	return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 }
 
 func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -20,7 +20,7 @@ type OpSetUnique struct {
 
 var _ Operation = (*OpSetUnique)(nil)
 
-func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -35,7 +35,7 @@ func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	dbActions := []DBAction{
 		NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, column.Name),
 	}
-	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpSetUnique) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -19,7 +19,7 @@ var (
 	_ Createable = (*OpAddColumn)(nil)
 )
 
-func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -118,7 +118,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return &StartOperation{Actions: dbActions, BackfillTask: task}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {

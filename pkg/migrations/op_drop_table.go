@@ -14,7 +14,7 @@ var (
 	_ Createable = (*OpDropTable)(nil)
 )
 
-func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Name)
@@ -29,7 +29,7 @@ func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	dbActions := []DBAction{
 		NewRenameTableAction(conn, table.Name, DeletionName(table.Name)),
 	}
-	return &StartOperation{Actions: dbActions}, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpDropTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

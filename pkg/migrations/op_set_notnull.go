@@ -20,7 +20,7 @@ type OpSetNotNull struct {
 
 var _ Operation = (*OpSetNotNull)(nil)
 
-func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -47,7 +47,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 		),
 	}
 
-	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

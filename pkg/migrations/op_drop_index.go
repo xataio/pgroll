@@ -14,7 +14,7 @@ var (
 	_ Createable = (*OpDropIndex)(nil)
 )
 
-func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpDropIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	// no-op

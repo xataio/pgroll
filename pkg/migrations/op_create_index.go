@@ -17,7 +17,7 @@ var (
 	_ Createable = (*OpCreateIndex)(nil)
 )
 
-func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -44,7 +44,7 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 		),
 	}
 
-	return &StartOperation{Actions: dbActions}, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

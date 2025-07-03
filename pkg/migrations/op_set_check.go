@@ -20,7 +20,7 @@ type OpSetCheckConstraint struct {
 
 var _ Operation = (*OpSetCheckConstraint)(nil)
 
-func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartOperation, error) {
+func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
@@ -41,7 +41,7 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, 
 			skipValidate),
 	}
 
-	return &StartOperation{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpSetCheckConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
