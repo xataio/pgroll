@@ -20,16 +20,16 @@ type OpSetDefault struct {
 
 var _ Operation = (*OpSetDefault)(nil)
 
-func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 
 	dbActions := make([]DBAction, 0)
@@ -41,7 +41,7 @@ func (o *OpSetDefault) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 		column.Default = o.Default
 	}
 
-	return dbActions, backfill.NewTask(table), nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpSetDefault) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

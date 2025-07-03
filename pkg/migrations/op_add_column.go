@@ -19,12 +19,12 @@ var (
 	_ Createable = (*OpAddColumn)(nil)
 )
 
-func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	// If the column has a DEFAULT, check if it can be added using the fast path
@@ -33,14 +33,14 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	if o.Column.HasDefault() {
 		v, err := defaults.UsesFastPath(ctx, conn, table.Name, o.Column.Type, *o.Column.Default)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to check for fast path default optimization: %w", err)
+			return nil, fmt.Errorf("failed to check for fast path default optimization: %w", err)
 		}
 		fastPathDefault = v
 	}
 
 	action, err := addColumn(conn, *o, table, fastPathDefault)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	dbActions := []DBAction{action}
 
@@ -96,7 +96,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	// value for the column.
 	if o.Column.HasDefault() && !fastPathDefault {
 		if o.Up != *o.Column.Default {
-			return nil, nil, UpSQLMustBeColumnDefaultError{Column: o.Column.Name}
+			return nil, UpSQLMustBeColumnDefaultError{Column: o.Column.Name}
 		}
 	}
 
@@ -118,7 +118,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return dbActions, task, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {

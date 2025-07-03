@@ -5,7 +5,6 @@ package migrations
 import (
 	"context"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -15,19 +14,22 @@ var (
 	_ Createable = (*OpDropTable)(nil)
 )
 
-func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Name)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Name}
+		return nil, TableDoesNotExistError{Name: o.Name}
 	}
 
 	s.RemoveTable(o.Name)
 
 	// Soft-delete the table in order that a create table operation in the same
 	// migration can create a table with the same name
-	return []DBAction{NewRenameTableAction(conn, table.Name, DeletionName(table.Name))}, nil, nil
+	dbActions := []DBAction{
+		NewRenameTableAction(conn, table.Name, DeletionName(table.Name)),
+	}
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpDropTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

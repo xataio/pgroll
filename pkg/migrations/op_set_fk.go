@@ -20,25 +20,25 @@ type OpSetForeignKey struct {
 
 var _ Operation = (*OpSetForeignKey)(nil)
 
-func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 	referencedTable := s.GetTable(o.References.Table)
 	if referencedTable == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.References.Table}
+		return nil, TableDoesNotExistError{Name: o.References.Table}
 	}
 
 	referencedColumn := referencedTable.GetColumn(o.References.Column)
 	if referencedColumn == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
+		return nil, ColumnDoesNotExistError{Table: o.References.Table, Name: o.References.Column}
 	}
 
 	dbActions := []DBAction{
@@ -60,7 +60,7 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *sc
 		),
 	}
 
-	return dbActions, backfill.NewTask(table), nil
+	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
 }
 
 func (o *OpSetForeignKey) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -18,12 +17,12 @@ var (
 	_ Createable = (*OpCreateIndex)(nil)
 )
 
-func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
 	cols := make(map[string]IndexField, len(o.Columns))
@@ -45,7 +44,7 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 		),
 	}
 
-	return dbActions, nil, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpCreateIndex) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

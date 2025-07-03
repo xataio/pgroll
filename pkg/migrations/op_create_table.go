@@ -8,7 +8,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
 	"github.com/xataio/pgroll/pkg/schema"
 )
@@ -18,18 +17,18 @@ var (
 	_ Createable = (*OpCreateTable)(nil)
 )
 
-func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	// Generate SQL for the columns in the table
 	columnsSQL, err := columnsToSQL(o.Columns)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create columns SQL: %w", err)
+		return nil, fmt.Errorf("failed to create columns SQL: %w", err)
 	}
 
 	constraintsSQL, err := constraintsToSQL(o.Constraints)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create constraints SQL: %w", err)
+		return nil, fmt.Errorf("failed to create constraints SQL: %w", err)
 	}
 
 	dbActions := make([]DBAction, 0)
@@ -50,7 +49,7 @@ func (o *OpCreateTable) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	// Update the in-memory schema representation with the new table
 	o.updateSchema(s)
 
-	return dbActions, nil, nil
+	return &StartResult{Actions: dbActions}, nil
 }
 
 func (o *OpCreateTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

@@ -18,16 +18,16 @@ var (
 	_ Createable = (*OpAlterColumn)(nil)
 )
 
-func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) ([]DBAction, *backfill.Task, error) {
+func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
 	table := s.GetTable(o.Table)
 	if table == nil {
-		return nil, nil, TableDoesNotExistError{Name: o.Table}
+		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 	column := table.GetColumn(o.Column)
 	if column == nil {
-		return nil, nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
 	ops := o.subOperations()
 
@@ -35,7 +35,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	d := duplicatorForOperations(ops, conn, table, column).
 		WithName(column.Name, TemporaryName(o.Column))
 	if err := d.Execute(ctx); err != nil {
-		return nil, nil, fmt.Errorf("failed to duplicate column: %w", err)
+		return nil, fmt.Errorf("failed to duplicate column: %w", err)
 	}
 
 	// Copy the columns from table columns, so we can use it later
@@ -83,15 +83,15 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	var dbActions []DBAction
 	// perform any operation specific start steps
 	for _, op := range ops {
-		actions, bf, err := op.Start(ctx, l, conn, s)
+		startOp, err := op.Start(ctx, l, conn, s)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		task.AddTriggers(bf)
-		dbActions = append(dbActions, actions...)
+		task.AddTriggers(startOp.BackfillTask)
+		dbActions = append(dbActions, startOp.Actions...)
 	}
 
-	return dbActions, task, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 }
 
 func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
