@@ -41,6 +41,11 @@ func (o *OpSetUnique) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 func (o *OpSetUnique) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+
 	// Create a unique constraint using the unique index
 	return []DBAction{NewAddConstraintUsingUniqueIndex(conn, o.Table, o.Name, o.Name)}, nil
 }

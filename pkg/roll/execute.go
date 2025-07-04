@@ -212,25 +212,22 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// execute operations
 	refreshViews := false
+	var actions []migrations.DBAction
 	for _, op := range migration.Operations {
-		actions, err := op.Complete(m.logger, m.pgConn, currentSchema)
+		opActions, err := op.Complete(m.logger, m.pgConn, currentSchema)
 		if err != nil {
 			return fmt.Errorf("unable to collect actions for complete operation: %w", err)
 		}
-
-		coordinator := migrations.NewCoordinator(actions)
-		if err := coordinator.Execute(ctx); err != nil {
-			return fmt.Errorf("unable to execute complete operation: %w", err)
-		}
-
-		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
-		if err != nil {
-			return fmt.Errorf("unable to read schema: %w", err)
-		}
+		actions = append(actions, opActions...)
 
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
 			refreshViews = true
 		}
+	}
+
+	coordinator := migrations.NewCoordinator(actions)
+	if err := coordinator.Execute(ctx); err != nil {
+		return fmt.Errorf("unable to execute complete operation: %w", err)
 	}
 
 	// recreate views for the new version (if some operations require it, ie SQL)

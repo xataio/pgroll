@@ -53,6 +53,20 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+	column := table.GetColumn(o.Column)
+	if column == nil {
+		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
+	}
+
+	// Ensure the column is not nullable
+	column.Nullable = false
+	// Remove the NOT NULL constraint
+	delete(table.CheckConstraints, NotNullConstraintName(o.Column))
+
 	return []DBAction{
 		// Validate the NOT NULL constraint on the old column.
 		// The constraint must be valid because:

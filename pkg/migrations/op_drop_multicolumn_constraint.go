@@ -96,10 +96,10 @@ func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.S
 	l.LogOperationComplete(o)
 
 	table := s.GetTable(o.Table)
+	table.Name = o.Table
 
 	dbActions := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		column := table.GetColumn(columnName)
 		dbActions = append(dbActions,
 			NewDropFunctionAction(conn,
 				backfill.TriggerFunctionName(o.Table, columnName),
@@ -107,7 +107,7 @@ func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.S
 			NewAlterSequenceOwnerAction(conn, o.Table, columnName, TemporaryName(columnName)),
 			NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
 			NewDropColumnAction(conn, o.Table, columnName),
-			NewRenameDuplicatedColumnAction(conn, table, column.Name),
+			NewRenameDuplicatedColumnAction(conn, table, columnName),
 		)
 	}
 
