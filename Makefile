@@ -9,8 +9,11 @@ clean:
 format:
 	# Format JSON schema
 	docker run --rm -v $$PWD/schema.json:/mnt/schema.json node:alpine npx prettier /mnt/schema.json --parser json --tab-width 2 --single-quote --trailing-comma all --no-semi --arrow-parens always --print-width 120 --write
+	#
 	# Format embedded SQL
-	docker run --rm -v $$PWD/pkg/state/init.sql:/data/init.sql backplane/pgformatter --inplace /data/init.sql
+	# Removed because backplane/pgformatter:latest is broken; only latest tag is available so no way to pin to an older version.
+	# docker run --rm -v $$PWD/pkg/state/init.sql:/data/init.sql backplane/pgformatter --inplace /data/init.sql
+	
 	# Run gofumpt
 	gofumpt -w .
 
