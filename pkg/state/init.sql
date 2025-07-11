@@ -1,6 +1,125 @@
 -- SPDX-License-Identifier: Apache-2.0
 CREATE SCHEMA IF NOT EXISTS placeholder;
 
+CREATE OR REPLACE FUNCTION placeholder.raw_migration ()
+    RETURNS event_trigger
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path = placeholder, pg_catalog, pg_temp
+    AS $$
+DECLARE
+    schemaname text;
+    migration_id text;
+BEGIN
+    -- Ignore schema changes made by pgroll
+    IF (pg_catalog.current_setting('pgroll.no_inferred_migrations', TRUE) = 'TRUE') THEN
+        RETURN;
+    END IF;
+    IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN
+        -- Take the schema name from the drop schema command
+        SELECT
+            object_identity INTO schemaname
+        FROM
+            pg_event_trigger_dropped_objects ();
+    ELSIF tg_event = 'sql_drop'
+            AND tg_tag != 'ALTER TABLE' THEN
+            -- Guess the schema from drop commands
+            SELECT
+                schema_name INTO schemaname
+            FROM
+                pg_catalog.pg_event_trigger_dropped_objects ()
+            WHERE
+                schema_name IS NOT NULL;
+    ELSIF tg_event = 'ddl_command_end' THEN
+        -- Guess the schema from ddl commands, ignore migrations that touch several schemas
+        IF (
+            SELECT
+                pg_catalog.count(DISTINCT schema_name)
+            FROM
+                pg_catalog.pg_event_trigger_ddl_commands ()
+            WHERE
+                schema_name IS NOT NULL) > 1 THEN
+            RETURN;
+        END IF;
+        IF tg_tag = 'CREATE SCHEMA' THEN
+            SELECT
+                object_identity INTO schemaname
+            FROM
+                pg_event_trigger_ddl_commands ();
+        ELSE
+            SELECT
+                schema_name INTO schemaname
+            FROM
+                pg_catalog.pg_event_trigger_ddl_commands ()
+            WHERE
+                schema_name IS NOT NULL;
+        END IF;
+    END IF;
+    IF schemaname IS NULL THEN
+        RETURN;
+    END IF;
+    -- Ignore migrations done during a migration period
+    IF placeholder.is_active_migration_period (schemaname) THEN
+        RETURN;
+    END IF;
+    -- Remove any duplicate inferred migrations with the same timestamp for this
+    -- schema. We assume such migrations are multi-statement batched migrations
+    -- and we are only interested in the last one in the batch.
+    DELETE FROM placeholder.migrations
+    WHERE SCHEMA = schemaname
+        AND created_at = CURRENT_TIMESTAMP
+        AND migration_type = 'inferred'
+        AND migration -> 'operations' -> 0 -> 'sql' ->> 'up' = current_query();
+    -- Someone did a schema change without pgroll, include it in the history
+    -- Get the latest non-inferred migration name with microsecond timestamp for ordering
+    WITH latest_non_inferred AS (
+        SELECT
+            name
+        FROM
+            placeholder.migrations
+        WHERE
+            SCHEMA = schemaname
+            AND migration_type != 'inferred'
+        ORDER BY
+            created_at DESC
+        LIMIT 1
+)
+SELECT
+    INTO migration_id CASE WHEN EXISTS (
+        SELECT
+            1
+        FROM
+            latest_non_inferred) THEN
+        pg_catalog.format('%s_%s', (
+                SELECT
+                    name
+                FROM latest_non_inferred), pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
+    ELSE
+        pg_catalog.format('00000_initial_%s', pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
+    END;
+    INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
+        VALUES (schemaname, migration_id, pg_catalog.json_build_object('version_schema', 'sql_' || substring(md5(random()::text), 1, 8), 'operations', (
+                SELECT
+                    pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
+            placeholder.read_schema (schemaname),
+            TRUE,
+            placeholder.latest_migration (schemaname),
+            'inferred',
+            statement_timestamp(),
+            statement_timestamp());
+END;
+$$;
+
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
+
+CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
+    EXECUTE FUNCTION placeholder.raw_migration ();
+
+DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
+
+CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
+    EXECUTE FUNCTION placeholder.raw_migration ();
+
 CREATE TABLE IF NOT EXISTS placeholder.migrations (
     schema NAME NOT NULL,
     name text NOT NULL,
@@ -358,123 +477,4 @@ BEGIN
     RETURN tables;
 END;
 $$;
-
-CREATE OR REPLACE FUNCTION placeholder.raw_migration ()
-    RETURNS event_trigger
-    LANGUAGE plpgsql
-    SECURITY DEFINER
-    SET search_path = placeholder, pg_catalog, pg_temp
-    AS $$
-DECLARE
-    schemaname text;
-    migration_id text;
-BEGIN
-    -- Ignore schema changes made by pgroll
-    IF (pg_catalog.current_setting('pgroll.no_inferred_migrations', TRUE) = 'TRUE') THEN
-        RETURN;
-    END IF;
-    IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN
-        -- Take the schema name from the drop schema command
-        SELECT
-            object_identity INTO schemaname
-        FROM
-            pg_event_trigger_dropped_objects ();
-    ELSIF tg_event = 'sql_drop'
-            AND tg_tag != 'ALTER TABLE' THEN
-            -- Guess the schema from drop commands
-            SELECT
-                schema_name INTO schemaname
-            FROM
-                pg_catalog.pg_event_trigger_dropped_objects ()
-            WHERE
-                schema_name IS NOT NULL;
-    ELSIF tg_event = 'ddl_command_end' THEN
-        -- Guess the schema from ddl commands, ignore migrations that touch several schemas
-        IF (
-            SELECT
-                pg_catalog.count(DISTINCT schema_name)
-            FROM
-                pg_catalog.pg_event_trigger_ddl_commands ()
-            WHERE
-                schema_name IS NOT NULL) > 1 THEN
-            RETURN;
-        END IF;
-        IF tg_tag = 'CREATE SCHEMA' THEN
-            SELECT
-                object_identity INTO schemaname
-            FROM
-                pg_event_trigger_ddl_commands ();
-        ELSE
-            SELECT
-                schema_name INTO schemaname
-            FROM
-                pg_catalog.pg_event_trigger_ddl_commands ()
-            WHERE
-                schema_name IS NOT NULL;
-        END IF;
-    END IF;
-    IF schemaname IS NULL THEN
-        RETURN;
-    END IF;
-    -- Ignore migrations done during a migration period
-    IF placeholder.is_active_migration_period (schemaname) THEN
-        RETURN;
-    END IF;
-    -- Remove any duplicate inferred migrations with the same timestamp for this
-    -- schema. We assume such migrations are multi-statement batched migrations
-    -- and we are only interested in the last one in the batch.
-    DELETE FROM placeholder.migrations
-    WHERE SCHEMA = schemaname
-        AND created_at = CURRENT_TIMESTAMP
-        AND migration_type = 'inferred'
-        AND migration -> 'operations' -> 0 -> 'sql' ->> 'up' = current_query();
-    -- Someone did a schema change without pgroll, include it in the history
-    -- Get the latest non-inferred migration name with microsecond timestamp for ordering
-    WITH latest_non_inferred AS (
-        SELECT
-            name
-        FROM
-            placeholder.migrations
-        WHERE
-            SCHEMA = schemaname
-            AND migration_type != 'inferred'
-        ORDER BY
-            created_at DESC
-        LIMIT 1
-)
-SELECT
-    INTO migration_id CASE WHEN EXISTS (
-        SELECT
-            1
-        FROM
-            latest_non_inferred) THEN
-        pg_catalog.format('%s_%s', (
-                SELECT
-                    name
-                FROM latest_non_inferred), pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
-    ELSE
-        pg_catalog.format('00000_initial_%s', pg_catalog.to_char(pg_catalog.clock_timestamp(), 'YYYYMMDDHH24MISSUS'))
-    END;
-    INSERT INTO placeholder.migrations (schema, name, migration, resulting_schema, done, parent, migration_type, created_at, updated_at)
-        VALUES (schemaname, migration_id, pg_catalog.json_build_object('version_schema', 'sql_' || substring(md5(random()::text), 1, 8), 'operations', (
-                SELECT
-                    pg_catalog.json_agg(pg_catalog.json_build_object('sql', pg_catalog.json_build_object('up', pg_catalog.current_query()))))),
-            placeholder.read_schema (schemaname),
-            TRUE,
-            placeholder.latest_migration (schemaname),
-            'inferred',
-            statement_timestamp(),
-            statement_timestamp());
-END;
-$$;
-
-DROP EVENT TRIGGER IF EXISTS pg_roll_handle_ddl;
-
-CREATE EVENT TRIGGER pg_roll_handle_ddl ON ddl_command_end
-    EXECUTE FUNCTION placeholder.raw_migration ();
-
-DROP EVENT TRIGGER IF EXISTS pg_roll_handle_drop;
-
-CREATE EVENT TRIGGER pg_roll_handle_drop ON sql_drop
-    EXECUTE FUNCTION placeholder.raw_migration ();
 
