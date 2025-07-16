@@ -35,6 +35,10 @@ func (o *OpRenameColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sch
 func (o *OpRenameColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	table := s.GetTable(o.Table)
+	table.RenameColumn(o.From, o.To)
+	table.RenameConstraintColumns(o.From, o.To)
+
 	return []DBAction{
 		NewRenameColumnAction(conn, o.Table, o.From, o.To),
 	}, nil

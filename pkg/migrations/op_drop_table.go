@@ -35,6 +35,8 @@ func (o *OpDropTable) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 func (o *OpDropTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	s.RemoveTable(DeletionName(o.Name))
+
 	return []DBAction{
 		// Perform the actual deletion of the soft-deleted table
 		NewDropTableAction(conn, DeletionName(o.Name)),

@@ -66,9 +66,20 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *sc
 func (o *OpSetForeignKey) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	table := s.GetTable(o.Table)
+	if table == nil {
+		return nil, TableDoesNotExistError{Name: o.Table}
+	}
+	table.ForeignKeys[o.References.Name] = &schema.ForeignKey{
+		Name:              o.References.Name,
+		Columns:           []string{o.Column},
+		ReferencedTable:   o.References.Table,
+		ReferencedColumns: []string{o.References.Column},
+	}
+
 	return []DBAction{
 		// Validate the foreign key constraint
-		NewValidateConstraintAction(conn, o.Table, o.References.Name),
+		NewValidateConstraintAction(conn, table.Name, o.References.Name),
 	}, nil
 }
 

@@ -20,6 +20,8 @@ func (o *OpRenameTable) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 func (o *OpRenameTable) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
 	l.LogOperationComplete(o)
 
+	s.RenameTable(o.From, o.To)
+
 	return []DBAction{NewRenameTableAction(conn, o.From, o.To)}, nil
 }
 

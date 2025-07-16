@@ -161,12 +161,13 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
+	table.Name = o.Table
 	for _, col := range o.Columns {
 		column := table.GetColumn(col)
 		if column == nil {
 			return nil, ColumnDoesNotExistError{Table: o.Table, Name: col}
 		}
-		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, column.Name))
+		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, col))
 	}
 	dbActions = append(dbActions,
 		o.removeTriggers(conn),
