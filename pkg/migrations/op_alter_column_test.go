@@ -836,6 +836,13 @@ func TestAlterPrimaryKeyColumns(t *testing.T) {
 							Up:     "CAST(id AS bigint)",
 							Down:   "SELECT CASE WHEN id < 2147483647 THEN CAST(id AS int) ELSE 0 END",
 						},
+						&migrations.OpAlterColumn{
+							Table:  "people",
+							Column: "manages",
+							Type:   ptr("bigint"),
+							Up:     "CAST(manages AS bigint)",
+							Down:   "SELECT CASE WHEN manages < 2147483647 THEN CAST(manages AS int) ELSE 0 END",
+						},
 					},
 				},
 			},
@@ -866,6 +873,8 @@ func TestAlterPrimaryKeyColumns(t *testing.T) {
 					"id":   bigint,
 					"name": "pgroll v2 release party",
 				})
+
+				// Inserting a row with a bigint value into the new column should succeed
 				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
 					"id":      "2",
 					"name":    "bob",
