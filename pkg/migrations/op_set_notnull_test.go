@@ -799,7 +799,7 @@ func TestSetNotNullInMultiOperationMigrations(t *testing.T) {
 				}, rows)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
-				// Tht table has been dropped
+				// The table has been dropped
 				TableMustNotExist(t, db, schema, "items")
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {

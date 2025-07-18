@@ -301,7 +301,7 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		// Specifying storage options is not supported
 		"CREATE TABLE foo(a int) WITH (fillfactor=70)",
 
-		// ON COMMMIT options are not supported. These options are syntactically
+		// ON COMMIT options are not supported. These options are syntactically
 		// valid for all tables, but Postgres will reject them for non-temporary
 		// tables. We err on the side of caution and reject them for all tables.
 		"CREATE TABLE foo(a int) ON COMMIT DROP",

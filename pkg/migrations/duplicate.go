@@ -118,7 +118,7 @@ func (d *duplicator) Execute(ctx context.Context) error {
 		}
 	}
 
-	// Generate SQL to duplicate any check constraints on the columns. This may faile
+	// Generate SQL to duplicate any check constraints on the columns. This may fail
 	// if the check constraint is not valid for the new column type, in which case
 	// the error is ignored.
 	for _, sql := range d.stmtBuilder.duplicateCheckConstraints(d.withoutConstraint, colNames...) {
