@@ -87,7 +87,7 @@ func TestWithUseVersionSchemaOption(t *testing.T) {
 
 	t.Run("roll instance reports that it does not use version schema", func(t *testing.T) {
 		testutils.WithMigratorInSchemaAndConnectionToContainerWithOptions(t, "public", opts, func(mig *roll.Roll, db *sql.DB) {
-			// The roll instance correctly reports tht it does not use version schema
+			// The roll instance correctly reports that it does not use version schema
 			require.False(t, mig.UseVersionSchema())
 		})
 	})
