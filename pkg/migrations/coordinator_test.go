@@ -77,10 +77,10 @@ func TestCoordinator(t *testing.T) {
 		"drop default value on column": {
 			actions: []DBAction{
 				NewCreateTableAction(nil, "test_table", "", ""),
-				NewAddColumnAction(nil, "column1", Column{Default: ptr("default_value")}, false),
+				NewAddColumnAction(nil, "test_table1", Column{Name: "column1", Default: ptr("default_value")}, false),
 				NewDropDefaultValueAction(nil, "test_table", "column1"),
 			},
-			expectedOrder: []string{"create_table_test_table", "add_column_column1_", "drop_default_test_table_column1"},
+			expectedOrder: []string{"create_table_test_table", "add_column_test_table1_column1", "drop_default_test_table_column1"},
 		},
 		"alter column multiple times rollback phase": {
 			actions: []DBAction{
