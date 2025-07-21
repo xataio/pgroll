@@ -57,7 +57,7 @@ func TestCoordinator(t *testing.T) {
 				"rename_duplicated_t1_column2",
 			},
 		},
-		"add same column multiple times to same column": {
+		"add same column multiple times to same table": {
 			actions: []DBAction{
 				NewCreateTableAction(nil, "test_table", "", ""),
 				NewAddColumnAction(nil, "t1", Column{Name: "column1"}, false),
