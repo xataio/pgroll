@@ -236,7 +236,7 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	return total, nil
 }
 
-// getIdentityColumn will return a column suitable for use in a backfill operation.
+// getIdentityColumns will return a column suitable for use in a backfill operation.
 func getIdentityColumns(table *schema.Table) []string {
 	if len(table.PrimaryKey) != 0 {
 		return table.PrimaryKey

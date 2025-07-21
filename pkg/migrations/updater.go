@@ -46,7 +46,7 @@ func (u *FileUpdater) Update(rawMigration *RawMigration) (*Migration, error) {
 	return ParseMigration(rawMigration)
 }
 
-// updateCreateIndexColumnsList transforms create_index's columns attribute from a list into a map
+// UpdateCreateIndexColumnsList transforms create_index's columns attribute from a list into a map
 // columns: [name] -> columns: name: {}
 // breaking change was released in v0.10.0
 // PR: https://github.com/xataio/pgroll/pull/697

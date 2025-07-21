@@ -27,7 +27,7 @@ type ConstraintSQLWriter struct {
 	Tablespace        string
 }
 
-// WriterUnique generates a unique constraint.
+// WriteUnique generates a unique constraint.
 // Supported options:
 // - nullsNotDistinct: if true, NULL values are considered equal.
 // - includeColumns: additional columns to include in the index.
