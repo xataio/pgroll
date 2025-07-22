@@ -93,7 +93,7 @@ func (s *State) VersionCompatibility(ctx context.Context) (VersionCompatibility,
 	return VersionCompatVersionSchemaEqual, nil
 }
 
-// schemaVersion retrieves the version stored in the pgroll_version table.
+// SchemaVersion retrieves the version stored in the pgroll_version table.
 func (s *State) SchemaVersion(ctx context.Context) (string, error) {
 	query := fmt.Sprintf("SELECT version FROM %s.pgroll_version ORDER BY initialized_at DESC LIMIT 1",
 		pq.QuoteIdentifier(s.schema))
