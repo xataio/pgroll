@@ -109,16 +109,15 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 			continue
 		}
 
-		for _, action := range startOp.Actions {
-			if err := action.Execute(ctx); err != nil {
-				errRollback := m.Rollback(ctx)
-				if errRollback != nil {
-					return nil, errors.Join(
-						fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
-						fmt.Errorf("unable to roll back failed operation: %w", errRollback))
-				}
-				return nil, fmt.Errorf("failed to start %q migration, changes rolled back: %w", migration.Name, err)
+		coordinator := migrations.NewCoordinator(startOp.Actions)
+		if err := coordinator.Execute(ctx); err != nil {
+			errRollback := m.Rollback(ctx)
+			if errRollback != nil {
+				return nil, errors.Join(
+					fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
+					fmt.Errorf("unable to roll back failed operation: %w", errRollback))
 			}
+			return nil, fmt.Errorf("failed to start %q migration, changes rolled back: %w", migration.Name, err)
 		}
 		// refresh schema when the op is isolated and requires a refresh (for example raw sql)
 		// we don't want to refresh the schema if the operation is not isolated as it would
@@ -212,26 +211,22 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	// execute operations
 	refreshViews := false
+	var actions []migrations.DBAction
 	for _, op := range migration.Operations {
-		actions, err := op.Complete(m.logger, m.pgConn, currentSchema)
+		opActions, err := op.Complete(m.logger, m.pgConn, currentSchema)
 		if err != nil {
 			return fmt.Errorf("unable to collect actions for complete operation: %w", err)
 		}
-
-		for _, action := range actions {
-			if err := action.Execute(ctx); err != nil {
-				return fmt.Errorf("unable to execute complete operation: %w", err)
-			}
-		}
-
-		currentSchema, err = m.state.ReadSchema(ctx, m.schema)
-		if err != nil {
-			return fmt.Errorf("unable to read schema: %w", err)
-		}
+		actions = append(actions, opActions...)
 
 		if _, ok := op.(migrations.RequiresSchemaRefreshOperation); ok {
 			refreshViews = true
 		}
+	}
+
+	coordinator := migrations.NewCoordinator(actions)
+	if err := coordinator.Execute(ctx); err != nil {
+		return fmt.Errorf("unable to execute complete operation: %w", err)
 	}
 
 	// recreate views for the new version (if some operations require it, ie SQL)
@@ -303,10 +298,9 @@ func (m *Roll) Rollback(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("unable to collect actions for rollback operation: %w", err)
 		}
-		for _, a := range actions {
-			if err := a.Execute(ctx); err != nil {
-				return fmt.Errorf("unable to execute rollback operation: %w", err)
-			}
+		coordinator := migrations.NewCoordinator(actions)
+		if err := coordinator.Execute(ctx); err != nil {
+			return fmt.Errorf("unable to execute rollback operation: %w", err)
 		}
 	}
 

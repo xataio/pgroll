@@ -109,7 +109,6 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 		dbActions = append(dbActions, actions...)
 	}
 
-	// Rename the new column to the old column name
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
@@ -118,16 +117,18 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	if column == nil {
 		return nil, ColumnDoesNotExistError{Table: o.Table, Name: o.Column}
 	}
+	table.Name = o.Table
 
+	// Rename the new column to the old column name
 	return append(dbActions, []DBAction{
-		NewAlterSequenceOwnerAction(conn, o.Table, o.Column, TemporaryName(o.Column)),
-		NewDropColumnAction(conn, o.Table, o.Column),
+		NewAlterSequenceOwnerAction(conn, table.Name, column.Name, TemporaryName(column.Name)),
+		NewDropColumnAction(conn, table.Name, o.Column),
 		NewDropFunctionAction(conn,
 			backfill.TriggerFunctionName(o.Table, o.Column),
 			backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
 		),
 		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
-		NewRenameDuplicatedColumnAction(conn, table, column.Name),
+		NewRenameDuplicatedColumnAction(conn, table, o.Column),
 	}...), nil
 }
 
