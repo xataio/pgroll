@@ -207,7 +207,7 @@ func TestMissingMigrations(t *testing.T) {
 			require.NoError(t, err)
 
 			// Assert that no migrations are missing in the local directory; the
-			// unamed migration uses the filename as the name
+			// unnamed migration uses the filename as the name
 			require.Len(t, migs, 0)
 		})
 	})
