@@ -316,7 +316,6 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 			Columns: []string{asName},
 		}
 	}
-	fmt.Println(sql)
 
 	return sql
 }

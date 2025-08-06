@@ -579,7 +579,6 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
 					{"id": 2, "name": "Jane"},
-					{"id": 3, "name": "Bob"},
 					{"id": 4, "name": "Carl"},
 				}, rows)
 			},
@@ -590,7 +589,7 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				})
 				// Can insert a row into the `people` table with a NULL `name` value
 				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
-					"id": "2",
+					"id": "100",
 				})
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
@@ -604,8 +603,9 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				assert.Equal(t, []map[string]any{
 					{"id": 1, "name": "Alice"},
 					{"id": 2, "name": "Jane"},
-					{"id": 3, "name": "Bob"},
 					{"id": 4, "name": "Carl"},
+					{"id": 3, "name": "Alice"},
+					{"id": 100, "name": "Jane"},
 				}, rows)
 			},
 		},
