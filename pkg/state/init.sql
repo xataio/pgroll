@@ -465,7 +465,20 @@ BEGIN
                                                 AND fk_constraint.contype = 'f' GROUP BY fk_constraint.conrelid, fk_constraint.conname, fk_constraint.confrelid, fk_cl.relname, fk_constraint.confkey, fk_constraint.confmatchtype, fk_constraint.confdeltype, fk_constraint.confupdtype) AS fk_info
                                             INNER JOIN pg_attribute ref_attr ON ref_attr.attrelid = fk_info.confrelid
                                                 AND ref_attr.attnum = ANY (fk_info.confkey) -- join the columns of the referenced table
-                                        GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confmatchtype, fk_info.confdeltype, fk_info.confupdtype, fk_info.relname) AS fk_details)))), '{}'::json)
+                                        GROUP BY fk_info.conname, fk_info.conrelid, fk_info.columns, fk_info.confrelid, fk_info.confmatchtype, fk_info.confdeltype, fk_info.confupdtype, fk_info.relname) AS fk_details), 'referencedBy', (
+                                    SELECT
+                                        json_object_agg(ref_table, ref_constraints)
+                                    FROM (
+                                        SELECT
+                                            ref_cl.relname AS ref_table,
+                                            json_agg(json_build_object('name', ref_constraint.conname, 'table', ref_cl.relname, 'definition', pg_get_constraintdef(ref_constraint.oid))) AS ref_constraints
+                                        FROM pg_constraint AS ref_constraint
+                                        INNER JOIN pg_class ref_cl ON ref_constraint.conrelid = ref_cl.oid
+                                        WHERE
+                                            ref_constraint.confrelid = t.oid
+                                            AND ref_constraint.contype = 'f'
+                                        GROUP BY ref_cl.relname
+                                    ) AS ref_fk)))), '{}'::json)
                     FROM pg_class AS t
                     INNER JOIN pg_namespace AS ns ON t.relnamespace = ns.oid
                     LEFT JOIN pg_description AS descr ON t.oid = descr.objoid

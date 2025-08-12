@@ -62,8 +62,23 @@ type Table struct {
 	// ExcludeConstraints is a map of all exclude constraints defined on the table
 	ExcludeConstraints map[string]*ExcludeConstraint `json:"excludeConstraints"`
 
+	// ReferencedBy is a map of table names that reference this table by foreign key
+	// The key is the name of the referencing table, and the value is a slice of foreign key references
+	ReferencedBy map[string][]*ReferencedBy `json:"referencedBy"`
+
 	// Whether or not the table has been deleted in the virtual schema
 	Deleted bool `json:"-"`
+}
+
+type ReferencedBy struct {
+	// Name is the name of the foreign key constraint
+	Name string `json:"name"`
+
+	// Table is the name of the table that is referenced
+	Table string `json:"table"`
+
+	// Definition is the definition of the foreign key constraint
+	Definition string `json:"definition"`
 }
 
 // Column represents a column in a table

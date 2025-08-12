@@ -12,6 +12,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/xataio/pgroll/pkg/db"
+	"github.com/xataio/pgroll/pkg/schema"
 )
 
 // DBAction is an interface for common database actions
@@ -940,4 +941,55 @@ func (a *setReplicaIdentityAction) Execute(ctx context.Context) error {
 		pq.QuoteIdentifier(a.table),
 		identitySQL))
 	return err
+}
+
+type alterReferencesAction struct {
+	conn         db.DB
+	id           string
+	referencedBy map[string][]*schema.ReferencedBy
+	table        string
+	column       string
+}
+
+func NewAlterReferencesAction(conn db.DB, referencedBy map[string][]*schema.ReferencedBy, table, column string) *alterReferencesAction {
+	return &alterReferencesAction{
+		conn:         conn,
+		id:           fmt.Sprintf("alter_references_%s_%s", table, column),
+		table:        table,
+		column:       column,
+		referencedBy: referencedBy,
+	}
+}
+
+func (a *alterReferencesAction) ID() string {
+	return a.id
+}
+
+func (a *alterReferencesAction) Execute(ctx context.Context) error {
+	for table, constraints := range a.referencedBy {
+		for _, constraint := range constraints {
+			// Drop the existing constraint
+			_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT %s",
+				pq.QuoteIdentifier(table),
+				pq.QuoteIdentifier(constraint.Name),
+			))
+			if err != nil {
+				return fmt.Errorf("dropping constraint %s on %s: %w", constraint.Name, table, err)
+			}
+
+			// Recreate the constraint with the table and new column
+			newDef := strings.ReplaceAll(constraint.Definition, a.column, pq.QuoteIdentifier(TemporaryName(a.column)))
+			newDef = strings.ReplaceAll(newDef, a.table, pq.QuoteIdentifier(a.table))
+			_, err = a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s %s",
+				pq.QuoteIdentifier(table),
+				pq.QuoteIdentifier(constraint.Name),
+				newDef,
+			))
+			if err != nil {
+				return fmt.Errorf("altering references for %s.%s: %w", a.table, a.column, err)
+			}
+
+		}
+	}
+	return nil
 }

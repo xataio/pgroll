@@ -778,6 +778,138 @@ func TestAlterPrimaryKeyColumns(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "alter a single primary key column when the column is used in a foreign key constraint",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "events",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+						&migrations.OpCreateTable{
+							Name: "people",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+								{
+									Name:     "manages",
+									Type:     "serial",
+									Nullable: false,
+									References: &migrations.ForeignKeyReference{
+										Table:  "events",
+										Column: "id",
+										Name:   "person_manages_event_fk",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "events",
+							Column: "id",
+							Type:   ptr("bigint"),
+							Up:     "CAST(id AS bigint)",
+							Down:   "SELECT CASE WHEN id < 2147483647 THEN CAST(id AS int) ELSE 0 END",
+						},
+						&migrations.OpAlterColumn{
+							Table:  "people",
+							Column: "manages",
+							Type:   ptr("bigint"),
+							Up:     "CAST(manages AS bigint)",
+							Down:   "SELECT CASE WHEN manages < 2147483647 THEN CAST(manages AS int) ELSE 0 END",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ValidatedForeignKeyMustExist(t, db, schema, "people", "person_manages_event_fk")
+
+				bigint := "31474836471" // A value larger than int can hold
+
+				// Inserting a row with integer id into the old schema should succeed
+				MustInsert(t, db, schema, "01_create_table", "events", map[string]string{
+					"id":   "1",
+					"name": "pgroll v1 release party",
+				})
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id":      "1",
+					"name":    "alice",
+					"manages": "1",
+				})
+				// Inserting a row with integer bigint id into the old schema should fail
+				MustNotInsert(t, db, schema, "01_create_table", "events", map[string]string{
+					"id":   bigint,
+					"name": "pgroll v2 release party",
+				}, testutils.NumericValueOutOfRangeErrorCode)
+
+				// Inserting a row with bigint id into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id":   bigint,
+					"name": "pgroll v2 release party",
+				})
+
+				// Inserting a row with a bigint value into the new column should succeed
+				MustInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id":      "2",
+					"name":    "bob",
+					"manages": bigint,
+				})
+				// Inserting a row into the `people` table with a `manages` field that
+				// violates the FK constraint fails
+				MustNotInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id":      "10",
+					"name":    "alice",
+					"manages": "2",
+				}, testutils.FKViolationErrorCode)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ValidatedForeignKeyMustExist(t, db, schema, "people", "person_manages_event_fk")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				PrimaryKeyConstraintMustExist(t, db, schema, "people", "people_pkey")
+				ValidatedForeignKeyMustExist(t, db, schema, "people", "person_manages_event_fk")
+
+				// Inserting a row with integer bigint into the new schema should succeed
+				MustInsert(t, db, schema, "02_alter_column", "events", map[string]string{
+					"id":   "31474836472",
+					"name": "pgroll v3 release party",
+				})
+				// Inserting a row into the `people` table with a `manages` field that
+				// violates the FK constraint fails
+				MustNotInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id":      "3",
+					"name":    "carol",
+					"manages": "2",
+				}, testutils.FKViolationErrorCode)
+			},
+		},
 	})
 }
 
