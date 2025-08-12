@@ -25,22 +25,6 @@ $ ls migrations/
 ...
 ```
 
-The command takes an optional `--with-prefixes` flag which will write each filename prefixed with its position in the schema history:
-
-```
-$ ls migrations/
-
-0001_01_create_tables.yaml
-0002_02_create_another_table.yaml
-0003_03_add_column_to_products.yaml
-0004_04_rename_table.yaml
-0005_05_sql.yaml
-0006_06_add_column_to_sql_table.yaml
-...
-```
-
-The `--with-prefixes` flag ensures that files are sorted lexicographically by their time of application.
-
 Use the `--json` flag to pull migrations in JSON format rather than YAML.
 
 If the target directory given to `pgroll pull` does not exist, `pgroll pull` will create it.
