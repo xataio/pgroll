@@ -505,6 +505,110 @@ func TestAlterColumnMultipleSubOperations(t *testing.T) {
 				}, rows)
 			},
 		},
+		{
+			name: "can alter a column multiple times: add check and not null",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "people",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "name",
+									Type:     "varchar(255)",
+									Nullable: true,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "people",
+							Column: "name",
+							Up:     "INITCAP(name)",
+							Down:   "name",
+							Check: &migrations.CheckConstraint{
+								Name:       "name_capitalized",
+								Constraint: "name ~ '^[A-Z].*'",
+							},
+						},
+						&migrations.OpAlterColumn{
+							Table:    "people",
+							Column:   "name",
+							Up:       "SELECT CASE WHEN name IS NULL THEN 'Jane' ELSE name END",
+							Down:     "name",
+							Nullable: ptr(false),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the `people` table with a lowercase `name` value
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"name": "alice",
+				})
+				// Can insert a row into the `people` table with a NULL `name` value
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id": "2",
+				})
+				// Cannot insert a row into the `people` table with an lowercase `name` value
+				MustNotInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"name": "bob",
+				}, testutils.CheckViolationErrorCode)
+				// Can insert a row into the `people` table with a missing `name` value
+				MustNotInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"id": "4",
+				}, testutils.CheckViolationErrorCode)
+				// Can insert a row into the `people` table with a capitalized `name` value
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id":   "4",
+					"name": "Carl",
+				})
+
+				// The version of the `people` table in the new schema has the expected rows.
+				rows := MustSelect(t, db, schema, "02_alter_column", "people")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "Alice"},
+					{"id": 2, "name": "Jane"},
+					{"id": 4, "name": "Carl"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// Can insert a row into the `people` table with a lowercase `name` value
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"name": "alice",
+				})
+				// Can insert a row into the `people` table with a NULL `name` value
+				MustInsert(t, db, schema, "01_create_table", "people", map[string]string{
+					"id": "100",
+				})
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// Inserting a row into the `people` table with a NULL `manages` value fails
+				MustNotInsert(t, db, schema, "02_alter_column", "people", map[string]string{
+					"name": "carl",
+				}, testutils.CheckViolationErrorCode)
+
+				// The `people` table has the expected rows.
+				rows := MustSelect(t, db, schema, "02_alter_column", "people")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "Alice"},
+					{"id": 2, "name": "Jane"},
+					{"id": 4, "name": "Carl"},
+					{"id": 3, "name": "Alice"},
+					{"id": 100, "name": "Jane"},
+				}, rows)
+			},
+		},
 	})
 }
 

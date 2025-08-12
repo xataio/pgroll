@@ -172,7 +172,7 @@ func (d *duplicator) Execute(ctx context.Context) error {
 func (d *duplicatorStmtBuilder) duplicateCheckConstraints(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.CheckConstraints))
 	for _, cc := range d.table.CheckConstraints {
-		if slices.Contains(withoutConstraint, cc.Name) {
+		if slices.Contains(withoutConstraint, cc.Name) || IsDuplicatedName(cc.Name) {
 			continue
 		}
 		if duplicatedConstraintColumns := d.duplicatedConstraintColumns(cc.Columns, colNames...); len(duplicatedConstraintColumns) > 0 {
@@ -214,7 +214,7 @@ func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint
 func (d *duplicatorStmtBuilder) duplicateIndexes(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.Indexes))
 	for _, idx := range d.table.Indexes {
-		if slices.Contains(withoutConstraint, idx.Name) {
+		if slices.Contains(withoutConstraint, idx.Name) || IsDuplicatedName(idx.Name) {
 			continue
 		}
 		if _, ok := d.table.UniqueConstraints[idx.Name]; ok && idx.Unique {
@@ -286,8 +286,8 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 	withType string,
 ) string {
 	const (
-		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN %s %s`
-		cAddCheckConstraintSQL = `ADD CONSTRAINT %s %s NOT VALID`
+		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s %s`
+		cAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
 	)
 
 	// Generate SQL to duplicate the column's name and type
@@ -299,10 +299,22 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 	// Generate SQL to add an unchecked NOT NULL constraint if the original column
 	// is NOT NULL. The constraint will be validated on migration completion.
 	if !column.Nullable && !withoutNotNull {
-		sql += fmt.Sprintf(", "+cAddCheckConstraintSQL,
-			pq.QuoteIdentifier(DuplicationName(NotNullConstraintName(column.Name))),
+		constraintName := DuplicationName(NotNullConstraintName(column.Name))
+		if _, ok := d.table.CheckConstraints[constraintName]; ok {
+			return sql // Skip if the constraint already exists
+		}
+		sql += fmt.Sprintf("; "+cAddCheckConstraintSQL,
+			pq.QuoteIdentifier(d.table.Name),
+			pq.QuoteIdentifier(constraintName),
 			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(asName)),
 		)
+		if d.table.CheckConstraints == nil {
+			d.table.CheckConstraints = make(map[string]*schema.CheckConstraint)
+		}
+		d.table.CheckConstraints[constraintName] = &schema.CheckConstraint{
+			Name:    constraintName,
+			Columns: []string{asName},
+		}
 	}
 
 	return sql
