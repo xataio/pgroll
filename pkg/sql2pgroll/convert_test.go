@@ -165,7 +165,7 @@ SECURITY DEFINER`,
 			},
 			expectedErr: false,
 		},
-		"multiple multiline statments with comments": {
+		"multiple multiline statements with comments": {
 			sql: `DROP TYPE t1; -- drop type t1
 DROP INDEX ixd1; -- drop my index
 `,

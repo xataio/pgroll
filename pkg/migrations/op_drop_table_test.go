@@ -308,7 +308,7 @@ func TestDropTableInMultiOperationMigrations(t *testing.T) {
 					"name": "apples",
 				})
 
-				// There is no soft-deleted version of thte items table
+				// There is no soft-deleted version of the items table
 				TableMustNotExist(t, db, schema, migrations.DeletionName("items"))
 			},
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
