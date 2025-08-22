@@ -233,7 +233,7 @@ LANGUAGE SQL;
 -- previous version schema, and so on.
 -- Only version schemas that exist in the database are considered; migrations
 -- without version schema (such as inferred migrations) are ignored.
-CREATE OR REPLACE FUNCTION find_version_schema (p_schema_name name, p_depth integer DEFAULT 0)
+CREATE OR REPLACE FUNCTION placeholder.find_version_schema (p_schema_name name, p_depth integer DEFAULT 0)
     RETURNS text
     AS $$
     WITH RECURSIVE ancestors AS (
@@ -281,7 +281,7 @@ STABLE;
 
 -- previous_version returns the name of the previous version schema for a given
 -- schema name or NULL if there is no previous version schema.
-CREATE OR REPLACE FUNCTION previous_version (schemaname name)
+CREATE OR REPLACE FUNCTION placeholder.previous_version (schemaname name)
     RETURNS text
     AS $$
     SELECT
@@ -292,7 +292,7 @@ STABLE;
 
 -- latest_version returns the name of the latest version schema for a given
 -- schema name or NULL if there are no version schema.
-CREATE OR REPLACE FUNCTION latest_version (schemaname name)
+CREATE OR REPLACE FUNCTION placeholder.latest_version (schemaname name)
     RETURNS text
     AS $$
     SELECT
