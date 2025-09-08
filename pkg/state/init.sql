@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS placeholder.migrations (
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     parent text,
     done boolean NOT NULL DEFAULT FALSE,
-    resulting_schema jsonb NOT NULL DEFAULT '{}' ::jsonb,
+    resulting_schema jsonb NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (schema, name),
     FOREIGN KEY (schema, parent) REFERENCES placeholder.migrations (schema, name)
 );
