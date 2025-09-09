@@ -98,11 +98,11 @@ func TestConstraintUnique(t *testing.T) {
 			includeColumns:    []string{"include_column", "other_include_column"},
 			expected:          `CONSTRAINT "test" UNIQUE  ("column1", "column2") INCLUDE ("include_column", "other_include_column") WITH (fillfactor=70)`,
 		},
-		"mutli column without name": {
+		"multi column without name": {
 			columns:  []string{"column1", "column2"},
 			expected: `UNIQUE  ("column1", "column2")`,
 		},
-		"mutli column without name deferrable": {
+		"multi column without name deferrable": {
 			columns:    []string{"column1", "column2"},
 			deferrable: true,
 			expected:   `UNIQUE  ("column1", "column2") DEFERRABLE INITIALLY IMMEDIATE`,
@@ -428,12 +428,12 @@ func TestConstraintExclude(t *testing.T) {
 			includeColumns:    []string{"include_column", "other_include_column"},
 			expected:          `CONSTRAINT "test" EXCLUDE USING gist (col1 WITH &&, col2 WITH =) INCLUDE ("include_column", "other_include_column") WITH (fillfactor=70)`,
 		},
-		"mutli column without name": {
+		"multi column without name": {
 			indexMethod: "gist",
 			elements:    "col1 WITH &&, col2 WITH =",
 			expected:    `EXCLUDE USING gist (col1 WITH &&, col2 WITH =)`,
 		},
-		"mutli column without name deferrable": {
+		"multi column without name deferrable": {
 			indexMethod: "gist",
 			elements:    "col1 WITH &&, col2 WITH =",
 			deferrable:  true,
