@@ -1,6 +1,6 @@
 module github.com/xataio/pgroll
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/cloudflare/backoff v0.0.0-20240920015135-e46b80a3a7d0
@@ -16,8 +16,8 @@ require (
 	github.com/testcontainers/testcontainers-go v0.38.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.38.0
 	github.com/xataio/pg_query_go/v6 v6.0.0-20250425105130-ed1845ee2d75
-	golang.org/x/mod v0.27.0
-	golang.org/x/tools v0.36.0
+	golang.org/x/mod v0.28.0
+	golang.org/x/tools v0.37.0
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -93,7 +93,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.36.1 // indirect
