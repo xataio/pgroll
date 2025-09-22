@@ -317,7 +317,11 @@ BEGIN
                                             json_object_agg(name, c)
                                     FROM (
                                         SELECT
-                                            attr.attname AS name, pg_get_expr(def.adbin, def.adrelid) AS default, NOT (attr.attnotnull
+                                            attr.attname AS name, CASE WHEN attr.attgenerated = '' THEN
+                                                pg_get_expr(def.adbin, def.adrelid)
+                                            ELSE
+                                                NULL
+                                            END AS default, NOT (attr.attnotnull
                                             OR tp.typtype = 'd'
                                             AND tp.typnotnull) AS nullable, CASE WHEN 'character varying'::regtype = ANY (ARRAY[attr.atttypid, tp.typelem]) THEN
                                         REPLACE(format_type(attr.atttypid, attr.atttypmod), 'character varying', 'varchar')
