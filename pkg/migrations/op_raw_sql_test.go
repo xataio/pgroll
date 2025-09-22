@@ -183,5 +183,30 @@ func TestRawSQL(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "raw SQL migration can create table with a generated column",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: `
+								CREATE TABLE test_table (
+									id serial,
+									name text,
+									loud_name text GENERATED ALWAYS AS (upper(name)) STORED
+								)`,
+							Down: `DROP TABLE test_table `,
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// No-op, just ensure no errors during migration execution
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// No-op, just ensure no errors during migration execution
+			},
+		},
 	})
 }
