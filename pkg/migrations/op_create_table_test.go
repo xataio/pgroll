@@ -1232,6 +1232,83 @@ func TestCreateTable(t *testing.T) {
 				}, testutils.ExclusionViolationErrorCode)
 			},
 		},
+		{
+			// Testcase for https://github.com/xataio/pgroll/issues/965
+			name: "create table with a generated column doesn't break subsequent migrations",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_create_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "int",
+								},
+								{
+									Name: "name",
+									Type: "text",
+								},
+								{
+									Name: "loud_name",
+									Type: "text",
+									Generated: &migrations.ColumnGenerated{
+										Expression: "UPPER(name)",
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_no_op",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: "SELECT 1",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// can insert into users table through the old schema
+				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
+					"id":   "1",
+					"name": "alice",
+				})
+
+				// can insert into users table through the new schema
+				MustInsert(t, db, schema, "02_no_op", "users", map[string]string{
+					"id":   "2",
+					"name": "bob",
+				})
+
+				// the generated column has the expected values
+				rows := MustSelect(t, db, schema, "01_create_table", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "loud_name": "ALICE"},
+					{"id": 2, "name": "bob", "loud_name": "BOB"},
+				}, rows)
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// no-op
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// can insert into users table through the new schema
+				MustInsert(t, db, schema, "02_no_op", "users", map[string]string{
+					"id":   "3",
+					"name": "carl",
+				})
+
+				// the generated column has the expected value
+				rows := MustSelect(t, db, schema, "02_no_op", "users")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "loud_name": "ALICE"},
+					{"id": 2, "name": "bob", "loud_name": "BOB"},
+					{"id": 3, "name": "carl", "loud_name": "CARL"},
+				}, rows)
+			},
+		},
 	})
 }
 
