@@ -12,7 +12,7 @@ Prerequisites:
 A good way to get a throw-away Postgres instance for use in the tutorial is to use [Docker](https://www.docker.com/). Start a Postgres instance in Docker with:
 
 ```
-docker run --rm --name for-pgroll -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+docker run --rm --name for-pgroll -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:18
 ```
 
 The remainder of the tutorial assumes that you have a local Postgres instance accessible on port 5432.

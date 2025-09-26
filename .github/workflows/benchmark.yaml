@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pgVersion: ['14.8', '15.3', '16.4', '17.0' ,'latest']
+        pgVersion: ['14.8', '15.3', '16.4', '17.0', '18.0', 'latest']
     steps:
     - uses: actions/checkout@v4
 
