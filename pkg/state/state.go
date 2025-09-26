@@ -72,7 +72,11 @@ func New(ctx context.Context, pgURL, stateSchema string, opts ...StateOpt) (*Sta
 
 	// If the state schema is newer than the pgroll version, return an error
 	if compat == VersionCompatVersionSchemaNewer {
-		return nil, ErrNewPgrollSchema
+		schemaVersion := "unknown"
+		if v, err := st.SchemaVersion(ctx); err == nil {
+			schemaVersion = v
+		}
+		return nil, fmt.Errorf("%w: binary: %s vs schema: %s", ErrNewPgrollSchema, st.pgrollVersion, schemaVersion)
 	}
 
 	// if the state schema is older than the pgroll version, re-initialize the
