@@ -12,6 +12,12 @@
   <a href="https://twitter.com/xata"><img src="https://img.shields.io/twitter/follow/xata?style=flat" alt="X (formerly Twitter) Follow" /> </a>
 </p>
 
+<p align="center">
+  <a href="https://xata.io">
+    <img src="https://img.shields.io/badge/Made%20with%20♥%20%20-%20%20by%20Xata-6c47ff?style=flat&logo=postgresql&logoColor=white" alt="Made with ♥ by Xata">
+  </a>
+</p>
+
 # pgroll - Zero-downtime, reversible, schema migrations for Postgres
 
 `pgroll` is an open source command-line tool that offers safe and reversible schema migrations for PostgreSQL by serving multiple schema versions simultaneously. It takes care of the complex migration operations to ensure that client applications continue working while the database schema is being updated. This includes ensuring changes are applied without locking the database, and that both old and new schema versions work simultaneously (even when breaking changes are being made!). This removes risks related to schema migrations, and greatly simplifies client application rollout, also allowing for instant rollbacks.
