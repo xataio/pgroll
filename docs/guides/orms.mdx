@@ -23,7 +23,7 @@ You can use `pgroll` with any ORM that can generate raw SQL statements for its m
 ### Alembic
 
 [Alembic](https://alembic.sqlalchemy.org/en/latest/) is a database migration tool used in SQLAlchemy projects. You can generate SQL statements from its migrations in [its offline mode](https://alembic.sqlalchemy.org/en/latest/offline.html). If you add
-`a --sql` flag to the `upgrade` command of `alembic` it prints the SQL statements to stdout. You can pipe this output into `pgroll convert`:
+a `--sql` flag to the `upgrade` command of `alembic` it prints the SQL statements to stdout. You can pipe this output into `pgroll convert`:
 
 ```sh
 $ alembic update {revision} --sql | pgroll convert
@@ -144,7 +144,7 @@ pgroll convert 0000_init.sql
 
 ## Limitations
 
-The functionality still has some limitations. The generated pgroll migrations must be edited to provide `up` and `down` data migrations manually. You can find more details about writing these migrations in [this guide](/updown).
+The functionality still has some limitations. The generated pgroll migrations must be edited to provide `up` and `down` data migrations manually. You can find more details about writing these migrations in [this guide](updown).
 
 Furthermore, the SQL statements are not aggregated into single pgroll operations. Some ORMs add unique constraints in a different statement when they are creating a table with a unique column. This leads to more pgroll operations than necessary. You can resolve this manually by removing the unique constraint operation from the pgroll migration, and add it to the list of `constraints` of `create_table`.
 
