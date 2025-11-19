@@ -1,0 +1,3 @@
+operations:
+- sql:
+    up: ""
