@@ -15,7 +15,7 @@ import (
 )
 
 func migrateCmd() *cobra.Command {
-	var complete bool
+	var complete, expectOne bool
 	var batchSize int
 	var batchDelay time.Duration
 
@@ -78,6 +78,11 @@ func migrateCmd() *cobra.Command {
 				return nil
 			}
 
+			// In 'expect one' mode, abort if there is more than one unapplied migration
+			if expectOne && len(rawMigs) > 1 {
+				return fmt.Errorf("expected one migration to apply but found %d", len(rawMigs))
+			}
+
 			// fail early if there is an incompatible migration
 			migs, err := parseMigrations(rawMigs)
 			if err != nil {
@@ -104,6 +109,7 @@ func migrateCmd() *cobra.Command {
 
 	migrateCmd.Flags().IntVar(&batchSize, "backfill-batch-size", backfill.DefaultBatchSize, "Number of rows backfilled in each batch")
 	migrateCmd.Flags().DurationVar(&batchDelay, "backfill-batch-delay", backfill.DefaultDelay, "Duration of delay between batch backfills (eg. 1s, 1000ms)")
+	migrateCmd.Flags().BoolVar(&expectOne, "expect-one", false, "Abort if there is more than one migration to be applied")
 	migrateCmd.Flags().BoolVarP(&complete, "complete", "c", false, "complete the final migration rather than leaving it active")
 
 	return migrateCmd
