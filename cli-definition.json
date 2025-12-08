@@ -181,6 +181,11 @@
           "shorthand": "c",
           "description": "complete the final migration rather than leaving it active",
           "default": "false"
+        },
+        {
+          "name": "expect-one",
+          "description": "Abort if there is more than one migration to be applied",
+          "default": "false"
         }
       ],
       "subcommands": [],
