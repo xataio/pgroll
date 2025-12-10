@@ -30,6 +30,16 @@ $ pgroll migrate examples/ --backfill-batch-size 500 --backfill-batch-delay 100m
 
 These options help manage the performance impact of large backfill operations by processing data in smaller batches with optional delays between batches.
 
+## Abort on multiple unapplied migrations
+
+By default, `pgroll migrate` will apply all unapplied migrations. However, it may sometimes be desirable to only apply a single migration to ensure that an existing version schema is not removed by a sequence of migrations. In this case, running:
+
+```
+$ pgroll migrate examples/ --expect-one
+```
+
+will cause the command to fail if more than one unapplied migration is detected.
+
 ## Existing Database Schema
 
 If you attempt to run `pgroll migrate` against a database that has existing tables but no migration history, the command will fail with an error message. In this case, you should first run `pgroll baseline` to establish a baseline migration that captures the current schema state before applying any new migrations.
