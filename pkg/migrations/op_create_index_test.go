@@ -11,6 +11,15 @@ import (
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
+// testColumns creates OpCreateIndexColumns from a map for test fixtures.
+func testColumns(m map[string]migrations.IndexField) migrations.OpCreateIndexColumns {
+	cols := migrations.NewOpCreateIndexColumns()
+	for name, settings := range m {
+		cols.Set(name, settings)
+	}
+	return cols
+}
+
 func TestCreateIndex(t *testing.T) {
 	t.Parallel()
 
@@ -47,7 +56,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
 						},
 					},
 				},
@@ -93,7 +102,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_USERS_name",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
 						},
 					},
 				},
@@ -141,12 +150,12 @@ func TestCreateIndex(t *testing.T) {
 				{
 					Name: "02_create_index_for_new_users_after_2019",
 					Operations: migrations.Operations{
-						&migrations.OpCreateIndex{
-							Name:      "idx_users_name_after_2019",
-							Table:     "users",
-							Columns:   map[string]migrations.IndexField{"registered_at_year": {}},
-							Predicate: "registered_at_year > 2019",
-						},
+					&migrations.OpCreateIndex{
+						Name:      "idx_users_name_after_2019",
+						Table:     "users",
+						Columns:   testColumns(map[string]migrations.IndexField{"registered_at_year": {}}),
+						Predicate: "registered_at_year > 2019",
+					},
 					},
 				},
 			},
@@ -192,11 +201,11 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:  "idx_users_name",
 							Table: "users",
-							Columns: map[string]migrations.IndexField{
+							Columns: testColumns(map[string]migrations.IndexField{
 								"name": {
 									Sort: migrations.IndexFieldSortDESC,
 								},
-							},
+							}),
 						},
 					},
 				},
@@ -247,7 +256,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    invalidName,
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"registered_at_year": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"registered_at_year": {}}),
 						},
 					},
 				},
@@ -286,7 +295,7 @@ func TestCreateIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:              "idx_users_name_hash",
 							Table:             "users",
-							Columns:           map[string]migrations.IndexField{"name": {}},
+							Columns:           testColumns(map[string]migrations.IndexField{"name": {}}),
 							Method:            migrations.OpCreateIndexMethodHash,
 							StorageParameters: "fillfactor = 70",
 						},
@@ -347,7 +356,7 @@ func TestCreateIndexOnMultipleColumns(t *testing.T) {
 					&migrations.OpCreateIndex{
 						Name:    "idx_users_name_email",
 						Table:   "users",
-						Columns: map[string]migrations.IndexField{"name": {}, "email": {}},
+						Columns: testColumns(map[string]migrations.IndexField{"name": {}, "email": {}}),
 					},
 				},
 			},
@@ -402,7 +411,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						},
 						&migrations.OpCreateIndex{
 							Table:   "products",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
 							Name:    "idx_products_name",
 						},
 					},
@@ -458,7 +467,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						},
 						&migrations.OpCreateIndex{
 							Table:   "products",
-							Columns: map[string]migrations.IndexField{"item_name": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"item_name": {}}),
 							Name:    "idx_products_item_name",
 						},
 					},
@@ -501,7 +510,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
 						},
 					},
 				},
@@ -557,7 +566,7 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_age",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"age": {}},
+							Columns: testColumns(map[string]migrations.IndexField{"age": {}}),
 						},
 					},
 				},
@@ -573,6 +582,92 @@ func TestCreateIndexInMultiOperationMigrations(t *testing.T) {
 			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
 				// The index has been created on the underlying table.
 				IndexMustExist(t, db, schema, "users", "idx_users_age")
+			},
+		},
+		{
+			name: "create index with multiple columns preserves order",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{
+									Name: "id",
+									Type: "serial",
+									Pk:   true,
+								},
+								{
+									Name:     "tool_call_id",
+									Type:     "integer",
+									Nullable: false,
+								},
+								{
+									Name:     "created_at",
+									Type:     "timestamp",
+									Nullable: false,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name: "02_create_index",
+					Operations: migrations.Operations{
+						&migrations.OpCreateIndex{
+							Name:  "idx_tool_call_created",
+							Table: "users",
+							Columns: func() migrations.OpCreateIndexColumns {
+								cols := migrations.NewOpCreateIndexColumns()
+								cols.Set("tool_call_id", migrations.IndexField{})
+								cols.Set("created_at", migrations.IndexField{})
+								return cols
+							}(),
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				// Verify index created with correct column order
+				// Query pg_indexes to verify: tool_call_id, created_at (not created_at, tool_call_id)
+				var indexdef string
+				err := db.QueryRow(`
+					SELECT indexdef 
+					FROM pg_indexes 
+					WHERE schemaname = $1 AND indexname = 'idx_tool_call_created'
+				`, schema).Scan(&indexdef)
+				if err != nil {
+					t.Fatal(err)
+				}
+				// Verify the correct order: tool_call_id should come before created_at
+				if !strings.Contains(indexdef, "(tool_call_id, created_at)") {
+					t.Fatalf("Expected index to have columns in order (tool_call_id, created_at), got: %s", indexdef)
+				}
+				// Verify it's NOT in the wrong order
+				if strings.Contains(indexdef, "(created_at, tool_call_id)") {
+					t.Fatalf("Index has columns in wrong order (created_at, tool_call_id), got: %s", indexdef)
+				}
+			},
+			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been dropped from the the underlying table.
+				IndexMustNotExist(t, db, schema, "users", "idx_tool_call_created")
+			},
+			afterComplete: func(t *testing.T, db *sql.DB, schema string) {
+				// The index has been created on the underlying table with correct order.
+				IndexMustExist(t, db, schema, "users", "idx_tool_call_created")
+				var indexdef string
+				err := db.QueryRow(`
+					SELECT indexdef 
+					FROM pg_indexes 
+					WHERE schemaname = $1 AND indexname = 'idx_tool_call_created'
+				`, schema).Scan(&indexdef)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !strings.Contains(indexdef, "(tool_call_id, created_at)") {
+					t.Fatalf("Expected index to have columns in order (tool_call_id, created_at), got: %s", indexdef)
+				}
 			},
 		},
 	})

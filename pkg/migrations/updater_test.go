@@ -41,11 +41,11 @@ func TestFileUpdater(t *testing.T) {
 			require.True(t, ok, "expected create_index operation to be present")
 			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
-				"col1": migrations.IndexField{},
-				"col2": migrations.IndexField{},
-			}
-			require.Equal(t, expectedColumns, createIndexOp.Columns, "columns should be transformed to a map")
+			expectedColumns := migrations.NewOpCreateIndexColumns()
+			expectedColumns.Set("col1", migrations.IndexField{})
+			expectedColumns.Set("col2", migrations.IndexField{})
+			require.Equal(t, expectedColumns.Names(), createIndexOp.Columns.Names(), "columns should be transformed and preserve order")
+			require.Equal(t, 2, createIndexOp.Columns.Len(), "columns should have 2 items")
 		})
 
 		t.Run("update with no create_index operation", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestFileUpdater(t *testing.T) {
 			for i, op := range migration.Operations {
 				createIndexOp, ok := op.(*migrations.OpCreateIndex)
 				require.True(t, ok, "expected create_index operation at index %d to be present", i)
-				require.NotNil(t, createIndexOp.Columns, "expected columns to be a map for create_index operation at index %d", i)
+				require.NotNil(t, createIndexOp.Columns, "expected columns to be present for create_index operation at index %d", i)
 			}
 		})
 
@@ -97,13 +97,13 @@ func TestFileUpdater(t *testing.T) {
 			op = migration.Operations[1]
 			createIndexOp, ok := op.(*migrations.OpCreateIndex)
 			require.True(t, ok, "expected create_index operation to be present")
-			require.NotNil(t, createIndexOp.Columns, "expected columns to be a map for create_index operation")
+			require.NotNil(t, createIndexOp.Columns, "expected columns to be present for create_index operation")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
-				"col1": migrations.IndexField{},
-				"col2": migrations.IndexField{},
-			}
-			require.Equal(t, expectedColumns, createIndexOp.Columns, "columns should be transformed to a map")
+			expectedColumns := migrations.NewOpCreateIndexColumns()
+			expectedColumns.Set("col1", migrations.IndexField{})
+			expectedColumns.Set("col2", migrations.IndexField{})
+			require.Equal(t, expectedColumns.Names(), createIndexOp.Columns.Names(), "columns should be transformed and preserve order")
+			require.Equal(t, 2, createIndexOp.Columns.Len(), "columns should have 2 items")
 		})
 	})
 }
