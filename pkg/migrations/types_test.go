@@ -176,3 +176,46 @@ func TestOpCreateIndexColumns_RoundTrip(t *testing.T) {
 	settings2, _ := cols2.Get("col2")
 	require.Equal(t, migrations.IndexFieldSortDESC, settings2.Sort)
 }
+
+func TestOpCreateIndexColumns_MarshalPreservesOrder(t *testing.T) {
+	t.Parallel()
+
+	// Test that marshaling preserves the insertion order in the JSON string
+	// This is critical for consistent output when converting SQL to migrations
+	cols := migrations.NewOpCreateIndexColumns()
+	cols.Set("zebra", migrations.IndexField{})
+	cols.Set("alpha", migrations.IndexField{})
+	cols.Set("beta", migrations.IndexField{})
+
+	data, err := json.Marshal(cols)
+	require.NoError(t, err)
+
+	// The JSON should have keys in insertion order (zebra, alpha, beta)
+	// not alphabetical order (alpha, beta, zebra)
+	jsonStr := string(data)
+	
+	// Find positions of each key in the JSON string
+	zebraPos := -1
+	alphaPos := -1
+	betaPos := -1
+	
+	for i := 0; i < len(jsonStr)-6; i++ {
+		if jsonStr[i:i+7] == `"zebra"` {
+			zebraPos = i
+		}
+		if jsonStr[i:i+7] == `"alpha"` {
+			alphaPos = i
+		}
+		if jsonStr[i:i+6] == `"beta"` {
+			betaPos = i
+		}
+	}
+	
+	require.NotEqual(t, -1, zebraPos, "zebra should be in JSON")
+	require.NotEqual(t, -1, alphaPos, "alpha should be in JSON")
+	require.NotEqual(t, -1, betaPos, "beta should be in JSON")
+	
+	// Verify insertion order is preserved
+	require.Less(t, zebraPos, alphaPos, "zebra should appear before alpha")
+	require.Less(t, alphaPos, betaPos, "alpha should appear before beta")
+}

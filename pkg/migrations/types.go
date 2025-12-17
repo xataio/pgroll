@@ -424,9 +424,38 @@ func (c OpCreateIndexColumns) Names() []string {
 	return c.order
 }
 
-// MarshalJSON marshals to map format for backwards compatibility.
+// MarshalJSON marshals to map format for backwards compatibility, preserving key order.
 func (c OpCreateIndexColumns) MarshalJSON() ([]byte, error) {
-	return json.Marshal(c.m)
+	if c.order == nil || len(c.order) == 0 {
+		return []byte("{}"), nil
+	}
+	
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	
+	for i, name := range c.order {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		
+		// Marshal the key
+		keyJSON, err := json.Marshal(name)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(keyJSON)
+		buf.WriteByte(':')
+		
+		// Marshal the value
+		valueJSON, err := json.Marshal(c.m[name])
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(valueJSON)
+	}
+	
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
 }
 
 // UnmarshalJSON unmarshals from map format, preserving key order from the JSON source.
