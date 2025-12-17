@@ -3,11 +3,13 @@
 package migrations
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 
 	_ "github.com/lib/pq"
+	"gopkg.in/yaml.v3"
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/db"
@@ -128,4 +130,114 @@ func (m *Migration) UpdateVirtualSchema(ctx context.Context, s *schema.Schema) e
 		}
 	}
 	return nil
+}
+
+// UnmarshalYAML implements custom YAML unmarshaling for RawMigration to preserve
+// column order in operations. The default yaml→json conversion loses order because
+// it goes through Go maps.
+func (r *RawMigration) UnmarshalYAML(value *yaml.Node) error {
+	// Create temporary struct to unmarshal non-operations fields
+	type temp struct {
+		VersionSchema string `yaml:"version_schema"`
+	}
+	var t temp
+	if err := value.Decode(&t); err != nil {
+		return err
+	}
+	r.VersionSchema = t.VersionSchema
+	
+	// Find the operations node and convert it to JSON preserving order
+	for i := 0; i < len(value.Content); i += 2 {
+		var key string
+		if err := value.Content[i].Decode(&key); err != nil {
+			return err
+		}
+		if key == "operations" {
+			jsonBytes, err := yamlNodeToJSON(value.Content[i+1])
+			if err != nil {
+				return fmt.Errorf("converting operations to JSON: %w", err)
+			}
+			r.Operations = jsonBytes
+			return nil
+		}
+	}
+	
+	return fmt.Errorf("operations field not found in migration")
+}
+
+// yamlNodeToJSON converts a yaml.Node to JSON bytes while preserving key order.
+// This manually walks the yaml.Node tree to maintain insertion order for mappings.
+func yamlNodeToJSON(node *yaml.Node) ([]byte, error) {
+	var buf bytes.Buffer
+	
+	switch node.Kind {
+	case yaml.DocumentNode:
+		if len(node.Content) > 0 {
+			return yamlNodeToJSON(node.Content[0])
+		}
+		return []byte("null"), nil
+		
+	case yaml.MappingNode:
+		buf.WriteByte('{')
+		for i := 0; i < len(node.Content); i += 2 {
+			if i > 0 {
+				buf.WriteByte(',')
+			}
+			
+			// Write key
+			keyBytes, err := yamlNodeToJSON(node.Content[i])
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(keyBytes)
+			buf.WriteByte(':')
+			
+			// Write value
+			valueBytes, err := yamlNodeToJSON(node.Content[i+1])
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(valueBytes)
+		}
+		buf.WriteByte('}')
+		
+	case yaml.SequenceNode:
+		buf.WriteByte('[')
+		for i, item := range node.Content {
+			if i > 0 {
+				buf.WriteByte(',')
+			}
+			itemBytes, err := yamlNodeToJSON(item)
+			if err != nil {
+				return nil, err
+			}
+			buf.Write(itemBytes)
+		}
+		buf.WriteByte(']')
+		
+	case yaml.ScalarNode:
+		switch node.Tag {
+		case "!!str":
+			return json.Marshal(node.Value)
+		case "!!int":
+			return []byte(node.Value), nil
+		case "!!float":
+			return []byte(node.Value), nil
+		case "!!bool":
+			return []byte(node.Value), nil
+		case "!!null":
+			return []byte("null"), nil
+		default:
+			// Try to parse as string if unknown
+			return json.Marshal(node.Value)
+		}
+		
+	case yaml.AliasNode:
+		return yamlNodeToJSON(node.Alias)
+		
+	default:
+		return nil, fmt.Errorf("unsupported YAML node kind: %v", node.Kind)
+	}
+	
+	return buf.Bytes(), nil
 }

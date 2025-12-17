@@ -13,7 +13,7 @@ import (
 	"slices"
 	"strings"
 
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 type OpName string
@@ -112,7 +112,7 @@ func ReadRawMigration(dir fs.FS, filename string) (*RawMigration, error) {
 		dec.DisallowUnknownFields()
 		err = dec.Decode(&mig)
 	case ".yaml", ".yml":
-		err = yaml.UnmarshalStrict(byteValue, &mig)
+		err = yaml.Unmarshal(byteValue, &mig)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("reading migration file: %w", err)
