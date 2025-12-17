@@ -219,3 +219,36 @@ func TestOpCreateIndexColumns_MarshalPreservesOrder(t *testing.T) {
 	require.Less(t, zebraPos, alphaPos, "zebra should appear before alpha")
 	require.Less(t, alphaPos, betaPos, "alpha should appear before beta")
 }
+
+func TestOpCreateIndexColumns_JSONToOperationOrder(t *testing.T) {
+	t.Parallel()
+
+	// Test the primary use case: reading a migration JSON file
+	// with specific column order for index creation
+	jsonInput := `{
+		"name": "idx_users",
+		"table": "users",
+		"columns": {
+			"last_name": {},
+			"first_name": {},
+			"email": {}
+		},
+		"method": "btree"
+	}`
+
+	var op migrations.OpCreateIndex
+	err := json.Unmarshal([]byte(jsonInput), &op)
+	require.NoError(t, err)
+
+	// Verify column order from JSON is preserved
+	expectedOrder := []string{"last_name", "first_name", "email"}
+	require.Equal(t, expectedOrder, op.Columns.Names(),
+		"Column order from JSON must be preserved for correct index creation")
+
+	// Verify OrderedItems returns columns in correct order for SQL generation
+	orderedItems := op.Columns.OrderedItems()
+	require.Len(t, orderedItems, 3)
+	require.Equal(t, "last_name", orderedItems[0].Name)
+	require.Equal(t, "first_name", orderedItems[1].Name)
+	require.Equal(t, "email", orderedItems[2].Name)
+}

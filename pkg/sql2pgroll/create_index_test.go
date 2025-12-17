@@ -3,6 +3,7 @@
 package sql2pgroll_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -185,4 +186,33 @@ func TestUnconvertableCreateIndexStatements(t *testing.T) {
 			assert.Equal(t, expect.RawSQLOp(sql), ops[0])
 		})
 	}
+}
+
+func TestCreateIndexColumnOrderPreservation(t *testing.T) {
+	t.Parallel()
+
+	// Test that column order from SQL is preserved through JSON marshaling
+	sql := "CREATE INDEX idx_test ON users (last_name, first_name, email)"
+	
+	ops, err := sql2pgroll.Convert(sql)
+	require.NoError(t, err)
+	require.Len(t, ops, 1)
+
+	createIndexOp, ok := ops[0].(*migrations.OpCreateIndex)
+	require.True(t, ok)
+
+	// Verify column order
+	expectedOrder := []string{"last_name", "first_name", "email"}
+	assert.Equal(t, expectedOrder, createIndexOp.Columns.Names())
+
+	// Verify JSON round-trip preserves order
+	jsonData, err := json.Marshal(createIndexOp)
+	require.NoError(t, err)
+
+	var unmarshaled migrations.OpCreateIndex
+	err = json.Unmarshal(jsonData, &unmarshaled)
+	require.NoError(t, err)
+
+	assert.Equal(t, expectedOrder, unmarshaled.Columns.Names(),
+		"Column order should be preserved through JSON serialization")
 }
