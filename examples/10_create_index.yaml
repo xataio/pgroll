@@ -3,4 +3,4 @@ operations:
       name: idx_fruits_name
       table: fruits
       columns:
-        name: {}
+        - column: "name"

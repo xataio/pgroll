@@ -3,6 +3,6 @@ operations:
       name: idx_fruits_custom_opclass
       table: fruits
       columns:
-        id:
+        - column: "id"
           opclass:
             name: int8_ops

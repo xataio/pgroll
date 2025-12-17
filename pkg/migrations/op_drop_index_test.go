@@ -44,7 +44,7 @@ func TestDropIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_users_name",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: []migrations.IndexField{{Column: "name"}},
 						},
 					},
 				},
@@ -99,7 +99,7 @@ func TestDropIndex(t *testing.T) {
 						&migrations.OpCreateIndex{
 							Name:    "idx_USERS_name",
 							Table:   "users",
-							Columns: map[string]migrations.IndexField{"name": {}},
+							Columns: []migrations.IndexField{{Column: "name"}},
 						},
 					},
 				},

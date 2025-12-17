@@ -183,6 +183,9 @@ type ForeignKeyReference struct {
 
 // Index field and its settings
 type IndexField struct {
+	// Name of the referenced column
+	Column string `json:"column"`
+
 	// Collation for the index element
 	Collate string `json:"collate,omitempty"`
 
@@ -347,7 +350,7 @@ type OpCreateIndex struct {
 }
 
 // Names and settings of columns on which to define the index
-type OpCreateIndexColumns map[string]IndexField
+type OpCreateIndexColumns []IndexField
 
 type OpCreateIndexMethod string
 

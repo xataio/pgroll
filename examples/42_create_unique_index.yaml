@@ -3,5 +3,5 @@ operations:
       name: idx_fruits_unique_name
       table: fruits
       columns:
-        name: {}
+        - column: "name"
       unique: true

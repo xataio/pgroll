@@ -25,10 +25,11 @@ func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	cols := make(map[string]IndexField, len(o.Columns))
-	for name, settings := range map[string]IndexField(o.Columns) {
-		physicalName := table.PhysicalColumnNamesFor(name)
-		cols[physicalName[0]] = settings
+	cols := make([]IndexField, 0, len(o.Columns))
+	for _, settings := range o.Columns {
+		physicalName := table.PhysicalColumnNamesFor(settings.Column)
+		settings.Column = physicalName[0]
+		cols = append(cols, settings)
 	}
 
 	dbActions := []DBAction{
@@ -75,9 +76,12 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	for column := range map[string]IndexField(o.Columns) {
-		if table.GetColumn(column) == nil {
-			return ColumnDoesNotExistError{Table: o.Table, Name: column}
+	for _, field := range o.Columns {
+		if field.Column == "" {
+			return FieldRequiredError{Name: "column"}
+		}
+		if table.GetColumn(field.Column) == nil {
+			return ColumnDoesNotExistError{Table: o.Table, Name: field.Column}
 		}
 	}
 
