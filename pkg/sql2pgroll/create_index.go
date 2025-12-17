@@ -21,7 +21,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	// Get the columns and their settings on which the index is defined
-	columns := make(map[string]migrations.IndexField, len(stmt.GetIndexParams()))
+	columns := migrations.NewOpCreateIndexColumns()
 	for _, param := range stmt.GetIndexParams() {
 		if colName := param.GetIndexElem().GetName(); colName != "" {
 			var indexField migrations.IndexField
@@ -79,7 +79,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 				}
 			}
 
-			columns[colName] = indexField
+			columns.Set(colName, indexField)
 		}
 	}
 

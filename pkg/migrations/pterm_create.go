@@ -70,7 +70,7 @@ func (o *OpCreateIndex) Create() {
 		WithDefaultText("Add columns").
 		WithDefaultValue(true).
 		Show()
-	columns := make(map[string]IndexField)
+	columns := NewOpCreateIndexColumns()
 	for addColumns {
 		name, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 		var indexField IndexField
@@ -102,7 +102,7 @@ func (o *OpCreateIndex) Create() {
 			indexField.Opclass = &IndexFieldOpclass{Name: name, Params: strings.Split(params, ",")}
 		}
 
-		columns[name] = indexField
+		columns.Set(name, indexField)
 		addColumns, _ = pterm.DefaultInteractiveConfirm.
 			WithDefaultText("Add more columns").
 			Show()

@@ -259,12 +259,12 @@ type createIndexConcurrentlyAction struct {
 	name              string
 	method            string
 	unique            bool
-	columns           map[string]IndexField
+	columns           OpCreateIndexColumns
 	storageParameters string
 	predicate         string
 }
 
-func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns map[string]IndexField, storageParameters, predicate string) *createIndexConcurrentlyAction {
+func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns OpCreateIndexColumns, storageParameters, predicate string) *createIndexConcurrentlyAction {
 	return &createIndexConcurrentlyAction{
 		conn:              conn,
 		id:                fmt.Sprintf("create_index_concurrently_%s_%s", table, name),
@@ -293,8 +293,9 @@ func (a *createIndexConcurrentlyAction) Execute(ctx context.Context) error {
 		stmt += fmt.Sprintf(" USING %s", a.method)
 	}
 
-	colSQLs := make([]string, 0, len(a.columns))
-	for columnName, settings := range a.columns {
+	colSQLs := make([]string, 0, a.columns.Len())
+	for _, item := range a.columns.OrderedItems() {
+		columnName, settings := item.Name, item.Settings
 		colSQL := pq.QuoteIdentifier(columnName)
 		// deparse collations
 		if settings.Collate != "" {
