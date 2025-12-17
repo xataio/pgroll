@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	"github.com/oapi-codegen/nullable"
+	"gopkg.in/yaml.v3"
 )
 
 // Check constraint definition
@@ -500,6 +501,38 @@ func (c *OpCreateIndexColumns) UnmarshalJSON(data []byte) error {
 	// Read closing brace
 	if _, err := dec.Token(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// UnmarshalYAML unmarshals from YAML format, preserving key order from the YAML source.
+func (c *OpCreateIndexColumns) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return &yaml.TypeError{Errors: []string{"expected mapping node"}}
+	}
+
+	c.m = make(map[string]IndexField)
+	c.order = make([]string, 0)
+
+	// YAML mapping nodes store keys and values alternately
+	for i := 0; i < len(value.Content); i += 2 {
+		keyNode := value.Content[i]
+		valueNode := value.Content[i+1]
+
+		// Get column name
+		var colName string
+		if err := keyNode.Decode(&colName); err != nil {
+			return err
+		}
+
+		// Get column settings
+		var settings IndexField
+		if err := valueNode.Decode(&settings); err != nil {
+			return err
+		}
+
+		c.Set(colName, settings)
 	}
 
 	return nil

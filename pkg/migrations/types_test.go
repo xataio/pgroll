@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
+
 	"github.com/xataio/pgroll/pkg/migrations"
 )
 
@@ -251,4 +253,28 @@ func TestOpCreateIndexColumns_JSONToOperationOrder(t *testing.T) {
 	require.Equal(t, "last_name", orderedItems[0].Name)
 	require.Equal(t, "first_name", orderedItems[1].Name)
 	require.Equal(t, "email", orderedItems[2].Name)
+}
+
+func TestOpCreateIndexColumns_YAMLToOperationOrder(t *testing.T) {
+	t.Parallel()
+
+	// Test YAML migration files preserve column order
+	yamlInput := `
+name: idx_users
+table: users
+columns:
+  last_name: {}
+  first_name: {}
+  email: {}
+method: btree
+`
+
+	var op migrations.OpCreateIndex
+	err := yaml.Unmarshal([]byte(yamlInput), &op)
+	require.NoError(t, err)
+
+	// Verify column order from YAML is preserved
+	expectedOrder := []string{"last_name", "first_name", "email"}
+	require.Equal(t, expectedOrder, op.Columns.Names(),
+		"Column order from YAML must be preserved for correct index creation")
 }
