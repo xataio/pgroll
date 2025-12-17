@@ -538,6 +538,52 @@ func (c *OpCreateIndexColumns) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+// MarshalYAML implements custom YAML marshaling to preserve column order.
+func (c OpCreateIndexColumns) MarshalYAML() (interface{}, error) {
+	if c.order == nil || len(c.order) == 0 {
+		return map[string]IndexField{}, nil
+	}
+	
+	// Create a yaml.Node with mapping kind
+	node := &yaml.Node{
+		Kind: yaml.MappingNode,
+	}
+	
+	// Add key-value pairs in order
+	for _, name := range c.order {
+		settings := c.m[name]
+		
+		// Add key node
+		keyNode := &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: name,
+		}
+		node.Content = append(node.Content, keyNode)
+		
+		// Marshal settings to get value node
+		settingsBytes, err := yaml.Marshal(settings)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Parse settings into a node
+		var valueNode yaml.Node
+		if err := yaml.Unmarshal(settingsBytes, &valueNode); err != nil {
+			return nil, err
+		}
+		
+		// yaml.Unmarshal wraps in Document node, extract the actual content
+		if valueNode.Kind == yaml.DocumentNode && len(valueNode.Content) > 0 {
+			node.Content = append(node.Content, valueNode.Content[0])
+		} else {
+			node.Content = append(node.Content, &valueNode)
+		}
+	}
+	
+	return node, nil
+}
+
 type OpCreateIndexMethod string
 
 const OpCreateIndexMethodBrin OpCreateIndexMethod = "brin"

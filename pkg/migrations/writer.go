@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 type MigrationFormat int

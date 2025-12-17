@@ -42,11 +42,11 @@ func TestDropIndex(t *testing.T) {
 					Name:          "02_create_index",
 					VersionSchema: "create_index",
 					Operations: migrations.Operations{
-						&migrations.OpCreateIndex{
-							Name:    "idx_users_name",
-							Table:   "users",
-							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
-						},
+					&migrations.OpCreateIndex{
+						Name:    "idx_users_name",
+						Table:   "users",
+						Columns: testColumns("name", migrations.IndexField{}),
+					},
 					},
 				},
 				{
@@ -97,11 +97,11 @@ func TestDropIndex(t *testing.T) {
 				{
 					Name: "02_create_index",
 					Operations: migrations.Operations{
-						&migrations.OpCreateIndex{
-							Name:    "idx_USERS_name",
-							Table:   "users",
-							Columns: testColumns(map[string]migrations.IndexField{"name": {}}),
-						},
+					&migrations.OpCreateIndex{
+						Name:    "idx_USERS_name",
+						Table:   "users",
+						Columns: testColumns("name", migrations.IndexField{}),
+					},
 					},
 				},
 				{
