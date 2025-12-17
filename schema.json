@@ -581,12 +581,63 @@
       "description": "Create index operation",
       "properties": {
         "columns": {
-          "description": "Names and settings of columns on which to define the index",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/$defs/IndexField",
-            "description": "Index field settings"
-          }
+          "description": "Index columns with their settings. Supports two formats: 1) Array format (preferred): [{\"name\": \"col1\", \"sort\": \"DESC\"}, {\"name\": \"col2\"}] - preserves order, consistent with create_table. 2) Map format (legacy): {\"col1\": {\"sort\": \"DESC\"}, \"col2\": {}} - deprecated for multi-column indexes due to non-deterministic ordering.",
+          "oneOf": [
+            {
+              "description": "Map format (deprecated for multi-column indexes)",
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/IndexField",
+                "description": "Index field settings"
+              }
+            },
+            {
+              "description": "Array format (preferred, explicit ordering)",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {
+                    "description": "Column name",
+                    "type": "string"
+                  },
+                  "collate": {
+                    "description": "Collation for the index element",
+                    "type": "string"
+                  },
+                  "sort": {
+                    "description": "Sort order",
+                    "type": "string",
+                    "enum": ["ASC", "DESC"]
+                  },
+                  "nulls": {
+                    "description": "Nulls ordering",
+                    "type": "string",
+                    "enum": ["FIRST", "LAST"]
+                  },
+                  "opclass": {
+                    "description": "Operator class settings",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "description": "Name of the operator class",
+                        "type": "string"
+                      },
+                      "params": {
+                        "description": "Operator class parameters",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
         },
         "name": {
           "description": "Index name",

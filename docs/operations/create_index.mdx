@@ -5,13 +5,18 @@ description: A create index operation creates a new index on a set of columns.
 
 ## Structure
 
+The `columns` field supports two formats:
+
+### Array Format (Recommended)
+Use this format for multi-column indexes to ensure predictable column ordering:
+
 <YamlJsonTabs>
 ```yaml
 create_index:
   table: name of table on which to define the index
   name: index name
   columns:
-    column_name:
+    - name: column_name1
       collate: collation name
       sort: ASC | DESC
       nulls: FIRST | LAST
@@ -20,6 +25,8 @@ create_index:
         params:
           - param1=val
           - param2=val
+    - name: column_name2
+      sort: DESC
   predicate: conditional expression for defining a partial index
   storage_parameters: comma-separated list of storage parameters
   unique: true | false
@@ -31,7 +38,8 @@ create_index:
     "table": "name of table on which to define the index",
     "name": "index name",
     "columns": [
-      "column_name": {
+      {
+        "name": "column_name1",
         "collate": "collation name",
         "sort": "ASC | DESC",
         "nulls": "FIRST | LAST",
@@ -42,8 +50,12 @@ create_index:
              "param2=val"
           ]
         }
+      },
+      {
+        "name": "column_name2",
+        "sort": "DESC"
       }
-    ]
+    ],
     "predicate": "conditional expression for defining a partial index",
     "storage_parameters": "comma-separated list of storage parameters",
     "unique": true | false,
@@ -53,9 +65,45 @@ create_index:
 ```
 </YamlJsonTabs>
 
+### Map Format (Legacy, Single-Column Only)
+This format is still supported for single-column indexes but is deprecated for multi-column indexes due to non-deterministic ordering:
+
+<YamlJsonTabs>
+```yaml
+create_index:
+  table: name of table on which to define the index
+  name: index name
+  columns:
+    column_name:
+      sort: DESC
+  method: btree
+```
+```json
+{
+  "create_index": {
+    "table": "name of table on which to define the index",
+    "name": "index name",
+    "columns": {
+      "column_name": {
+        "sort": "DESC"
+      }
+    },
+    "method": "btree"
+  }
+}
+```
+</YamlJsonTabs>
+
+<Note type="warning">
+**Deprecation Notice:** Map format for `columns` is deprecated for multi-column and partial indexes.
+It will continue to work for single-column indexes, but using array format is recommended for consistency.
+Support for map format in multi-column/partial indexes will be removed on June 17, 2025.
+</Note>
+
 * The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 * You can also specify storage parameters for the index in `storage_parameters`.
 * To create a unique index set `unique` to `true`.
+* For multi-column indexes, always use the array format to ensure predictable column ordering.
 
 ## Examples
 

@@ -1,0 +1,8 @@
+operations:
+  - create_index:
+      name: idx_users_last_first
+      table: users
+      columns:
+        - name: last_name
+        - name: first_name
+          sort: ASC

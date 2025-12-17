@@ -259,12 +259,12 @@ type createIndexConcurrentlyAction struct {
 	name              string
 	method            string
 	unique            bool
-	columns           map[string]IndexField
+	columns           []IndexColumn
 	storageParameters string
 	predicate         string
 }
 
-func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns map[string]IndexField, storageParameters, predicate string) *createIndexConcurrentlyAction {
+func NewCreateIndexConcurrentlyAction(conn db.DB, table, name, method string, unique bool, columns []IndexColumn, storageParameters, predicate string) *createIndexConcurrentlyAction {
 	return &createIndexConcurrentlyAction{
 		conn:              conn,
 		id:                fmt.Sprintf("create_index_concurrently_%s_%s", table, name),
@@ -294,26 +294,26 @@ func (a *createIndexConcurrentlyAction) Execute(ctx context.Context) error {
 	}
 
 	colSQLs := make([]string, 0, len(a.columns))
-	for columnName, settings := range a.columns {
-		colSQL := pq.QuoteIdentifier(columnName)
+	for _, col := range a.columns {
+		colSQL := pq.QuoteIdentifier(col.Name)
 		// deparse collations
-		if settings.Collate != "" {
-			colSQL += " COLLATE " + settings.Collate
+		if col.Collate != "" {
+			colSQL += " COLLATE " + col.Collate
 		}
 		// deparse operator classes and their parameters
-		if settings.Opclass != nil {
-			colSQL += " " + settings.Opclass.Name
-			if len(settings.Opclass.Params) > 0 {
-				colSQL += " " + strings.Join(settings.Opclass.Params, ", ")
+		if col.Opclass != nil {
+			colSQL += " " + col.Opclass.Name
+			if len(col.Opclass.Params) > 0 {
+				colSQL += " " + strings.Join(col.Opclass.Params, ", ")
 			}
 		}
 		// deparse sort order of the index column
-		if settings.Sort != "" {
-			colSQL += " " + string(settings.Sort)
+		if col.Sort != "" {
+			colSQL += " " + string(col.Sort)
 		}
 		// deparse nulls order of the index column
-		if settings.Nulls != nil {
-			colSQL += " " + string(*settings.Nulls)
+		if col.Nulls != nil {
+			colSQL += " " + string(*col.Nulls)
 		}
 		colSQLs = append(colSQLs, colSQL)
 	}

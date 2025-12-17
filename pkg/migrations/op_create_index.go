@@ -20,15 +20,27 @@ var (
 func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)
 
+	// Check for deprecation warnings/errors
+	if err := o.checkDeprecation(l); err != nil {
+		return nil, err
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return nil, TableDoesNotExistError{Name: o.Table}
 	}
 
-	cols := make(map[string]IndexField, len(o.Columns))
-	for name, settings := range map[string]IndexField(o.Columns) {
-		physicalName := table.PhysicalColumnNamesFor(name)
-		cols[physicalName[0]] = settings
+	// Build ordered columns array with physical column names
+	cols := make([]IndexColumn, 0, len(o.Columns))
+	for _, col := range o.Columns {
+		physicalName := table.PhysicalColumnNamesFor(col.Name)
+		cols = append(cols, IndexColumn{
+			Name:    physicalName[0],
+			Collate: col.Collate,
+			Nulls:   col.Nulls,
+			Opclass: col.Opclass,
+			Sort:    col.Sort,
+		})
 	}
 
 	dbActions := []DBAction{
@@ -70,14 +82,19 @@ func (o *OpCreateIndex) Validate(ctx context.Context, s *schema.Schema) error {
 		return err
 	}
 
+	if len(o.Columns) == 0 {
+		return FieldRequiredError{Name: "columns"}
+	}
+
 	table := s.GetTable(o.Table)
 	if table == nil {
 		return TableDoesNotExistError{Name: o.Table}
 	}
 
-	for column := range map[string]IndexField(o.Columns) {
-		if table.GetColumn(column) == nil {
-			return ColumnDoesNotExistError{Table: o.Table, Name: column}
+	// Validate column existence
+	for _, col := range o.Columns {
+		if table.GetColumn(col.Name) == nil {
+			return ColumnDoesNotExistError{Table: o.Table, Name: col.Name}
 		}
 	}
 
