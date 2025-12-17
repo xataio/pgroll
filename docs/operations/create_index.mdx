@@ -56,6 +56,7 @@ create_index:
 * The field `method` can be `btree`, `hash`, `gist`, `spgist`, `gin`, `brin`.
 * You can also specify storage parameters for the index in `storage_parameters`.
 * To create a unique index set `unique` to `true`.
+* **Column order is preserved**: When specifying multiple columns, the order in which they appear in the JSON/YAML file is maintained in the created index. This is important for multi-column indexes where column order affects query optimization.
 
 ## Examples
 
