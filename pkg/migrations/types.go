@@ -3,7 +3,12 @@
 
 package migrations
 
-import "github.com/oapi-codegen/nullable"
+import (
+	"bytes"
+	"encoding/json"
+
+	"github.com/oapi-codegen/nullable"
+)
 
 // Check constraint definition
 type CheckConstraint struct {
@@ -346,8 +351,130 @@ type OpCreateIndex struct {
 	Unique bool `json:"unique,omitempty"`
 }
 
-// Names and settings of columns on which to define the index
-type OpCreateIndexColumns map[string]IndexField
+// OpCreateIndexColumns represents columns for index creation with preserved order.
+// It maintains both a map for O(1) lookups and an order slice for iteration.
+type OpCreateIndexColumns struct {
+	m     map[string]IndexField
+	order []string
+}
+
+// NewOpCreateIndexColumns creates a new OpCreateIndexColumns instance.
+func NewOpCreateIndexColumns() OpCreateIndexColumns {
+	return OpCreateIndexColumns{
+		m:     make(map[string]IndexField),
+		order: make([]string, 0),
+	}
+}
+
+// Set adds or updates a column, preserving insertion order.
+// If the column already exists, it updates the settings but maintains original position.
+func (c *OpCreateIndexColumns) Set(name string, settings IndexField) {
+	if c.m == nil {
+		c.m = make(map[string]IndexField)
+	}
+	if _, exists := c.m[name]; !exists {
+		c.order = append(c.order, name)
+	}
+	c.m[name] = settings
+}
+
+// Get retrieves column settings by name.
+func (c *OpCreateIndexColumns) Get(name string) (IndexField, bool) {
+	if c.m == nil {
+		return IndexField{}, false
+	}
+	settings, ok := c.m[name]
+	return settings, ok
+}
+
+// OrderedItems returns columns in their original order.
+func (c OpCreateIndexColumns) OrderedItems() []struct {
+	Name     string
+	Settings IndexField
+} {
+	if c.order == nil {
+		return []struct {
+			Name     string
+			Settings IndexField
+		}{}
+	}
+	result := make([]struct {
+		Name     string
+		Settings IndexField
+	}, len(c.order))
+	for i, name := range c.order {
+		result[i] = struct {
+			Name     string
+			Settings IndexField
+		}{name, c.m[name]}
+	}
+	return result
+}
+
+// Len returns the number of columns.
+func (c OpCreateIndexColumns) Len() int {
+	if c.order == nil {
+		return 0
+	}
+	return len(c.order)
+}
+
+// Names returns column names in order.
+func (c OpCreateIndexColumns) Names() []string {
+	return c.order
+}
+
+// MarshalJSON marshals to map format for backwards compatibility.
+func (c OpCreateIndexColumns) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.m)
+}
+
+// UnmarshalJSON unmarshals from map format, preserving key order from the JSON source.
+// Note: Old array format ["col1", "col2"] is converted to map format by FileUpdater before this is called.
+func (c *OpCreateIndexColumns) UnmarshalJSON(data []byte) error {
+	c.m = make(map[string]IndexField)
+	c.order = make([]string, 0)
+
+	// Use a decoder to preserve the order of keys as they appear in the JSON
+	dec := json.NewDecoder(bytes.NewReader(data))
+	
+	// Read opening brace
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := tok.(json.Delim); !ok || delim != '{' {
+		return &json.UnmarshalTypeError{Value: "object", Type: nil}
+	}
+
+	// Read key-value pairs in order
+	for dec.More() {
+		// Read key
+		keyTok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		key, ok := keyTok.(string)
+		if !ok {
+			return &json.UnmarshalTypeError{Value: "string", Type: nil}
+		}
+
+		// Read value
+		var settings IndexField
+		if err := dec.Decode(&settings); err != nil {
+			return err
+		}
+
+		c.Set(key, settings)
+	}
+
+	// Read closing brace
+	if _, err := dec.Token(); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 type OpCreateIndexMethod string
 
