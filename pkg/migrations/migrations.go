@@ -219,9 +219,14 @@ func yamlNodeToJSON(node *yaml.Node) ([]byte, error) {
 		switch node.Tag {
 		case "!!str":
 			return json.Marshal(node.Value)
-		case "!!int":
-			return []byte(node.Value), nil
-		case "!!float":
+		case "!!int", "!!float":
+			// Validate that the numeric value is valid JSON before passing through.
+			// YAML supports formats that JSON doesn't (hex: 0xFF, octal: 0o777, etc.)
+			var num json.Number
+			if err := json.Unmarshal([]byte(node.Value), &num); err != nil {
+				// If not a valid JSON number, treat as string to avoid invalid JSON
+				return json.Marshal(node.Value)
+			}
 			return []byte(node.Value), nil
 		case "!!bool":
 			return []byte(node.Value), nil
