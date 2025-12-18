@@ -84,7 +84,8 @@ func updateCmd() *cobra.Command {
 func newFileUpdater() *migrations.FileUpdater {
 	return migrations.NewFileUpdater(map[string][]migrations.UpdaterFn{
 		string(migrations.OpNameCreateIndex): {
-			migrations.UpdateCreateIndexColumnsList,
+			migrations.UpdateCreateIndexColumnsList,       // string[] -> map
+			migrations.UpdateCreateIndexColumnsMapToArray, // map -> array[]
 		},
 	})
 }

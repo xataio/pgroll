@@ -21,10 +21,12 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	// Get the columns and their settings on which the index is defined
-	columns := make(map[string]migrations.IndexField, len(stmt.GetIndexParams()))
+	columns := make([]migrations.IndexField, 0, len(stmt.GetIndexParams()))
 	for _, param := range stmt.GetIndexParams() {
 		if colName := param.GetIndexElem().GetName(); colName != "" {
 			var indexField migrations.IndexField
+			indexField.Column = colName
+
 			// Deparse collation name
 			collate, err := pgq.DeparseAnyName(param.GetIndexElem().GetCollation())
 			if err != nil {
@@ -79,7 +81,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 				}
 			}
 
-			columns[colName] = indexField
+			columns = append(columns, indexField)
 		}
 	}
 

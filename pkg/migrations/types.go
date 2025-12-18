@@ -186,6 +186,9 @@ type IndexField struct {
 	// Collation for the index element
 	Collate string `json:"collate,omitempty"`
 
+	// Name of the column
+	Column string `json:"column"`
+
 	// Nulls ordering, default is first if ascending, last if descending
 	Nulls *IndexFieldNulls `json:"nulls,omitempty"`
 
@@ -325,7 +328,7 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 // Create index operation
 type OpCreateIndex struct {
 	// Names and settings of columns on which to define the index
-	Columns OpCreateIndexColumns `json:"columns"`
+	Columns []IndexField `json:"columns"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`
@@ -345,9 +348,6 @@ type OpCreateIndex struct {
 	// Indicates if the index is unique
 	Unique bool `json:"unique,omitempty"`
 }
-
-// Names and settings of columns on which to define the index
-type OpCreateIndexColumns map[string]IndexField
 
 type OpCreateIndexMethod string
 

@@ -424,6 +424,10 @@
       "description": "Index field and its settings",
       "type": "object",
       "properties": {
+        "column": {
+          "description": "Name of the column",
+          "type": "string"
+        },
         "collate": {
           "type": "string",
           "description": "Collation for the index element",
@@ -460,7 +464,8 @@
           "description": "Nulls ordering, default is first if ascending, last if descending",
           "enum": ["FIRST", "LAST"]
         }
-      }
+      },
+      "required": ["column"]
     },
     "OpAddColumn": {
       "additionalProperties": false,
@@ -582,8 +587,8 @@
       "properties": {
         "columns": {
           "description": "Names and settings of columns on which to define the index",
-          "type": "object",
-          "additionalProperties": {
+          "type": "array",
+          "items": {
             "$ref": "#/$defs/IndexField",
             "description": "Index field settings"
           }

@@ -2,6 +2,8 @@
 
 package migrations
 
+import "maps"
+
 import "encoding/json"
 
 type UpdaterFn func(operation map[string]any) (map[string]any, error)
@@ -46,8 +48,17 @@ func (u *FileUpdater) Update(rawMigration *RawMigration) (*Migration, error) {
 	return ParseMigration(rawMigration)
 }
 
-// UpdateCreateIndexColumnsList transforms create_index's columns attribute from a list into a map
-// columns: [name] -> columns: name: {}
+// UpdateCreateIndexColumnsList transforms create_index's columns attribute from a string list
+// to the new array format, preserving order:
+//
+// Old format:
+//
+//	columns: ["name", "email"]
+//
+// New format:
+//
+//	columns: [{"column": "name"}, {"column": "email"}]
+//
 // breaking change was released in v0.10.0
 // PR: https://github.com/xataio/pgroll/pull/697
 func UpdateCreateIndexColumnsList(op map[string]any) (map[string]any, error) {
@@ -61,18 +72,62 @@ func UpdateCreateIndexColumnsList(op map[string]any) (map[string]any, error) {
 		} `json:"create_index"`
 	}
 
-	// error is ignored here, because it can only happened if the create_index
+	// error is ignored here, because it can only happen if the create_index
 	// operation does not contain the expected, outdated structure
 	if err := json.Unmarshal(body, &createIndexOp); err == nil {
 		if createIndexOper, ok := op["create_index"].(map[string]any); ok {
-			delete(createIndexOper, "columns")
-			columnsList := make(map[string]any, len(createIndexOp.CreateIndex.Columns))
+			// Convert directly to new array format, preserving order
+			newColumns := make([]map[string]any, 0, len(createIndexOp.CreateIndex.Columns))
 			for _, col := range createIndexOp.CreateIndex.Columns {
-				columnsList[col] = map[string]any{}
+				newColumns = append(newColumns, map[string]any{"column": col})
 			}
-			createIndexOper["columns"] = columnsList
+			createIndexOper["columns"] = newColumns
 		}
 	}
 
 	return op, nil
+}
+
+// UpdateCreateIndexColumnsMapToArray transforms create_index's columns from
+// map to array format:
+//
+// Old format:
+//
+//	columns: {"name": {}, "email": {"sort": "DESC"}}
+//
+// New format:
+//
+//	columns: [{"column": "name"}, {"column": "email", "sort": "DESC"}]
+//
+// This Updater should run after UpdateCreateIndexColumnsList in the chain.
+func UpdateCreateIndexColumnsMapToArray(ops map[string]any) (map[string]any, error) {
+	createIndexOp, ok := ops["create_index"].(map[string]any)
+	if !ok {
+		return ops, nil
+	}
+
+	columns, ok := createIndexOp["columns"]
+	if !ok {
+		return ops, nil
+	}
+
+	// Only convert if it's a map (old format)
+	colsMap, ok := columns.(map[string]any)
+	if !ok {
+		return ops, nil
+	}
+
+	// Convert map to array
+	newColumns := make([]map[string]any, 0, len(colsMap))
+	for colName, settings := range colsMap {
+		entry := map[string]any{"column": colName}
+		if settingsMap, ok := settings.(map[string]any); ok {
+			maps.Copy(entry, settingsMap)
+		}
+		newColumns = append(newColumns, entry)
+	}
+
+	createIndexOp["columns"] = newColumns
+
+	return ops, nil
 }

@@ -3,5 +3,5 @@ operations:
       name: idx_fruits_id_gt_10
       table: fruits
       columns:
-        id: {}
+        - column: "id"
       predicate: id > 10
