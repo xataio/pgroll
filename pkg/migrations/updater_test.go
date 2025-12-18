@@ -41,11 +41,15 @@ func TestFileUpdater(t *testing.T) {
 			require.True(t, ok, "expected create_index operation to be present")
 			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
-				"col1": migrations.IndexField{},
-				"col2": migrations.IndexField{},
+			// The updater transforms ["col1", "col2"] -> {"col1": {}, "col2": {}}
+			// Then our UnmarshalJSON converts map -> array internally
+			require.Len(t, createIndexOp.Columns, 2, "expected 2 columns")
+			colNames := make(map[string]bool)
+			for _, col := range createIndexOp.Columns {
+				colNames[col.Name] = true
 			}
-			require.Equal(t, expectedColumns, createIndexOp.Columns, "columns should be transformed to a map")
+			require.True(t, colNames["col1"], "col1 should be present")
+			require.True(t, colNames["col2"], "col2 should be present")
 		})
 
 		t.Run("update with no create_index operation", func(t *testing.T) {
@@ -97,13 +101,17 @@ func TestFileUpdater(t *testing.T) {
 			op = migration.Operations[1]
 			createIndexOp, ok := op.(*migrations.OpCreateIndex)
 			require.True(t, ok, "expected create_index operation to be present")
-			require.NotNil(t, createIndexOp.Columns, "expected columns to be a map for create_index operation")
+			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
-				"col1": migrations.IndexField{},
-				"col2": migrations.IndexField{},
+			// The updater transforms ["col1", "col2"] -> {"col1": {}, "col2": {}}
+			// Then our UnmarshalJSON converts map -> array internally
+			require.Len(t, createIndexOp.Columns, 2, "expected 2 columns")
+			colNames := make(map[string]bool)
+			for _, col := range createIndexOp.Columns {
+				colNames[col.Name] = true
 			}
-			require.Equal(t, expectedColumns, createIndexOp.Columns, "columns should be transformed to a map")
+			require.True(t, colNames["col1"], "col1 should be present")
+			require.True(t, colNames["col2"], "col2 should be present")
 		})
 	})
 }

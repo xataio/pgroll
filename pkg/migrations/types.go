@@ -215,6 +215,25 @@ type IndexFieldSort string
 const IndexFieldSortASC IndexFieldSort = "ASC"
 const IndexFieldSortDESC IndexFieldSort = "DESC"
 
+// IndexColumn represents a single column in an index with its settings.
+// This is the preferred format for specifying index columns as it preserves order.
+type IndexColumn struct {
+	// Name of the column
+	Name string `json:"name" yaml:"name"`
+
+	// Collation for the index element
+	Collate string `json:"collate,omitempty" yaml:"collate,omitempty"`
+
+	// Nulls ordering, default is first if ascending, last if descending
+	Nulls *IndexFieldNulls `json:"nulls,omitempty" yaml:"nulls,omitempty"`
+
+	// Operator class settings
+	Opclass *IndexFieldOpclass `json:"opclass,omitempty" yaml:"opclass,omitempty"`
+
+	// Sort order, default is ascending (ASC)
+	Sort IndexFieldSort `json:"sort,omitempty" yaml:"sort,omitempty"`
+}
+
 // Map of column names to down SQL expressions
 type MultiColumnDownSQL map[string]string
 
@@ -324,8 +343,17 @@ const OpCreateConstraintTypeUnique OpCreateConstraintType = "unique"
 
 // Create index operation
 type OpCreateIndex struct {
-	// Names and settings of columns on which to define the index
-	Columns OpCreateIndexColumns `json:"columns"`
+	// Index columns with their settings
+	// Supports two formats:
+	// 1. Array format (preferred): [{"name": "col1", "sort": "DESC"}, {"name": "col2"}]
+	//    - Preserves order explicitly
+	//    - Consistent with create_table operation
+	//    - Required for multi-column indexes
+	// 2. Map format (legacy): {"col1": {"sort": "DESC"}, "col2": {}}
+	//    - Deprecated for multi-column indexes (order not preserved)
+	//    - Still supported for single-column indexes
+	// Internally stored as array format after unmarshaling.
+	Columns []IndexColumn `json:"columns"`
 
 	// Index method to use for the index: btree, hash, gist, spgist, gin, brin
 	Method OpCreateIndexMethod `json:"method,omitempty"`

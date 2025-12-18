@@ -70,11 +70,12 @@ func (o *OpCreateIndex) Create() {
 		WithDefaultText("Add columns").
 		WithDefaultValue(true).
 		Show()
-	columns := make(map[string]IndexField)
+	columns := make([]IndexColumn, 0)
 	for addColumns {
 		name, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
-		var indexField IndexField
-		indexField.Collate, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("collate").Show()
+		var indexCol IndexColumn
+		indexCol.Name = name
+		indexCol.Collate, _ = pterm.DefaultInteractiveTextInput.WithDefaultText("collate").Show()
 		nulls, _ := pterm.DefaultInteractiveSelect.
 			WithDefaultText("null").
 			WithOptions([]string{"", "FIRST", "LAST"}).
@@ -82,7 +83,7 @@ func (o *OpCreateIndex) Create() {
 			Show()
 		if nulls != "" {
 			n := IndexFieldNulls(nulls)
-			indexField.Nulls = &n
+			indexCol.Nulls = &n
 		}
 		sort, _ := pterm.DefaultInteractiveSelect.
 			WithDefaultText("sort").
@@ -90,7 +91,7 @@ func (o *OpCreateIndex) Create() {
 			WithDefaultOption("").
 			Show()
 		if sort != "" {
-			indexField.Sort = IndexFieldSort(sort)
+			indexCol.Sort = IndexFieldSort(sort)
 		}
 		addOpclass, _ := pterm.DefaultInteractiveConfirm.
 			WithDefaultText("Add opclass").
@@ -99,10 +100,10 @@ func (o *OpCreateIndex) Create() {
 		if addOpclass {
 			name, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("name").Show()
 			params, _ := pterm.DefaultInteractiveTextInput.WithDefaultText("params").Show()
-			indexField.Opclass = &IndexFieldOpclass{Name: name, Params: strings.Split(params, ",")}
+			indexCol.Opclass = &IndexFieldOpclass{Name: name, Params: strings.Split(params, ",")}
 		}
 
-		columns[name] = indexField
+		columns = append(columns, indexCol)
 		addColumns, _ = pterm.DefaultInteractiveConfirm.
 			WithDefaultText("Add more columns").
 			Show()

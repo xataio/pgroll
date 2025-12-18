@@ -21,16 +21,19 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 	tableName := getQualifiedRelationName(stmt.GetRelation())
 
 	// Get the columns and their settings on which the index is defined
-	columns := make(map[string]migrations.IndexField, len(stmt.GetIndexParams()))
+	// Use array format to preserve SQL column order
+	columns := make([]migrations.IndexColumn, 0, len(stmt.GetIndexParams()))
 	for _, param := range stmt.GetIndexParams() {
 		if colName := param.GetIndexElem().GetName(); colName != "" {
-			var indexField migrations.IndexField
+			var indexCol migrations.IndexColumn
+			indexCol.Name = colName
+			
 			// Deparse collation name
 			collate, err := pgq.DeparseAnyName(param.GetIndexElem().GetCollation())
 			if err != nil {
 				return nil, nil
 			}
-			indexField.Collate = collate
+			indexCol.Collate = collate
 
 			// Deparse operator class name
 			opclassName, err := pgq.DeparseAnyName(param.GetIndexElem().GetOpclass())
@@ -49,7 +52,7 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 						opclassOpts = append(opclassOpts, strings.TrimSpace(opt))
 					}
 				}
-				indexField.Opclass = &migrations.IndexFieldOpclass{
+				indexCol.Opclass = &migrations.IndexFieldOpclass{
 					Name:   opclassName,
 					Params: opclassOpts,
 				}
@@ -59,9 +62,9 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 			if param.GetIndexElem().GetOrdering() != pgq.SortByDir_SORTBY_DEFAULT {
 				switch param.GetIndexElem().GetOrdering() {
 				case pgq.SortByDir_SORTBY_ASC:
-					indexField.Sort = migrations.IndexFieldSortASC
+					indexCol.Sort = migrations.IndexFieldSortASC
 				case pgq.SortByDir_SORTBY_DESC:
-					indexField.Sort = migrations.IndexFieldSortDESC
+					indexCol.Sort = migrations.IndexFieldSortDESC
 				default:
 					return nil, nil
 				}
@@ -71,15 +74,15 @@ func convertCreateIndexStmt(stmt *pgq.IndexStmt) (migrations.Operations, error) 
 			if param.GetIndexElem().GetNullsOrdering() != pgq.SortByNulls_SORTBY_NULLS_DEFAULT {
 				switch param.GetIndexElem().GetNullsOrdering() {
 				case pgq.SortByNulls_SORTBY_NULLS_FIRST:
-					indexField.Nulls = ptr(migrations.IndexFieldNullsFIRST)
+					indexCol.Nulls = ptr(migrations.IndexFieldNullsFIRST)
 				case pgq.SortByNulls_SORTBY_NULLS_LAST:
-					indexField.Nulls = ptr(migrations.IndexFieldNullsLAST)
+					indexCol.Nulls = ptr(migrations.IndexFieldNullsLAST)
 				default:
 					return nil, nil
 				}
 			}
 
-			columns[colName] = indexField
+			columns = append(columns, indexCol)
 		}
 	}
 

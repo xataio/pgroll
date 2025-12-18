@@ -210,13 +210,13 @@ BEGIN
          RETURN passed;
 END; $$  LANGUAGE plpgsql
 SECURITY DEFINER`,
-				},
-				&migrations.OpCreateIndex{
-					Name:    "idx1",
-					Table:   "t1",
-					Columns: map[string]migrations.IndexField{"id": {}},
-					Method:  "btree",
-				},
+			},
+			&migrations.OpCreateIndex{
+				Name:    "idx1",
+				Table:   "t1",
+				Columns: []migrations.IndexColumn{{Name: "id"}},
+				Method:  "btree",
+			},
 				&migrations.OpRawSQL{
 					Up: "CREATE TYPE t1",
 				},
