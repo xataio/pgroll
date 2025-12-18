@@ -42,7 +42,7 @@ func TestFileUpdater(t *testing.T) {
 			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
 			// Order is preserved when converting from string array
-			expectedColumns := migrations.OpCreateIndexColumns{
+			expectedColumns := []migrations.IndexField{
 				{Column: "col1"},
 				{Column: "col2"},
 			}
@@ -101,7 +101,7 @@ func TestFileUpdater(t *testing.T) {
 			require.True(t, ok, "expected create_index operation to be present")
 			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
+			expectedColumns := []migrations.IndexField{
 				{Column: "col1"},
 				{Column: "col2"},
 			}
@@ -146,7 +146,7 @@ func TestFileUpdater(t *testing.T) {
 			require.True(t, ok, "expected create_index operation to be present")
 			require.NotNil(t, createIndexOp.Columns, "expected columns to be present")
 
-			expectedColumns := migrations.OpCreateIndexColumns{
+			expectedColumns := []migrations.IndexField{
 				{Column: "col1"},
 				{Column: "col2"},
 			}
