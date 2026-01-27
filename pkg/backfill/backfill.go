@@ -199,18 +199,19 @@ func (bf *Backfill) Start(ctx context.Context, table *schema.Table) error {
 // getRowCount will attempt to get the row count for the given table. It first attempts to get an
 // estimate and if that is zero, falls back to a full table scan.
 func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, error) {
-	// Try and get estimated row count
+	// Get current schema
 	var currentSchema string
 	rows, err := conn.QueryContext(ctx, "select current_schema()")
 	if err != nil {
 		return 0, fmt.Errorf("getting current schema: %w", err)
 	}
-	defer rows.Close()
-
-	if err := db.ScanFirstValue(rows, &currentSchema); err != nil {
+	err = db.ScanFirstValue(rows, &currentSchema)
+	rows.Close()
+	if err != nil {
 		return 0, fmt.Errorf("scanning current schema: %w", err)
 	}
 
+	// Get estimated row count
 	var total int64
 	rows, err = conn.QueryContext(ctx, `
 	  SELECT n_live_tup AS estimate
@@ -219,7 +220,9 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	if err != nil {
 		return 0, fmt.Errorf("getting row count estimate for %q: %w", tableName, err)
 	}
-	if err := db.ScanFirstValue(rows, &total); err != nil {
+	err = db.ScanFirstValue(rows, &total)
+	rows.Close()
+	if err != nil {
 		return 0, fmt.Errorf("scanning row count estimate for %q: %w", tableName, err)
 	}
 	if total > 0 {
@@ -231,7 +234,9 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	if err != nil {
 		return 0, fmt.Errorf("getting row count for %q: %w", tableName, err)
 	}
-	if err := db.ScanFirstValue(rows, &total); err != nil {
+	err = db.ScanFirstValue(rows, &total)
+	rows.Close()
+	if err != nil {
 		return 0, fmt.Errorf("scanning row count for %q: %w", tableName, err)
 	}
 
