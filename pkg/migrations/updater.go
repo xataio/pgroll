@@ -2,9 +2,10 @@
 
 package migrations
 
-import "maps"
-
-import "encoding/json"
+import (
+	"encoding/json"
+	"maps"
+)
 
 type UpdaterFn func(operation map[string]any) (map[string]any, error)
 
