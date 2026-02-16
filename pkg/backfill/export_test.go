@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
+package backfill
+
+var GetRowCount = getRowCount

@@ -205,11 +205,11 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 	if err != nil {
 		return 0, fmt.Errorf("getting current schema: %w", err)
 	}
-	defer rows.Close()
-
 	if err := db.ScanFirstValue(rows, &currentSchema); err != nil {
+		rows.Close()
 		return 0, fmt.Errorf("scanning current schema: %w", err)
 	}
+	rows.Close()
 
 	var total int64
 	rows, err = conn.QueryContext(ctx, `
@@ -220,8 +220,11 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 		return 0, fmt.Errorf("getting row count estimate for %q: %w", tableName, err)
 	}
 	if err := db.ScanFirstValue(rows, &total); err != nil {
+		rows.Close()
 		return 0, fmt.Errorf("scanning row count estimate for %q: %w", tableName, err)
 	}
+	rows.Close()
+
 	if total > 0 {
 		return total, nil
 	}
@@ -232,8 +235,10 @@ func getRowCount(ctx context.Context, conn db.DB, tableName string) (int64, erro
 		return 0, fmt.Errorf("getting row count for %q: %w", tableName, err)
 	}
 	if err := db.ScanFirstValue(rows, &total); err != nil {
+		rows.Close()
 		return 0, fmt.Errorf("scanning row count for %q: %w", tableName, err)
 	}
+	rows.Close()
 
 	return total, nil
 }

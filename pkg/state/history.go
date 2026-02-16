@@ -47,6 +47,7 @@ func (s *State) SchemaHistory(ctx context.Context, schema string) ([]HistoryEntr
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var entries []HistoryEntry
 	for rows.Next() {
