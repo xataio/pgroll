@@ -500,6 +500,8 @@ func (a *createUniqueIndexConcurrentlyAction) isIndexInProgress(ctx context.Cont
 		// In that case, we can safely return false.
 		return false, nil
 	}
+	defer rows.Close()
+
 	var isInProgress bool
 	if err := db.ScanFirstValue(rows, &isInProgress); err != nil {
 		return false, fmt.Errorf("scanning index in progress with name %q: %w", quotedQualifiedIndexName, err)
@@ -521,6 +523,8 @@ func (a *createUniqueIndexConcurrentlyAction) isIndexValid(ctx context.Context, 
 		// In that case, we can safely return true.
 		return true, nil
 	}
+	defer rows.Close()
+
 	var isValid bool
 	if err := db.ScanFirstValue(rows, &isValid); err != nil {
 		return false, fmt.Errorf("scanning index with name %q: %w", quotedQualifiedIndexName, err)
