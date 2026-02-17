@@ -367,7 +367,9 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 func (m *Roll) performBackfills(ctx context.Context, job *backfill.Job, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
 
-	bf.CreateTriggers(ctx, job)
+	if err := bf.CreateTriggers(ctx, job); err != nil {
+		return fmt.Errorf("failed to create triggers: %w", err)
+	}
 
 	for _, table := range job.Tables {
 		m.logger.LogBackfillStart(table.Name)
