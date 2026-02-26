@@ -95,6 +95,7 @@ func (d *duplicator) WithName(columnName, asName string) *duplicator {
 // comments.
 func (d *duplicator) Execute(ctx context.Context) error {
 	colNames := make([]string, 0, len(d.columns))
+
 	for name, c := range d.columns {
 		colNames = append(colNames, name)
 
@@ -148,7 +149,6 @@ func (d *duplicator) Execute(ctx context.Context) error {
 			}
 		}
 	}
-
 	// Generate SQL to duplicate any foreign key constraints on the columns.
 	// If the foreign key constraint is not valid for a new column type, the error is ignored.
 	for _, sql := range d.stmtBuilder.duplicateForeignKeyConstraints(d.withoutConstraint, colNames...) {
@@ -162,6 +162,11 @@ func (d *duplicator) Execute(ctx context.Context) error {
 	// Generate SQL to duplicate any indexes on the columns.
 	for _, sql := range d.stmtBuilder.duplicateIndexes(d.withoutConstraint, colNames...) {
 		if _, err := d.conn.ExecContext(ctx, sql); err != nil {
+			// Ignore "already exists" errors when resuming from a crash
+			pqErr := &pq.Error{}
+			if ok := errors.As(err, &pqErr); ok && pqErr.Code == "42P07" { // duplicate_table (index already exists)
+				continue
+			}
 			return err
 		}
 	}
@@ -213,6 +218,7 @@ func (d *duplicatorStmtBuilder) duplicateForeignKeyConstraints(withoutConstraint
 
 func (d *duplicatorStmtBuilder) duplicateIndexes(withoutConstraint []string, colNames ...string) []string {
 	stmts := make([]string, 0, len(d.table.Indexes))
+
 	for _, idx := range d.table.Indexes {
 		if slices.Contains(withoutConstraint, idx.Name) || IsDuplicatedName(idx.Name) {
 			continue
