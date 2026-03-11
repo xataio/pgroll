@@ -79,7 +79,7 @@ func runMigrationFromFile(ctx context.Context, m *roll.Roll, fileName string, co
 	return runMigration(ctx, m, migration, complete, c)
 }
 
-func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool, c *backfill.Config) error {
+func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migration, complete bool, c *backfill.Config, completeOpts ...roll.CompleteOption) error {
 	sp, _ := pterm.DefaultSpinner.WithText("Starting migration...").Start()
 	c.AddCallback(func(n int64, total int64) {
 		if total > 0 {
@@ -99,7 +99,7 @@ func runMigration(ctx context.Context, m *roll.Roll, migration *migrations.Migra
 	}
 
 	if complete {
-		if err = m.Complete(ctx); err != nil {
+		if err = m.Complete(ctx, completeOpts...); err != nil {
 			sp.Fail(fmt.Sprintf("Failed to complete migration: %s", err))
 			return err
 		}
