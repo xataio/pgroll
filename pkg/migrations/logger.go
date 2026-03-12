@@ -94,7 +94,7 @@ func (l migrationLogger) LogOperationRollback(op Operation) {
 }
 
 func (l migrationLogger) Info(msg string, args ...any) {
-	l.logger.Info(msg, l.logger.Args(args))
+	l.logger.Info(msg, l.logger.Args(args...))
 }
 
 func (l migrationLogger) extractOpArgs(op Operation) []any {

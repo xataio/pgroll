@@ -168,8 +168,27 @@ func (m *Roll) ensureViews(ctx context.Context, schema *schema.Schema, mig *migr
 	return nil
 }
 
+// completeOptions holds options for the Complete method.
+type completeOptions struct {
+	skipSchemaDrop bool
+}
+
+// CompleteOption is a functional option for the Complete method.
+type CompleteOption func(*completeOptions)
+
+// WithSkipSchemaDrop returns a CompleteOption that skips dropping the previous
+// version schema during Complete. This is used during multi-migration batches
+// to preserve schemas that applications may still be connected to.
+func WithSkipSchemaDrop() CompleteOption {
+	return func(o *completeOptions) { o.skipSchemaDrop = true }
+}
+
 // Complete will update the database schema to match the current version
-func (m *Roll) Complete(ctx context.Context) error {
+func (m *Roll) Complete(ctx context.Context, opts ...CompleteOption) error {
+	var o completeOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
 	// get current ongoing migration
 	migration, err := m.state.GetActiveMigration(ctx, m.schema)
 	if err != nil {
@@ -178,17 +197,21 @@ func (m *Roll) Complete(ctx context.Context) error {
 
 	m.logger.LogMigrationComplete(migration)
 
-	// Drop the old version schema if there is one
-	prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
-	if err != nil {
-		return fmt.Errorf("unable to get name of previous version: %w", err)
-	}
-	if prevVersion != nil {
-		versionSchema := VersionedSchemaName(m.schema, *prevVersion)
-		_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+	// Drop the old version schema if there is one (unless skip is requested)
+	if !o.skipSchemaDrop {
+		prevVersion, err := m.state.PreviousVersion(ctx, m.schema)
 		if err != nil {
-			return fmt.Errorf("unable to drop previous version: %w", err)
+			return fmt.Errorf("unable to get name of previous version: %w", err)
 		}
+		if prevVersion != nil {
+			versionSchema := VersionedSchemaName(m.schema, *prevVersion)
+			_, err = m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(versionSchema)))
+			if err != nil {
+				return fmt.Errorf("unable to drop previous version: %w", err)
+			}
+		}
+	} else {
+		m.logger.Info("skipping previous version schema drop (deferred cleanup)", "migration", migration.Name)
 	}
 
 	// read the current schema
@@ -381,6 +404,56 @@ func (m *Roll) performBackfills(ctx context.Context, job *backfill.Job, cfg *bac
 		}
 
 		m.logger.LogBackfillComplete(table.Name)
+	}
+
+	return nil
+}
+
+// DropVersionSchemasExcept drops all version schemas for the given schema
+// except those whose version name is in the keep list. Version schemas are
+// identified by their prefix (schema + "_") and cross-referenced with the
+// migration history to avoid dropping unrelated schemas.
+func (m *Roll) DropVersionSchemasExcept(ctx context.Context, keep ...string) error {
+	keepSet := make(map[string]bool, len(keep))
+	for _, k := range keep {
+		keepSet[VersionedSchemaName(m.schema, k)] = true
+	}
+
+	prefix := m.schema + "_"
+	rows, err := m.pgConn.QueryContext(ctx,
+		"SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE $1",
+		prefix+"%")
+	if err != nil {
+		return fmt.Errorf("unable to list version schemas: %w", err)
+	}
+	defer rows.Close()
+
+	var toDrop []string
+	for rows.Next() {
+		var schemaName string
+		if err := rows.Scan(&schemaName); err != nil {
+			return fmt.Errorf("unable to scan schema name: %w", err)
+		}
+		if !keepSet[schemaName] {
+			toDrop = append(toDrop, schemaName)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating version schemas: %w", err)
+	}
+
+	if len(toDrop) == 0 {
+		m.logger.Info("deferred schema cleanup: no intermediate schemas to drop")
+	} else {
+		m.logger.Info("deferred schema cleanup: dropping intermediate schemas", "count", len(toDrop))
+	}
+
+	for _, s := range toDrop {
+		m.logger.Info("deferred schema cleanup: dropping schema", "schema", s)
+		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(s)))
+		if err != nil {
+			return fmt.Errorf("unable to drop version schema %q: %w", s, err)
+		}
 	}
 
 	return nil

@@ -977,6 +977,192 @@ func TestVersionSchemaCreationIsNotCapturedAsAnInferredMigration(t *testing.T) {
 	})
 }
 
+func TestCompleteWithSkipSchemaDropPreservesPreviousVersionSchema(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		const (
+			version1 = "1_create_table"
+			version2 = "2_create_another_table"
+		)
+
+		// Start and complete the first migration
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       version1,
+			Operations: migrations.Operations{createTableOp("table1")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = mig.Complete(ctx)
+		require.NoError(t, err)
+
+		// Start and complete the second migration with WithSkipSchemaDrop
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       version2,
+			Operations: migrations.Operations{createTableOp("table2")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = mig.Complete(ctx, roll.WithSkipSchemaDrop())
+		require.NoError(t, err)
+
+		// The first version schema should still exist because we skipped the drop
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)),
+			"Expected schema %q to still exist after Complete with WithSkipSchemaDrop", version1)
+
+		// The second version schema should also exist
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version2)),
+			"Expected schema %q to exist", version2)
+	})
+}
+
+func TestMultiMigrationBatchPreservesOriginalSchema(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		const (
+			version1 = "1_create_table"
+			version2 = "2_create_table2"
+			version3 = "3_create_table3"
+			version4 = "4_create_table4"
+		)
+
+		// Apply the first migration normally (this is the "app's current version")
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       version1,
+			Operations: migrations.Operations{createTableOp("table1")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = mig.Complete(ctx)
+		require.NoError(t, err)
+
+		// Verify the original schema exists
+		require.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)))
+
+		// Simulate a multi-migration batch: apply intermediates with WithSkipSchemaDrop
+		for _, v := range []struct {
+			name  string
+			table string
+		}{
+			{version2, "table2"},
+			{version3, "table3"},
+		} {
+			err = mig.Start(ctx, &migrations.Migration{
+				Name:       v.name,
+				Operations: migrations.Operations{createTableOp(v.table)},
+			}, backfill.NewConfig())
+			require.NoError(t, err)
+			err = mig.Complete(ctx, roll.WithSkipSchemaDrop())
+			require.NoError(t, err)
+
+			// Original schema should still exist after each intermediate
+			assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)),
+				"Original schema should persist during intermediate migration %s", v.name)
+		}
+
+		// Apply the final migration normally (no skip)
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       version4,
+			Operations: migrations.Operations{createTableOp("table4")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+
+		// Original schema should still exist (final migration is left active, not completed)
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)))
+
+		// Clean up intermediate schemas, keeping original and latest
+		err = mig.DropVersionSchemasExcept(ctx, version1, version4)
+		require.NoError(t, err)
+
+		// Original and latest should still exist
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)),
+			"Original schema should be preserved after cleanup")
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version4)),
+			"Latest schema should be preserved after cleanup")
+
+		// Intermediate schemas should be cleaned up
+		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version2)),
+			"Intermediate schema v2 should be dropped after cleanup")
+		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version3)),
+			"Intermediate schema v3 should be dropped after cleanup")
+	})
+}
+
+func TestDropVersionSchemasExceptKeepsSpecifiedSchemas(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+
+		versions := []string{"v1", "v2", "v3", "v4"}
+		tables := []string{"t1", "t2", "t3", "t4"}
+
+		// Create 4 migrations, skipping schema drops for all
+		for i, v := range versions {
+			err := mig.Start(ctx, &migrations.Migration{
+				Name:       v,
+				Operations: migrations.Operations{createTableOp(tables[i])},
+			}, backfill.NewConfig())
+			require.NoError(t, err)
+			err = mig.Complete(ctx, roll.WithSkipSchemaDrop())
+			require.NoError(t, err)
+		}
+
+		// All version schemas should exist
+		for _, v := range versions {
+			require.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, v)),
+				"Expected schema for %s to exist before cleanup", v)
+		}
+
+		// Drop all except v1 and v4
+		err := mig.DropVersionSchemasExcept(ctx, "v1", "v4")
+		require.NoError(t, err)
+
+		// v1 and v4 should still exist
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, "v1")))
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, "v4")))
+
+		// v2 and v3 should be dropped
+		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, "v2")))
+		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, "v3")))
+	})
+}
+
+func TestSingleMigrationCompleteStillDropsPreviousSchema(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+		ctx := context.Background()
+		const (
+			version1 = "1_create_table"
+			version2 = "2_create_table2"
+		)
+
+		// Apply two migrations normally (no WithSkipSchemaDrop)
+		err := mig.Start(ctx, &migrations.Migration{
+			Name:       version1,
+			Operations: migrations.Operations{createTableOp("table1")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = mig.Complete(ctx)
+		require.NoError(t, err)
+
+		err = mig.Start(ctx, &migrations.Migration{
+			Name:       version2,
+			Operations: migrations.Operations{createTableOp("table2")},
+		}, backfill.NewConfig())
+		require.NoError(t, err)
+		err = mig.Complete(ctx)
+		require.NoError(t, err)
+
+		// Previous version schema should have been dropped (normal behavior unchanged)
+		assert.False(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version1)),
+			"Previous schema should be dropped during normal Complete")
+		assert.True(t, schemaExists(t, db, roll.VersionedSchemaName(cSchema, version2)),
+			"Current schema should exist")
+	})
+}
+
 func addColumnOp(tableName string) *migrations.OpAddColumn {
 	return &migrations.OpAddColumn{
 		Table: tableName,

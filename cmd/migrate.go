@@ -12,6 +12,7 @@ import (
 
 	"github.com/xataio/pgroll/pkg/backfill"
 	"github.com/xataio/pgroll/pkg/migrations"
+	"github.com/xataio/pgroll/pkg/roll"
 )
 
 func migrateCmd() *cobra.Command {
@@ -94,16 +95,45 @@ func migrateCmd() *cobra.Command {
 				backfill.WithBatchDelay(batchDelay),
 			)
 
+			// Record the schema version the app is currently using so we can
+			// preserve it throughout the batch.
+			originalVersion, err := m.State().LatestVersion(ctx, m.Schema())
+			if err != nil {
+				return fmt.Errorf("unable to get original version: %w", err)
+			}
+
 			// Run all migrations after the latest version up to the final migration,
-			// completing each one.
+			// completing each one but skipping schema drops to preserve the
+			// original version schema that applications may still be using.
 			for _, mig := range migs[:len(migs)-1] {
-				if err := runMigration(ctx, m, mig, true, backfillConfig); err != nil {
+				if err := runMigration(ctx, m, mig, true, backfillConfig, roll.WithSkipSchemaDrop()); err != nil {
 					return fmt.Errorf("failed to run migration file %q: %w", mig.Name, err)
 				}
 			}
 
 			// Run the final migration, completing it only if requested.
-			return runMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig)
+			if err := runMigration(ctx, m, migs[len(migs)-1], complete, backfillConfig); err != nil {
+				return err
+			}
+
+			// Clean up intermediate version schemas, keeping only the original
+			// (for zero-downtime) and the latest active version.
+			keepSchemas := []string{}
+			if originalVersion != nil {
+				keepSchemas = append(keepSchemas, *originalVersion)
+			}
+			latestVersion, err := m.State().LatestVersion(ctx, m.Schema())
+			if err != nil {
+				return fmt.Errorf("unable to get latest version: %w", err)
+			}
+			if latestVersion != nil {
+				keepSchemas = append(keepSchemas, *latestVersion)
+			}
+			if err := m.DropVersionSchemasExcept(ctx, keepSchemas...); err != nil {
+				return fmt.Errorf("failed to clean up intermediate schemas: %w", err)
+			}
+
+			return nil
 		},
 	}
 
