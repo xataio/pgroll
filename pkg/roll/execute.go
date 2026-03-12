@@ -210,6 +210,8 @@ func (m *Roll) Complete(ctx context.Context, opts ...CompleteOption) error {
 				return fmt.Errorf("unable to drop previous version: %w", err)
 			}
 		}
+	} else {
+		m.logger.Info("skipping previous version schema drop (deferred cleanup)", "migration", migration.Name)
 	}
 
 	// read the current schema
@@ -440,7 +442,14 @@ func (m *Roll) DropVersionSchemasExcept(ctx context.Context, keep ...string) err
 		return fmt.Errorf("error iterating version schemas: %w", err)
 	}
 
+	if len(toDrop) == 0 {
+		m.logger.Info("deferred schema cleanup: no intermediate schemas to drop")
+	} else {
+		m.logger.Info("deferred schema cleanup: dropping intermediate schemas", "count", len(toDrop))
+	}
+
 	for _, s := range toDrop {
+		m.logger.Info("deferred schema cleanup: dropping schema", "schema", s)
 		_, err := m.pgConn.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pq.QuoteIdentifier(s)))
 		if err != nil {
 			return fmt.Errorf("unable to drop version schema %q: %w", s, err)
