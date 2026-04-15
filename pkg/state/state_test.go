@@ -332,6 +332,30 @@ func TestInferredMigrationsHaveExpectedNamesAndVersionSchema(t *testing.T) {
 	})
 }
 
+func TestTempSchemaDDLDoesNotProduceInferredMigrations(t *testing.T) {
+	t.Parallel()
+
+	testutils.WithStateAndConnectionToContainer(t, func(st *state.State, db *sql.DB) {
+		ctx := context.Background()
+
+		// Create and drop a temporary table. Postgres places these in a
+		// per-session pg_temp_<N> schema; the event trigger must ignore them.
+		_, err := db.ExecContext(ctx, "CREATE TEMP TABLE temp_foo(id int)")
+		require.NoError(t, err)
+
+		_, err = db.ExecContext(ctx, "DROP TABLE temp_foo")
+		require.NoError(t, err)
+
+		// No inferred migration rows should have been recorded for any schema.
+		var count int
+		err = db.QueryRowContext(ctx,
+			fmt.Sprintf("SELECT count(*) FROM %s.migrations WHERE migration_type = 'inferred'", st.Schema()),
+		).Scan(&count)
+		require.NoError(t, err)
+		assert.Equal(t, 0, count, "temp-schema DDL should not produce inferred migrations")
+	})
+}
+
 func TestInferredMigrationsInTransactionHaveDifferentTimestamps(t *testing.T) {
 	ctx := context.Background()
 
