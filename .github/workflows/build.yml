@@ -14,7 +14,7 @@ jobs:
     name: cross-platform build
     runs-on: ubuntu-24.04
     container:
-      image: goreleaser/goreleaser-cross:v1.24
+      image: goreleaser/goreleaser-cross:v1.26.2
     steps:
       - uses: actions/checkout@v4
 
@@ -83,7 +83,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v8
       with:
-        version: v2.1
+        version: v2.12.2
         args: --timeout=30m --config=.golangci.yml
 
   format:
@@ -249,7 +249,7 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     container:
-      image: goreleaser/goreleaser-cross:v1.24
+      image: goreleaser/goreleaser-cross:v1.26.2
     needs: [test, lint, examples, license-check, format, code-generation, dead-code-check, check-ledger, cross-build]
     if: startsWith(github.ref, 'refs/tags/')
     env:
