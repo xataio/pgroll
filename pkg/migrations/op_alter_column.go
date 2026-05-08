@@ -47,7 +47,8 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	triggers := make([]backfill.OperationTrigger, 0)
-	triggers = append(triggers,
+	triggers = append(
+		triggers,
 		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, o.Column),
 			Direction:      backfill.TriggerDirectionUp,
@@ -73,7 +74,8 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	})
 
 	// Add a trigger to copy values from the new column to the old.
-	triggers = append(triggers,
+	triggers = append(
+		triggers,
 		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, TemporaryName(o.Column)),
 			Direction:      backfill.TriggerDirectionDown,
@@ -128,7 +130,8 @@ func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 	return append(dbActions, []DBAction{
 		NewAlterSequenceOwnerAction(conn, table.Name, column.Name, TemporaryName(column.Name)),
 		NewDropColumnAction(conn, table.Name, o.Column),
-		NewDropFunctionAction(conn,
+		NewDropFunctionAction(
+			conn,
 			backfill.TriggerFunctionName(o.Table, o.Column),
 			backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
 		),
@@ -160,9 +163,11 @@ func (o *OpAlterColumn) Rollback(l Logger, conn db.DB, s *schema.Schema) ([]DBAc
 		dbActions = append(dbActions, actions...)
 	}
 
-	dbActions = append(dbActions,
+	dbActions = append(
+		dbActions,
 		NewDropColumnAction(conn, table.Name, column.Name),
-		NewDropFunctionAction(conn,
+		NewDropFunctionAction(
+			conn,
 			backfill.TriggerFunctionName(o.Table, o.Column),
 			backfill.TriggerFunctionName(o.Table, TemporaryName(o.Column)),
 		),
@@ -292,7 +297,7 @@ func duplicatorForOperations(ops []Operation, conn db.DB, table *schema.Table, c
 	d := NewColumnDuplicator(conn, table, column)
 
 	for _, op := range ops {
-		switch op := (op).(type) {
+		switch op := op.(type) {
 		case *OpDropNotNull:
 			d = d.WithoutNotNull(column.Name)
 		case *OpChangeType:
@@ -310,7 +315,7 @@ func (o *OpAlterColumn) downSQLForOperations(ops []Operation) string {
 	}
 
 	for _, op := range ops {
-		switch (op).(type) {
+		switch op.(type) {
 		case *OpSetUnique, *OpSetNotNull, *OpSetDefault, *OpSetComment:
 			return pq.QuoteIdentifier(o.Column)
 		}
@@ -327,7 +332,7 @@ func (o *OpAlterColumn) upSQLForOperations(ops []Operation) string {
 	}
 
 	for _, op := range ops {
-		switch (op).(type) {
+		switch op.(type) {
 		case *OpDropNotNull, *OpSetDefault, *OpSetComment:
 			return pq.QuoteIdentifier(o.Column)
 		}

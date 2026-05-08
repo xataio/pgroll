@@ -46,7 +46,8 @@ func (a *addColumnAction) Execute(ctx context.Context) error {
 		return err
 	}
 
-	_, err = a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s",
+	_, err = a.conn.ExecContext(ctx, fmt.Sprintf(
+		"ALTER TABLE %s ADD COLUMN %s",
 		pq.QuoteIdentifier(a.table),
 		colSQL,
 	))
@@ -218,7 +219,8 @@ func NewAddPrimaryKeyAction(conn db.DB, table, indexName string) *addPrimaryKeyA
 func (a *addPrimaryKeyAction) ID() string { return a.id }
 
 func (a *addPrimaryKeyAction) Execute(ctx context.Context) error {
-	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf(
+		"ALTER TABLE %s ADD PRIMARY KEY USING INDEX %s",
 		pq.QuoteIdentifier(a.table),
 		pq.QuoteIdentifier(a.indexName),
 	))
@@ -729,7 +731,8 @@ func (a *createFKConstraintAction) Execute(ctx context.Context) error {
 		a.reference.OnDelete,
 		a.reference.OnUpdate,
 		a.reference.OnDeleteSetColumns,
-		a.reference.MatchType)
+		a.reference.MatchType,
+	)
 
 	_, err := a.conn.ExecContext(ctx, sql)
 	return err
@@ -760,7 +763,8 @@ func (a *alterSequenceOwnerAction) Execute(ctx context.Context) error {
 	if sequence == "" {
 		return nil
 	}
-	_, err := a.conn.ExecContext(ctx, fmt.Sprintf("ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
+	_, err := a.conn.ExecContext(ctx, fmt.Sprintf(
+		"ALTER SEQUENCE IF EXISTS %s OWNED BY %s.%s",
 		sequence,
 		pq.QuoteIdentifier(a.table),
 		pq.QuoteIdentifier(a.to),

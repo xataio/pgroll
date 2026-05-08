@@ -56,7 +56,8 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 			upColumns[name] = col
 		}
 		// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-		triggers = append(triggers,
+		triggers = append(
+			triggers,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, columnName),
 				Direction:      backfill.TriggerDirectionUp,
@@ -77,7 +78,8 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		})
 
 		// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-		triggers = append(triggers,
+		triggers = append(
+			triggers,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, TemporaryName(columnName)),
 				Direction:      backfill.TriggerDirectionDown,
@@ -100,7 +102,8 @@ func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.S
 
 	dbActions := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		dbActions = append(dbActions,
+		dbActions = append(
+			dbActions,
 			NewDropFunctionAction(conn,
 				backfill.TriggerFunctionName(o.Table, columnName),
 				backfill.TriggerFunctionName(o.Table, TemporaryName(columnName))),
@@ -121,7 +124,8 @@ func (o *OpDropMultiColumnConstraint) Rollback(l Logger, conn db.DB, s *schema.S
 
 	dbAction := make([]DBAction, 0)
 	for _, columnName := range table.GetConstraintColumns(o.Name) {
-		dbAction = append(dbAction,
+		dbAction = append(
+			dbAction,
 			NewDropColumnAction(conn, table.Name, TemporaryName(columnName)),
 			NewDropFunctionAction(conn,
 				backfill.TriggerFunctionName(o.Table, columnName),

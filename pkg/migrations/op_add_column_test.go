@@ -725,7 +725,8 @@ func TestAddForeignKeyColumn(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -765,7 +766,8 @@ func TestAddForeignKeyColumn(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_add_column", "users", map[string]string{

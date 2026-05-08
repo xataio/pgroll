@@ -108,7 +108,8 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 		}
 
 		// Rename the index to its original name
-		renameIndexSQL := fmt.Sprintf(cRenameIndexSQL,
+		renameIndexSQL := fmt.Sprintf(
+			cRenameIndexSQL,
 			pq.QuoteIdentifier(idx.Name),
 			pq.QuoteIdentifier(StripDuplicationPrefix(idx.Name)),
 		)
@@ -123,7 +124,8 @@ func (a *renameDuplicatedColumnAction) Execute(ctx context.Context) error {
 
 		if _, ok := a.table.UniqueConstraints[StripDuplicationPrefix(idx.Name)]; idx.Unique && ok {
 			// Create a unique constraint using the unique index
-			err := NewAddConstraintUsingUniqueIndex(a.conn,
+			err := NewAddConstraintUsingUniqueIndex(
+				a.conn,
 				a.table.Name,
 				StripDuplicationPrefix(idx.Name),
 				StripDuplicationPrefix(idx.Name),

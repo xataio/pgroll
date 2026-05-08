@@ -43,7 +43,8 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
 	triggers := make([]backfill.OperationTrigger, 0)
-	triggers = append(triggers,
+	triggers = append(
+		triggers,
 		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, column.Name),
 			Direction:      backfill.TriggerDirectionUp,
@@ -62,7 +63,8 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 	})
 
 	// Add a trigger to copy values from the new column to the old, rewriting values using the `down` SQL.
-	triggers = append(triggers,
+	triggers = append(
+		triggers,
 		backfill.OperationTrigger{
 			Name:           backfill.TriggerName(o.Table, TemporaryName(column.Name)),
 			Direction:      backfill.TriggerDirectionDown,

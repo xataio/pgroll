@@ -303,7 +303,8 @@ func (d *duplicatorStmtBuilder) duplicateColumn(
 		if _, ok := d.table.CheckConstraints[constraintName]; ok {
 			return sql // Skip if the constraint already exists
 		}
-		sql += fmt.Sprintf("; "+cAddCheckConstraintSQL,
+		sql += fmt.Sprintf(
+			"; "+cAddCheckConstraintSQL,
 			pq.QuoteIdentifier(d.table.Name),
 			pq.QuoteIdentifier(constraintName),
 			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(asName)),
@@ -341,7 +342,8 @@ func (d *duplicatorStmtBuilder) duplicateComment(column *schema.Column, asName s
 	const cCommentOnColumnSQL = `COMMENT ON COLUMN %s.%s IS %s`
 
 	// Generate SQL to duplicate the column's comment
-	return fmt.Sprintf(cCommentOnColumnSQL,
+	return fmt.Sprintf(
+		cCommentOnColumnSQL,
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(asName),
 		pq.QuoteLiteral(column.Comment),

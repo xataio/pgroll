@@ -20,7 +20,8 @@ func (o *OpDropColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 
 	var task *backfill.Task
 	if o.Down != "" {
-		task = backfill.NewTask(nil,
+		task = backfill.NewTask(
+			nil,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, o.Column),
 				Direction:      backfill.TriggerDirectionDown,

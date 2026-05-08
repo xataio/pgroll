@@ -31,7 +31,8 @@ func NewRoll(ctx context.Context) (*roll.Roll, error) {
 		return nil, err
 	}
 
-	return roll.New(ctx, pgURL, schema, state,
+	return roll.New(
+		ctx, pgURL, schema, state,
 		roll.WithLockTimeoutMs(lockTimeout),
 		roll.WithRole(role),
 		roll.WithSkipValidation(skipValidation),

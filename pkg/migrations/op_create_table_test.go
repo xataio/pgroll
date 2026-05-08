@@ -330,7 +330,8 @@ func TestCreateTable(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -369,7 +370,8 @@ func TestCreateTable(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_create_table_with_fk", "users", map[string]string{
@@ -461,7 +463,8 @@ func TestCreateTable(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionCASCADE)
+					migrations.ForeignKeyActionCASCADE,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "01_create_table", "users", map[string]string{
@@ -498,7 +501,8 @@ func TestCreateTable(t *testing.T) {
 					"orders",
 					"fk_users_id",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionCASCADE)
+					migrations.ForeignKeyActionCASCADE,
+				)
 
 				// Inserting a row into the referenced table succeeds.
 				MustInsert(t, db, schema, "02_create_table_with_fk", "users", map[string]string{

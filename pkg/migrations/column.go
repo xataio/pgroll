@@ -93,7 +93,8 @@ func (w ColumnSQLWriter) Write(col Column) (string, error) {
 			col.References.OnDelete,
 			col.References.OnUpdate,
 			nil,
-			col.References.MatchType)
+			col.References.MatchType,
+		)
 	}
 	if col.Check != nil {
 		writer := &ConstraintSQLWriter{Name: col.Check.Name}

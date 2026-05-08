@@ -699,13 +699,14 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column string, ex
 	t.Helper()
 
 	var actualComment *string
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT col_description(
       %[1]s::regclass,
       (SELECT attnum FROM pg_attribute WHERE attname=%[2]s and attrelid=%[1]s::regclass)
     )`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
-		pq.QuoteLiteral(column)),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+			pq.QuoteLiteral(column)),
 	).Scan(&actualComment)
 	if err != nil {
 		t.Fatal(err)
@@ -742,7 +743,8 @@ func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool
 	t.Helper()
 
 	var exists bool
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT EXISTS (
 	  SELECT a.attname
       FROM   pg_index i
@@ -750,8 +752,8 @@ func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool
                       AND a.attnum = ANY(i.indkey)
       WHERE  i.indrelid = %[1]s::regclass AND i.indisprimary AND a.attname = %[2]s
     )`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
-		pq.QuoteLiteral(column)),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+			pq.QuoteLiteral(column)),
 	).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
@@ -764,9 +766,10 @@ func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment st
 	t.Helper()
 
 	var actualComment string
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT obj_description(%[1]s::regclass, 'pg_class')`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table))),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table))),
 	).Scan(&actualComment)
 	if err != nil {
 		t.Fatal(err)

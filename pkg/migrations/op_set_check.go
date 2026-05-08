@@ -38,7 +38,8 @@ func (o *OpSetCheckConstraint) Start(ctx context.Context, l Logger, conn db.DB, 
 			o.Check.Constraint,
 			[]string{o.Column},
 			o.Check.NoInherit,
-			skipValidate),
+			skipValidate,
+		),
 	}
 
 	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil

@@ -45,7 +45,8 @@ func SharedTestMain(m *testing.M, postRunHooks ...func() error) {
 		pgVersion = defaultPostgresVersion
 	}
 
-	ctr, err := postgres.Run(ctx,
+	ctr, err := postgres.Run(
+		ctx,
 		"postgres:"+pgVersion,
 		testcontainers.WithWaitStrategy(waitForLogs),
 	)

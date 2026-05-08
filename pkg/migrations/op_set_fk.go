@@ -43,7 +43,8 @@ func (o *OpSetForeignKey) Start(ctx context.Context, l Logger, conn db.DB, s *sc
 
 	dbActions := []DBAction{
 		// Create a NOT VALID foreign key constraint on the new column.
-		NewCreateFKConstraintAction(conn,
+		NewCreateFKConstraintAction(
+			conn,
 			table.Name,
 			o.References.Name,
 			[]string{column.Name},
