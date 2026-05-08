@@ -100,8 +100,9 @@ func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.S
 	table := s.GetTable(o.Table)
 	table.Name = o.Table
 
-	dbActions := make([]DBAction, 0)
-	for _, columnName := range table.GetConstraintColumns(o.Name) {
+	constraintColumns := table.GetConstraintColumns(o.Name)
+	dbActions := make([]DBAction, 0, 5*len(constraintColumns))
+	for _, columnName := range constraintColumns {
 		dbActions = append(
 			dbActions,
 			NewDropFunctionAction(conn,
@@ -122,8 +123,9 @@ func (o *OpDropMultiColumnConstraint) Rollback(l Logger, conn db.DB, s *schema.S
 
 	table := s.GetTable(o.Table)
 
-	dbAction := make([]DBAction, 0)
-	for _, columnName := range table.GetConstraintColumns(o.Name) {
+	constraintColumns := table.GetConstraintColumns(o.Name)
+	dbAction := make([]DBAction, 0, 3*len(constraintColumns))
+	for _, columnName := range constraintColumns {
 		dbAction = append(
 			dbAction,
 			NewDropColumnAction(conn, table.Name, TemporaryName(columnName)),

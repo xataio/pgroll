@@ -42,7 +42,7 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 	}
 
 	// Add a trigger to copy values from the old column to the new, rewriting values using the `up` SQL.
-	triggers := make([]backfill.OperationTrigger, 0)
+	triggers := make([]backfill.OperationTrigger, 0, 2)
 	triggers = append(
 		triggers,
 		backfill.OperationTrigger{

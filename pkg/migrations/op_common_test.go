@@ -812,7 +812,6 @@ func update(t *testing.T, db *sql.DB, schema, version, table, column, value stri
 	}
 	recordStr += " WHERE " + column + "=" + value
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("UPDATE %s.%s %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -866,7 +865,6 @@ func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[
 	}
 	recordStr += ")"
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("INSERT INTO %s.%s %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -914,7 +912,6 @@ func delete(t *testing.T, db *sql.DB, schema, version, table string, record map[
 		recordStr += fmt.Sprintf("%s = '%s'", c, record[c])
 	}
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("DELETE FROM %s.%s WHERE %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -925,7 +922,6 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
 
 	q, err := db.Query(selectStmt)

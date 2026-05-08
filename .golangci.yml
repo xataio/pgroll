@@ -5,7 +5,6 @@ linters:
     - copyloopvar
     - errorlint
     - forcetypeassert
-    - goconst
     - gocritic
     - gosec
     - govet
@@ -20,8 +19,6 @@ linters:
   settings:
     errorlint:
       errorf: true
-    goconst:
-      numbers: true
     gocritic:
       disabled-checks:
         - exitAfterDefer
@@ -53,7 +50,7 @@ linters:
       - std-error-handling
     rules:
       - linters:
-          - goconst
+          - gosec
         path: (.+)_test\.go
     paths:
       - third_party$

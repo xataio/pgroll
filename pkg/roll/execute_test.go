@@ -993,7 +993,6 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
 
 	q, err := db.Query(selectStmt)
