@@ -699,13 +699,14 @@ func columnHasComment(t *testing.T, db *sql.DB, schema, table, column string, ex
 	t.Helper()
 
 	var actualComment *string
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT col_description(
       %[1]s::regclass,
       (SELECT attnum FROM pg_attribute WHERE attname=%[2]s and attrelid=%[1]s::regclass)
     )`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
-		pq.QuoteLiteral(column)),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+			pq.QuoteLiteral(column)),
 	).Scan(&actualComment)
 	if err != nil {
 		t.Fatal(err)
@@ -742,7 +743,8 @@ func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool
 	t.Helper()
 
 	var exists bool
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT EXISTS (
 	  SELECT a.attname
       FROM   pg_index i
@@ -750,8 +752,8 @@ func columnMustBePK(t *testing.T, db *sql.DB, schema, table, column string) bool
                       AND a.attnum = ANY(i.indkey)
       WHERE  i.indrelid = %[1]s::regclass AND i.indisprimary AND a.attname = %[2]s
     )`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
-		pq.QuoteLiteral(column)),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table)),
+			pq.QuoteLiteral(column)),
 	).Scan(&exists)
 	if err != nil {
 		t.Fatal(err)
@@ -764,9 +766,10 @@ func tableHasComment(t *testing.T, db *sql.DB, schema, table, expectedComment st
 	t.Helper()
 
 	var actualComment string
-	err := db.QueryRow(fmt.Sprintf(`
+	err := db.QueryRow(
+		fmt.Sprintf(`
     SELECT obj_description(%[1]s::regclass, 'pg_class')`,
-		pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table))),
+			pq.QuoteLiteral(fmt.Sprintf("%s.%s", schema, table))),
 	).Scan(&actualComment)
 	if err != nil {
 		t.Fatal(err)
@@ -809,7 +812,6 @@ func update(t *testing.T, db *sql.DB, schema, version, table, column, value stri
 	}
 	recordStr += " WHERE " + column + "=" + value
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("UPDATE %s.%s %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -863,7 +865,6 @@ func insert(t *testing.T, db *sql.DB, schema, version, table string, record map[
 	}
 	recordStr += ")"
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("INSERT INTO %s.%s %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -911,7 +912,6 @@ func delete(t *testing.T, db *sql.DB, schema, version, table string, record map[
 		recordStr += fmt.Sprintf("%s = '%s'", c, record[c])
 	}
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	stmt := fmt.Sprintf("DELETE FROM %s.%s WHERE %s", versionSchema, table, recordStr)
 
 	_, err := db.Exec(stmt)
@@ -922,7 +922,6 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
 
 	q, err := db.Query(selectStmt)

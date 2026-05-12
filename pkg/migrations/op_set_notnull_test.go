@@ -286,7 +286,8 @@ func TestSetNotNull(t *testing.T) {
 					"employees",
 					migrations.DuplicationName("fk_employee_department"),
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
@@ -299,7 +300,8 @@ func TestSetNotNull(t *testing.T) {
 					"employees",
 					"fk_employee_department",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 			},
 		},
 		{

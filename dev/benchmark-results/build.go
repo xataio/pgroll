@@ -149,7 +149,8 @@ func generateCharts(reports []BenchmarkReports) []*charts.Line {
 			charts.WithTitleOpts(opts.Title{
 				Title: fmt.Sprintf("%s (%s)", ck.benchmarkName, ck.postgresVersion),
 			}),
-			charts.WithAnimation(false))
+			charts.WithAnimation(false),
+		)
 		chart.SetXAxis(xValues)
 
 		series := make(map[int][]float64) // rowCount -> rows/s

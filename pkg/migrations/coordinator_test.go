@@ -85,13 +85,15 @@ func TestCoordinator(t *testing.T) {
 		"alter column multiple times rollback phase": {
 			actions: []DBAction{
 				NewDropColumnAction(nil, "t1", "column1"),
-				NewDropFunctionAction(nil,
+				NewDropFunctionAction(
+					nil,
 					backfill.TriggerFunctionName("t1", "column1"),
 					backfill.TriggerFunctionName("t1", "__pgroll_new_column1"),
 				),
 				NewDropColumnAction(nil, "t1", backfill.CNeedsBackfillColumn),
 				NewDropColumnAction(nil, "t1", "column1"),
-				NewDropFunctionAction(nil,
+				NewDropFunctionAction(
+					nil,
 					backfill.TriggerFunctionName("t1", "column1"),
 					backfill.TriggerFunctionName("t1", "__pgroll_new_column1"),
 				),
@@ -107,7 +109,8 @@ func TestCoordinator(t *testing.T) {
 			actions: []DBAction{
 				NewAlterSequenceOwnerAction(nil, "t1", "column1", TemporaryName("column1")),
 				NewDropColumnAction(nil, "t1", "column1"),
-				NewDropFunctionAction(nil,
+				NewDropFunctionAction(
+					nil,
 					backfill.TriggerFunctionName("t1", "column1"),
 					backfill.TriggerFunctionName("t1", TemporaryName("column1")),
 				),
@@ -115,7 +118,8 @@ func TestCoordinator(t *testing.T) {
 				NewRenameDuplicatedColumnAction(nil, &schema.Table{Name: "t1"}, "column1"),
 				NewAlterSequenceOwnerAction(nil, "t1", "column1", TemporaryName("column1")),
 				NewDropColumnAction(nil, "t1", "column1"),
-				NewDropFunctionAction(nil,
+				NewDropFunctionAction(
+					nil,
 					backfill.TriggerFunctionName("t1", "column1"),
 					backfill.TriggerFunctionName("t1", TemporaryName("column1")),
 				),

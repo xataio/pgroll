@@ -49,7 +49,8 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 	triggers := make([]backfill.OperationTrigger, 0)
 	for _, colName := range o.Columns {
 		upSQL := o.Up[colName]
-		triggers = append(triggers,
+		triggers = append(
+			triggers,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, colName),
 				Direction:      backfill.TriggerDirectionUp,
@@ -70,7 +71,8 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 		})
 
 		downSQL := o.Down[colName]
-		triggers = append(triggers,
+		triggers = append(
+			triggers,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, TemporaryName(colName)),
 				Direction:      backfill.TriggerDirectionDown,
@@ -86,19 +88,22 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 
 	switch o.Type {
 	case OpCreateConstraintTypeUnique, OpCreateConstraintTypePrimaryKey:
-		dbActions = append(dbActions,
+		dbActions = append(
+			dbActions,
 			NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...),
 		)
 		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeCheck:
-		dbActions = append(dbActions,
+		dbActions = append(
+			dbActions,
 			NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true),
 		)
 		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
 
 	case OpCreateConstraintTypeForeignKey:
-		dbActions = append(dbActions,
+		dbActions = append(
+			dbActions,
 			NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true),
 		)
 		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
@@ -169,7 +174,8 @@ func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([
 		}
 		dbActions = append(dbActions, NewRenameDuplicatedColumnAction(conn, table, col))
 	}
-	dbActions = append(dbActions,
+	dbActions = append(
+		dbActions,
 		o.removeTriggers(conn),
 		NewDropColumnAction(conn, o.Table, backfill.CNeedsBackfillColumn),
 	)

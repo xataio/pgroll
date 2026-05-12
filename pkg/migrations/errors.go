@@ -199,7 +199,8 @@ type InvalidOnDeleteSettingError struct {
 }
 
 func (e InvalidOnDeleteSettingError) Error() string {
-	return fmt.Sprintf("foreign key %q on_delete setting must be one of: %q, %q, %q, %q or %q, not %q",
+	return fmt.Sprintf(
+		"foreign key %q on_delete setting must be one of: %q, %q, %q, %q or %q, not %q",
 		e.Name,
 		ForeignKeyActionNOACTION,
 		ForeignKeyActionRESTRICT,
@@ -215,7 +216,8 @@ type UnexpectedOnDeleteSetColumnError struct {
 }
 
 func (e UnexpectedOnDeleteSetColumnError) Error() string {
-	return fmt.Sprintf("if on_delete_set_columns is set in foreign key %q, on_delete setting must be one of: %q, %q",
+	return fmt.Sprintf(
+		"if on_delete_set_columns is set in foreign key %q, on_delete setting must be one of: %q, %q",
 		e.Name,
 		ForeignKeyActionSETDEFAULT,
 		ForeignKeyActionSETNULL,
@@ -228,7 +230,8 @@ type InvalidOnDeleteSetColumnError struct {
 }
 
 func (e InvalidOnDeleteSetColumnError) Error() string {
-	return fmt.Sprintf("invalid on_delete_set_columns setting: column %q is not part of the foreign key %q",
+	return fmt.Sprintf(
+		"invalid on_delete_set_columns setting: column %q is not part of the foreign key %q",
 		e.Column,
 		e.Name,
 	)

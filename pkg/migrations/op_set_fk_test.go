@@ -760,7 +760,8 @@ func TestSetForeignKey(t *testing.T) {
 					"posts",
 					migrations.DuplicationName("fk_users_id_1"),
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 			},
 			afterRollback: func(t *testing.T, db *sql.DB, schema string) {
 			},
@@ -773,7 +774,8 @@ func TestSetForeignKey(t *testing.T) {
 					"posts",
 					"fk_users_id_1",
 					migrations.ForeignKeyActionCASCADE,
-					migrations.ForeignKeyActionNOACTION)
+					migrations.ForeignKeyActionNOACTION,
+				)
 			},
 		},
 		{

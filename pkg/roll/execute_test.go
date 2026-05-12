@@ -385,10 +385,11 @@ func TestSchemaOptionIsRespected(t *testing.T) {
 		}
 
 		// Apply another migration to the same schema
-		if err := mig.Start(ctx, &migrations.Migration{
-			Name:       version2,
-			Operations: migrations.Operations{createTableOp("table2")},
-		},
+		if err := mig.Start(
+			ctx, &migrations.Migration{
+				Name:       version2,
+				Operations: migrations.Operations{createTableOp("table2")},
+			},
 			backfill.NewConfig(),
 		); err != nil {
 			t.Fatalf("Failed to start migration: %v", err)
@@ -992,7 +993,6 @@ func MustSelect(t *testing.T, db *sql.DB, schema, version, table string) []map[s
 	t.Helper()
 	versionSchema := roll.VersionedSchemaName(schema, version)
 
-	//nolint:gosec // this is a test so we don't care about SQL injection
 	selectStmt := fmt.Sprintf("SELECT * FROM %s.%s", versionSchema, table)
 
 	q, err := db.Query(selectStmt)

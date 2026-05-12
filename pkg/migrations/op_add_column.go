@@ -102,7 +102,8 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 
 	var task *backfill.Task
 	if o.Up != "" {
-		task = backfill.NewTask(table,
+		task = backfill.NewTask(
+			table,
 			backfill.OperationTrigger{
 				Name:           backfill.TriggerName(o.Table, o.Column.Name),
 				Direction:      backfill.TriggerDirectionUp,

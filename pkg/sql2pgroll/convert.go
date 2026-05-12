@@ -26,7 +26,7 @@ func Convert(sql string) (migrations.Operations, error) {
 		node := stmts[i].GetStmt().GetNode()
 		var ops migrations.Operations
 		var err error
-		switch node := (node).(type) {
+		switch node := node.(type) {
 		case *pgq.Node_CreateStmt:
 			ops, err = convertCreateStmt(node.CreateStmt)
 		case *pgq.Node_AlterTableStmt:
