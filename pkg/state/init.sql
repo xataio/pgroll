@@ -18,14 +18,18 @@ BEGIN
     IF tg_event = 'sql_drop' AND tg_tag = 'DROP SCHEMA' THEN
         -- Take the schema name from the drop schema command
         SELECT
-            object_identity INTO schemaname
+            object_identity
+        INTO
+            schemaname
         FROM
             pg_event_trigger_dropped_objects ();
     ELSIF tg_event = 'sql_drop'
             AND tg_tag != 'ALTER TABLE' THEN
             -- Guess the schema from drop commands
             SELECT
-                schema_name INTO schemaname
+                schema_name
+            INTO
+                schemaname
             FROM
                 pg_catalog.pg_event_trigger_dropped_objects ()
             WHERE
@@ -43,12 +47,16 @@ BEGIN
         END IF;
         IF tg_tag = 'CREATE SCHEMA' THEN
             SELECT
-                object_identity INTO schemaname
+                object_identity
+            INTO
+                schemaname
             FROM
                 pg_event_trigger_ddl_commands ();
         ELSE
             SELECT
-                schema_name INTO schemaname
+                schema_name
+            INTO
+                schemaname
             FROM
                 pg_catalog.pg_event_trigger_ddl_commands ()
             WHERE
@@ -85,7 +93,8 @@ BEGIN
         LIMIT 1
 )
 SELECT
-    INTO migration_id CASE WHEN EXISTS (
+INTO
+    migration_id CASE WHEN EXISTS (
         SELECT
             1
         FROM
@@ -477,7 +486,9 @@ BEGIN
             WHERE
                 ns.nspname = schemaname
                 AND t.relkind IN ('r', 'p') -- tables only (ignores views, materialized views & foreign tables)
-)) INTO tables;
+))
+    INTO
+        tables;
     RETURN tables;
 END;
 $$;
