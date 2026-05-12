@@ -66,6 +66,14 @@ BEGIN
     IF schemaname IS NULL THEN
         RETURN;
     END IF;
+    -- Ignore DDL on PostgreSQL's per-session temporary schemas. Applications
+    -- creating or dropping temp tables would otherwise accumulate inferred
+    -- migrations on pg_temp/pg_temp_<N> schemas indefinitely.
+    IF schemaname IN ('pg_temp', 'pg_toast_temp')
+        OR schemaname LIKE 'pg_temp_%'
+        OR schemaname LIKE 'pg_toast_temp_%' THEN
+        RETURN;
+    END IF;
     -- Ignore migrations done during a migration period
     IF placeholder.is_active_migration_period (schemaname) THEN
         RETURN;
