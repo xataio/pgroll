@@ -208,6 +208,7 @@ This is a list of projects and articles that helped as inspiration, or otherwise
 
 * [Reshape](https://github.com/fabianlindfors/reshape) by Fabian Lindfors
 * [PgHaMigrations](https://github.com/braintree/pg_ha_migrations)
+* [pgfence](https://pgfence.com) - static analysis for Postgres migration SQL (lock modes, blocking DDL, safe rewrites)
 * [PostgreSQL at Scale: Database Schema Changes Without Downtime](https://medium.com/paypal-tech/postgresql-at-scale-database-schema-changes-without-downtime-20d3749ed680)
 * [Zero downtime schema migrations in highly available databases](http://essay.utwente.nl/92098/1/vanKampen_MA_EEMCS.pdf)
 * [Expand and contract pattern](https://openpracticelibrary.com/practice/expand-and-contract-pattern/)
