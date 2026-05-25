@@ -80,7 +80,16 @@ Follow these steps to perform your first schema migration using `pgroll`:
 `pgroll` needs to store some internal state in the database. A table is created to track the current schema version and store version history. To prepare the database, run the following command:
 
 ```sh
-pgroll init --postgres-url postgres://user:password@host:port/dbname
+pgroll --postgres-url postgres://user:password@host:port/dbname init
+```
+
+### Import existing DB (optional)
+
+To start from a scratch (empty) database, just skip this step :)  
+But if you want to use pgroll on an **already populated** database, you need to "import" the structure using the `baseline` command:
+
+```sh 
+pgroll --postgres-url postgres://user:password@host:port/dbname baseline 00_initial_schema ./migrations/
 ```
 
 ### Start a migration
