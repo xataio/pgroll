@@ -75,7 +75,7 @@ const expectSingleIDColumnNoLastValue = `WITH batch AS
 update AS
 (
   UPDATE "table_name"
-  SET "id" = "table_name"."id"
+  SET "_pgroll_needs_backfill" = true
   FROM batch
   WHERE "table_name"."id" = batch."id"
   RETURNING "table_name"."id"
@@ -96,7 +96,7 @@ const multipleIDColumnsNoLastValue = `WITH batch AS
 update AS
 (
   UPDATE "table_name"
-  SET "id" = "table_name"."id", "zip" = "table_name"."zip"
+  SET "_pgroll_needs_backfill" = true
   FROM batch
   WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
   RETURNING "table_name"."id", "table_name"."zip"
@@ -118,7 +118,7 @@ const singleIDColumnWithLastValue = `WITH batch AS
 update AS
 (
   UPDATE "table_name"
-  SET "id" = "table_name"."id"
+  SET "_pgroll_needs_backfill" = true
   FROM batch
   WHERE "table_name"."id" = batch."id"
   RETURNING "table_name"."id"
@@ -140,7 +140,7 @@ const multipleIDColumnsWithLastValue = `WITH batch AS
 update AS
 (
   UPDATE "table_name"
-  SET "id" = "table_name"."id", "zip" = "table_name"."zip"
+  SET "_pgroll_needs_backfill" = true
   FROM batch
   WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
   RETURNING "table_name"."id", "table_name"."zip"

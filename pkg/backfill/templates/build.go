@@ -47,13 +47,6 @@ func executeTemplate(name, content string, cfg BatchConfig) (string, error) {
 				}
 				return quoted
 			},
-			"updateSetClause": func(tableName string, columns []string) string {
-				quoted := make([]string, len(columns))
-				for i, c := range columns {
-					quoted[i] = qi(c) + " = " + qi(tableName) + "." + qi(c)
-				}
-				return strings.Join(quoted, ", ")
-			},
 			"updateWhereClause": func(tableName string, columns []string) string {
 				quoted := make([]string, len(columns))
 				for i, c := range columns {

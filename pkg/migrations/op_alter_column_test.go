@@ -899,5 +899,45 @@ func TestAlterColumnValidation(t *testing.T) {
 			},
 			wantStartErr: nil,
 		},
+		{
+			name: "backfill with generated always identity primary key",
+			migrations: []migrations.Migration{
+				{
+					Name: "01_add_table",
+					Operations: migrations.Operations{
+						&migrations.OpRawSQL{
+							Up: `
+								CREATE TABLE my_table (
+									id integer GENERATED ALWAYS AS IDENTITY NOT NULL PRIMARY KEY,
+									name varchar NOT NULL,
+									parent_id integer NOT NULL
+								);
+								INSERT INTO my_table(name, parent_id) VALUES ('alice', 100), ('bob', 100);
+							`,
+							Down: "DROP TABLE my_table",
+						},
+					},
+				},
+				{
+					Name: "02_alter_column",
+					Operations: migrations.Operations{
+						&migrations.OpAlterColumn{
+							Table:  "my_table",
+							Column: "parent_id",
+							Type:   ptr("smallint"),
+							Up:     "parent_id",
+							Down:   "parent_id",
+						},
+					},
+				},
+			},
+			afterStart: func(t *testing.T, db *sql.DB, schema string) {
+				rows := MustSelect(t, db, schema, "02_alter_column", "my_table")
+				assert.Equal(t, []map[string]any{
+					{"id": 1, "name": "alice", "parent_id": 100},
+					{"id": 2, "name": "bob", "parent_id": 100},
+				}, rows)
+			},
+		},
 	})
 }
