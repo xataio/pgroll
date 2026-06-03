@@ -9,7 +9,7 @@ require (
 	github.com/oapi-codegen/nullable v1.1.0
 	github.com/pterm/pterm v0.12.83
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
