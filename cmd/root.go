@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/xataio/pgroll/cmd/flags"
+	"github.com/xataio/pgroll/internal/connstr"
 	"github.com/xataio/pgroll/pkg/roll"
 	"github.com/xataio/pgroll/pkg/state"
 )
@@ -83,7 +84,7 @@ func Prepare() *cobra.Command {
 	viper.SetEnvPrefix("PGROLL")
 	viper.AutomaticEnv()
 
-	rootCmd.PersistentFlags().String("postgres-url", "postgres://postgres:postgres@localhost?sslmode=disable", "Postgres URL")
+	rootCmd.PersistentFlags().String("postgres-url", connstr.DefaultURL(), "Postgres URL")
 	rootCmd.PersistentFlags().String("schema", "public", "Postgres schema to use for the migration")
 	rootCmd.PersistentFlags().String("pgroll-schema", "pgroll", "Postgres schema to use for pgroll internal state")
 	rootCmd.PersistentFlags().Int("lock-timeout", 500, "Postgres lock timeout in milliseconds for pgroll DDL operations")

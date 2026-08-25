@@ -4,9 +4,52 @@ package connstr
 
 import (
 	"fmt"
+	"net"
 	"net/url"
+	"os"
 	"strings"
 )
+
+// DefaultURL builds the connection string used when no --postgres-url flag (or
+// PGROLL_PG_URL environment variable) is provided. It starts from pgroll's
+// built-in local defaults and lets the standard libpq environment variables
+// override individual fields when they are set. With none of them set it
+// returns the historical default of a local Postgres instance.
+//
+// The following libpq environment variables are respected: PGHOST, PGPORT,
+// PGUSER, PGPASSWORD, PGDATABASE and PGSSLMODE.
+func DefaultURL() string {
+	host := "localhost"
+	if v := os.Getenv("PGHOST"); v != "" {
+		host = v
+	}
+	if port := os.Getenv("PGPORT"); port != "" {
+		host = net.JoinHostPort(host, port)
+	}
+
+	u := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(getenvOr("PGUSER", "postgres"), getenvOr("PGPASSWORD", "postgres")),
+		Host:   host,
+	}
+
+	if db := os.Getenv("PGDATABASE"); db != "" {
+		u.Path = "/" + db
+	}
+
+	q := url.Values{}
+	q.Set("sslmode", getenvOr("PGSSLMODE", "disable"))
+	u.RawQuery = q.Encode()
+
+	return u.String()
+}
+
+func getenvOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
 
 // AppendSearchPathOption take a Postgres connection string in URL format and
 // produces the same connection string with the search_path option set to the
