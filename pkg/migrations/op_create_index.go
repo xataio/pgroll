@@ -3,8 +3,11 @@
 package migrations
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/lib/pq"
 
@@ -16,6 +19,42 @@ var (
 	_ Operation  = (*OpCreateIndex)(nil)
 	_ Createable = (*OpCreateIndex)(nil)
 )
+
+// UnmarshalJSON accepts the current array-of-fields "columns" shape as well
+// as the object-keyed-by-column-name shape used before #697, so a migration
+// left active by an older pgroll version can still be completed by a newer one.
+func (o *OpCreateIndex) UnmarshalJSON(data []byte) error {
+	type opCreateIndexAlias OpCreateIndex
+
+	var current opCreateIndexAlias
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&current); err == nil {
+		*o = OpCreateIndex(current)
+		return nil
+	}
+
+	var legacy struct {
+		opCreateIndexAlias
+		Columns map[string]IndexField `json:"columns"`
+	}
+	dec = json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&legacy); err != nil {
+		return err
+	}
+
+	columns := make([]IndexField, 0, len(legacy.Columns))
+	for name, field := range legacy.Columns {
+		field.Column = name
+		columns = append(columns, field)
+	}
+	sort.Slice(columns, func(i, j int) bool { return columns[i].Column < columns[j].Column })
+
+	*o = OpCreateIndex(legacy.opCreateIndexAlias)
+	o.Columns = columns
+	return nil
+}
 
 func (o *OpCreateIndex) Start(ctx context.Context, l Logger, conn db.DB, s *schema.Schema) (*StartResult, error) {
 	l.LogOperationStart(o)

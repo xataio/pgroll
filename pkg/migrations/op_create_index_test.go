@@ -7,9 +7,44 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"testing/fstest"
 
+	"github.com/stretchr/testify/require"
 	"github.com/xataio/pgroll/pkg/migrations"
 )
+
+func TestCreateIndexColumnsAcceptsLegacyObjectFormat(t *testing.T) {
+	t.Parallel()
+
+	dir := fstest.MapFS{
+		"01_create_index.json": &fstest.MapFile{Data: []byte(`{
+			"operations": [
+				{
+					"create_index": {
+						"name": "idx_users_name",
+						"table": "users",
+						"unique": true,
+						"columns": {
+							"name": {},
+							"email": {"sort": "DESC"}
+						}
+					}
+				}
+			]
+		}`)},
+	}
+
+	mig, err := migrations.ReadMigration(dir, "01_create_index.json")
+	require.NoError(t, err)
+	require.Len(t, mig.Operations, 1)
+
+	op, ok := mig.Operations[0].(*migrations.OpCreateIndex)
+	require.True(t, ok)
+	require.Equal(t, []migrations.IndexField{
+		{Column: "email", Sort: migrations.IndexFieldSortDESC},
+		{Column: "name"},
+	}, op.Columns)
+}
 
 func TestCreateIndex(t *testing.T) {
 	t.Parallel()
