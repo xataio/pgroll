@@ -17,7 +17,7 @@ const SQL = `WITH batch AS
 update AS
 (
   UPDATE {{ .TableName | qi }}
-  SET {{ updateSetClause .TableName .PrimaryKey }}
+  SET {{ .NeedsBackfillColumn | qi }} = true
   FROM batch
   WHERE {{ updateWhereClause .TableName .PrimaryKey }}
   RETURNING {{ updateReturnClause .TableName .PrimaryKey }}
