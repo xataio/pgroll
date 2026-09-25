@@ -60,24 +60,37 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 // not include running backfills for any modified tables.
 func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) (*backfill.Job, error) {
 	// check if there is an active migration, create one otherwise
+
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
 	if err != nil {
 		return nil, err
 	}
 	if active {
-		return nil, fmt.Errorf("a migration for schema %q is already in progress", m.schema)
-	}
-
-	// create a new active migration (guaranteed to be unique by constraints)
-	if err = m.state.Start(ctx, m.schema, migration); err != nil {
-		return nil, fmt.Errorf("unable to start migration: %w", err)
-	}
-
-	// run any BeforeStartDDL hooks
-	if m.migrationHooks.BeforeStartDDL != nil {
-		if err := m.migrationHooks.BeforeStartDDL(m); err != nil {
-			return nil, fmt.Errorf("failed to execute BeforeStartDDL hook: %w", err)
+		lastNotNilMigration, err := m.state.GetActiveMigration(ctx, m.schema)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get active migration: %w", err)
 		}
+
+		m.logger.Info("Resuming migration %s",
+			"name", lastNotNilMigration.Name,
+		)
+		// return nil, fmt.Errorf("a migration for schema %q is already in progress", m.schema)
+	} else {
+		m.logger.Info("No active migration found, starting a new one...")
+
+		// create a new active migration (guaranteed to be unique by constraints)
+		if err = m.state.Start(ctx, m.schema, migration); err != nil {
+			return nil, fmt.Errorf("unable to start migration: %w", err)
+		}
+
+		// run any BeforeStartDDL hooks
+		// Same as above, we are not in the middle of a migration, so we already ran this hook
+		if m.migrationHooks.BeforeStartDDL != nil {
+			if err := m.migrationHooks.BeforeStartDDL(m); err != nil {
+				return nil, fmt.Errorf("failed to execute BeforeStartDDL hook: %w", err)
+			}
+		}
+
 	}
 
 	// defer execution of any AfterStartDDL hooks
