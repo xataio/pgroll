@@ -30,9 +30,8 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 	}
 
 	// Create a copy of the column on the underlying table.
-	dbActions := []DBAction{
-		NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name),
-	}
+	d := NewColumnDuplicator(conn, table, column).WithoutConstraint(o.Name)
+	dbActions := []DBAction{d}
 
 	// Copy the columns from table columns, so we can use it later
 	// in the down trigger with the physical name
@@ -74,7 +73,11 @@ func (o *OpDropConstraint) Start(ctx context.Context, l Logger, conn db.DB, s *s
 			SQL:            o.Down,
 		},
 	)
-	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
+	return &StartResult{
+		Actions:             dbActions,
+		BackfillTask:        backfill.NewTask(table, triggers...),
+		AfterTriggerActions: d.NotNullConstraintActions(),
+	}, nil
 }
 
 func (o *OpDropConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

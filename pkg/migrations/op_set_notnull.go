@@ -35,7 +35,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 	// Add an unchecked NOT NULL constraint to the new column.
 	skipInherit := false
 	skipValidate := true // We will validate the constraint later in the Complete step.
-	dbActions := []DBAction{
+	afterTriggerActions := []DBAction{
 		NewCreateCheckConstraintAction(
 			conn,
 			table.Name,
@@ -47,7 +47,7 @@ func (o *OpSetNotNull) Start(ctx context.Context, l Logger, conn db.DB, s *schem
 		),
 	}
 
-	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table)}, nil
+	return &StartResult{BackfillTask: backfill.NewTask(table), AfterTriggerActions: afterTriggerActions}, nil
 }
 
 func (o *OpSetNotNull) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

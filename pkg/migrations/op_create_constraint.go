@@ -37,6 +37,7 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 		d = d.WithName(table.GetColumn(colName).Name, TemporaryName(colName))
 	}
 	dbActions := []DBAction{d}
+	afterTriggerActions := d.NotNullConstraintActions()
 
 	// Copy the columns from table columns, so we can use it later
 	// in the down trigger with the physical name
@@ -92,24 +93,24 @@ func (o *OpCreateConstraint) Start(ctx context.Context, l Logger, conn db.DB, s 
 			dbActions,
 			NewCreateUniqueIndexConcurrentlyAction(conn, s.Name, o.Name, table.Name, temporaryNames(o.Columns)...),
 		)
-		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 
 	case OpCreateConstraintTypeCheck:
 		dbActions = append(
 			dbActions,
 			NewCreateCheckConstraintAction(conn, table.Name, o.Name, *o.Check, o.Columns, o.NoInherit, true),
 		)
-		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 
 	case OpCreateConstraintTypeForeignKey:
 		dbActions = append(
 			dbActions,
 			NewCreateFKConstraintAction(conn, table.Name, o.Name, temporaryNames(o.Columns), o.References, false, false, true),
 		)
-		return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+		return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 	}
 
-	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 }
 
 func (o *OpCreateConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {

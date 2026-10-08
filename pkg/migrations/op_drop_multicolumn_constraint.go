@@ -91,7 +91,11 @@ func (o *OpDropMultiColumnConstraint) Start(ctx context.Context, l Logger, conn 
 		)
 	}
 
-	return &StartResult{Actions: dbActions, BackfillTask: backfill.NewTask(table, triggers...)}, nil
+	return &StartResult{
+		Actions:             dbActions,
+		BackfillTask:        backfill.NewTask(table, triggers...),
+		AfterTriggerActions: d.NotNullConstraintActions(),
+	}, nil
 }
 
 func (o *OpDropMultiColumnConstraint) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
