@@ -88,6 +88,7 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 	task := backfill.NewTask(table, triggers...)
 
 	var dbActions []DBAction
+	afterTriggerActions := d.NotNullConstraintActions()
 	// perform any operation specific start steps
 	for _, op := range ops {
 		startOp, err := op.Start(ctx, l, conn, s)
@@ -96,9 +97,10 @@ func (o *OpAlterColumn) Start(ctx context.Context, l Logger, conn db.DB, s *sche
 		}
 		task.AddTriggers(startOp.BackfillTask)
 		dbActions = append(dbActions, startOp.Actions...)
+		afterTriggerActions = append(afterTriggerActions, startOp.AfterTriggerActions...)
 	}
 
-	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 }
 
 func (o *OpAlterColumn) Complete(l Logger, conn db.DB, s *schema.Schema) ([]DBAction, error) {
