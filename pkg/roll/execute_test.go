@@ -214,6 +214,50 @@ func TestPreviousVersionIsDroppedAfterMigrationCompletion(t *testing.T) {
 			require.False(t, schemaExists(t, db, roll.VersionedSchemaName("public", "01_foo")))
 		})
 	})
+
+	t.Run("when subsequent migrations share the same version schema name", func(t *testing.T) {
+		testutils.WithMigratorAndConnectionToContainer(t, func(m *roll.Roll, db *sql.DB) {
+			ctx := context.Background()
+
+			migs := []migrations.Migration{
+				{
+					Name:          "01_create_table",
+					VersionSchema: "shared_version",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "users",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+				{
+					Name:          "02_create_another_table",
+					VersionSchema: "shared_version",
+					Operations: migrations.Operations{
+						&migrations.OpCreateTable{
+							Name: "items",
+							Columns: []migrations.Column{
+								{Name: "id", Type: "serial", Pk: true},
+							},
+						},
+					},
+				},
+			}
+
+			// Start and complete both migrations
+			for _, mig := range migs {
+				err := m.Start(ctx, &mig, backfill.NewConfig())
+				require.NoError(t, err)
+				err = m.Complete(ctx)
+				require.NoError(t, err)
+			}
+
+			// Ensure that the shared versioned schema is NOT dropped
+			require.True(t, schemaExists(t, db, roll.VersionedSchemaName("public", "shared_version")))
+		})
+	})
 }
 
 func TestSchemaIsDroppedAfterMigrationRollback(t *testing.T) {
