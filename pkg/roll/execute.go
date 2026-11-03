@@ -56,8 +56,9 @@ func (m *Roll) Start(ctx context.Context, migration *migrations.Migration, cfg *
 	return m.performBackfills(ctx, job, cfg)
 }
 
-// StartDDLOperations performs the DDL operations for the migration. This does
-// not include running backfills for any modified tables.
+// StartDDLOperations performs the DDL operations for the migration, including
+// creating the backfill triggers. This does not include running backfills for
+// any modified tables.
 func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Migration) (*backfill.Job, error) {
 	// check if there is an active migration, create one otherwise
 	active, err := m.state.IsActiveMigrationPeriod(ctx, m.schema)
@@ -100,6 +101,7 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 
 	// execute operations
 	job := backfill.NewJob(m.schema, versionSchemaName)
+	var afterTriggerActions []migrations.DBAction
 	for _, op := range migration.Operations {
 		startOp, err := op.Start(ctx, m.logger, m.pgConn, newSchema)
 		if err != nil {
@@ -134,6 +136,24 @@ func (m *Roll) StartDDLOperations(ctx context.Context, migration *migrations.Mig
 		if startOp.BackfillTask != nil {
 			job.AddTask(startOp.BackfillTask)
 		}
+		afterTriggerActions = append(afterTriggerActions, startOp.AfterTriggerActions...)
+	}
+
+	// Create the backfill triggers before the constraints that need them, so
+	// that writes from the previous version are never rejected for leaving a
+	// new column empty.
+	err = backfill.New(m.pgConn, backfill.NewConfig()).CreateTriggers(ctx, job)
+	if err == nil {
+		err = migrations.NewCoordinator(afterTriggerActions).Execute(ctx)
+	}
+	if err != nil {
+		if errRollback := m.Rollback(ctx); errRollback != nil {
+			return nil, errors.Join(
+				fmt.Errorf("unable to execute start operation of %q: %w", migration.Name, err),
+				fmt.Errorf("unable to roll back failed operation: %w", errRollback),
+			)
+		}
+		return nil, fmt.Errorf("failed to start %q migration, changes rolled back: %w", migration.Name, err)
 	}
 
 	// create views for the new version
@@ -367,8 +387,6 @@ func (m *Roll) ensureView(ctx context.Context, version, name string, table *sche
 
 func (m *Roll) performBackfills(ctx context.Context, job *backfill.Job, cfg *backfill.Config) error {
 	bf := backfill.New(m.pgConn, cfg)
-
-	bf.CreateTriggers(ctx, job)
 
 	for _, table := range job.Tables {
 		m.logger.LogBackfillStart(table.Name)

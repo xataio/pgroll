@@ -82,6 +82,10 @@ type (
 	StartResult struct {
 		Actions      []DBAction
 		BackfillTask *backfill.Task
+		// AfterTriggerActions run once the backfill triggers exist. They add
+		// constraints that would reject writes from the previous version if
+		// the triggers were not there to fill the new columns.
+		AfterTriggerActions []DBAction
 	}
 )
 

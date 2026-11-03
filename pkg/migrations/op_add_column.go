@@ -54,8 +54,9 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	// will be validated on migration completion.
 	skipInherit := false
 	skipValidate := true
+	var afterTriggerActions []DBAction
 	if !o.Column.IsNullable() && (o.Column.Default == nil || !fastPathDefault) {
-		dbActions = append(dbActions,
+		afterTriggerActions = append(afterTriggerActions,
 			NewCreateCheckConstraintAction(
 				conn,
 				table.Name,
@@ -119,7 +120,7 @@ func (o *OpAddColumn) Start(ctx context.Context, l Logger, conn db.DB, s *schema
 	tmpColumn.Name = TemporaryName(o.Column.Name)
 	table.AddColumn(o.Column.Name, tmpColumn)
 
-	return &StartResult{Actions: dbActions, BackfillTask: task}, nil
+	return &StartResult{Actions: dbActions, BackfillTask: task, AfterTriggerActions: afterTriggerActions}, nil
 }
 
 func toSchemaColumn(c Column) *schema.Column {

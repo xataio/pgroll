@@ -6,9 +6,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand/v2"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -448,6 +452,105 @@ func TestMigrationDDLIsRetriedOnLockTimeouts(t *testing.T) {
 		}, backfill.NewConfig())
 		require.NoError(t, err)
 	})
+}
+
+func TestStartDoesNotRejectWritesFromThePreviousVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]migrations.Operation{
+		"add a NOT NULL column": &migrations.OpAddColumn{
+			Table:  "items",
+			Up:     "0",
+			Column: migrations.Column{Name: "quantity", Type: "integer"},
+		},
+		"change the type of a NOT NULL column": &migrations.OpAlterColumn{
+			Table:  "items",
+			Column: "name",
+			Type:   ptr("text"),
+			Up:     "name",
+			Down:   "name",
+		},
+	}
+
+	for name, op := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			testutils.WithMigratorAndConnectionToContainer(t, func(mig *roll.Roll, db *sql.DB) {
+				ctx := context.Background()
+				const firstVersion = "01_create_tables"
+
+				// Many tables make starting a migration slower, which widens any
+				// window in which writes from the previous version are rejected.
+				const extraTables = 200
+				ops := make(migrations.Operations, 0, extraTables+1)
+				ops = append(ops, &migrations.OpCreateTable{
+					Name: "items",
+					Columns: []migrations.Column{
+						{Name: "id", Type: "serial", Pk: true},
+						{Name: "name", Type: "text"},
+					},
+				})
+				for i := range extraTables {
+					ops = append(ops, createTableOp(fmt.Sprintf("table%d", i)))
+				}
+				require.NoError(t, mig.Start(ctx, &migrations.Migration{Name: firstVersion, Operations: ops}, backfill.NewConfig()))
+				require.NoError(t, mig.Complete(ctx))
+
+				_, err := db.ExecContext(ctx, "INSERT INTO items (name) SELECT 'item' FROM generate_series(1, 1000)")
+				require.NoError(t, err)
+
+				// Write through the previous version's schema while the next
+				// migration starts.
+				var (
+					writes   atomic.Int64
+					mu       sync.Mutex
+					rejected = map[string]int{}
+					wg       sync.WaitGroup
+				)
+				writing, stopWriting := context.WithCancel(ctx)
+				defer func() {
+					stopWriting()
+					wg.Wait()
+				}()
+				for range 4 {
+					conn, err := db.Conn(ctx)
+					require.NoError(t, err)
+					_, err = conn.ExecContext(ctx, "SET search_path TO "+pq.QuoteIdentifier(roll.VersionedSchemaName(cSchema, firstVersion)))
+					require.NoError(t, err)
+
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						defer conn.Close()
+						for writing.Err() == nil {
+							_, insertErr := conn.ExecContext(ctx, "INSERT INTO items (name) VALUES ('item')")
+							_, updateErr := conn.ExecContext(ctx, "UPDATE items SET name = 'updated' WHERE id = $1", rand.IntN(1000)+1)
+							writes.Add(2)
+							mu.Lock()
+							for _, err := range []error{insertErr, updateErr} {
+								if err != nil {
+									rejected[err.Error()]++
+								}
+							}
+							mu.Unlock()
+						}
+					}()
+				}
+				require.Eventually(t, func() bool { return writes.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
+
+				writesBefore := writes.Load()
+				err = mig.Start(ctx, &migrations.Migration{Name: "02_change_items", Operations: migrations.Operations{op}}, backfill.NewConfig())
+				writesDuring := writes.Load() - writesBefore
+				stopWriting()
+				wg.Wait()
+
+				require.NoError(t, err)
+				require.Positive(t, writesDuring, "no writes ran while the migration started")
+				require.Empty(t, rejected, "writes from the previous version were rejected")
+			})
+		})
+	}
 }
 
 func TestViewsAreCreatedWithSecurityInvokerTrue(t *testing.T) {

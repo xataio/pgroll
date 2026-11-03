@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -99,7 +100,7 @@ func (d *duplicator) Execute(ctx context.Context) error {
 		colNames = append(colNames, name)
 
 		// Duplicate the column with the new type
-		if sql := d.stmtBuilder.duplicateColumn(c.column, c.asName, c.withoutNotNull, c.withType); sql != "" {
+		if sql := d.stmtBuilder.duplicateColumn(c.asName, c.withType); sql != "" {
 			_, err := d.conn.ExecContext(ctx, sql)
 			if err != nil {
 				return err
@@ -279,46 +280,51 @@ func (d *duplicatorStmtBuilder) allConstraintColumns(constraintColumns []string,
 	return duplicatedMember, newConstraintColumns
 }
 
-func (d *duplicatorStmtBuilder) duplicateColumn(
-	column *schema.Column,
-	asName string,
-	withoutNotNull bool,
-	withType string,
-) string {
-	const (
-		cAlterTableSQL         = `ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s %s`
-		cAddCheckConstraintSQL = `ALTER TABLE %s ADD CONSTRAINT %s %s NOT VALID`
-	)
+func (d *duplicatorStmtBuilder) duplicateColumn(asName string, withType string) string {
+	const cAlterTableSQL = `ALTER TABLE %s ADD COLUMN IF NOT EXISTS %s %s`
 
 	// Generate SQL to duplicate the column's name and type
-	sql := fmt.Sprintf(cAlterTableSQL,
+	return fmt.Sprintf(cAlterTableSQL,
 		pq.QuoteIdentifier(d.table.Name),
 		pq.QuoteIdentifier(asName),
 		withType)
+}
 
-	// Generate SQL to add an unchecked NOT NULL constraint if the original column
-	// is NOT NULL. The constraint will be validated on migration completion.
-	if !column.Nullable && !withoutNotNull {
-		constraintName := DuplicationName(NotNullConstraintName(column.Name))
-		if _, ok := d.table.CheckConstraints[constraintName]; ok {
-			return sql // Skip if the constraint already exists
+// NotNullConstraintActions returns actions that add an unchecked NOT NULL
+// constraint to each duplicated column whose original column is NOT NULL. The
+// constraints are validated on migration completion.
+func (d *duplicator) NotNullConstraintActions() []DBAction {
+	table := d.stmtBuilder.table
+	skipInherit := false
+	skipValidate := true
+	actions := make([]DBAction, 0)
+	for _, name := range slices.Sorted(maps.Keys(d.columns)) {
+		c := d.columns[name]
+		if c.column.Nullable || c.withoutNotNull {
+			continue
 		}
-		sql += fmt.Sprintf(
-			"; "+cAddCheckConstraintSQL,
-			pq.QuoteIdentifier(d.table.Name),
-			pq.QuoteIdentifier(constraintName),
-			fmt.Sprintf("CHECK (%s IS NOT NULL)", pq.QuoteIdentifier(asName)),
-		)
-		if d.table.CheckConstraints == nil {
-			d.table.CheckConstraints = make(map[string]*schema.CheckConstraint)
+		constraintName := DuplicationName(NotNullConstraintName(c.column.Name))
+		if _, ok := table.CheckConstraints[constraintName]; ok {
+			continue // Skip if the constraint already exists
 		}
-		d.table.CheckConstraints[constraintName] = &schema.CheckConstraint{
+		if table.CheckConstraints == nil {
+			table.CheckConstraints = make(map[string]*schema.CheckConstraint)
+		}
+		table.CheckConstraints[constraintName] = &schema.CheckConstraint{
 			Name:    constraintName,
-			Columns: []string{asName},
+			Columns: []string{c.asName},
 		}
+		actions = append(actions, NewCreateCheckConstraintAction(
+			d.conn,
+			table.Name,
+			constraintName,
+			fmt.Sprintf("%s IS NOT NULL", pq.QuoteIdentifier(c.asName)),
+			nil,
+			skipInherit,
+			skipValidate,
+		))
 	}
-
-	return sql
+	return actions
 }
 
 func (d *duplicatorStmtBuilder) duplicateDefault(column *schema.Column, asName string) string {
