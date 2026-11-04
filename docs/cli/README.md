@@ -2,7 +2,7 @@
 
 The `pgroll` CLI has the following top-level flags:
 
-- `--postgres-url`: The URL of the postgres instance against which migrations will be run.
+- `--postgres-url`: The URL of the postgres instance against which migrations will be run. When this flag is not set, `pgroll` defaults to a local Postgres instance but respects the standard libpq environment variables (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` and `PGSSLMODE`) for any fields you set.
 - `--schema`: The Postgres schema in which migrations will be run (default `"public"`).
 - `--pgroll-schema`: The Postgres schema in which `pgroll` will store its internal state (default: `"pgroll"`). One `--pgroll-schema` may be used safely with multiple `--schema`s.
 - `--lock-timeout`: The Postgres `lock_timeout` value to use for all `pgroll` DDL operations, specified in milliseconds (default `500`).
