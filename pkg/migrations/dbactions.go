@@ -5,11 +5,13 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	pgq "github.com/xataio/pg_query_go/v6"
 
 	"github.com/xataio/pgroll/pkg/db"
 )
@@ -679,12 +681,61 @@ func (a *CreateCheckConstraintAction) Execute(ctx context.Context) error {
 // the check expression as though it were being applied to the old column,
 // On migration start, however, the check is actually applied to the new (temporary)
 // column.
-// This function naively rewrites the check expression to apply to the new column.
+// This function rewrites the column references in the check expression to
+// apply to the new columns. Only identifier tokens that name one of the columns
+// are rewritten, so string literals, function names, type names and other
+// identifiers that contain a column name are left unchanged.
 func rewriteCheckExpression(check string, columns ...string) string {
-	for _, col := range columns {
-		check = strings.ReplaceAll(check, col, TemporaryName(col))
+	result, err := pgq.Scan(check)
+	if err != nil {
+		return check
 	}
-	return check
+
+	var sb strings.Builder
+	last := 0
+	tokens := result.GetTokens()
+	for i, tok := range tokens {
+		if !isIdentifierToken(tok) {
+			continue
+		}
+		// Skip function names and type names
+		if i+1 < len(tokens) && tokens[i+1].GetToken() == pgq.Token_ASCII_40 {
+			continue
+		}
+		if i > 0 && tokens[i-1].GetToken() == pgq.Token_TYPECAST {
+			continue
+		}
+
+		text := check[tok.GetStart():tok.GetEnd()]
+		quoted := strings.HasPrefix(text, `"`)
+		name := strings.ToLower(text)
+		if quoted {
+			name = strings.ReplaceAll(text[1:len(text)-1], `""`, `"`)
+		}
+		if !slices.Contains(columns, name) {
+			continue
+		}
+
+		replacement := TemporaryName(name)
+		if quoted {
+			replacement = pq.QuoteIdentifier(replacement)
+		}
+		sb.WriteString(check[last:tok.GetStart()])
+		sb.WriteString(replacement)
+		last = int(tok.GetEnd())
+	}
+	sb.WriteString(check[last:])
+	return sb.String()
+}
+
+// isIdentifierToken returns true if the token can name a column: a plain or
+// quoted identifier, or a keyword that is not reserved.
+func isIdentifierToken(tok *pgq.ScanToken) bool {
+	if tok.GetToken() == pgq.Token_IDENT {
+		return true
+	}
+	kind := tok.GetKeywordKind()
+	return kind != pgq.KeywordKind_NO_KEYWORD && kind != pgq.KeywordKind_RESERVED_KEYWORD
 }
 
 // createFKConstraintAction is a DBAction that creates a new foreign key constraint
