@@ -5,6 +5,7 @@ package migrations
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -679,10 +680,18 @@ func (a *CreateCheckConstraintAction) Execute(ctx context.Context) error {
 // the check expression as though it were being applied to the old column,
 // On migration start, however, the check is actually applied to the new (temporary)
 // column.
-// This function naively rewrites the check expression to apply to the new column.
+// This function rewrites the check expression to apply to the new column,
+// using word boundaries and preserving string literals so that function names
+// containing the column name as a substring are not corrupted.
 func rewriteCheckExpression(check string, columns ...string) string {
 	for _, col := range columns {
-		check = strings.ReplaceAll(check, col, TemporaryName(col))
+		re := regexp.MustCompile(`'(''|[^'])*'|\b(` + regexp.QuoteMeta(col) + `)\b`)
+		check = re.ReplaceAllStringFunc(check, func(match string) string {
+			if strings.HasPrefix(match, "'") {
+				return match
+			}
+			return TemporaryName(col)
+		})
 	}
 	return check
 }
