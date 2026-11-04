@@ -47,8 +47,7 @@ func startCmd() *cobra.Command {
 				return fmt.Errorf("failed to check for existing schema: %w", err)
 			}
 			if needsBaseline {
-				fmt.Printf("Schema %q is non-empty but has no migration history. Run `pgroll baseline` first\n", m.Schema())
-				return nil
+				return errBaselineRequired(m.Schema())
 			}
 
 			c := backfill.NewConfig(
