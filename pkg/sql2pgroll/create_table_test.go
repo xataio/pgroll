@@ -354,6 +354,12 @@ func TestUnconvertableCreateTableStatements(t *testing.T) {
 		"CREATE TABLE foo(a int UNIQUE DEFERRABLE INITIALLY DEFERRED)",
 		"CREATE TABLE foo(a int PRIMARY KEY DEFERRABLE INITIALLY DEFERRED)",
 		"CREATE TABLE foo(a int REFERENCES bar(b) DEFERRABLE INITIALLY DEFERRED)",
+
+		// Inline foreign key constraints that omit the referenced column list
+		// reference the primary key of the referenced table. The referenced
+		// column cannot be determined from the statement alone.
+		"CREATE TABLE foo(a int REFERENCES bar)",
+		"CREATE TABLE foo(a int REFERENCES bar ON DELETE CASCADE)",
 	}
 
 	for _, sql := range tests {

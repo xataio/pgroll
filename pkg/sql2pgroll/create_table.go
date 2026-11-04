@@ -451,6 +451,14 @@ func convertInlineForeignKeyConstraint(tableName, columnName string, constraint 
 		return nil, nil
 	}
 
+	// If the referenced column list is omitted the constraint references the
+	// primary key of the referenced table. The referenced column is only
+	// resolved by Postgres at execution time, so the constraint cannot be
+	// converted without losing information.
+	if len(constraint.GetPkAttrs()) == 0 {
+		return nil, nil
+	}
+
 	onDelete := migrations.ForeignKeyActionNOACTION
 	if constraint.GetFkDelAction() != "" {
 		onDelete = referentialAction[constraint.FkDelAction]

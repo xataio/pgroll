@@ -334,6 +334,11 @@ func TestUnconvertableAlterTableStatements(t *testing.T) {
 		"ALTER TABLE foo ADD COLUMN bar int UNIQUE INITIALLY DEFERRED",
 		"ALTER TABLE foo ADD COLUMN bar int COLLATE en_US",
 		"ALTER TABLE foo ADD COLUMN bar int COMPRESSION pglz",
+
+		// Inline foreign key constraints that omit the referenced column list
+		// reference the primary key of the referenced table. The referenced
+		// column cannot be determined from the statement alone.
+		"ALTER TABLE foo ADD COLUMN bar int REFERENCES baz",
 	}
 
 	for _, sql := range tests {
