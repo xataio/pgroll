@@ -15,6 +15,8 @@ will apply migrations from `41_add_enum_column` onwards to the target database.
 
 If the `--complete` flag is passed to `pgroll migrate` the final migration to be applied will be completed. Otherwise the final migration will be left active (started but not completed).
 
+If a migration is already active, `pgroll migrate` fails with a non-zero exit code without applying anything, the same as `pgroll start`. Complete or roll back the active migration first.
+
 If any of the migration files are incompatible with your `pgroll` version, the command will report the errors and exit before running any migrations.
 
 ## Backfill Configuration
