@@ -46,8 +46,7 @@ func migrateCmd() *cobra.Command {
 				return fmt.Errorf("unable to determine active migration period: %w", err)
 			}
 			if active {
-				fmt.Printf("migration %q is active\n", *latestMigration)
-				return nil
+				return fmt.Errorf("migration %q is active; complete or roll it back before running migrate", *latestMigration)
 			}
 
 			info, err := os.Stat(migrationsDir)
