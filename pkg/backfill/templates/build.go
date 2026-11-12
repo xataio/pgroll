@@ -69,9 +69,18 @@ func executeTemplate(name, content string, cfg BatchConfig) (string, error) {
 				return strings.Join(quoted, ", ")
 			},
 			"selectLastValue": func(columns []string) string {
+				// Order the window by the same columns as the batch and use a full
+				// frame so LAST_VALUE returns the highest key in the batch, not the
+				// last row in arbitrary UPDATE ... RETURNING order.
+				ordered := make([]string, len(columns))
+				for i, c := range columns {
+					ordered[i] = qi(c)
+				}
+				window := "OVER(ORDER BY " + strings.Join(ordered, ", ") +
+					" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)"
 				quoted := make([]string, len(columns))
 				for i, c := range columns {
-					quoted[i] = "LAST_VALUE(" + qi(c) + ") OVER()"
+					quoted[i] = "LAST_VALUE(" + qi(c) + ") " + window
 				}
 				return strings.Join(quoted, ", ")
 			},
