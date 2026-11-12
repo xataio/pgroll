@@ -80,7 +80,7 @@ update AS
   WHERE "table_name"."id" = batch."id"
   RETURNING "table_name"."id"
 )
-SELECT LAST_VALUE("id") OVER()
+SELECT LAST_VALUE("id") OVER(ORDER BY "id" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 FROM update
 `
 
@@ -101,7 +101,7 @@ update AS
   WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
   RETURNING "table_name"."id", "table_name"."zip"
 )
-SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER()
+SELECT LAST_VALUE("id") OVER(ORDER BY "id", "zip" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING), LAST_VALUE("zip") OVER(ORDER BY "id", "zip" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 FROM update
 `
 
@@ -123,7 +123,7 @@ update AS
   WHERE "table_name"."id" = batch."id"
   RETURNING "table_name"."id"
 )
-SELECT LAST_VALUE("id") OVER()
+SELECT LAST_VALUE("id") OVER(ORDER BY "id" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 FROM update
 `
 
@@ -145,6 +145,6 @@ update AS
   WHERE "table_name"."id" = batch."id" AND "table_name"."zip" = batch."zip"
   RETURNING "table_name"."id", "table_name"."zip"
 )
-SELECT LAST_VALUE("id") OVER(), LAST_VALUE("zip") OVER()
+SELECT LAST_VALUE("id") OVER(ORDER BY "id", "zip" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING), LAST_VALUE("zip") OVER(ORDER BY "id", "zip" ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 FROM update
 `
